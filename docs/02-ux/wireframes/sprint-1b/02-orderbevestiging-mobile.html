@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Orderbevestiging (Mobiel, v1.3)</title>
+<style>
+  :root{ --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8; --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515; --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:390px; margin:0 auto; background:#fff; border:1px solid var(--wf-400); border-radius:18px; overflow:hidden;}
+  .banner{max-width:390px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 14px; border-radius:4px; font-size:10.5px;}
+  .section-label{background:var(--wf-800); color:#fff; padding:5px 14px; font-size:8.5px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;}
+  header.gh{display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:70px; height:16px; background:var(--wf-300); border-radius:2px;}
+  .search-ph{flex:1; height:30px; border:1px solid var(--wf-400); border-radius:6px;}
+  .icon-ph{width:20px; height:20px; border-radius:50%; background:var(--wf-200);}
+  .success-block{text-align:center; padding:26px 14px 18px;}
+  .success-check{width:44px; height:44px; border-radius:50%; background:var(--wf-900); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; margin:0 auto 10px;}
+  .success-block h1{font-size:16px; margin:0 0 6px;}
+  .success-sub{font-size:11px; color:var(--wf-600);}
+  .order-numbers{display:flex; justify-content:center; gap:5px; margin-top:9px; flex-wrap:wrap;}
+  .dm-badge{font-size:9px; font-weight:600; padding:3px 7px; border-radius:8px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  .dm-badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+  .content{padding:0 14px 20px;}
+  .notice{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:8px 9px; font-size:10px; color:var(--wf-700); margin-bottom:14px;}
+  .shared-block{border:1px solid var(--wf-300); border-radius:8px; padding:10px 11px; margin-bottom:8px;}
+  .shared-block h4{font-size:9px; text-transform:uppercase; color:var(--wf-500); margin:0 0 5px;}
+  .shared-line{font-size:11px; line-height:1.5;}
+  .split-notice{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:7px 8px; font-size:9.5px; color:var(--wf-700); margin:12px 0;}
+  .retailer-group{border:1px solid var(--wf-300); border-radius:8px; padding:11px; margin-bottom:10px;}
+  .rg-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:7px; border-bottom:1px solid var(--wf-200); flex-wrap:wrap; gap:5px;}
+  .retailer-indicator{display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600;}
+  .dm-avatar-sm{width:14px; height:14px; border-radius:50%; background:var(--wf-300); display:inline-block;}
+  .order-num{font-size:9px; color:var(--wf-600);}
+  .cart-line{display:flex; gap:8px; align-items:center; padding:6px 0;}
+  .line-img{width:40px; height:40px; background:var(--wf-100); border-radius:6px; flex-shrink:0;}
+  .line-title{font-size:10.5px; font-weight:600; flex:1;}
+  .line-price{font-size:10.5px; font-weight:700;}
+  .rg-meta{display:flex; gap:6px; margin-top:8px; padding-top:8px; border-top:1px solid var(--wf-200); flex-wrap:wrap;}
+  .tt-note{font-size:9px; color:var(--wf-500); font-style:italic; margin-top:6px;}
+  .totals-box{border:2px solid var(--wf-800); border-radius:8px; padding:12px 13px; margin-top:6px;}
+  .totals-row{display:flex; justify-content:space-between; font-size:10.5px; margin-bottom:5px;}
+  .totals-row.grand{font-size:13px; font-weight:700; border-top:1px solid var(--wf-300); padding-top:7px;}
+  .btw-label{display:flex; align-items:center; gap:5px;}
+  .info-dot{width:12px; height:12px; border-radius:50%; border:1px solid var(--wf-500); color:var(--wf-600); font-size:8px; display:inline-flex; align-items:center; justify-content:center; cursor:default; flex-shrink:0;}
+  .cta-row{display:flex; flex-direction:column; gap:8px; margin-top:18px;}
+  .btn{font-family:inherit; font-weight:700; border-radius:6px; border:1px solid transparent; text-align:center; padding:11px 0; font-size:12px;}
+  .btn-primary{background:var(--wf-900); color:#fff;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800);}
+  .contact-row{margin-top:14px; font-size:10.5px; color:var(--wf-600); text-align:center;}
+  footer.gf{border-top:1px solid var(--wf-300); padding:14px; font-size:9.5px; color:var(--wf-500);}
+</style>
+</head>
+<body>
+<div class="banner"><b>EuropMade — Wireframe: Orderbevestiging (Mobiel) — v1.3</b> · <b>UX-vereenvoudiging BTW:</b> label + bedrag + info-icoon (ⓘ), geen standaard zichtbare toelichting meer. CTA's gestapeld, geen sticky bar nodig.</div>
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div><div class="search-ph"></div><span class="icon-ph"></span></header>
+  <div class="success-block">
+    <div class="success-check">✓</div>
+    <h1>Bestelling geplaatst!</h1>
+    <div class="success-sub">2 pakketten, 2 aanbieders.</div>
+    <div class="order-numbers"><span class="dm-badge dm-badge-solid">✓ Betaald</span><span class="dm-badge">#EM-48213-A</span><span class="dm-badge">#EM-48213-B</span></div>
+  </div>
+  <div class="content">
+    <div class="notice">ⓘ Je ontvangt per deelbestelling een aparte e-mail, incl. track &amp; trace zodra verzonden.</div>
+    <div class="section-label" style="margin:0 0 8px -14px; padding-left:14px;">Marketplace-brede informatie</div>
+    <div class="shared-block"><h4>Leveradres</h4><div class="shared-line">Jan Jansen, Hoofdstraat 12, 1234 AB Amsterdam</div></div>
+    <div class="shared-block"><h4>Betaalmethode</h4><div class="shared-line">iDEAL — € 313,90</div></div>
+    <div class="section-label" style="margin:12px 0 8px -14px; padding-left:14px;">Retailerinformatie</div>
+    <div class="split-notice">Opgesplitst in <b>2 deelbestellingen</b>.</div>
+    <div class="retailer-group">
+      <div class="rg-head"><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X</div><div class="order-num">#EM-48213-A</div></div>
+      <div class="cart-line"><div class="line-img"></div><div class="line-title">Robotmaaier X200 — 1×</div><div class="line-price">€ 249,00</div></div>
+      <div class="rg-meta"><span class="dm-badge">Wo 23 juli</span><span class="dm-badge">Gratis</span></div>
+      <div class="tt-note">Track &amp; trace volgt.</div>
+    </div>
+    <div class="retailer-group">
+      <div class="rg-head"><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer Y</div><div class="order-num">#EM-48213-B</div></div>
+      <div class="cart-line"><div class="line-img"></div><div class="line-title">Tuinslang 20m — 1×</div><div class="line-price">€ 59,95</div></div>
+      <div class="rg-meta"><span class="dm-badge">25–27 juli</span><span class="dm-badge">€ 4,95</span></div>
+      <div class="tt-note">Track &amp; trace volgt.</div>
+    </div>
+    <div class="totals-box">
+      <div class="totals-row"><span>Subtotaal</span><span>€ 308,95</span></div>
+      <div class="totals-row"><span>Verzendkosten</span><span>€ 4,95</span></div>
+      <div class="totals-row"><span class="btw-label">BTW <span class="info-dot" title="BTW o.b.v. land van levering. Land: Nederland. Tarief: 21%.">ⓘ</span></span><span>€ 54,48</span></div>
+      <div class="totals-row grand"><span>Totaal betaald</span><span>€ 313,90</span></div>
+    </div>
+    <div class="cta-row"><button class="btn btn-primary">Bestelling bekijken</button><button class="btn btn-ghost">Verder winkelen</button></div>
+    <div class="contact-row">Vragen? Neem contact op</div>
+  </div>
+  <footer class="gf">Over EuropMade · Klantenservice</footer>
+</div>
+</body>
+</html>

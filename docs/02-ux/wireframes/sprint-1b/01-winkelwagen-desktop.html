@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Winkelwagen (Desktop, v1.0)</title>
+<style>
+  :root{
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:#e8e8e8; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:32px 0;}
+  .page{max-width:1080px; margin:0 auto; background:#fff; border:1px solid var(--wf-400);}
+  .banner{max-width:1080px; margin:0 auto 20px; background:var(--wf-900); color:#fff; padding:12px 20px; border-radius:4px; font-size:12px;}
+  .fix{background:var(--wf-100); border-left:3px solid var(--wf-900); padding:8px 12px; font-size:11px; color:var(--wf-800); margin:0 32px 20px;}
+
+  header.gh{display:flex; align-items:center; gap:20px; padding:14px 32px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:120px; height:24px; background:var(--wf-300); border-radius:2px;}
+  .searchbar{flex:1; height:36px; border:1px solid var(--wf-400); border-radius:4px;}
+  .icon-ph{width:22px; height:22px; border-radius:50%; background:var(--wf-800); display:inline-block; position:relative;}
+
+  .page-head{padding:24px 32px 0;}
+  .page-head h1{font-size:22px; font-weight:700; margin:0; color:var(--wf-900);}
+
+  .cart-grid{display:grid; grid-template-columns:1fr 360px; gap:32px; padding:20px 32px 40px;}
+
+  .split-notice{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:9px 11px; font-size:11.5px; color:var(--wf-700); margin-bottom:16px;}
+
+  .retailer-group{border:1px solid var(--wf-300); border-radius:8px; padding:16px; margin-bottom:16px;}
+  .rg-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--wf-200);}
+  .retailer-indicator{display:flex; align-items:center; gap:6px; font-size:13px; font-weight:600; color:var(--wf-800);}
+  .dm-avatar-sm{width:18px; height:18px; border-radius:50%; background:var(--wf-300); display:inline-block;}
+  .rg-meta{display:flex; gap:8px;}
+  .dm-badge{font-size:10px; font-weight:600; padding:3px 8px; border-radius:9px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+
+  .cart-line{display:grid; grid-template-columns:64px 1fr auto auto auto; gap:14px; align-items:center; padding:12px 0; border-bottom:1px solid var(--wf-100);}
+  .cart-line:last-child{border-bottom:none;}
+  .line-img{width:64px; height:64px; background:var(--wf-100); border-radius:6px;}
+  .line-title{font-size:13px; font-weight:600; color:var(--wf-800); margin-bottom:4px;}
+  .line-variant{display:flex; gap:5px;}
+  .line-variant .dm-badge{font-size:9px; padding:2px 6px;}
+
+  /* CMP-039 Quantity Stepper */
+  .qty-stepper{display:flex; align-items:center; border:1px solid var(--wf-400); border-radius:5px; overflow:hidden;}
+  .qty-btn{width:28px; height:28px; border:none; background:#fff; color:var(--wf-800); font-size:14px; font-weight:700; cursor:default;}
+  .qty-btn.is-disabled{color:var(--wf-300); cursor:not-allowed;}
+  .qty-value{width:32px; text-align:center; font-size:13px; font-weight:600;}
+
+  .line-price{font-size:13px; font-weight:700; color:var(--wf-900); text-align:right; min-width:70px;}
+  .line-remove{font-family:inherit; font-size:11px; color:var(--wf-600); text-decoration:underline; text-decoration-style:dotted; background:none; border:none; cursor:default;}
+
+  .notice{background:var(--wf-100); border:1px dashed var(--wf-700); border-radius:4px; padding:8px 10px; font-size:11px; color:var(--wf-800); margin:8px 0;}
+
+  .rg-sub{display:flex; justify-content:space-between; font-size:12px; color:var(--wf-600); margin-top:10px; padding-top:10px; border-top:1px solid var(--wf-200);}
+
+  .btn{font-family:inherit; font-weight:700; border-radius:4px; cursor:default; border:1px solid transparent;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800); padding:11px 20px; font-size:13px;}
+
+  .summary-col{position:sticky; top:20px; align-self:start;}
+  .summary-box{border:2px solid var(--wf-800); border-radius:8px; padding:20px 22px;}
+  .summary-box h3{font-size:14px; margin:0 0 14px;}
+  .summary-row{display:flex; justify-content:space-between; font-size:13px; color:var(--wf-700); margin-bottom:8px;}
+  .summary-row.grand{font-size:16px; font-weight:700; color:var(--wf-900); border-top:1px solid var(--wf-300); padding-top:10px; margin-top:6px;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:14px 0; width:100%; font-size:14px; text-align:center; margin-top:14px;}
+  .btn-primary.is-disabled{background:var(--wf-300); color:var(--wf-600);}
+
+  footer.gf{border-top:1px solid var(--wf-300); padding:24px 32px; display:flex; gap:32px; font-size:11px; color:var(--wf-500);}
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Winkelwagen (Desktop) — v1.0</b> · Eerste scherm van Sprint 1B. Hergebruikt CMP-025 (Besteloverzicht, nu `is-editable`), CMP-016, CMP-011, CMP-005, CMP-008. Eén nieuw component: <b>CMP-039 Quantity Stepper</b>, vooraf vastgelegd in het Design System. Sprint 1A-schermen (Productpagina, Checkout, Homepage, Marketplace Listing) zijn niet gewijzigd.</div>
+
+<div class="page">
+  <header class="gh">
+    <div class="logo-ph"></div>
+    <div class="searchbar"></div>
+    <span class="icon-ph"></span>
+  </header>
+
+  <div class="page-head"><h1>Winkelwagen (2 producten)</h1></div>
+
+  <div class="cart-grid">
+    <div class="lines-col">
+      <div class="split-notice">Je bestelling wordt opgesplitst in <b>2 deelbestellingen</b> — één per aanbieder. Je ontvangt per deelbestelling een aparte bevestiging en track &amp; trace-code.</div>
+
+      <div class="retailer-group">
+        <div class="rg-head">
+          <div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X</div>
+          <div class="rg-meta"><span class="dm-badge">Morgen in huis</span><span class="dm-badge">Gratis verzending</span></div>
+        </div>
+        <div class="cart-line">
+          <div class="line-img"></div>
+          <div>
+            <div class="line-title">Robotmaaier X200</div>
+            <div class="line-variant"><span class="dm-badge">Zwart</span><span class="dm-badge">800 m²</span></div>
+          </div>
+          <div class="qty-stepper">
+            <button class="qty-btn">−</button>
+            <span class="qty-value">1</span>
+            <button class="qty-btn">+</button>
+          </div>
+          <div class="line-price">€ 249,00</div>
+          <button class="line-remove">Verwijderen</button>
+        </div>
+        <div class="rg-sub"><span>Subtotaal Retailer X</span><span>€ 249,00</span></div>
+      </div>
+
+      <div class="retailer-group">
+        <div class="rg-head">
+          <div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer Y</div>
+          <div class="rg-meta"><span class="dm-badge">2–3 werkdagen</span><span class="dm-badge">€ 4,95 verzending</span></div>
+        </div>
+        <div class="cart-line">
+          <div class="line-img"></div>
+          <div>
+            <div class="line-title">Tuinslang 20m</div>
+            <div class="line-variant"><span class="dm-badge">20 meter</span></div>
+          </div>
+          <div class="qty-stepper">
+            <button class="qty-btn is-disabled">−</button>
+            <span class="qty-value">1</span>
+            <button class="qty-btn">+</button>
+          </div>
+          <div class="line-price">€ 59,95</div>
+          <button class="line-remove">Verwijderen</button>
+        </div>
+        <div class="notice">ⓘ Prijs gewijzigd sinds toevoegen: was € 64,95, nu € 59,95.</div>
+        <div class="rg-sub"><span>Subtotaal Retailer Y</span><span>€ 59,95</span></div>
+      </div>
+
+      <button class="btn btn-ghost">← Verder winkelen</button>
+    </div>
+
+    <div class="summary-col">
+      <div class="summary-box">
+        <h3>Overzicht</h3>
+        <div class="summary-row"><span>Subtotaal</span><span>€ 308,95</span></div>
+        <div class="summary-row"><span>Verzendkosten</span><span>€ 4,95</span></div>
+        <div class="summary-row grand"><span>Totaal</span><span>€ 313,90</span></div>
+        <button class="btn btn-primary">Naar checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="gf"><span>Over EuropMade</span><span>Klantenservice</span><span>Juridisch</span></footer>
+</div>
+
+<div class="fix">
+  <b>Toelichting:</b> "Aantal aanpassen" (CMP-039) triggert een serverzijdig gevalideerde herberekening — nooit een client-side aanname (zelfde principe als ADR 0005, hier toegepast op voorraadvalidatie). De regel-min-knop bij Retailer Y is <code>is-disabled</code> (aantal = 1); verwijderen gaat uitsluitend via de losse "Verwijderen"-actie. De prijswijziging-notice bij Retailer Y is zichtbaar zodra dit speelt — niet pas bij Checkout.
+</div>
+
+</body>
+</html>

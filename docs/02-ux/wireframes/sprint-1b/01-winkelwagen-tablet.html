@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Winkelwagen (Tablet, v1.0)</title>
+<style>
+  :root{ --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8; --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515; --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:834px; margin:0 auto; background:#fff; border:1px solid var(--wf-400); border-radius:10px; overflow:hidden;}
+  .banner{max-width:834px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 16px; border-radius:4px; font-size:11px;}
+  header.gh{display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:100px; height:20px; background:var(--wf-300); border-radius:2px;}
+  .searchbar{flex:1; height:32px; border:1px solid var(--wf-400); border-radius:4px;}
+  .icon-ph{width:20px; height:20px; border-radius:50%; background:var(--wf-800);}
+  .page-head{padding:18px 18px 0;} .page-head h1{font-size:18px; margin:0;}
+  .split-notice{margin:16px 18px 0; background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:8px 10px; font-size:10.5px; color:var(--wf-700);}
+  .retailer-group{margin:14px 18px 0; border:1px solid var(--wf-300); border-radius:8px; padding:14px;}
+  .rg-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--wf-200); flex-wrap:wrap; gap:6px;}
+  .retailer-indicator{display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600;}
+  .dm-avatar-sm{width:16px; height:16px; border-radius:50%; background:var(--wf-300); display:inline-block;}
+  .dm-badge{font-size:9.5px; font-weight:600; padding:3px 7px; border-radius:8px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  .cart-line{display:grid; grid-template-columns:52px 1fr auto auto auto; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--wf-100);}
+  .cart-line:last-child{border-bottom:none;}
+  .line-img{width:52px; height:52px; background:var(--wf-100); border-radius:6px;}
+  .line-title{font-size:12px; font-weight:600; margin-bottom:3px;}
+  .line-variant .dm-badge{font-size:8.5px; padding:2px 5px;}
+  .qty-stepper{display:flex; align-items:center; border:1px solid var(--wf-400); border-radius:5px; overflow:hidden;}
+  .qty-btn{width:24px; height:24px; border:none; background:#fff; font-size:12px; font-weight:700;}
+  .qty-btn.is-disabled{color:var(--wf-300);}
+  .qty-value{width:26px; text-align:center; font-size:12px; font-weight:600;}
+  .line-price{font-size:12px; font-weight:700; text-align:right; min-width:60px;}
+  .line-remove{font-family:inherit; font-size:10px; color:var(--wf-600); text-decoration:underline; background:none; border:none;}
+  .rg-sub{display:flex; justify-content:space-between; font-size:11px; color:var(--wf-600); margin-top:8px; padding-top:8px; border-top:1px solid var(--wf-200);}
+  .btn{font-family:inherit; font-weight:700; border-radius:4px; border:1px solid transparent;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800); padding:10px 16px; font-size:12px; margin:16px 18px;}
+  .summary-box{margin:0 18px 24px; border:2px solid var(--wf-800); border-radius:8px; padding:16px 18px;}
+  .summary-box h3{font-size:13px; margin:0 0 12px;}
+  .summary-row{display:flex; justify-content:space-between; font-size:12px; color:var(--wf-700); margin-bottom:6px;}
+  .summary-row.grand{font-size:15px; font-weight:700; border-top:1px solid var(--wf-300); padding-top:8px;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:13px 0; width:100%; font-size:13px; margin-top:12px;}
+  footer.gf{border-top:1px solid var(--wf-300); padding:16px 18px; font-size:10px; color:var(--wf-500);}
+</style>
+</head>
+<body>
+<div class="banner"><b>EuropMade — Wireframe: Winkelwagen (Tablet) — v1.0</b> · Zelfde componenten als desktop; overzicht/CTA staat hier als full-width blok onder de regels i.p.v. een sticky sidebar (te weinig breedte voor beide naast elkaar, zelfde patroon als Checkout Stap 1 op tablet).</div>
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div><div class="searchbar"></div><span class="icon-ph"></span></header>
+  <div class="page-head"><h1>Winkelwagen (2 producten)</h1></div>
+  <div class="split-notice">Wordt opgesplitst in <b>2 deelbestellingen</b> — één per aanbieder.</div>
+
+  <div class="retailer-group">
+    <div class="rg-head"><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X</div><span class="dm-badge">Morgen in huis</span></div>
+    <div class="cart-line">
+      <div class="line-img"></div>
+      <div><div class="line-title">Robotmaaier X200</div><div class="line-variant"><span class="dm-badge">Zwart</span></div></div>
+      <div class="qty-stepper"><button class="qty-btn">−</button><span class="qty-value">1</span><button class="qty-btn">+</button></div>
+      <div class="line-price">€ 249,00</div>
+      <button class="line-remove">Verwijderen</button>
+    </div>
+    <div class="rg-sub"><span>Subtotaal</span><span>€ 249,00</span></div>
+  </div>
+
+  <div class="retailer-group">
+    <div class="rg-head"><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer Y</div><span class="dm-badge">2–3 werkdagen</span></div>
+    <div class="cart-line">
+      <div class="line-img"></div>
+      <div><div class="line-title">Tuinslang 20m</div><div class="line-variant"><span class="dm-badge">20 meter</span></div></div>
+      <div class="qty-stepper"><button class="qty-btn is-disabled">−</button><span class="qty-value">1</span><button class="qty-btn">+</button></div>
+      <div class="line-price">€ 59,95</div>
+      <button class="line-remove">Verwijderen</button>
+    </div>
+    <div class="rg-sub"><span>Subtotaal</span><span>€ 59,95</span></div>
+  </div>
+
+  <button class="btn btn-ghost">← Verder winkelen</button>
+
+  <div class="summary-box">
+    <h3>Overzicht</h3>
+    <div class="summary-row"><span>Subtotaal</span><span>€ 308,95</span></div>
+    <div class="summary-row"><span>Verzendkosten</span><span>€ 4,95</span></div>
+    <div class="summary-row grand"><span>Totaal</span><span>€ 313,90</span></div>
+    <button class="btn btn-primary">Naar checkout</button>
+  </div>
+  <footer class="gf">Over EuropMade · Klantenservice · Juridisch</footer>
+</div>
+</body>
+</html>

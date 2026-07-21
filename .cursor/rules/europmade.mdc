@@ -1,0 +1,28 @@
+---
+description: EuropMade project-context — verplichte documentatie om te raadplegen vóór het bouwen of wijzigen van code
+globs:
+alwaysApply: true
+---
+
+# EuropMade — Cursor-projectinstructies
+
+Deze repository bevat naast de broncode een volledige, vastgestelde documentatiestructuur onder `docs/`. Raadpleeg deze **voordat** je code voorstelt of wijzigt — de documentatie is leidend, niet de code.
+
+## Verplichte controle vóór je iets bouwt of wijzigt
+
+1. **Business-/functionele regels:** check `docs/00-context/blueprint-reference.md` en `docs/03-functional-specs/` voor de geldende functionele logica (bijv. Product Cloud/Commerce Cloud-scheiding, Buy Box-logica, rolrechten). Nooit business-logica verzinnen die hier niet in staat.
+2. **Technische kaders:** check `docs/01-architecture/tech-stack.md` en `docs/01-architecture/standard-vs-custom.md` voordat je een technische aanpak kiest. Volg het principe "standard where possible, custom where it creates competitive advantage": gebruik Medusa/Next.js-standaardpatronen tenzij een domein daar expliciet als "Maatwerk" is gelabeld.
+3. **Formele beslissingen:** check `docs/04-decisions/` (ADR's) voor beslissingen die niet in de Blueprint zelf staan (bijv. configureerbare Buy Box-weging, configureerbare Verified™-drempel). Een ADR is bindend totdat een nieuwe ADR hem vervangt.
+4. **UX/schermen:** check `docs/02-ux/ux-architecture.md` (rollen, flows, sitemap, navigatie, scherminventarisatie) en `docs/02-ux/wireframes/` (zodra gevuld) voordat je een scherm bouwt. Bouw geen scherm dat niet in de scherminventarisatie voorkomt zonder dit eerst te bespreken.
+5. **UI-bouwstenen:** check `docs/07-design-system/` voordat je een nieuw UI-component maakt — hergebruik een bestaand component/token in plaats van een nieuwe variant te introduceren, tenzij het design system het component nog niet kent.
+
+## Belangrijke architectuurregels (samengevat, volledige uitwerking in `docs/`)
+
+- EuropMade verkoopt zelf nooit producten (Blueprint H5.12).
+- Product Cloud (officiële productinformatie) en Commerce Cloud (commerciële gegevens per retailer) zijn **altijd strikt gescheiden** — nooit in één datamodel of scherm vermengen.
+- De Buy Box wordt uitsluitend bepaald op basis van de beste totale aanbieding voor de klant — nooit door advertenties, commissies of platformbelang (zie `docs/03-functional-specs/product-cloud-commerce-cloud-buy-box/spec.md`, sectie 3.0).
+- Alle data wordt binnen de EU gehost en verwerkt (TransIP, Nederland) — geen diensten/SDK's toevoegen die dit doorbreken zonder dit expliciet te bespreken.
+
+## Wijzigingen aan de documentatie zelf
+
+Als een implementatiekeuze een gedocumenteerde aanname tegenspreekt: **stop, en stel voor om eerst de documentatie bij te werken** (nieuwe ADR in `docs/04-decisions/` bij een inhoudelijke beslissing) in plaats van de code stilzwijgend af te laten wijken van `docs/`.

@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+.next/
+out/
+dist/
+build/
+.medusa/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor/OS
+.DS_Store
+*.pem
+.vscode/
+!.vscode/extensions.json
+
+# Testing/coverage
+coverage/
+
+# Turborepo
+.turbo/
+
+# Misc
+*.tsbuildinfo
+next-env.d.ts

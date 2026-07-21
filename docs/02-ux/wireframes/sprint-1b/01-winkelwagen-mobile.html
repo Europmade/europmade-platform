@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Winkelwagen (Mobiel, v1.0)</title>
+<style>
+  :root{ --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8; --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515; --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:390px; margin:0 auto; background:#fff; border:1px solid var(--wf-400); border-radius:18px; overflow:hidden;}
+  .banner{max-width:390px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 14px; border-radius:4px; font-size:10.5px;}
+  header.gh{display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:70px; height:16px; background:var(--wf-300); border-radius:2px;}
+  .search-ph{flex:1; height:30px; border:1px solid var(--wf-400); border-radius:6px;}
+  .icon-ph{width:20px; height:20px; border-radius:50%; background:var(--wf-800);}
+  .page-head{padding:10px 14px 0;} .page-head h1{font-size:15px; margin:0;}
+  .content{padding-bottom:78px;}
+  .split-notice{margin:12px 14px 0; background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:7px 9px; font-size:9.5px; color:var(--wf-700);}
+  .retailer-group{margin:12px 14px 0; border:1px solid var(--wf-300); border-radius:8px; padding:10px;}
+  .rg-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:7px; border-bottom:1px solid var(--wf-200); flex-wrap:wrap; gap:5px;}
+  .retailer-indicator{display:flex; align-items:center; gap:5px; font-size:11px; font-weight:600;}
+  .dm-avatar-sm{width:14px; height:14px; border-radius:50%; background:var(--wf-300); display:inline-block;}
+  .dm-badge{font-size:8.5px; font-weight:600; padding:2px 6px; border-radius:8px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  .cart-line{display:flex; gap:8px; padding:8px 0; border-bottom:1px solid var(--wf-100);}
+  .cart-line:last-child{border-bottom:none;}
+  .line-img{width:56px; height:56px; background:var(--wf-100); border-radius:6px; flex-shrink:0;}
+  .line-body{flex:1; min-width:0;}
+  .line-title{font-size:11.5px; font-weight:600; margin-bottom:3px;}
+  .line-variant{display:flex; gap:4px; margin-bottom:6px;}
+  .line-variant .dm-badge{font-size:8px; padding:2px 5px;}
+  .line-bottom-row{display:flex; justify-content:space-between; align-items:center;}
+  .qty-stepper{display:flex; align-items:center; border:1px solid var(--wf-400); border-radius:5px; overflow:hidden;}
+  .qty-btn{width:24px; height:24px; border:none; background:#fff; font-size:12px; font-weight:700;}
+  .qty-btn.is-disabled{color:var(--wf-300);}
+  .qty-value{width:24px; text-align:center; font-size:11px; font-weight:600;}
+  .line-price{font-size:12.5px; font-weight:700;}
+  .line-remove{display:block; margin-top:5px; font-family:inherit; font-size:9.5px; color:var(--wf-600); text-decoration:underline; background:none; border:none; padding:0;}
+  .rg-sub{display:flex; justify-content:space-between; font-size:10.5px; color:var(--wf-600); margin-top:8px; padding-top:8px; border-top:1px solid var(--wf-200);}
+  .notice{background:var(--wf-100); border:1px dashed var(--wf-700); border-radius:4px; padding:7px 8px; font-size:9.5px; color:var(--wf-800); margin-top:6px;}
+  .btn{font-family:inherit; font-weight:700; border-radius:6px; border:1px solid transparent;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800); padding:10px 0; width:calc(100% - 28px); margin:14px; text-align:center; font-size:12px;}
+
+  /* CMP-028 Sticky Bottom Bar — hergebruikt patroon uit Productpagina */
+  .sticky-bar{position:sticky; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--wf-400); padding:10px 14px; display:flex; align-items:center; gap:10px; box-shadow:0 -2px 6px rgba(0,0,0,0.06);}
+  .sb-total-block{flex-shrink:0;}
+  .sb-total{font-size:15px; font-weight:700; color:var(--wf-900);}
+  .sb-sub{font-size:9px; color:var(--wf-600);}
+  .btn-primary{flex:1; background:var(--wf-900); color:#fff; font-size:12.5px; padding:11px 0; border-radius:6px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="banner"><b>EuropMade — Wireframe: Winkelwagen (Mobiel) — v1.0</b> · Sticky bottom bar (CMP-028) hergebruikt — zelfde patroon als de Productpagina, nu met "Naar checkout" i.p.v. "In winkelwagen".</div>
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div><div class="search-ph"></div><span class="icon-ph"></span></header>
+  <div class="page-head"><h1>Winkelwagen (2)</h1></div>
+  <div class="content">
+    <div class="split-notice">Wordt opgesplitst in <b>2 deelbestellingen</b>.</div>
+
+    <div class="retailer-group">
+      <div class="rg-head"><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X</div><span class="dm-badge">Morgen in huis</span></div>
+      <div class="cart-line">
+        <div class="line-img"></div>
+        <div class="line-body">
+          <div class="line-title">Robotmaaier X200</div>
+          <div class="line-variant"><span class="dm-badge">Zwart</span><span class="dm-badge">800 m²</span></div>
+          <div class="line-bottom-row">
+            <div class="qty-stepper"><button class="qty-btn">−</button><span class="qty-value">1</span><button class="qty-btn">+</button></div>
+            <div class="line-price">€ 249,00</div>
+          </div>
+          <button class="line-remove">Verwijderen</button>
+        </div>
+      </div>
+      <div class="rg-sub"><span>Subtotaal</span><span>€ 249,00</span></div>
+    </div>
+
+    <div class="retailer-group">
+      <div class="rg-head"><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer Y</div><span class="dm-badge">2–3 werkdagen</span></div>
+      <div class="cart-line">
+        <div class="line-img"></div>
+        <div class="line-body">
+          <div class="line-title">Tuinslang 20m</div>
+          <div class="line-variant"><span class="dm-badge">20 meter</span></div>
+          <div class="line-bottom-row">
+            <div class="qty-stepper"><button class="qty-btn is-disabled">−</button><span class="qty-value">1</span><button class="qty-btn">+</button></div>
+            <div class="line-price">€ 59,95</div>
+          </div>
+          <button class="line-remove">Verwijderen</button>
+        </div>
+      </div>
+      <div class="notice">ⓘ Prijs gewijzigd: was € 64,95, nu € 59,95.</div>
+      <div class="rg-sub"><span>Subtotaal</span><span>€ 59,95</span></div>
+    </div>
+
+    <button class="btn btn-ghost">← Verder winkelen</button>
+  </div>
+
+  <div class="sticky-bar">
+    <div class="sb-total-block"><div class="sb-total">€ 313,90</div><div class="sb-sub">2 producten</div></div>
+    <button class="btn btn-primary">Naar checkout</button>
+  </div>
+</div>
+</body>
+</html>

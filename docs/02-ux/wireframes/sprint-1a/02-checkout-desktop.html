@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Checkout (Desktop, v1.3)</title>
+<style>
+  :root{
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:#e8e8e8; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:32px 0;}
+  .page{max-width:1080px; margin:0 auto 40px; background:#fff; border:1px solid var(--wf-400);}
+  .banner{max-width:1080px; margin:0 auto 20px; background:var(--wf-900); color:#fff; padding:12px 20px; border-radius:4px; font-size:12px;}
+  .screen-label{background:var(--wf-800); color:#fff; padding:8px 20px; font-size:11px; text-transform:uppercase; letter-spacing:.05em; font-weight:700;}
+
+  /* CMP-001 Header */
+  header.gh{display:flex; align-items:center; gap:20px; padding:14px 32px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:120px; height:24px; background:var(--wf-300); border-radius:2px;}
+
+  /* CMP-004 Stepper */
+  .stepper{display:flex; gap:0; padding:18px 32px; border-bottom:1px solid var(--wf-200);}
+  .step{display:flex; align-items:center; gap:8px; font-size:12px; color:var(--wf-500); margin-right:28px;}
+  .step .num{width:22px; height:22px; border-radius:50%; border:1px solid var(--wf-400); display:flex; align-items:center; justify-content:center; font-size:11px;}
+  .step.active{color:var(--wf-900); font-weight:700;}
+  .step.active .num{background:var(--wf-900); color:#fff; border-color:var(--wf-900);}
+  .step.done .num{background:var(--wf-700); color:#fff; border-color:var(--wf-700);}
+
+  /* Stap 0 */
+  .guest-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px; padding:32px;}
+  /* CMP-026 Choice Card */
+  .choice-card{border:1px solid var(--wf-400); border-radius:8px; padding:22px;}
+  .choice-card h3{font-size:15px; margin:0 0 12px;}
+  /* CMP-006 Form Field */
+  .field{display:flex; flex-direction:column; gap:4px; margin-bottom:12px;}
+  .field label{font-size:11px; color:var(--wf-600);}
+  .field input{font-family:inherit; font-size:13px; padding:9px 10px; border:1px solid var(--wf-400); border-radius:4px;}
+  /* CMP-005 Button */
+  .btn{font-family:inherit; font-weight:700; border-radius:4px; border:1px solid transparent; cursor:default;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:11px 0; width:100%; font-size:13px; text-align:center; margin-top:6px;}
+  .t-small{font-size:11px; color:var(--wf-600); margin-top:8px;}
+
+  /* Stap 1 layout */
+  .checkout-grid{display:grid; grid-template-columns:1fr 380px; gap:32px; padding:28px 32px;}
+  .form-col h2{font-size:16px; margin:0 0 16px;}
+  .field-row{display:grid; grid-template-columns:2fr 1fr; gap:12px;}
+  /* CMP-027 Saved Address Selector */
+  .saved-address{border:1px solid var(--wf-400); border-radius:6px; padding:12px 14px; font-size:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;}
+  .saved-address.selected{border-color:var(--wf-800); background:var(--wf-100);}
+
+  /* Sidebar — Besteloverzicht */
+  /* CMP-025 Besteloverzicht / Order Summary */
+  .sidebar{border:1px solid var(--wf-400); border-radius:8px; padding:18px 20px; position:sticky; top:20px; align-self:start;}
+  .sidebar h3{font-size:14px; margin:0 0 12px;}
+  /* CMP-011 Notice */
+  .notice.notice--info{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:8px 10px; font-size:10.5px; color:var(--wf-700); margin-bottom:14px;}
+  /* CMP-025 Besteloverzicht: Retailer Group */
+  .retailer-group{border-top:1px solid var(--wf-200); padding-top:12px; margin-top:12px;}
+  .retailer-group:first-of-type{border-top:none; margin-top:0; padding-top:0;}
+  .rg-head{display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700; margin-bottom:6px;}
+  .dm-avatar-sm{width:16px; height:16px; border-radius:50%; background:var(--wf-300); display:inline-block; vertical-align:-3px; margin-right:5px;}
+  .rg-item{display:flex; justify-content:space-between; font-size:11.5px; color:var(--wf-700); margin-bottom:4px;}
+  .rg-meta{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
+  .dm-badge{font-size:9.5px; font-weight:600; padding:3px 7px; border-radius:9px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  /* CMP-025 Besteloverzicht: Totals */
+  .totals{border-top:1px solid var(--wf-400); margin-top:14px; padding-top:12px; font-size:12px;}
+  .totals .row{display:flex; justify-content:space-between; margin-bottom:5px;}
+  .totals .grand{font-weight:700; font-size:14px; margin-top:6px;}
+  .btw-label{display:flex; align-items:center; gap:6px;}
+  .info-dot{width:14px; height:14px; border-radius:50%; border:1px solid var(--wf-500); color:var(--wf-600); font-size:9px; display:inline-flex; align-items:center; justify-content:center; cursor:default; flex-shrink:0;}
+
+  .fix{background:#fff; border-left:3px solid var(--wf-900); padding:8px 12px; font-size:11px; color:var(--wf-800); margin:0 32px 20px;}
+  /* CMP-011 Notice (warning) */
+  .notice.notice--warning{background:var(--wf-100); border:1px dashed var(--wf-700); border-radius:4px; padding:8px 10px; font-size:10.5px; color:var(--wf-800); margin-top:8px;}
+
+  /* Stap 3 */
+  .review-grid{padding:28px 32px;}
+  /* CMP-030 Review Block */
+  .review-block{border:1px solid var(--wf-300); border-radius:6px; padding:16px 18px; margin-bottom:16px;}
+  .review-block-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+  .review-block-head h4{font-size:13px; margin:0;}
+  .change-link{font-size:11px; color:var(--wf-700); text-decoration:underline;}
+  .review-line{font-size:12px; color:var(--wf-700); margin-bottom:4px;}
+  .terms-row{display:flex; align-items:flex-start; gap:8px; font-size:12px; margin:18px 0; padding-top:16px; border-top:1px solid var(--wf-200);}
+  .btn-primary.btn-primary--lg{font-size:14px; padding:14px 0; width:100%; text-align:center; margin-top:0;}
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Checkout (Desktop) — v1.3</b> · Sprint 1A · Volledig uitgewerkt: Stap 0 (gast/account), Stap 1 (verzending + ordersplitsing), Stap 3 (controle). Stap 2 (Betaling) bewust op componentniveau beschreven. <b>UX-vereenvoudiging BTW:</b> BTW-regel toont nu uitsluitend label + bedrag + info-icoon (ⓘ) — geen losse toelichtende tekst, geen standaard zichtbare tarief-uitsplitsing meer. Details via hover/klik op het icoon.</div>
+
+<div class="screen-label" style="max-width:1080px; margin:0 auto;">Scherm 1 — Stap 0: gast-of-account-keuzepunt</div>
+<div class="page">
+  <header class="gh"><div class="logo-ph"></div></header>
+  <div class="guest-grid">
+    <div class="choice-card">
+      <h3>Inloggen</h3>
+      <div class="field"><label>E-mailadres</label><input type="text" placeholder="naam@voorbeeld.nl"></div>
+      <div class="field"><label>Wachtwoord</label><input type="text" placeholder="••••••••"></div>
+      <button class="btn btn-primary">Inloggen en verdergaan</button>
+      <div class="t-small">Je adres en betaalgegevens staan al klaar.</div>
+    </div>
+    <div class="choice-card">
+      <h3>Verder als gast</h3>
+      <div class="field"><label>E-mailadres</label><input type="text" placeholder="naam@voorbeeld.nl"></div>
+      <button class="btn btn-primary">Verdergaan als gast</button>
+      <div class="t-small">Je kunt na het plaatsen van je bestelling alsnog een account aanmaken om deze te volgen.</div>
+    </div>
+  </div>
+</div>
+
+<div class="screen-label" style="max-width:1080px; margin:0 auto;">Scherm 2 — Stap 1: verzending (adres + besteloverzicht/ordersplitsing)</div>
+<div class="page">
+  <header class="gh"><div class="logo-ph"></div></header>
+  <div class="stepper">
+    <div class="step active"><span class="num">1</span>Verzending</div>
+    <div class="step"><span class="num">2</span>Betaling</div>
+    <div class="step"><span class="num">3</span>Controle</div>
+  </div>
+
+  <div class="checkout-grid">
+    <div class="form-col">
+      <h2>Bezorgadres</h2>
+      <div class="saved-address selected">Jan Jansen · Hoofdstraat 12, 1234 AB Amsterdam <span>✓</span></div>
+      <div class="saved-address">Nieuw adres toevoegen</div>
+
+      <div style="margin-top:20px;">
+        <div class="field"><label>Naam</label><input type="text" value="Jan Jansen"></div>
+        <div class="field-row">
+          <div class="field"><label>Straat + huisnummer</label><input type="text" value="Hoofdstraat 12"></div>
+          <div class="field"><label>Postcode</label><input type="text" value="1234 AB"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Plaats</label><input type="text" value="Amsterdam"></div>
+          <div class="field"><label>Land</label><input type="text" value="Nederland"></div>
+        </div>
+        <div class="field"><label>Telefoonnummer (voor bezorgupdates)</label><input type="text" placeholder="06 12345678"></div>
+      </div>
+
+      <div class="notice notice--warning">⚠ Voorbeeld van een edge-case-melding (niet actief in dit scenario): "Retailer X levert niet naar het gekozen land. Kies een andere aanbieder of wijzig je adres."</div>
+
+      <button class="btn btn-primary" style="margin-top:20px; max-width:220px;">Naar betaling</button>
+    </div>
+
+    <div class="sidebar">
+      <h3>Besteloverzicht</h3>
+      <div class="notice notice--info">Je bestelling wordt opgesplitst in <b>2 deelbestellingen</b> — één per aanbieder. Je ontvangt per deelbestelling een aparte bevestiging en track&nbsp;&amp;&nbsp;trace-code.</div>
+
+      <div class="retailer-group">
+        <div class="rg-head"><span><span class="dm-avatar-sm"></span>Retailer X</span><span>€ 249,00</span></div>
+        <div class="rg-item"><span>1× Robotmaaier X200</span><span>€ 249,00</span></div>
+        <div class="rg-meta">
+          <span class="dm-badge">Morgen in huis</span>
+          <span class="dm-badge">Gratis verzending</span>
+          <span class="dm-badge">30 dagen retour</span>
+        </div>
+      </div>
+
+      <div class="retailer-group">
+        <div class="rg-head"><span><span class="dm-avatar-sm"></span>Retailer Y</span><span>€ 64,90</span></div>
+        <div class="rg-item"><span>1× Tuinslang 20m</span><span>€ 59,95</span></div>
+        <div class="rg-item"><span>Verzendkosten</span><span>€ 4,95</span></div>
+        <div class="rg-meta">
+          <span class="dm-badge">2–3 werkdagen</span>
+          <span class="dm-badge">14 dagen retour</span>
+        </div>
+      </div>
+
+      <div class="totals">
+        <div class="row"><span>Subtotaal</span><span>€ 308,95</span></div>
+        <div class="row"><span>Verzendkosten</span><span>€ 4,95</span></div>
+        <div class="row"><span class="btw-label">BTW <span class="info-dot" title="BTW wordt berekend op basis van het land van levering. Land: Nederland. Toegepast tarief: 21%.">ⓘ</span></span><span>€ 54,48</span></div>
+        <div class="row grand"><span>Totaal te betalen</span><span>€ 313,90</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="fix">
+  <b>Uit de spec:</b> de sidebar is hier het centrale bewijs van "ordersplitsing per aanbieder, meerdere retailers in één bestelling, verzendkosten/levertijden per retailer, retourinformatie" — alle vijf expliciet gevraagde aandachtspunten zijn hier zichtbaar in structuur, vóór de betaalstap. De sidebar is <code>position:sticky</code> — zelfde patroon als de Buy Box op de (bevroren) Productpagina, bewuste consistentiekeuze.
+</div>
+
+<div class="screen-label" style="max-width:1080px; margin:0 auto;">Scherm 3 — Stap 3: controle &amp; bevestigen</div>
+<div class="page">
+  <header class="gh"><div class="logo-ph"></div></header>
+  <div class="stepper">
+    <div class="step done"><span class="num">✓</span>Verzending</div>
+    <div class="step done"><span class="num">✓</span>Betaling</div>
+    <div class="step active"><span class="num">3</span>Controle</div>
+  </div>
+
+  <div class="review-grid">
+    <div class="review-block">
+      <div class="review-block-head"><h4>Bezorgadres</h4><span class="change-link">Wijzigen</span></div>
+      <div class="review-line">Jan Jansen · Hoofdstraat 12, 1234 AB Amsterdam, Nederland</div>
+    </div>
+
+    <div class="review-block">
+      <div class="review-block-head"><h4>Betaalmethode</h4><span class="change-link">Wijzigen</span></div>
+      <div class="review-line">iDEAL</div>
+    </div>
+
+    <div class="review-block">
+      <div class="review-block-head"><h4>Bestelling — wordt opgesplitst in 2 deelbestellingen</h4></div>
+      <div class="review-line" style="font-weight:700; margin-top:8px;"><span class="dm-avatar-sm"></span>Retailer X — € 249,00, morgen in huis, gratis verzending, 30 dagen retour</div>
+      <div class="review-line" style="margin-left:22px;">1× Robotmaaier X200 — € 249,00</div>
+      <div class="review-line" style="font-weight:700; margin-top:10px;"><span class="dm-avatar-sm"></span>Retailer Y — € 64,90, 2–3 werkdagen, € 4,95 verzendkosten, 14 dagen retour</div>
+      <div class="review-line" style="margin-left:22px;">1× Tuinslang 20m — € 59,95</div>
+    </div>
+
+    <div class="terms-row">
+      <input type="checkbox" checked style="margin-top:2px;">
+      <span>Ik ga akkoord met de <u>Algemene Voorwaarden</u> en het <u>Retourbeleid</u>.</span>
+    </div>
+
+    <button class="btn btn-primary btn-primary--lg">Bestelling plaatsen — € 313,90</button>
+  </div>
+</div>
+
+<div class="annot" style="max-width:1080px; margin:0 auto 20px; background:var(--wf-100); border-left:3px solid var(--wf-700); padding:8px 12px; font-size:11px; color:var(--wf-700);">
+  <b>Interactienotitie (server-side, ADR 0005):</b> "Bestelling plaatsen" triggert een laatste serverzijdige revalidatie vóór de betaalbevestiging wordt verwerkt en de order server-side wordt gesplitst in de getoonde 2 deelbestellingen. Bij een wijziging sinds het laden van dit scherm wordt de klant hier gehouden met een duidelijke melding, niet doorgestuurd naar een orderbevestiging op verouderde gegevens.
+</div>
+
+</body>
+</html>
