@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Verification Queue (Tablet)</title>
+<style>
+  :root{ --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8; --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515; --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:700px; margin:0 auto 22px; background:#fff; border:1px solid var(--wf-400); border-radius:10px; overflow:hidden;}
+  .banner{max-width:900px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 16px; border-radius:4px; font-size:11px;}
+  .section-label{background:var(--wf-800); color:#fff; padding:5px 20px; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; max-width:700px; margin:0 auto;}
+  .fix{max-width:900px; margin:0 auto 18px; background:var(--wf-100); border-left:3px solid var(--wf-700); padding:7px 10px; font-size:10.5px; color:var(--wf-700);}
+
+  .admin-header{display:flex; align-items:center; justify-content:space-between; padding:10px 18px; border-bottom:1px solid var(--wf-300);}
+  .admin-header .ah-left{display:flex; align-items:center; gap:10px;}
+  .logo-ph{width:100px; height:18px; background:var(--wf-300); border-radius:2px;}
+  .ah-module{font-size:10.5px; font-weight:700; color:var(--wf-700); padding-left:10px; border-left:1px solid var(--wf-300);}
+  .ah-right{display:flex; align-items:center; gap:12px;}
+  .ah-search{width:130px; height:26px; border:1px solid var(--wf-400); border-radius:5px; background:var(--wf-100); font-size:10px; color:var(--wf-500); display:flex; align-items:center; padding:0 8px;}
+  .ah-icon{width:22px; height:22px; border-radius:50%; border:1px solid var(--wf-400); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--wf-600); position:relative;}
+  .ah-icon .dot{position:absolute; top:-2px; right:-2px; width:7px; height:7px; border-radius:50%; background:var(--wf-800); border:1.5px solid #fff;}
+  .ah-avatar{width:24px; height:24px; border-radius:50%; background:var(--wf-300);}
+
+  .breadcrumb{font-size:10.5px; color:var(--wf-500); padding:10px 18px; border-bottom:1px solid var(--wf-200);}
+  .breadcrumb b{color:var(--wf-800); font-weight:600;}
+
+  .content{padding:18px 20px;}
+  .content h1{font-size:16px; font-weight:700; margin:0 0 5px; color:var(--wf-900);}
+  .content-sub{font-size:11px; color:var(--wf-600); margin-bottom:16px;}
+
+  .kpi-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;}
+  .kpi-card{border:1px solid var(--wf-300); border-radius:8px; padding:14px 16px; background:#fff;}
+  .kpi-value{font-size:24px; font-weight:700; color:var(--wf-900); line-height:1;}
+  .kpi-label{font-size:10.5px; color:var(--wf-600); margin-top:5px;}
+  .kpi-link{font-size:10px; color:var(--wf-700); text-decoration:underline; margin-top:6px; display:inline-block;}
+
+  .queue-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px;}
+  .queue-card{border:1px solid var(--wf-300); border-radius:8px; padding:14px 16px; background:#fff;}
+  .queue-card h3{font-size:12px; margin:0 0 5px; color:var(--wf-900);}
+  .queue-meta{font-size:10.5px; color:var(--wf-600); margin-bottom:10px;}
+
+  .task-list{border:1px solid var(--wf-300); border-radius:8px; background:#fff;}
+  .task-item{display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid var(--wf-200); font-size:11px; color:var(--wf-700);}
+  .task-item:last-child{border-bottom:none;}
+  .task-link{font-size:10px; color:var(--wf-800); text-decoration:underline;}
+
+  .btn{font-family:inherit; font-weight:700; border-radius:5px; border:1px solid transparent;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:9px 18px; font-size:11.5px;}
+  .btn-secondary{background:#fff; color:var(--wf-800); border-color:var(--wf-500); padding:9px 18px; font-size:11.5px;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800); padding:9px 16px; font-size:11px;}
+  .btn-destructive{background:#fff; color:var(--wf-900); border:1px dashed var(--wf-700); padding:9px 16px; font-size:11.5px;}
+  .btn-sm{padding:5px 12px; font-size:10px;}
+  .btn-row{display:flex; justify-content:flex-end; gap:8px; margin-top:16px;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block; font-size:11px; font-weight:600; color:var(--wf-700); margin-bottom:4px;}
+  .field input, .field textarea{width:100%; border:1px solid var(--wf-400); border-radius:5px; padding:8px 10px; font-size:11.5px; color:var(--wf-600); font-family:inherit;}
+  .field textarea{min-height:80px; resize:none;}
+  .field-hint{font-size:9.5px; color:var(--wf-500); margin-top:3px;}
+  .field-count{font-size:9px; color:var(--wf-500); text-align:right; margin-top:2px;}
+
+  .notice{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:8px 10px; font-size:10.5px; color:var(--wf-700); margin-bottom:14px;}
+  .notice.notice--warning{border-style:solid; border-color:var(--wf-700);}
+
+  .tabs{display:flex; gap:0; border-bottom:1px solid var(--wf-300); padding:0 20px;}
+  .tab{font-size:11px; padding:10px 14px; color:var(--wf-500); border-bottom:2px solid transparent; font-weight:600;}
+  .tab .tab-count{color:var(--wf-500); font-weight:400;}
+  .tab.active{color:var(--wf-900); border-bottom-color:var(--wf-900);}
+
+  .toolbar{display:flex; gap:8px; padding:12px 20px; align-items:center; flex-wrap:wrap;}
+  .search-field{flex:1; min-width:140px; height:32px; border:1px solid var(--wf-400); border-radius:5px; padding:0 10px; font-size:11px; color:var(--wf-500); display:flex; align-items:center;}
+  .filter-chip{height:32px; border:1px solid var(--wf-400); border-radius:5px; padding:0 10px; font-size:10.5px; color:var(--wf-700); display:flex; align-items:center; gap:5px;}
+
+  table.table{width:100%; border-collapse:collapse; font-size:11px;}
+  table.table th{text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:.04em; color:var(--wf-500); padding:7px 20px; border-bottom:1px solid var(--wf-400);}
+  table.table td{padding:9px 20px; border-bottom:1px solid var(--wf-200); color:var(--wf-800);}
+  table.table tr:last-child td{border-bottom:none;}
+
+  .badge{display:inline-block; font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:3px 8px; border-radius:10px; border:1px solid var(--wf-400); color:var(--wf-700); background:var(--wf-100);}
+  .badge-outline{background:transparent;}
+  .badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+
+  .pagination-row{display:flex; justify-content:space-between; align-items:center; padding:12px 20px;}
+  .pagination-meta{font-size:10px; color:var(--wf-500);}
+  .pagination{display:flex; gap:4px; align-items:center;}
+  .page-item{width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:10px; border:1px solid var(--wf-300); border-radius:3px; color:var(--wf-600);}
+  .page-item.active{background:var(--wf-900); color:#fff; border-color:var(--wf-900);}
+
+  .empty-state{text-align:center; padding:44px 20px; color:var(--wf-600);}
+  .empty-state .es-icon{width:36px; height:36px; border-radius:50%; border:1.5px dashed var(--wf-400); margin:0 auto 12px;}
+  .empty-state .es-title{font-size:12.5px; font-weight:700; color:var(--wf-800); margin-bottom:5px;}
+  .empty-state .es-sub{font-size:11px; color:var(--wf-600);}
+
+  .detail-grid{display:grid; grid-template-columns:1fr; gap:14px; padding:18px 20px;}
+  .detail-block{border:1px solid var(--wf-200); border-radius:8px; padding:14px 16px; margin-bottom:12px;}
+  .detail-block:last-child{margin-bottom:0;}
+  .detail-block h3{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--wf-500); margin:0 0 10px;}
+  .detail-row{display:flex; justify-content:space-between; font-size:11.5px; color:var(--wf-800); padding:4px 0;}
+  .detail-row .dr-label{color:var(--wf-600);}
+  .detail-link{font-size:10px; color:var(--wf-800); text-decoration:underline;}
+
+  .upload-item{border:1px solid var(--wf-300); border-radius:6px; padding:9px 11px; margin-bottom:7px; display:flex; align-items:center; justify-content:space-between; font-size:11px;}
+  .upload-item .uf-name{font-weight:600; color:var(--wf-800);}
+
+  .checklist-row{display:flex; align-items:flex-start; gap:7px; font-size:11px; color:var(--wf-700); margin-bottom:8px;}
+  .checkbox-inline{width:14px; height:14px; border:1px solid var(--wf-500); border-radius:3px; flex-shrink:0; margin-top:1px;}
+
+  .ai-box{border:1px dashed var(--wf-500); border-radius:6px; padding:12px 14px; font-size:10.5px; color:var(--wf-700); line-height:1.55;}
+  .ai-box .ai-line{margin-bottom:4px;}
+  .ai-box .ai-ok::before{content:"✓ "; color:var(--wf-800); font-weight:700;}
+  .ai-box .ai-warn::before{content:"⚠ "; color:var(--wf-800); font-weight:700;}
+
+  .action-bar{display:flex; justify-content:space-between; padding:14px 20px; border-top:1px solid var(--wf-300); background:var(--wf-100); flex-wrap:wrap; gap:8px;}
+
+  .status-block{text-align:center; padding:34px 26px;}
+  .status-icon{width:48px; height:48px; border-radius:50%; background:var(--wf-900); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+  .status-icon.pending{background:#fff; border:2px solid var(--wf-800); color:var(--wf-800);}
+  .status-icon.rejected{background:#fff; border:2px solid var(--wf-700); color:var(--wf-700);}
+  .status-icon.processing{background:#fff; border:2px dashed var(--wf-600); color:var(--wf-600);}
+  .status-block h1{font-size:16px; font-weight:700; margin:0 0 8px; color:var(--wf-900);}
+  .status-sub{font-size:11.5px; color:var(--wf-600); line-height:1.6; max-width:380px; margin:0 auto 16px;}
+  .status-badge{display:inline-block; font-size:10px; font-weight:600; padding:4px 9px; border-radius:10px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff; margin-bottom:12px;}
+  .reason-box{background:var(--wf-100); border:1px dashed var(--wf-700); border-radius:6px; padding:10px 14px; text-align:left; max-width:380px; margin:0 auto 14px; font-size:11px; color:var(--wf-800);}
+  .consequence-box{background:#fff; border:1px solid var(--wf-300); border-radius:6px; padding:10px 14px; text-align:left; max-width:380px; margin:0 auto 16px; font-size:10.5px; color:var(--wf-700); line-height:1.55;}
+
+  .timeline{padding:16px 20px;}
+  .timeline-item{display:flex; gap:11px; padding:11px 0; border-bottom:1px solid var(--wf-200);}
+  .timeline-item:last-child{border-bottom:none;}
+  .timeline-dot{width:8px; height:8px; border-radius:50%; background:var(--wf-800); margin-top:4px; flex-shrink:0;}
+  .timeline-meta{font-size:10px; color:var(--wf-500); margin-bottom:2px;}
+  .timeline-title{font-size:11.5px; font-weight:600; color:var(--wf-800); margin-bottom:2px;}
+  .timeline-detail{font-size:10.5px; color:var(--wf-700); line-height:1.5;}
+
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Verification Center — Queue (Sprint 1C)</b> · Twee wachtrijen (Verification Center-spec §3): Nieuwe aanvragen, Periodieke hercontrole &amp; intrekking. Sortering altijd ontvangstvolgorde (oud → nieuw). Geen aparte, derde wachtrij voor "Aanvullende informatie vereist" — dat is een interne substatus binnen "Nieuwe aanvragen."</div>
+
+<div class="section-label">2a — Verification Queue: Nieuwe aanvragen (gevuld)</div>
+<div class="device">
+<header class="admin-header">
+    <div class="ah-left"><div class="logo-ph"></div><div class="ah-module">Verification Center</div></div>
+    <div class="ah-right">
+      <div class="ah-search">Zoeken...</div>
+      <div class="ah-icon">🔔<span class="dot"></span></div>
+      <div class="ah-avatar"></div>
+    </div>
+  </header>
+  <div class="breadcrumb">Dashboard &gt; Verification Center &gt; <b>Wachtrij</b></div>
+  <div class="content" style="padding-bottom:0;">
+    <h1>Verificatiewachtrij</h1>
+  </div>
+  <div class="tabs">
+      <div class="tab active">Nieuwe aanvragen <span class="tab-count">(12)</span></div>
+      <div class="tab">Periodieke hercontrole &amp; intrekking <span class="tab-count">(3)</span></div>
+    </div>
+  <div class="toolbar">
+      <div class="search-field">Zoek op product- of bedrijfsnaam...</div>
+      <div class="filter-chip">Land ▾</div>
+      <div class="filter-chip">Categorie ▾</div>
+    </div>
+  <table class="table">
+      <tr><th>Product</th><th>Producent/Merkhouder</th><th>Land</th><th>Ingediend op</th><th>Status</th></tr>
+      <tr><td>Houten fietsmand XL</td><td>De Mandenmaker BV</td><td>NL</td><td>12-07-2026</td><td><span class="badge badge-solid">In beoordeling</span></td></tr>
+<tr><td>Keramische mok 350ml</td><td>Atelier Terra</td><td>BE</td><td>13-07-2026</td><td><span class="badge badge-outline">Aangevraagd</span></td></tr>
+<tr><td>Wollen deken grijs</td><td>Noordwol B.V.</td><td>NL</td><td>14-07-2026</td><td><span class="badge badge-outline">Aangevraagd</span></td></tr>
+<tr><td>Gietijzeren pan 28cm</td><td>Ferro Ateliers</td><td>FR</td><td>14-07-2026</td><td><span class="badge badge-solid">In beoordeling</span></td></tr>
+
+    </table>
+  <div class="pagination-row">
+      <div class="pagination-meta">Toont 1–20 van 12 items</div>
+      <div class="pagination"><div class="page-item">←</div><div class="page-item active">1</div><div class="page-item">2</div><div class="page-item">→</div></div>
+    </div>
+</div>
+<div class="section-label">2b — Verification Queue: lege staat</div>
+<div class="device">
+<header class="admin-header">
+    <div class="ah-left"><div class="logo-ph"></div><div class="ah-module">Verification Center</div></div>
+    <div class="ah-right">
+      <div class="ah-search">Zoeken...</div>
+      <div class="ah-icon">🔔<span class="dot"></span></div>
+      <div class="ah-avatar"></div>
+    </div>
+  </header>
+  <div class="breadcrumb">Dashboard &gt; Verification Center &gt; <b>Wachtrij</b></div>
+  <div class="content" style="padding-bottom:0;">
+    <h1>Verificatiewachtrij</h1>
+  </div>
+  <div class="tabs">
+      <div class="tab active">Nieuwe aanvragen <span class="tab-count">(12)</span></div>
+      <div class="tab">Periodieke hercontrole &amp; intrekking <span class="tab-count">(3)</span></div>
+    </div>
+  <div class="toolbar">
+      <div class="search-field">Zoek op product- of bedrijfsnaam...</div>
+      <div class="filter-chip">Land ▾</div>
+      <div class="filter-chip">Categorie ▾</div>
+    </div>
+  <div class="empty-state">
+      <div class="es-icon"></div>
+      <div class="es-title">Geen openstaande verificaties</div>
+      <div class="es-sub">Alle nieuwe aanvragen zijn beoordeeld — mooi werk.</div>
+    </div>
+  
+</div>
+</body>
+</html>
