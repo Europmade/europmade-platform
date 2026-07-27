@@ -24,6 +24,7 @@ Voorheen opgeslagen in `docs/07-technical/` — die map is per besluit definitie
 | [08](./08-integration-architecture.md) | Integration Architecture | Externe integraties, integratiebesluitstatus |
 | [09](./09-adr-overview.md) | ADR Overview | 58 ADR-kandidaten (v0.2), geprioriteerd, 10 categorieën |
 | [10](./10-technical-roadmap.md) | Technical Roadmap | MVP-fasering (v0.2), Sprint-3 Readiness Checklist |
+| [11](./11-medusa-architecture.md) | Medusa Architecture | Officiële Medusa v2-richtlijn — standaardmodules, custom modules, Admin-verantwoordelijkheden, Customer/Auth/Notification-architectuur, upgradebeleid |
 
 **Affiliate-scopewijziging (v0.2):** na de definitieve projectbeslissing dat het Affiliate Platform onderdeel is van de MVP, zijn alle tien Sprint 2-documenten waar nodig bijgewerkt — nieuwe domeinobjecten, tabellen, resources, events, twee nieuwe services (Affiliate, Finance), en zeven nieuwe ADR-kandidaten (categorie J). Zie `docs/00-context/blueprint-reference.md` voor de volledige scopewijziging en `docs/03-functional-specs/affiliate-platform/` voor de functionele basis.
 

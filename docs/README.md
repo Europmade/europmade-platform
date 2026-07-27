@@ -32,7 +32,7 @@ Alle product-, UX-, functionele en technische documentatie van EuropMade, opgebo
 | `05-mvp-scope/` | Scherm- en featureprioritering | Definitief; wordt aangevuld naarmate nieuwe domeinen worden uitgewerkt |
 | `06-development/` | **Project status & roadmap (definitief, bijgewerkt na Sprint 1B-afsluiting)**, roadmap/backlog/sprintplanning | Centraal overzicht definitief; sprint-uitvoeringsdocumenten nog placeholder |
 | `07-design-system/` | Componenten (41, definitief), Coverage Matrix, spacing (bevestigd) | Structureel definitief; kleuren/typografie/iconen bewust nog placeholder (latere fase) |
-| `08-technical-blueprint/` | TB-01 System Architecture + volledige Sprint 2-reeks (01–10) | TB-01 Concept v0.2; Sprint 2 (domeinmodel, datamodel, API/event/service/security/deployment/integratie-architectuur, ADR-overzicht, roadmap) — 58 ADR-kandidaten geïdentificeerd (na de Affiliate-scopewijziging), Sprint-3 Readiness Checklist beschikbaar |
+| `08-technical-blueprint/` | TB-01 System Architecture + volledige Sprint 2-reeks (01–11) | TB-01 Concept v0.2; Sprint 2 (domeinmodel, datamodel, API/event/service/security/deployment/integratie-architectuur, ADR-overzicht, roadmap) — 58 ADR-kandidaten geïdentificeerd (na de Affiliate-scopewijziging), Sprint-3 Readiness Checklist beschikbaar; document 11 = officiële Medusa v2-architectuurrichtlijn (vastgesteld vóór S3-00-07) |
 | `09-implementation-blueprint/` | Sprint 3-implementatiestrategie (bouwvolgorde, modulevolgorde, reviewproces, Definition of Done, AI-werkwijze) | Concept v0.2, volledig in lijn met Sprint 2 v0.2 |
 | `10-implementation/` | Sprint 3-implementatieplanning: 14 Epics, 67 Tickets, Backlog, Progress, Change Requests | v1.0 — planning gereed, nog geen code geschreven |
 
