@@ -14,6 +14,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-00-02 | EPIC-00 | Niet gestart | — | — | — |
 | S3-00-03 | EPIC-00 | Niet gestart | — | — | — |
 | S3-00-04 | EPIC-00 | Niet gestart | — | — | — |
+| S3-00-05 | EPIC-00 | **Gereed** | — | Sprint 3, dag 1 | Workspace-analyse uitgevoerd; 1 kleine configuratiecorrectie doorgevoerd (overbodig `workspaces`-veld verwijderd uit root package.json); lockfile-generatie geblokkeerd door ontbrekende netwerktoegang in de uitvoeringsomgeving, zie rapport |
+| S3-00-06 | EPIC-00 | **Gereed** | — | Sprint 3, dag 1 | `packages/config/package.json` gecorrigeerd: exports-map, type:module, ontbrekende devDependencies (tailwindcss + 4 ESLint-packages) toegevoegd |
 | S3-01-01 | EPIC-01 | Niet gestart | — | — | — |
 | S3-01-02 | EPIC-01 | Niet gestart | — | — | — |
 | S3-01-03 | EPIC-01 | Niet gestart | — | — | — |
@@ -85,5 +87,5 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | Niet gestart | 67 |
 | In uitvoering | 0 |
 | In review | 0 |
-| Gereed | 0 |
+| Gereed | 2 |
 | Geblokkeerd | 0 |

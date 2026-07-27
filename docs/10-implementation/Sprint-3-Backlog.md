@@ -12,6 +12,8 @@ Volgorde = afhankelijkheidsvolgorde, niet toewijzing aan individuele sprints/wek
 | 2 | S3-00-02 | ADR-02 besluiten — Privacy & AVG | EPIC-00 | Geen |
 | 3 | S3-00-03 | ADR-03 besluiten — Encryptie | EPIC-00 | Geen |
 | 4 | S3-00-04 | ADR-13 besluiten — Sessiebeheer | EPIC-00 | Geen |
+| 4b | S3-00-05 | Workspace-/tooling-gereedheid (retroactief, CR-001) | EPIC-00 | Geen |
+| 4c | S3-00-06 | pnpm build-configuratiefouten oplossen (retroactief, CR-002) | EPIC-00 | S3-00-05 |
 | 5 | S3-01-01 | Datamodel: Customer, Session | EPIC-01 | S3-00-04 |
 | 6 | S3-01-02 | API: Registratie- en inlog-endpoints | EPIC-01 | S3-01-01 |
 | 7 | S3-01-03 | 2FA-implementatie | EPIC-01 | S3-01-02 |
@@ -76,4 +78,4 @@ Volgorde = afhankelijkheidsvolgorde, niet toewijzing aan individuele sprints/wek
 | 66 | S3-13-01 | Buyer Dashboard-shell | EPIC-13 | S3-01-05 |
 | 67 | S3-13-02 | Seller Dashboard-shell | EPIC-13 | S3-01-05, S3-02-03 |
 
-**Totaal: 67 tickets over 14 Epics.**
+**Totaal: 69 tickets over 14 Epics** (67 oorspronkelijk + 2 retroactief: S3-00-05/CR-001, S3-00-06/CR-002, zie Sprint-3-Change-Requests.md).

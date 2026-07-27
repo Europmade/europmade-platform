@@ -38,8 +38,27 @@ Deze punten zijn al in de Blueprint zelf als open of gedeeltelijk vastgelegd —
 
 ## Log
 
-*Nog geen Change Requests ingediend — Sprint 3 is nog niet gestart.*
-
 | ID | Titel | Datum | Status |
 |---|---|---|---|
-| — | — | — | — |
+| CR-001 | Ontbrekend ticket voor workspace-/tooling-gereedheid | Sprint 3, dag 1 | Doorgevoerd |
+| CR-002 | `pnpm build`-configuratiefouten in packages/config | Sprint 3, dag 1 | Doorgevoerd |
+
+### CR-001: Ontbrekend ticket voor workspace-/tooling-gereedheid
+**Datum:** Sprint 3, dag 1
+**Gemeld door:** Uitvoering van een verzoek dat verwees naar ticket-ID "S3-002", dat niet bestond in `Sprint-3-Tickets.md`/`Sprint-3-Backlog.md`.
+**Geraakt Blueprint-document:** `10-implementation/Sprint-3-Tickets.md`, `Sprint-3-Backlog.md`, `Sprint-3-Progress.md`, `Sprint-3-Epics.md` (planningsdocumenten, geen Blueprint-inhoud zelf).
+**Bevinding:** de oorspronkelijke 67-tickets-planning bevatte geen enkel ticket voor monorepo-/tooling-gereedheid (Turborepo, PNPM Workspace, package.json's, build-/TypeScript-configuratie) — een reëel gat, aangezien dit een voorwaarde is voor elk ander ticket dat code produceert.
+**Voorgestelde aanpak:** retroactief ticket `S3-00-05` toevoegen aan EPIC-00, uitgevoerd als onderdeel van dit verzoek.
+**Impact op bestaande tickets:** geen inhoudelijke wijziging aan de overige 67 tickets; uitsluitend een toevoeging.
+**Status:** Doorgevoerd.
+**Besluit + datum:** Direct doorgevoerd (laag-risico, puur toevoegend, geen bestaand ticket gewijzigd) — Sprint 3, dag 1.
+
+### CR-002: `pnpm build`-configuratiefouten in packages/config
+**Datum:** Sprint 3, dag 1
+**Gemeld door:** Lokale validatie van Epic 0 (`pnpm build`), gemeld als ticket S3-00-06.
+**Geraakt Blueprint-document:** Geen — puur tooling-configuratie (`packages/config/package.json`), geen Functionele/Technische/UX-Blueprint geraakt.
+**Bevinding:** twee build-fouten ("Cannot find module @europmade/config/eslint-preset," "Cannot find module tailwindcss") met dezelfde grondoorzaak: `packages/config/package.json` miste een `exports`-map en declareerde niet al zijn daadwerkelijk gebruikte dependencies — een klassiek pnpm phantom-dependency-probleem (sibling-packages' dependencies zijn onder pnpm nooit stilzwijgend beschikbaar).
+**Voorgestelde aanpak:** `exports`-map toegevoegd (`./eslint-preset`, `./tailwind-preset`, `./tsconfig/*.json`), `"type": "module"` toegevoegd, vijf ontbrekende devDependencies expliciet gedeclareerd.
+**Impact op bestaande tickets:** geen — uitsluitend een configuratiecorrectie op een net toegevoegd ticket (S3-00-05), geen van de oorspronkelijke 67 tickets geraakt.
+**Status:** Doorgevoerd.
+**Besluit + datum:** Direct doorgevoerd (laag-risico, uitsluitend configuratie, geen businesscode) — Sprint 3, dag 1.

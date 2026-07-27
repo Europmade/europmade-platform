@@ -10,13 +10,13 @@
 
 **Fase:** Fase 0 (vóór alle code)  
 **Afhankelijk van:** Geen  
-**Aantal tickets:** 4
+**Aantal tickets:** 6 (waarvan 2 retroactief toegevoegd, zie CR-001/CR-002)
 
-**Doel:** De vier blokkerende architectuurbesluiten nemen vóórdat enige implementatie start.
+**Doel:** De vier blokkerende architectuurbesluiten nemen vóórdat enige implementatie start, plus workspace-/tooling-gereedheid.
 
 **Blueprint-bronnen:** 10-technical-roadmap.md §4/16 Bijlage E; 09-adr-overview.md ADR-01/02/03/13
 
-**Tickets:** `S3-00-01`, `S3-00-02`, `S3-00-03`, `S3-00-04`
+**Tickets:** `S3-00-01`, `S3-00-02`, `S3-00-03`, `S3-00-04`, `S3-00-05`, `S3-00-06`
 
 ---
 

@@ -3,12 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "description": "Gedeelde configuratie (TypeScript, ESLint, Tailwind) voor alle EuropMade-apps en -packages.",
+  "type": "module",
   "files": [
     "tsconfig",
     "eslint-preset.js",
     "tailwind-preset.ts"
   ],
+  "exports": {
+    "./eslint-preset": "./eslint-preset.js",
+    "./tailwind-preset": "./tailwind-preset.ts",
+    "./tsconfig/*.json": "./tsconfig/*.json"
+  },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "@eslint/js": "^9.14.0",
+    "@next/eslint-plugin-next": "^15.0.3",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.13.0"
   }
 }

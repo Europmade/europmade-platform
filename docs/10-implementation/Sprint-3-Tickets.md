@@ -1077,3 +1077,41 @@
 **Blueprint-verwijzing(en):** `02-ux/wireframes/sprint-3-p0/seller-dashboard-*`
 
 ---
+
+## Retroactief toegevoegd (CR-001) — zie Sprint-3-Change-Requests.md
+
+### S3-00-05: Workspace-/tooling-gereedheid (Turborepo, PNPM, TypeScript-config)
+
+**Beschrijving:** Controleer en maak de bestaande monorepo-tooling (Turborepo, PNPM Workspace, `package.json`'s, `apps/`, `packages/`, build-/TypeScript-configuratie) gereed vóórdat enige businesscode wordt geschreven. Geen nieuwe functionaliteit, geen Medusa-installatie, geen wijziging aan Next.js-functionaliteit.
+
+**Afhankelijkheden:** Geen — dit is voorwaardelijk aan alle overige tickets die code produceren (EPIC-01 t/m EPIC-13).
+
+**Verwachte oplevering:** Analyse + eventuele kleine, niet-functionele configuratiecorrecties.
+
+**Acceptatiecriteria:**
+- Alle `workspace:*`-afhankelijkheden resolven naar daadwerkelijk bestaande packages.
+- Versieconsistentie (React/Next/TypeScript) over alle apps/packages bevestigd.
+- Turborepo-taakpijplijn en TypeScript-configuratiehiërarchie gecontroleerd op consistentie.
+- CI-workflow (`​.github/workflows/ci.yml`) gecontroleerd op uitvoerbaarheid.
+- Geen businesscode, geen Medusa, geen Next.js-functionaliteitswijziging.
+
+**Blueprint-verwijzing(en):** `01-architecture/standard-vs-custom.md` (Turborepo/PNPM/Next.js/Medusa als gekozen stack); geen functionele-spec-koppeling (puur tooling).
+
+
+### S3-00-06: `pnpm build`-configuratiefouten oplossen in packages/config
+
+**Beschrijving:** `pnpm build` faalde tijdens de lokale validatie van Epic 0 met twee fouten: "Cannot find module @europmade/config/eslint-preset" en "Cannot find module tailwindcss". Beide hebben dezelfde grondoorzaak: `packages/config/package.json` miste een `exports`-map (nodig voor strikte ESM-subpath-resolutie zonder bestandsextensie) én declareerde niet al zijn daadwerkelijk gebruikte dependencies (tailwindcss, vier ESLint-gerelateerde packages) — onder pnpm's niet-hoistende isolatie moet elke package zijn eigen imports zelf declareren, ook als een sibling-package (hier: apps/web) dezelfde dependency toevallig al heeft.
+
+**Afhankelijkheden:** S3-00-05 (workspace-/tooling-gereedheid)
+
+**Verwachte oplevering:** `pnpm build` slaagt zonder module-resolutiefouten.
+
+**Acceptatiecriteria:**
+- `packages/config/package.json` bevat een `exports`-map die exact de twee daadwerkelijk gebruikte subpaths (`./eslint-preset`, `./tailwind-preset`) dekt.
+- `packages/config/package.json` bevat `"type": "module"` (nodig omdat `eslint-preset.js` ESM `import`/`export`-syntax gebruikt).
+- Alle door `eslint-preset.js` en `tailwind-preset.ts` daadwerkelijk geïmporteerde packages (`@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, `@next/eslint-plugin-next`, `tailwindcss`) staan expliciet in `packages/config/package.json`.
+- Geen enkele wijziging aan businesscode, Medusa-installatie of Next.js-functionaliteit.
+
+**Blueprint-verwijzing(en):** `01-architecture/standard-vs-custom.md` (Turborepo/PNPM/Next.js/Tailwind als gekozen stack); geen functionele-spec-koppeling (puur tooling).
+
+---
