@@ -42,6 +42,17 @@ Deze punten zijn al in de Blueprint zelf als open of gedeeltelijk vastgelegd —
 |---|---|---|---|
 | CR-001 | Ontbrekend ticket voor workspace-/tooling-gereedheid | Sprint 3, dag 1 | Doorgevoerd |
 | CR-002 | `pnpm build`-configuratiefouten in packages/config | Sprint 3, dag 1 | Doorgevoerd |
+| CR-003 | Implementatievolgorde-review — 6 tickets verplaatst wegens afhankelijkheidsschendingen | Sprint 3, dag 1 (laatste review vóór bouwstart) | Doorgevoerd |
+
+### CR-003: Implementatievolgorde-review
+**Datum:** Sprint 3, dag 1 (laatste review vóór bouwstart)
+**Gemeld door:** Expliciete eindreview van de Sprint 3 Backlog vóór het bevriezen van de planning.
+**Geraakt Blueprint-document:** Geen — uitsluitend `Sprint-3-Backlog.md` (volgorde, geen inhoud).
+**Bevinding:** een volledige afhankelijkhedengrafiek van alle 69 tickets toonde 12 tickets die afhingen van een later gepland ticket. Oorzaak: EPIC-10 (Audit/Notificatie), EPIC-11 (Admin Shell) en EPIC-13 (Dashboard-shells) stonden, als strikt Epic-volgordelijke blokken, bijna aan het eind, terwijl zes van hun tickets al veel eerder nodig waren.
+**Voorgestelde aanpak:** zes tickets verplaatst: `S3-11-01`, `S3-10-01`, `S3-10-02`, `S3-13-01` direct na EPIC-01; `S3-13-02` direct na `S3-02-03`; `S3-09-02` direct na `S3-11-02`. Geen ticket toegevoegd, verwijderd of inhoudelijk gewijzigd.
+**Impact op bestaande tickets:** uitsluitend volgordepositie van 6 van de 69 tickets; alle overige 63 ongewijzigd.
+**Status:** Doorgevoerd — geverifieerd met een topologische controle (0 resterende schendingen).
+**Besluit + datum:** Direct doorgevoerd (laatste review vóór bevriezing, expliciet zo gevraagd) — Sprint 3, dag 1.
 
 ### CR-001: Ontbrekend ticket voor workspace-/tooling-gereedheid
 **Datum:** Sprint 3, dag 1
