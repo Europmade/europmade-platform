@@ -17,6 +17,8 @@ Alle product-, UX-, functionele en technische documentatie van EuropMade, opgebo
 7. [`06-development/`](./06-development/README.md) — **centraal project status- en roadmapoverzicht**, plus roadmap/backlog/sprintplanning voor de daadwerkelijke ontwikkeling in Cursor.
 8. [`07-design-system/`](./07-design-system/README.md) — UI-bouwstenen (componenten definitief, kleuren/typografie/iconen nog placeholder), Component ID-register, Coverage Matrix.
 9. [`08-technical-blueprint/`](./08-technical-blueprint/README.md) — de Technical Blueprint: TB-01 (System Architecture) plus de volledige Sprint 2-documentenreeks (domeinmodel t/m technische roadmap), gebouwd op de al bevroren product-/UX-/functionele documentatie. `docs/07-technical/` is per besluit definitief verlaten.
+10. [`09-implementation-blueprint/`](./09-implementation-blueprint/) — Sprint 3, eerste document: de implementatiestrategie (bouwvolgorde, modulevolgorde, reviewproces, Definition of Done, AI-werkwijze) — geen nieuwe architectuur, uitsluitend hoe de al vastgelegde architectuur gebouwd wordt.
+11. [`10-implementation/`](./10-implementation/README.md) — de daadwerkelijke Sprint 3-implementatieplanning: Epics, Tickets, Backlog, Progress en Change Requests. Gebaseerd op **Blueprint Freeze v1.0** — de Blueprint zelf wordt vanaf hier niet meer uitgebreid.
 
 ## Mapoverzicht
 
@@ -30,7 +32,9 @@ Alle product-, UX-, functionele en technische documentatie van EuropMade, opgebo
 | `05-mvp-scope/` | Scherm- en featureprioritering | Definitief; wordt aangevuld naarmate nieuwe domeinen worden uitgewerkt |
 | `06-development/` | **Project status & roadmap (definitief, bijgewerkt na Sprint 1B-afsluiting)**, roadmap/backlog/sprintplanning | Centraal overzicht definitief; sprint-uitvoeringsdocumenten nog placeholder |
 | `07-design-system/` | Componenten (41, definitief), Coverage Matrix, spacing (bevestigd) | Structureel definitief; kleuren/typografie/iconen bewust nog placeholder (latere fase) |
-| `08-technical-blueprint/` | TB-01 System Architecture + volledige Sprint 2-reeks (01–10) | TB-01 Concept v0.2; Sprint 2 (domeinmodel, datamodel, API/event/service/security/deployment/integratie-architectuur, ADR-overzicht, roadmap) — 51 ADR-kandidaten geïdentificeerd, Sprint-3 Readiness Checklist beschikbaar |
+| `08-technical-blueprint/` | TB-01 System Architecture + volledige Sprint 2-reeks (01–10) | TB-01 Concept v0.2; Sprint 2 (domeinmodel, datamodel, API/event/service/security/deployment/integratie-architectuur, ADR-overzicht, roadmap) — 58 ADR-kandidaten geïdentificeerd (na de Affiliate-scopewijziging), Sprint-3 Readiness Checklist beschikbaar |
+| `09-implementation-blueprint/` | Sprint 3-implementatiestrategie (bouwvolgorde, modulevolgorde, reviewproces, Definition of Done, AI-werkwijze) | Concept v0.2, volledig in lijn met Sprint 2 v0.2 |
+| `10-implementation/` | Sprint 3-implementatieplanning: 14 Epics, 67 Tickets, Backlog, Progress, Change Requests | v1.0 — planning gereed, nog geen code geschreven |
 
 ## Wijzigingsproces
 

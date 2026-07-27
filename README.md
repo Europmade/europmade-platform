@@ -52,7 +52,9 @@ Zie [`docs/06-development/project-status-and-roadmap.md`](./docs/06-development/
 │   ├── 05-mvp-scope/         ← MVP-afbakening (Must/Should/Could Have) over alle domeinen heen
 │   ├── 06-development/       ← roadmap, backlog, sprintplanning (voor ontwikkeling in Cursor)
 │   ├── 07-design-system/     ← kleuren, typografie, spacing, iconen, componenten
-│   └── 08-technical-blueprint/ ← Technical Blueprint (TB-01, TB-02, ...) voor senior software engineers
+│   ├── 08-technical-blueprint/ ← Technical Blueprint (domeinmodel t/m technische roadmap, ADR-overzicht) voor senior software engineers
+│   ├── 09-implementation-blueprint/ ← Sprint 3-implementatiestrategie (bouwvolgorde, modulevolgorde, geen nieuwe architectuur)
+│   └── 10-implementation/    ← Sprint 3-implementatieplanning: Epics, Tickets, Backlog, Progress, Change Requests (Blueprint Freeze v1.0)
 ├── apps/
 │   ├── web/                  ← Next.js 15 — publieke frontend (huidige stand: uitsluitend homepage)
 │   └── admin/                ← Next.js 15 — Admin Shell (huidige stand: lege dashboardpagina, Auth.js-basisconfiguratie)
