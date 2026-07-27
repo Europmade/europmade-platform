@@ -80,7 +80,7 @@
 
 **Beschrijving:** Database-migratie voor de customer-tabel en het bij ADR-13 besloten Session-concept.
 
-**Afhankelijkheden:** S3-00-04
+**Afhankelijkheden:** S3-00-04, S3-00-07 (Medusa-backend — Customer is standaard Medusa-functionaliteit, zie architectuurreview/CR-004)
 
 **Verwachte oplevering:** Migratiescript + geverifieerd schema.
 
@@ -1113,5 +1113,25 @@
 - Geen enkele wijziging aan businesscode, Medusa-installatie of Next.js-functionaliteit.
 
 **Blueprint-verwijzing(en):** `01-architecture/standard-vs-custom.md` (Turborepo/PNPM/Next.js/Tailwind als gekozen stack); geen functionele-spec-koppeling (puur tooling).
+
+---
+
+### S3-00-07: Medusa-backend installeren en basisconfiguratie
+
+**Beschrijving:** Voeg `apps/backend` toe als nieuwe Medusa-applicatie binnen de bestaande Turborepo/PNPM-workspace, verbonden met de al bestaande lokale PostgreSQL (`docker-compose.yml`). Uitsluitend framework-installatie en basisconfiguratie — geen enkel domeinspecifiek schema, geen Customer-uitbreiding (dat blijft S3-01-01).
+
+**Reden (architectuurreview):** `01-architecture/standard-vs-custom.md` classificeert Customer/login/adresboek expliciet als "Standaard | Medusa Customer-module." Zonder een geïnstalleerde Medusa-backend heeft S3-01-01 niets om op voort te bouwen. Retroactief toegevoegd na architectuurreview, zie `Sprint-3-Change-Requests.md` CR-004.
+
+**Afhankelijkheden:** S3-00-05, S3-00-06 (workspace-/build-gereedheid)
+
+**Verwachte oplevering:** Werkende, lokaal opstartbare Medusa-instantie (`apps/backend`), verbonden met PostgreSQL, admin-paneel bereikbaar. Geen domeinschema.
+
+**Acceptatiecriteria:**
+- `apps/backend` correct opgenomen in `pnpm-workspace.yaml`/Turborepo-taakpijplijn, consistent met de bestaande `apps/web`/`apps/admin`-structuur.
+- Medusa start lokaal op tegen de al bestaande `docker-compose.yml`-PostgreSQL, geen nieuwe databasedienst geïntroduceerd.
+- Geen enkele module-uitbreiding, geen custom Customer-schema — dat is expliciet de scope van S3-01-01, niet van dit ticket.
+- Geen wijziging aan enig Blueprint-, architectuur- of functioneel-specificatiedocument.
+
+**Blueprint-verwijzing(en):** `01-architecture/standard-vs-custom.md` (Medusa als standaardbasis voor Customer/Cart/Payment/Order/Product/Pricing/Promotion/Fulfillment).
 
 ---

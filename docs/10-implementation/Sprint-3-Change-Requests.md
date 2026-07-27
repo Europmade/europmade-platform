@@ -43,6 +43,17 @@ Deze punten zijn al in de Blueprint zelf als open of gedeeltelijk vastgelegd —
 | CR-001 | Ontbrekend ticket voor workspace-/tooling-gereedheid | Sprint 3, dag 1 | Doorgevoerd |
 | CR-002 | `pnpm build`-configuratiefouten in packages/config | Sprint 3, dag 1 | Doorgevoerd |
 | CR-003 | Implementatievolgorde-review — 6 tickets verplaatst wegens afhankelijkheidsschendingen | Sprint 3, dag 1 (laatste review vóór bouwstart) | Doorgevoerd |
+| CR-004 | Ontbrekend ticket voor Medusa-installatie vóór S3-01-01 | Sprint 3, dag 1 (architectuurreview) | Doorgevoerd |
+
+### CR-004: Ontbrekend ticket voor Medusa-installatie vóór S3-01-01
+**Datum:** Sprint 3, dag 1 (architectuurreview, tijdens voorbereiding van S3-01-01)
+**Gemeld door:** Expliciete architectuurreview vóór aanvang van S3-01-01.
+**Geraakt Blueprint-document:** Geen — `01-architecture/standard-vs-custom.md` is geraadpleegd, niet gewijzigd.
+**Bevinding:** `01-architecture/standard-vs-custom.md` classificeert Customer/login/adresboek expliciet als "Standaard | Medusa Customer-module." De repository bevat echter geen Medusa-backend (`apps/backend`), en geen enkel ticket in de 69-tickets-planning dekte "Medusa installeren" — een reëel gat, aangezien S3-01-01 hier zonder voorwerp op zou bouwen én vrijwel elke latere Epic (Product/Cart/Order/Payment/Pricing/Promotion/Fulfillment) impliciet van Medusa afhangt.
+**Voorgestelde aanpak:** retroactief ticket `S3-00-07` toegevoegd aan EPIC-00 (infrastructuurcategorie, consistent met S3-00-05/06), direct vóór EPIC-01. `S3-01-01`'s afhankelijkheden uitgebreid met `S3-00-07`.
+**Impact op bestaande tickets:** `S3-01-01`'s afhankelijkheidsveld aangepast (S3-00-04 → S3-00-04, S3-00-07); geen enkel ander ticket inhoudelijk gewijzigd. Totaal aantal tickets: 69 → 70.
+**Status:** Doorgevoerd.
+**Besluit + datum:** Direct doorgevoerd (architectuurreview expliciet zo gevraagd, laag-risico toevoeging) — Sprint 3, dag 1.
 
 ### CR-003: Implementatievolgorde-review
 **Datum:** Sprint 3, dag 1 (laatste review vóór bouwstart)
