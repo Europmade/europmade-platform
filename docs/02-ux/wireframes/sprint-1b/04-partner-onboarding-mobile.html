@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Partner Onboarding (Mobiel, v1.1 — BEVROREN)</title>
+<style>
+  :root{ --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8; --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515; --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:390px; margin:0 auto 20px; background:#fff; border:1px solid var(--wf-400); border-radius:18px; overflow:hidden;}
+  .banner{max-width:390px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 14px; border-radius:4px; font-size:10.5px;}
+  .section-label{background:var(--wf-800); color:#fff; padding:5px 14px; font-size:9px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; max-width:390px; margin:0 auto;}
+  .fix{max-width:390px; margin:0 auto 16px; background:var(--wf-100); border-left:3px solid var(--wf-700); padding:7px 9px; font-size:9.5px; color:var(--wf-700);}
+  header.gh-min{display:flex; align-items:center; justify-content:center; padding:12px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:80px; height:16px; background:var(--wf-300); border-radius:2px;}
+  .stepper{display:flex; overflow-x:auto; gap:0; padding:10px 12px; border-bottom:1px solid var(--wf-200);}
+  .step{display:flex; align-items:center; gap:4px; font-size:9px; color:var(--wf-500); padding:0 7px; flex-shrink:0;}
+  .step .dot{width:15px; height:15px; border-radius:50%; border:1.5px solid var(--wf-400); display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:700; color:var(--wf-500);}
+  .step.is-done .dot{background:var(--wf-900); border-color:var(--wf-900); color:#fff;}
+  .step.is-active .dot{border-color:var(--wf-900); color:var(--wf-900);}
+  .step.is-active{color:var(--wf-900); font-weight:700;}
+  .content{padding:18px 16px;}
+  .content h1{font-size:15px; margin:0 0 5px;}
+  .content-sub{font-size:10.5px; color:var(--wf-600); margin-bottom:14px;}
+  .field{margin-bottom:11px;}
+  .field label{display:block; font-size:10px; font-weight:600; color:var(--wf-700); margin-bottom:3px;}
+  .field input{width:100%; height:36px; border:1px solid var(--wf-400); border-radius:6px; padding:0 10px; font-size:11.5px;}
+  .field-hint{font-size:9px; color:var(--wf-500); margin-top:3px;}
+  .btn{font-family:inherit; font-weight:700; border-radius:6px; border:1px solid transparent;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:11px 0; width:100%; font-size:12px; text-align:center;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800); padding:11px 0; width:100%; font-size:11.5px; text-align:center;}
+  .btn-row{display:flex; flex-direction:column; gap:8px; margin-top:16px;}
+  .notice{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:8px 9px; font-size:10px; color:var(--wf-700); margin-bottom:14px;}
+  .choice-stack{display:flex; flex-direction:column; gap:8px; margin-bottom:16px;}
+  .choice-card{border:1.5px solid var(--wf-400); border-radius:8px; padding:12px 14px; display:flex; align-items:center; gap:10px;}
+  .choice-card.is-selected{border-color:var(--wf-900); border-width:2px; background:var(--wf-100);}
+  .choice-card .icon{width:30px; height:30px; border-radius:50%; background:var(--wf-200); flex-shrink:0;}
+  .choice-card .title{font-size:12px; font-weight:700;}
+  .choice-card .desc{font-size:9.5px; color:var(--wf-600);}
+  .upload-item{border:1.5px dashed var(--wf-400); border-radius:6px; padding:11px; margin-bottom:9px;}
+  .upload-item.filled{border-style:solid; border-color:var(--wf-800);}
+  .upload-label{font-size:10.5px; font-weight:600; margin-bottom:3px;}
+  .upload-req{font-size:8.5px; color:var(--wf-500); margin-bottom:6px;}
+  .upload-file{display:flex; justify-content:space-between; font-size:10.5px; font-weight:600;}
+  .upload-remove{font-size:9px; color:var(--wf-600); text-decoration:underline;}
+  .upload-btn{font-size:9.5px; padding:6px 10px; border:1px solid var(--wf-700); border-radius:5px; background:#fff;}
+  .upload-btn-row{display:flex; gap:8px;}
+  .upload-btn-camera{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+  .review-section{border-bottom:1px solid var(--wf-200); padding:10px 0;}
+  .review-head{display:flex; justify-content:space-between; margin-bottom:5px;}
+  .review-head h3{font-size:11px; margin:0;}
+  .review-change{font-size:9.5px; color:var(--wf-700); text-decoration:underline;}
+  .review-line{font-size:10px; color:var(--wf-700);}
+  .checkbox-row{display:flex; align-items:flex-start; gap:7px; font-size:10px; color:var(--wf-700); margin:12px 0;}
+  .checkbox-inline{width:12px; height:12px; border:1px solid var(--wf-500); border-radius:3px; flex-shrink:0; margin-top:1px;}
+  .status-block{text-align:center; padding:26px 18px;}
+  .status-icon{width:42px; height:42px; border-radius:50%; background:var(--wf-900); color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;}
+  .status-icon.pending{background:#fff; border:2px solid var(--wf-800); color:var(--wf-800);}
+  .status-icon.rejected{background:#fff; border:2px solid var(--wf-700); color:var(--wf-700);}
+  .status-block h1{font-size:15px; margin:0 0 7px;}
+  .status-sub{font-size:11px; color:var(--wf-600); line-height:1.6; margin:0 auto 14px;}
+  .status-badge{display:inline-block; font-size:9.5px; font-weight:600; padding:3px 8px; border-radius:8px; border:1px solid var(--wf-400); margin-bottom:10px;}
+  .reject-reason{background:var(--wf-100); border:1px dashed var(--wf-700); border-radius:6px; padding:9px 11px; text-align:left; font-size:10.5px; margin:0 auto 14px;}
+</style>
+</head>
+<body>
+<div class="banner"><b>EuropMade — Wireframe: Partner Onboarding (Mobiel) — v1.1, DEFINITIEF BEVROREN</b> · Na architectuurreview: CMP-041 met camera-upload (verbeterpunt 3), e-mailverificatie-gate op Welkom (verbeterpunt 2), nieuwe statuspagina "Aanvullende informatie vereist" (verbeterpunt 1).</div>
+
+<div class="section-label">1 — Welkom</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="content" style="text-align:center;">
+    <h1>Word partner op EuropMade</h1>
+    <div class="content-sub">Verkoop aan miljoenen Europese consumenten.</div>
+    <div class="notice" style="text-align:left;">Nodig: bedrijfsgegevens, identiteitsbewijs, KvK-uittreksel, evt. productiebewijs.</div>
+    <button class="btn btn-primary">Start aanmelding</button>
+  </div>
+</div>
+<div class="fix"><b>Nieuw (verbeterpunt 2):</b> "Start aanmelding" controleert server-side of het account e-mailgeverifieerd is; zo niet, verschijnt een gerichte melding + verificatie-actie in plaats van door te gaan.</div>
+
+<div class="section-label">2 — Partner kiezen</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="stepper"><div class="step is-active"><span class="dot">1</span>Partner</div><div class="step"><span class="dot">2</span>Bedrijf</div><div class="step"><span class="dot">3</span>Verif.</div><div class="step"><span class="dot">4</span>Docs</div><div class="step"><span class="dot">5</span>Samenv.</div></div>
+  <div class="content">
+    <h1>Hoe wil je verkopen?</h1>
+    <div class="content-sub">Kies één of meerdere rollen.</div>
+    <div class="choice-stack">
+      <div class="choice-card is-selected"><div class="icon"></div><div><div class="title">Retailer</div><div class="desc">Verkoop producten</div></div></div>
+      <div class="choice-card is-selected"><div class="icon"></div><div><div class="title">Producent/Merkhouder</div><div class="desc">Produceer/eigen merk</div></div></div>
+      <div class="choice-card"><div class="icon"></div><div><div class="title">Distributeur</div><div class="desc">Namens een merk</div></div></div>
+    </div>
+    <div class="btn-row"><button class="btn-primary">Volgende</button><button class="btn-ghost">← Terug</button></div>
+  </div>
+</div>
+
+<div class="section-label">3 — Bedrijfsgegevens</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="stepper"><div class="step is-done"><span class="dot">✓</span>Partner</div><div class="step is-active"><span class="dot">2</span>Bedrijf</div><div class="step"><span class="dot">3</span>Verif.</div><div class="step"><span class="dot">4</span>Docs</div><div class="step"><span class="dot">5</span>Samenv.</div></div>
+  <div class="content">
+    <h1>Bedrijfsgegevens</h1>
+    <div class="field"><label>Bedrijfsnaam</label><input type="text"></div>
+    <div class="field"><label>Rechtsvorm</label><input type="text"></div>
+    <div class="field"><label>KvK-nummer</label><input type="text"></div>
+    <div class="field"><label>Bedrijfsadres</label><input type="text"></div>
+    <div class="field"><label>BTW-nummer</label><input type="text"></div>
+    <div class="field"><label>Contactpersoon</label><input type="text"></div>
+    <div class="field"><label>IBAN</label><input type="text"></div>
+    <div class="field"><label>Rekeninghouder</label><input type="text"><div class="field-hint">= bedrijfsnaam</div></div>
+    <div class="btn-row"><button class="btn-primary">Volgende</button><button class="btn-ghost">← Terug</button></div>
+  </div>
+</div>
+
+<div class="section-label">4 — Verificatie</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="stepper"><div class="step is-done"><span class="dot">✓</span>Partner</div><div class="step is-done"><span class="dot">✓</span>Bedrijf</div><div class="step is-active"><span class="dot">3</span>Verif.</div><div class="step"><span class="dot">4</span>Docs</div><div class="step"><span class="dot">5</span>Samenv.</div></div>
+  <div class="content">
+    <h1>Verificatie</h1>
+    <div class="content-sub">Identiteit + Europese productieverificatie</div>
+    <div class="field"><label>Vertegenwoordiger</label><input type="text"></div>
+    <div class="field"><label>Functie</label><input type="text"></div>
+    <div class="field"><label>Land van productie</label><input type="text"></div>
+    <div class="field"><label>Fabrikant</label><input type="text"></div>
+    <div class="field"><label>Productielocatie(s)</label><input type="text"><div class="field-hint">Minimaal één verplicht.</div></div>
+    <div class="field"><label>Eigendom van het merk</label><input type="text"></div>
+    <div class="btn-row"><button class="btn-primary">Volgende</button><button class="btn-ghost">← Terug</button></div>
+  </div>
+</div>
+
+<div class="section-label">5 — Upload documenten</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="stepper"><div class="step is-done"><span class="dot">✓</span>Partner</div><div class="step is-done"><span class="dot">✓</span>Bedrijf</div><div class="step is-done"><span class="dot">✓</span>Verif.</div><div class="step is-active"><span class="dot">4</span>Docs</div><div class="step"><span class="dot">5</span>Samenv.</div></div>
+  <div class="content">
+    <h1>Upload documenten</h1>
+    <div class="upload-item filled"><div class="upload-label">Identiteitsbewijs</div><div class="upload-req">Verplicht</div><div class="upload-file">paspoort.pdf <span class="upload-remove">Verwijderen</span></div></div>
+    <div class="upload-item filled"><div class="upload-label">KvK-uittreksel</div><div class="upload-req">Verplicht</div><div class="upload-file">kvk.pdf <span class="upload-remove">Verwijderen</span></div></div>
+    <div class="upload-item"><div class="upload-label">Productiebewijsstuk</div><div class="upload-req">Verplicht — Producent</div><div class="upload-btn-row"><button class="upload-btn upload-btn-camera">📷 Foto maken</button><button class="upload-btn">Bestand kiezen</button></div></div>
+    <div class="btn-row"><button class="btn-primary">Volgende</button><button class="btn-ghost">← Terug</button></div>
+  </div>
+</div>
+<div class="fix"><b>Nieuw (verbeterpunt 3):</b> op mobiel twee gelijkwaardige acties per document — "Foto maken" (opent direct de camera) en "Bestand kiezen" (galerij/bestanden). Geen drag-and-drop op mobiel (desktop/tablet behouden dat wel). Zie CMP-041, Design System.</div>
+
+<div class="section-label">6 — Samenvatting</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="stepper"><div class="step is-done"><span class="dot">✓</span>Partner</div><div class="step is-done"><span class="dot">✓</span>Bedrijf</div><div class="step is-done"><span class="dot">✓</span>Verif.</div><div class="step is-done"><span class="dot">✓</span>Docs</div><div class="step is-active"><span class="dot">5</span>Samenv.</div></div>
+  <div class="content">
+    <h1>Controleer je aanvraag</h1>
+    <div class="review-section"><div class="review-head"><h3>Gekozen rollen</h3><span class="review-change">Wijzigen</span></div><div class="review-line">Retailer, Producent/Merkhouder</div></div>
+    <div class="review-section"><div class="review-head"><h3>Bedrijfsgegevens</h3><span class="review-change">Wijzigen</span></div><div class="review-line">Merknaam BV · KvK 12345678</div></div>
+    <div class="checkbox-row"><span class="checkbox-inline"></span>Ik ga akkoord met de Partnervoorwaarden</div>
+    <div class="btn-row"><button class="btn-primary">Aanvraag indienen</button><button class="btn-ghost">← Terug</button></div>
+  </div>
+</div>
+
+<div class="section-label">7 — Statuspagina: In behandeling</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="status-block">
+    <div class="status-icon pending">⏳</div>
+    <span class="status-badge">In beoordeling</span>
+    <h1>Je aanvraag wordt beoordeeld</h1>
+    <div class="status-sub">Meestal binnen één werkdag.</div>
+  </div>
+</div>
+
+<div class="section-label">7b — Statuspagina: Goedgekeurd</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="status-block">
+    <div class="status-icon">✓</div>
+    <span class="status-badge">Goedgekeurd</span>
+    <h1>Welkom als partner!</h1>
+    <div class="status-sub">Stel eerst tweestapsverificatie in.</div>
+    <button class="btn-primary" style="width:auto; padding:11px 20px;">2FA instellen</button>
+  </div>
+</div>
+
+<div class="section-label">7c — Statuspagina: Afgekeurd</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="status-block">
+    <div class="status-icon rejected">✕</div>
+    <span class="status-badge">Afgekeurd</span>
+    <h1>Nog niet goedgekeurd</h1>
+    <div class="reject-reason">Identiteitsbewijs onleesbaar. Overige onderdelen akkoord.</div>
+    <button class="btn-primary" style="width:auto; padding:11px 20px;">Opnieuw indienen</button>
+  </div>
+</div>
+
+<div class="section-label">7d — Statuspagina: Aanvullende informatie vereist (nieuw)</div>
+<div class="device"><header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="status-block">
+    <div class="status-icon pending">?</div>
+    <span class="status-badge">Aanvullende informatie vereist</span>
+    <h1>We hebben nog iets van je nodig</h1>
+    <div class="reject-reason">Productiebewijsstuk toont geen adres — upload een document met duidelijke productielocatie.</div>
+    <button class="btn-primary" style="width:auto; padding:11px 20px;">Aanvulling versturen</button>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Gedeelde CSS-variabelen — exacte 1-op-1 vertaling van de grijswaarden-schaal
+ * die in alle bevroren wireframes wordt gebruikt (--wf-100 t/m --wf-900).
+ * Zie packages/config/tailwind-preset.ts voor de Tailwind-kant van dezelfde tokens.
+ */
+:root {
+  --wf-100: #f2f2f2;
+  --wf-200: #e4e4e4;
+  --wf-300: #cccccc;
+  --wf-400: #a8a8a8;
+  --wf-500: #8a8a8a;
+  --wf-600: #666666;
+  --wf-700: #4a4a4a;
+  --wf-800: #2c2c2c;
+  --wf-900: #151515;
+}
+
+body {
+  @apply bg-white text-wf-800 antialiased;
+}

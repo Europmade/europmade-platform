@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Checkout (Mobiel, v1.3)</title>
+<style>
+  :root{
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:390px; margin:0 auto 28px; background:#fff; border:1px solid var(--wf-400); border-radius:18px; overflow:hidden;}
+  .banner{max-width:390px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 14px; border-radius:4px; font-size:10.5px;}
+  .screen-label{background:var(--wf-800); color:#fff; padding:6px 14px; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; max-width:390px; margin:0 auto;}
+
+  /* CMP-001 Header */
+  header.gh{padding:10px 14px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:70px; height:16px; background:var(--wf-300); border-radius:2px;}
+
+  /* CMP-004 Stepper */
+  .stepper{display:flex; gap:0; padding:10px 14px; border-bottom:1px solid var(--wf-200); font-size:10px;}
+  .step{display:flex; align-items:center; gap:4px; color:var(--wf-500); margin-right:12px;}
+  .step .num{width:16px; height:16px; border-radius:50%; border:1px solid var(--wf-400); display:flex; align-items:center; justify-content:center; font-size:9px;}
+  .step.active{color:var(--wf-900); font-weight:700;}
+  .step.active .num{background:var(--wf-900); color:#fff; border-color:var(--wf-900);}
+  .step.done .num{background:var(--wf-700); color:#fff; border-color:var(--wf-700);}
+
+  /* Stap 0 — gestapeld, gast eerst (F14/gebruikerskeuze mobiel) */
+  .guest-stack{padding:16px 14px; display:flex; flex-direction:column; gap:14px;}
+  /* CMP-026 Choice Card */
+  .choice-card{border:1px solid var(--wf-400); border-radius:8px; padding:14px;}
+  .choice-card h3{font-size:13px; margin:0 0 8px;}
+  /* CMP-006 Form Field */
+  .field{display:flex; flex-direction:column; gap:3px; margin-bottom:8px;}
+  .field label{font-size:9.5px; color:var(--wf-600);}
+  .field input{font-family:inherit; font-size:12px; padding:9px; border:1px solid var(--wf-400); border-radius:6px;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:11px 0; width:100%; font-size:12.5px; text-align:center; border-radius:6px; border:none; font-weight:700;}
+  .t-small{font-size:9.5px; color:var(--wf-600); margin-top:6px;}
+
+  /* Stap 1 — inklapbare besteloverzicht-balk boven het formulier */
+  /* CMP-029 Summary Bar */
+  .summary-bar{margin:12px 14px; border:1px solid var(--wf-400); border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; font-size:11.5px; font-weight:700;}
+  .form-block{padding:0 14px 16px;}
+  /* CMP-006 Form Field (sectiekop) */
+  .form-block h2{font-size:13px; margin:10px 0 10px;}
+  .field-full{margin-bottom:8px;}
+
+  /* Uitgeklapte besteloverzicht (getoond als voorbeeld van de inhoud achter de balk) */
+  .expanded-summary{margin:0 14px 14px; border:1px solid var(--wf-400); border-radius:8px; padding:12px;}
+  /* CMP-011 Notice */
+  .notice.notice--info{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:6px 8px; font-size:9.5px; color:var(--wf-700); margin-bottom:10px;}
+  /* CMP-025 Besteloverzicht: Retailer Group */
+  .retailer-group{border-top:1px solid var(--wf-200); padding-top:8px; margin-top:8px;}
+  .retailer-group:first-of-type{border-top:none; margin-top:0; padding-top:0;}
+  .rg-head{display:flex; justify-content:space-between; font-size:10.5px; font-weight:700; margin-bottom:4px;}
+  .dm-avatar-sm{width:13px; height:13px; border-radius:50%; background:var(--wf-300); display:inline-block; vertical-align:-2px; margin-right:4px;}
+  .rg-item{display:flex; justify-content:space-between; font-size:10px; color:var(--wf-700); margin-bottom:3px;}
+  .rg-meta{display:flex; gap:4px; flex-wrap:wrap; margin-top:4px;}
+  .dm-badge{font-size:8.5px; font-weight:600; padding:2px 6px; border-radius:8px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  /* CMP-025 Besteloverzicht: Totals */
+  .totals{border-top:1px solid var(--wf-400); margin-top:10px; padding-top:8px; font-size:10.5px;}
+  .totals .row{display:flex; justify-content:space-between; margin-bottom:3px;}
+  .totals .grand{font-weight:700; font-size:12px;}
+  .btw-label{display:flex; align-items:center; gap:5px;}
+  .info-dot{width:12px; height:12px; border-radius:50%; border:1px solid var(--wf-500); color:var(--wf-600); font-size:8px; display:inline-flex; align-items:center; justify-content:center; cursor:default; flex-shrink:0;}
+
+  /* Stap 3 — kaarten, niet inklapbaar (hoofdtaak = controle) */
+  /* CMP-030 Review Block */
+  .review-block{margin:0 14px 12px; border:1px solid var(--wf-300); border-radius:8px; padding:12px;}
+  .review-block-head{display:flex; justify-content:space-between; margin-bottom:6px;}
+  .review-block-head h4{font-size:11.5px; margin:0;}
+  .change-link{font-size:9.5px; color:var(--wf-700); text-decoration:underline;}
+  .review-line{font-size:10.5px; color:var(--wf-700); margin-bottom:3px;}
+  .terms-row{display:flex; gap:6px; font-size:10.5px; margin:14px; padding-top:12px; border-top:1px solid var(--wf-200);}
+  .btn-primary.btn-primary--lg{font-size:12.5px; padding:13px 0; width:calc(100% - 28px); margin:0 14px 14px; border-radius:6px;}
+
+  .annot{margin:0 14px 14px; background:var(--wf-100); border-left:3px solid var(--wf-700); padding:6px 8px; font-size:9px; color:var(--wf-700);}
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Checkout (Mobiel ~375–428px) — v1.3</b> · Stap 0: "Verder als gast" bovenaan. Stap 1: inklapbaar. Stap 3: volledig uitgeklapt. <b>UX-vereenvoudiging BTW:</b> label + bedrag + info-icoon (ⓘ), geen standaard zichtbare toelichting meer.</div>
+
+<div class="screen-label">Scherm 1 — Stap 0 (gast bovenaan)</div>
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div></header>
+  <div class="guest-stack">
+    <div class="choice-card">
+      <h3>Verder als gast</h3>
+      <div class="field"><label>E-mailadres</label><input type="text"></div>
+      <button class="btn btn-primary">Verdergaan als gast</button>
+      <div class="t-small">Later alsnog een account koppelen kan.</div>
+    </div>
+    <div class="choice-card">
+      <h3>Inloggen</h3>
+      <div class="field"><label>E-mailadres</label><input type="text"></div>
+      <div class="field"><label>Wachtwoord</label><input type="text"></div>
+      <button class="btn btn-primary">Inloggen</button>
+    </div>
+  </div>
+</div>
+
+<div class="screen-label">Scherm 2 — Stap 1: verzending (besteloverzicht ingeklapt)</div>
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div></header>
+  <div class="stepper">
+    <div class="step active"><span class="num">1</span>Verzending</div>
+    <div class="step"><span class="num">2</span>Betaling</div>
+    <div class="step"><span class="num">3</span>Controle</div>
+  </div>
+  <div class="summary-bar"><span>Bestelling (2 items) · € 313,90</span><span>▾</span></div>
+  <div class="form-block">
+    <h2>Bezorgadres</h2>
+    <div class="field-full"><div class="field"><label>Naam</label><input type="text" value="Jan Jansen"></div></div>
+    <div class="field-full"><div class="field"><label>Straat + huisnummer</label><input type="text" value="Hoofdstraat 12"></div></div>
+    <div class="field-full"><div class="field"><label>Postcode</label><input type="text" value="1234 AB"></div></div>
+    <div class="field-full"><div class="field"><label>Plaats</label><input type="text" value="Amsterdam"></div></div>
+    <div class="field-full"><div class="field"><label>Land</label><input type="text" value="Nederland"></div></div>
+  </div>
+  <div style="padding:0 14px 16px;"><button class="btn btn-primary">Naar betaling</button></div>
+</div>
+
+<div class="screen-label">Scherm 2b — dezelfde stap, balk uitgeklapt (ter illustratie van de inhoud)</div>
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div></header>
+  <div class="stepper">
+    <div class="step active"><span class="num">1</span>Verzending</div>
+    <div class="step"><span class="num">2</span>Betaling</div>
+    <div class="step"><span class="num">3</span>Controle</div>
+  </div>
+  <div class="summary-bar" style="border-radius:8px 8px 0 0; border-bottom:none;"><span>Bestelling (2 items) · € 313,90</span><span>▴</span></div>
+  <div class="expanded-summary" style="margin-top:0; border-top:none; border-radius:0 0 8px 8px;">
+    <div class="notice notice--info">Wordt opgesplitst in <b>2 deelbestellingen</b> — één per aanbieder.</div>
+    <div class="retailer-group">
+      <div class="rg-head"><span><span class="dm-avatar-sm"></span>Retailer X</span><span>€ 249,00</span></div>
+      <div class="rg-item"><span>1× Robotmaaier X200</span><span>€ 249,00</span></div>
+      <div class="rg-meta"><span class="dm-badge">Morgen</span><span class="dm-badge">Gratis</span><span class="dm-badge">30 dgn</span></div>
+    </div>
+    <div class="retailer-group">
+      <div class="rg-head"><span><span class="dm-avatar-sm"></span>Retailer Y</span><span>€ 64,90</span></div>
+      <div class="rg-item"><span>1× Tuinslang 20m</span><span>€ 59,95</span></div>
+      <div class="rg-item"><span>Verzendkosten</span><span>€ 4,95</span></div>
+      <div class="rg-meta"><span class="dm-badge">2–3 dgn</span><span class="dm-badge">14 dgn</span></div>
+    </div>
+    <div class="totals">
+      <div class="row"><span>Subtotaal</span><span>€ 308,95</span></div>
+      <div class="row"><span>Verzendkosten</span><span>€ 4,95</span></div>
+      <div class="row"><span class="btw-label">BTW <span class="info-dot" title="BTW o.b.v. land van levering. Land: Nederland. Tarief: 21%.">ⓘ</span></span><span>€ 54,48</span></div>
+      <div class="row grand"><span>Totaal</span><span>€ 313,90</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="screen-label">Scherm 3 — Stap 3: controle &amp; bevestigen (volledig uitgeklapt)</div>
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div></header>
+  <div class="stepper">
+    <div class="step done"><span class="num">✓</span>Verz.</div>
+    <div class="step done"><span class="num">✓</span>Bet.</div>
+    <div class="step active"><span class="num">3</span>Contr.</div>
+  </div>
+  <div class="review-block" style="margin-top:12px;">
+    <div class="review-block-head"><h4>Bezorgadres</h4><span class="change-link">Wijzigen</span></div>
+    <div class="review-line">Jan Jansen · Hoofdstraat 12, 1234 AB Amsterdam</div>
+  </div>
+  <div class="review-block">
+    <div class="review-block-head"><h4>Betaalmethode</h4><span class="change-link">Wijzigen</span></div>
+    <div class="review-line">iDEAL</div>
+  </div>
+  <div class="review-block">
+    <div class="review-block-head"><h4>2 deelbestellingen</h4></div>
+    <div class="review-line" style="font-weight:700;"><span class="dm-avatar-sm"></span>Retailer X — € 249,00</div>
+    <div class="review-line">Morgen in huis · gratis verzending · 30 dgn retour</div>
+    <div class="review-line" style="font-weight:700; margin-top:6px;"><span class="dm-avatar-sm"></span>Retailer Y — € 64,90</div>
+    <div class="review-line">2–3 werkdagen · € 4,95 verzendkosten · 14 dgn retour</div>
+  </div>
+  <div class="terms-row"><input type="checkbox" checked><span>Akkoord met Algemene Voorwaarden en Retourbeleid.</span></div>
+  <button class="btn btn-primary btn-primary--lg">Bestelling plaatsen — € 313,90</button>
+</div>
+
+<div class="annot" style="max-width:390px; margin:0 auto;">Geen sticky bottom bar nodig op deze stappen (in tegenstelling tot de Productpagina) — elke checkout-stap is kort genoeg om de actieknop zonder lang scrollen te bereiken.</div>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+# EuropMade — lokale ontwikkelomgeving
+#
+# Bevat op dit moment uitsluitend PostgreSQL. Er is bewust nog geen
+# Medusa-service toegevoegd — dat volgt in een volgende stap.
+#
+# Gebruik:
+#   docker compose up -d
+#   docker compose down
+#   docker compose down -v   (verwijdert ook het opgeslagen databasevolume)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: europmade-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-europmade}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-europmade_local_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-europmade}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - europmade-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-europmade}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  europmade-postgres-data:
+    name: europmade-postgres-data

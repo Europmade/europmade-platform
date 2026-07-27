@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe Kit v0.1 (Design System Foundation)</title>
+<style>
+  :root{
+    --wf-bg:#ffffff; --wf-page:#f4f4f4;
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-radius:4px; --wf-gap:8px;
+    --wf-font: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--wf-page); font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:32px;}
+  .wrap{max-width:1040px; margin:0 auto; display:flex; flex-direction:column; gap:48px;}
+  .banner{background:var(--wf-900); color:#fff; padding:14px 20px; border-radius:var(--wf-radius); font-size:13px; letter-spacing:.02em;}
+  .banner b{font-weight:600;}
+  section{background:var(--wf-bg); border:1px solid var(--wf-300); border-radius:var(--wf-radius); padding:24px 28px;}
+  h2{font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--wf-600); margin:0 0 18px; border-bottom:1px solid var(--wf-200); padding-bottom:10px;}
+  h3{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--wf-500); margin:20px 0 10px;}
+  .row{display:flex; gap:var(--wf-gap); flex-wrap:wrap; align-items:center;}
+  .col{display:flex; flex-direction:column; gap:var(--wf-gap);}
+
+  /* --- Type scale --- */
+  .type-sample{display:flex; align-items:baseline; gap:16px; padding:6px 0; border-bottom:1px dashed var(--wf-200);}
+  .type-sample:last-child{border-bottom:none;}
+  .type-label{width:170px; font-size:11px; color:var(--wf-500); flex-shrink:0;}
+  .t-display{font-size:32px; font-weight:700; color:var(--wf-900);}
+  .t-h1{font-size:24px; font-weight:700; color:var(--wf-900);}
+  .t-h2{font-size:19px; font-weight:600; color:var(--wf-900);}
+  .t-h3{font-size:16px; font-weight:600; color:var(--wf-800);}
+  .t-body{font-size:14px; font-weight:400; color:var(--wf-800);}
+  .t-small{font-size:12px; font-weight:400; color:var(--wf-600);}
+  .t-caption{font-size:11px; font-weight:400; color:var(--wf-500); text-transform:uppercase; letter-spacing:.04em;}
+
+  /* --- Spacing/grid --- */
+  .spacing-scale{display:flex; align-items:flex-end; gap:10px;}
+  .spacing-block{background:var(--wf-300); border-radius:2px;}
+  .spacing-label{font-size:10px; color:var(--wf-500); text-align:center; margin-top:4px;}
+  .grid-demo{display:grid; grid-template-columns:repeat(12,1fr); gap:8px;}
+  .grid-col{background:var(--wf-200); border:1px dashed var(--wf-400); height:28px; border-radius:2px;}
+
+  /* --- Buttons --- */
+  /* CMP-005 Button */
+  .btn{font-family:inherit; font-size:13px; font-weight:600; padding:9px 18px; border-radius:var(--wf-radius); cursor:default; border:1px solid transparent;}
+  .btn-primary{background:var(--wf-900); color:#fff;}
+  .btn-secondary{background:#fff; color:var(--wf-800); border-color:var(--wf-500);}
+  .btn-ghost{background:transparent; color:var(--wf-700); border-color:transparent; text-decoration:underline;}
+  .btn-destructive{background:#fff; color:var(--wf-900); border:1px dashed var(--wf-700);}
+  .btn-disabled{background:var(--wf-100); color:var(--wf-400); border-color:var(--wf-200);}
+
+  /* --- Form atoms --- */
+  /* CMP-006 Form Field */
+  .field{display:flex; flex-direction:column; gap:4px; width:220px;}
+  .field label{font-size:11px; color:var(--wf-600);}
+  .field input, .field select{font-family:inherit; font-size:13px; padding:8px 10px; border:1px solid var(--wf-400); border-radius:var(--wf-radius); background:#fff; color:var(--wf-800);}
+  .field .hint{font-size:10px; color:var(--wf-500);}
+  .field.error input{border-color:var(--wf-900); border-style:dashed;}
+  .field.error .hint{color:var(--wf-900); font-weight:600;}
+  .checkbox-row, .radio-row{display:flex; align-items:center; gap:6px; font-size:13px;}
+
+  /* --- Badge --- */
+  /* CMP-008 Badge (basis) */
+  .badge{display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:3px 8px; border-radius:10px; border:1px solid var(--wf-400); color:var(--wf-700); background:var(--wf-100);}
+  .badge-outline{background:transparent;}
+  .badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+
+  /* --- Card --- */
+  .card{border:1px solid var(--wf-300); border-radius:6px; padding:16px; background:#fff; width:200px;}
+  .card .ph-image{background:var(--wf-200); height:110px; border-radius:2px; margin-bottom:10px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--wf-500);}
+  .card .ph-title{height:10px; background:var(--wf-300); border-radius:2px; width:80%; margin-bottom:6px;}
+  .card .ph-sub{height:8px; background:var(--wf-200); border-radius:2px; width:55%;}
+
+  /* --- Tabs --- */
+  /* CMP-009 Tabs */
+  .tabs{display:flex; gap:0; border-bottom:1px solid var(--wf-300);}
+  .tab{font-size:13px; padding:10px 16px; color:var(--wf-500); border-bottom:2px solid transparent;}
+  .tab.active{color:var(--wf-900); border-bottom-color:var(--wf-900); font-weight:600;}
+
+  /* --- Table --- */
+  /* CMP-010 Table */
+  table.table{width:100%; border-collapse:collapse; font-size:12px;}
+  table.table th{text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--wf-500); padding:8px 10px; border-bottom:1px solid var(--wf-400);}
+  table.table td{padding:9px 10px; border-bottom:1px solid var(--wf-200); color:var(--wf-800);}
+
+  /* --- Alert --- */
+  .alert{display:flex; gap:10px; align-items:flex-start; padding:10px 14px; border-radius:var(--wf-radius); border:1px solid var(--wf-400); background:var(--wf-100); font-size:12px;}
+  .alert .dot{width:8px; height:8px; border-radius:50%; background:var(--wf-700); margin-top:3px; flex-shrink:0;}
+
+  /* --- Modal placeholder --- */
+  .modal-stage{background:repeating-linear-gradient(45deg, var(--wf-100), var(--wf-100) 6px, #fff 6px, #fff 12px); border:1px dashed var(--wf-400); border-radius:6px; padding:30px; display:flex; align-items:center; justify-content:center;}
+  .modal-box{background:#fff; border:1px solid var(--wf-500); border-radius:6px; width:300px; padding:18px; box-shadow:0 2px 0 var(--wf-300);}
+  .modal-box .m-title{height:12px; background:var(--wf-300); width:60%; border-radius:2px; margin-bottom:12px;}
+  .modal-box .m-line{height:8px; background:var(--wf-200); border-radius:2px; margin-bottom:6px;}
+
+  /* --- Breadcrumb / Pagination --- */
+  .breadcrumb{font-size:12px; color:var(--wf-500);}
+  .breadcrumb b{color:var(--wf-800); font-weight:600;}
+  .pagination{display:flex; gap:4px; align-items:center;}
+  .page-item{width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:11px; border:1px solid var(--wf-300); border-radius:3px; color:var(--wf-600);}
+  .page-item.active{background:var(--wf-900); color:#fff; border-color:var(--wf-900);}
+
+  .legend{font-size:11px; color:var(--wf-500); margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="banner"><b>EuropMade — Wireframe Kit v0.2</b> · Design System Foundation (Sprint 1A, stap 1) · Low-fidelity, grijswaarden, structuur-only — geen merkkleuren/typografie. Uitgebreid met domeinspecifieke EuropMade-componenten (Buy Box, Offer Card, Retailer Card, Verified™ Badge e.a.). Definitieve kleuren/typografie volgen in <code>docs/07-design-system/</code> zodra we van wireframe naar visueel ontwerp gaan.</div>
+
+  <section>
+    <h2>Type-hiërarchie (generiek, geen merklettertype)</h2>
+    <div class="type-sample"><span class="type-label">Display</span><span class="t-display">EuropMade</span></div>
+    <div class="type-sample"><span class="type-label">Heading 1</span><span class="t-h1">Productpagina</span></div>
+    <div class="type-sample"><span class="type-label">Heading 2</span><span class="t-h2">Aanbieders</span></div>
+    <div class="type-sample"><span class="type-label">Heading 3</span><span class="t-h3">Specificaties</span></div>
+    <div class="type-sample"><span class="type-label">Body</span><span class="t-body">Standaard lopende tekst, formulierlabels, productomschrijving.</span></div>
+    <div class="type-sample"><span class="type-label">Small</span><span class="t-small">Metadata, hulptekst, secundaire informatie.</span></div>
+    <div class="type-sample"><span class="type-label">Caption</span><span class="t-caption">Label / status / badge-tekst</span></div>
+  </section>
+
+  <section>
+    <h2>Spacing-schaal &amp; grid (12-koloms, Desktop-referentie)</h2>
+    <h3>Spacing-eenheden (4px-basis)</h3>
+    <div class="spacing-scale">
+      <div class="col"><div class="spacing-block" style="width:4px;height:4px"></div><div class="spacing-label">4</div></div>
+      <div class="col"><div class="spacing-block" style="width:8px;height:8px"></div><div class="spacing-label">8</div></div>
+      <div class="col"><div class="spacing-block" style="width:12px;height:12px"></div><div class="spacing-label">12</div></div>
+      <div class="col"><div class="spacing-block" style="width:16px;height:16px"></div><div class="spacing-label">16</div></div>
+      <div class="col"><div class="spacing-block" style="width:24px;height:24px"></div><div class="spacing-label">24</div></div>
+      <div class="col"><div class="spacing-block" style="width:32px;height:32px"></div><div class="spacing-label">32</div></div>
+      <div class="col"><div class="spacing-block" style="width:48px;height:48px"></div><div class="spacing-label">48</div></div>
+      <div class="col"><div class="spacing-block" style="width:64px;height:64px"></div><div class="spacing-label">64</div></div>
+    </div>
+    <h3>12-koloms grid (Desktop)</h3>
+    <div class="grid-demo">
+      <div class="grid-col"></div><div class="grid-col"></div><div class="grid-col"></div><div class="grid-col"></div>
+      <div class="grid-col"></div><div class="grid-col"></div><div class="grid-col"></div><div class="grid-col"></div>
+      <div class="grid-col"></div><div class="grid-col"></div><div class="grid-col"></div><div class="grid-col"></div>
+    </div>
+    <div class="legend">Tablet: 8 kolommen · Mobiel: 4 kolommen (exacte breakpoints worden vastgesteld bij het eerste responsive wireframe, zie <code>docs/07-design-system/spacing.md</code>).</div>
+  </section>
+
+  <section>
+    <h2>Buttons</h2>
+    <div class="row">
+      <button class="btn btn-primary">Primaire actie</button>
+      <button class="btn btn-secondary">Secundaire actie</button>
+      <button class="btn btn-ghost">Tekstlink-actie</button>
+      <button class="btn btn-destructive">Destructieve actie</button>
+      <button class="btn btn-disabled" disabled>Uitgeschakeld</button>
+    </div>
+    <div class="legend">Eén primaire knop per scherm/sectie (CDS-restraint-principe, ook hier toegepast); overige acties secundair/ghost.</div>
+  </section>
+
+  <section>
+    <h2>Formulier-atomen</h2>
+    <div class="row">
+      <div class="field">
+        <label>E-mailadres</label>
+        <input type="text" placeholder="naam@bedrijf.nl">
+        <span class="hint">Gebruikt voor accountmeldingen.</span>
+      </div>
+      <div class="field error">
+        <label>EAN-code</label>
+        <input type="text" value="87651234">
+        <span class="hint">Ongeldige EAN — controleer het nummer.</span>
+      </div>
+      <div class="field">
+        <label>Land</label>
+        <select><option>Nederland</option></select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:14px;">
+      <div class="checkbox-row"><input type="checkbox" checked> Ik ga akkoord met de voorwaarden</div>
+      <div class="radio-row"><input type="radio" checked> Ophalen &nbsp; <input type="radio"> Verzenden</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Badges (generieke basis + statusvarianten)</h2>
+    <div class="row">
+      <span class="badge">Label</span>
+      <span class="badge badge-outline">Retailer Created</span>
+      <span class="badge badge-outline">Concept gecontroleerd</span>
+      <span class="badge badge-solid">Actief</span>
+      <span class="badge badge-solid">Verified™</span>
+      <span class="badge badge-outline">Uitlopend</span>
+      <span class="badge badge-outline">Gearchiveerd</span>
+    </div>
+    <div class="legend">Kleurcodering per status volgt in <code>docs/07-design-system/colors.md</code> — hier uitsluitend vorm/hiërarchie (outline = neutraal/tussenstatus, solid = actieve/bereikte status).</div>
+  </section>
+
+  <section>
+    <h2>Card (basis)</h2>
+    <div class="row">
+      <div class="card">
+        <div class="ph-image">afbeelding</div>
+        <div class="ph-title"></div>
+        <div class="ph-sub"></div>
+      </div>
+      <div class="card">
+        <div class="ph-image">afbeelding</div>
+        <div class="ph-title"></div>
+        <div class="ph-sub"></div>
+      </div>
+    </div>
+    <div class="legend">Basisvorm voor Product Card, Offer Card, KPI-tile — invulling per context volgt in het betreffende wireframe.</div>
+  </section>
+
+  <section>
+    <h2>Tabs</h2>
+    <div class="tabs">
+      <div class="tab active">Specificaties</div>
+      <div class="tab">Downloads</div>
+      <div class="tab">Reviews</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Table (basis)</h2>
+    <table class="table">
+      <thead><tr><th>Product</th><th>Status</th><th>Voorraad</th><th>Prijs</th></tr></thead>
+      <tbody>
+        <tr><td>Productnaam A</td><td>Actief</td><td>24</td><td>€ 49,95</td></tr>
+        <tr><td>Productnaam B</td><td>Retailer Created</td><td>3</td><td>€ 129,00</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Alert / Toast</h2>
+    <div class="col">
+      <div class="alert"><span class="dot"></span><span>Wijziging succesvol opgeslagen.</span></div>
+      <div class="alert"><span class="dot"></span><span>Voorraad bijna op — vul aan om Buy Box-positie te behouden.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Modal (plaatsing/structuur)</h2>
+    <div class="modal-stage">
+      <div class="modal-box">
+        <div class="m-title"></div>
+        <div class="m-line" style="width:90%"></div>
+        <div class="m-line" style="width:75%"></div>
+        <div class="row" style="margin-top:14px; justify-content:flex-end;">
+          <button class="btn btn-secondary">Annuleren</button>
+          <button class="btn btn-primary">Bevestigen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Breadcrumbs &amp; Pagination</h2>
+    <div class="col">
+      <div class="breadcrumb">Home &gt; Tuin &gt; Robotmaaiers &gt; <b>Draadloos</b></div>
+      <div class="pagination">
+        <div class="page-item">‹</div>
+        <div class="page-item active">1</div>
+        <div class="page-item">2</div>
+        <div class="page-item">3</div>
+        <div class="page-item">›</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="banner"><b>Domeinspecifieke componenten</b> · EuropMade-onderscheidend vermogen (functionele spec Product Cloud/Commerce Cloud/Buy Box) · Zelfde grijswaarden-regel: structuur/hiërarchie nu, kleur/typografie later.</div>
+
+  <section>
+    <h2>1 — Country of Production Badge, Manufacturer Badge, Product Owner Badge</h2>
+    <div class="row">
+      <span class="dm-badge dm-badge-outline"><span class="dm-flag"></span>Gemaakt in Nederland</span>
+      <span class="dm-badge dm-badge-outline">Producent: Merknaam BV</span>
+      <span class="dm-badge dm-badge-solid">Beheerd door: Merknaam BV (Producent)</span>
+      <span class="dm-badge dm-badge-outline">Beheerd door: Retailer X (Retailer Created)</span>
+    </div>
+    <div class="legend">Country of Production + Manufacturer Badge: klantzijde (Productpagina, Merkpagina). Product Owner Badge: uitsluitend Partnerdashboard/Admin — toont eigenaarschap conform spec sectie 1.7, nooit klantzichtbaar.</div>
+  </section>
+
+  <section>
+    <h2>2 — Verified™ Badge &amp; Product Quality Score</h2>
+    <div class="row" style="align-items:flex-start;">
+      <span class="dm-badge dm-badge-verified">✓ Verified™</span>
+      <div class="pqs-block">
+        <div class="t-caption">Product Quality Score (intern, niet klantzichtbaar)</div>
+        <div class="pqs-bar"><div class="pqs-fill" style="width:92%"></div></div>
+        <div class="t-small">92% — voldoet aan Verified™-criteria (drempel configureerbaar, ADR 0002)</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 — Shipping Badge &amp; Delivery Estimate</h2>
+    <div class="row">
+      <span class="dm-badge dm-badge-outline">Gratis verzending</span>
+      <span class="dm-badge dm-badge-outline">€ 4,95 verzendkosten</span>
+      <span class="dm-badge dm-badge-solid">Morgen in huis</span>
+      <span class="dm-badge dm-badge-outline">2–3 werkdagen</span>
+      <span class="dm-badge dm-badge-outline">Pre-order</span>
+    </div>
+    <div class="legend">Delivery Estimate gebruikt de vaste, gestructureerde categorieën uit de functionele spec (sectie 2.4) — nooit vrije tekst, nodig voor een eerlijke Buy Box-vergelijking.</div>
+  </section>
+
+  <section>
+    <h2>4 — Retailer Indicator &amp; Retailer Card</h2>
+    <div class="row" style="align-items:flex-start;">
+      <div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X <span class="t-caption">★ 4,6</span></div>
+      <div class="retailer-card">
+        <div class="row" style="align-items:center; gap:10px;">
+          <span class="dm-avatar"></span>
+          <div>
+            <div class="t-h3" style="margin:0;">Retailer X</div>
+            <div class="t-small">★★★★★ 4,6 (1.204 verkopersreviews)</div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <span class="dm-badge dm-badge-outline">Actief sinds 2022</span>
+          <span class="dm-badge dm-badge-outline">Snelle verzending</span>
+        </div>
+      </div>
+    </div>
+    <div class="legend">Retailer Indicator: compact, voor tabellen (Orders, Rapportages, Admin-partnerbeheer). Retailer Card: uitgebreid, voor Buy Box/Offer-context.</div>
+  </section>
+
+  <section>
+    <h2>5 — Offer Card &amp; Offer Comparison Row</h2>
+    <div class="offer-card">
+      <div class="row" style="justify-content:space-between; align-items:flex-start;">
+        <div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X <span class="t-caption">★ 4,6</span></div>
+      </div>
+      <div class="row" style="justify-content:space-between; align-items:baseline; margin-top:10px;">
+        <span class="t-h2">€ 249,00</span>
+        <span class="dm-badge dm-badge-solid">Morgen in huis</span>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        <span class="dm-badge dm-badge-outline">Gratis verzending</span>
+        <span class="dm-badge dm-badge-outline">Op voorraad</span>
+        <span class="dm-badge dm-badge-outline">30 dagen retour</span>
+      </div>
+      <button class="btn btn-secondary" style="margin-top:12px; width:100%;">Kies deze aanbieder</button>
+    </div>
+    <div class="legend"><b>F12-correctie:</b> Verified™ Badge is verwijderd uit de Offer Card. Verified™ is een producteigenschap (Product Cloud), geen eigenschap van een specifieke aanbieder/Offer (Commerce Cloud) — zie Design System-sectie 1 hierboven voor de correcte plaatsing.</div>
+
+    <h3>Offer Comparison Row (rijweergave, "alle aanbieders"-lijst)</h3>
+    <table class="table">
+      <thead><tr><th>Aanbieder</th><th>Prijs</th><th>Levertijd</th><th>Verzending</th><th>Retour</th><th>Beoordeling</th><th>Voorraad</th><th></th></tr></thead>
+      <tbody>
+        <tr class="ocr-winner">
+          <td><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X</div></td>
+          <td>€ 249,00</td><td>Morgen in huis</td><td>Gratis</td><td>30 dagen</td><td>★ 4,6</td><td>Op voorraad</td>
+          <td><span class="dm-badge dm-badge-solid">Geselecteerd</span></td>
+        </tr>
+        <tr>
+          <td><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer Y</div></td>
+          <td>€ 255,00</td><td>2–3 werkdagen</td><td>€ 4,95</td><td>14 dagen</td><td>★ 4,3</td><td>Op voorraad</td>
+          <td><button class="btn btn-ghost">Kiezen</button></td>
+        </tr>
+        <tr>
+          <td><div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer Z</div></td>
+          <td>€ 239,00</td><td>5 werkdagen</td><td>Gratis</td><td>30 dagen</td><td>★ 4,1</td><td>Lage voorraad</td>
+          <td><button class="btn btn-ghost">Kiezen</button></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="legend">De gemarkeerde rij (Retailer X) is de automatisch geselecteerde aanbieding volgens de beslislogica uit de functionele spec (sectie 3.1–3.2) — structuur/positie hier vastgelegd, exacte weging blijft configureerbaar (ADR 0001). <b>F10/F11-correctie:</b> "Buy Box"-jargon vervangen door "Geselecteerd" (neutrale, klantgerichte term, geen redactioneel oordeel). <b>F13-correctie:</b> Retour-kolom toegevoegd (Commerce Cloud-dimensie, spec sectie 2.8).</div>
+  </section>
+
+  <section>
+    <h2>6 — Buy Box (samengestelde component)</h2>
+    <div class="buybox">
+      <div class="row" style="justify-content:space-between; align-items:center;">
+        <span class="t-caption">Automatisch geselecteerde aanbieding</span>
+        <span class="info-dot" title="Uitleg waarom deze aanbieder is geselecteerd">ⓘ</span>
+      </div>
+      <div class="row" style="justify-content:space-between; align-items:flex-start; margin-top:6px;">
+        <div>
+          <div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X <span class="t-caption">★ 4,6</span></div>
+          <div class="t-display" style="font-size:28px; margin-top:8px;">€ 249,00</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <span class="dm-badge dm-badge-solid">Morgen in huis</span>
+        <span class="dm-badge dm-badge-outline">Gratis verzending</span>
+        <span class="dm-badge dm-badge-outline">Op voorraad</span>
+        <span class="dm-badge dm-badge-outline">30 dagen retour</span>
+      </div>
+      <button class="btn btn-primary" style="margin-top:16px; width:100%;">In winkelwagen</button>
+      <div class="notice notice--info">ⓘ Geselecteerd op basis van prijs, levertijd, beoordeling, voorraad en betrouwbaarheid — nooit op basis van advertenties of commissies. <a href="#">Meer uitleg</a></div>
+      <div class="t-small" style="margin-top:10px; text-align:center;">Alle aanbieders bekijken (3) ▾</div>
+    </div>
+    <div class="legend">De Buy Box combineert Retailer Indicator, prijs, Delivery Estimate, Shipping Badge, Retourindicatie en de "alle aanbieders"-toegang in één component. <b>F10/F11/F12-correctie:</b> label "Beste aanbieding" vervangen door neutrale terminologie, Verified™ Badge verwijderd (producteigenschap, hoort niet in de aanbieder-specifieke Buy Box), en een info-element toegevoegd dat uitlegt waarom deze aanbieder automatisch is geselecteerd — zonder EuropMade een redactioneel oordeel te laten uitspreken (spec sectie 3.0).</div>
+  </section>
+
+</div>
+
+<style>
+  .info-dot{width:16px; height:16px; border-radius:50%; border:1px solid var(--wf-500); color:var(--wf-600); font-size:10px; display:inline-flex; align-items:center; justify-content:center; cursor:default;}
+  /* CMP-011 Notice */
+  .notice.notice--info{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:8px 10px; font-size:11px; color:var(--wf-700); margin-top:10px;}
+  .notice.notice--info a{color:var(--wf-800); text-decoration:underline;}
+</style>
+
+
+<style>
+  .dm-badge{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:4px 10px; border-radius:12px; border:1px solid var(--wf-400); color:var(--wf-700);}
+  .dm-badge-outline{background:#fff;}
+  .dm-badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+  /* CMP-018 Verified™ Badge (variant) */
+  .dm-badge-verified{background:var(--wf-900); color:#fff; border-color:var(--wf-900); font-weight:700;}
+  .dm-flag{width:12px; height:9px; background:var(--wf-400); display:inline-block; border-radius:1px;}
+  /* CMP-012 Avatar (groot) */
+  .dm-avatar{width:40px; height:40px; border-radius:50%; background:var(--wf-300); flex-shrink:0;}
+  .dm-avatar-sm{width:18px; height:18px; border-radius:50%; background:var(--wf-300); display:inline-block; vertical-align:-4px; margin-right:5px;}
+  /* CMP-019 Product Quality Score (voorbereid) */
+  .pqs-block{width:280px;}
+  .pqs-bar{height:8px; background:var(--wf-200); border-radius:4px; margin:6px 0;}
+  .pqs-fill{height:8px; background:var(--wf-700); border-radius:4px;}
+  /* CMP-016 Retailer Indicator */
+  .retailer-indicator{display:flex; align-items:center; font-size:12px; color:var(--wf-700); gap:0;}
+  /* CMP-015 Retailer Card (voorbereid) */
+  .retailer-card{border:1px solid var(--wf-300); border-radius:6px; padding:14px 16px; width:260px; background:#fff;}
+  /* CMP-014 Offer Card */
+  .offer-card{border:1px solid var(--wf-400); border-radius:6px; padding:14px 16px; width:260px; background:#fff;}
+  /* CMP-013 Buy Box */
+  .buybox{border:2px solid var(--wf-800); border-radius:8px; padding:18px 20px; width:340px; background:#fff;}
+  tr.ocr-winner{background:var(--wf-100); font-weight:600;}
+</style>
+</body>
+</html>

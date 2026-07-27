@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Marketplace Listing (Desktop, v1.3)</title>
+<style>
+  :root{
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:#e8e8e8; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:32px 0;}
+  .page{max-width:1160px; margin:0 auto; background:#fff; border:1px solid var(--wf-400);}
+  .banner{max-width:1160px; margin:0 auto 20px; background:var(--wf-900); color:#fff; padding:12px 20px; border-radius:4px; font-size:12px;}
+  .section-label{background:var(--wf-800); color:#fff; padding:6px 32px; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700;}
+  .annot{background:var(--wf-100); border-left:3px solid var(--wf-700); padding:8px 12px; font-size:11px; color:var(--wf-700); margin:16px 32px;}
+
+  header.gh{display:flex; align-items:center; gap:20px; padding:14px 32px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:120px; height:24px; background:var(--wf-300); border-radius:2px;}
+  .searchbar{flex:1; height:38px; border:1.5px solid var(--wf-700); border-radius:6px; display:flex; align-items:center; padding:0 12px; color:var(--wf-600); font-size:13px;}
+  .icon-ph{width:22px; height:22px; border-radius:50%; background:var(--wf-200); display:inline-block;}
+
+  .page-head{padding:18px 32px 0;}
+  .page-head h1{font-size:22px; font-weight:700; margin:0 0 4px; color:var(--wf-900);}
+  .page-head .meta{font-size:12.5px; color:var(--wf-600);}
+
+  .listing-grid{display:grid; grid-template-columns:220px 1fr; gap:28px; padding:20px 32px 40px;}
+  .filters{border:1px solid var(--wf-300); border-radius:8px; padding:16px; align-self:start;}
+  .filter-group{border-bottom:1px solid var(--wf-200); padding-bottom:12px; margin-bottom:12px;}
+  .filter-group h4{font-size:12px; font-weight:700; margin:0 0 8px;}
+  .filter-opt{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--wf-700); margin-bottom:6px;}
+
+  .toolbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .sort-select{height:34px; border:1px solid var(--wf-400); border-radius:4px; padding:0 10px; font-size:12px; color:var(--wf-700); background:#fff;}
+
+  .product-grid{display:grid; grid-template-columns:repeat(5,1fr); gap:16px;}
+  .product-card{border:1px solid var(--wf-300); border-radius:8px; padding:12px; position:relative;}
+  .product-img{background:var(--wf-100); width:100%; aspect-ratio:1/1; border-radius:6px; margin-bottom:8px; overflow:hidden;} /* Design System-regel: canonieke 1:1 productfoto-ratio, zie components.md CMP-017 */
+  .product-badges{display:flex; gap:4px; margin-bottom:6px; flex-wrap:wrap;}
+  .dm-badge{display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:600; padding:3px 7px; border-radius:9px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  .dm-badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+  .dm-badge-discount{background:var(--wf-900); color:#fff; border-color:var(--wf-900);}
+  .product-title{font-size:12.5px; font-weight:600; color:var(--wf-800); margin-bottom:6px;}
+  .kenmerken-row{display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;}
+  .kenmerk-tag{font-size:9px; color:var(--wf-600); background:var(--wf-100); border-radius:6px; padding:2px 6px;}
+  .price-row{display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;}
+  .price-old{font-size:11px; color:var(--wf-500); text-decoration:line-through;}
+  .price-new{font-size:15px; font-weight:700; color:var(--wf-900);}
+  .price-pct{font-size:10px; font-weight:700; color:var(--wf-800);}
+  .product-offers{font-size:10.5px; color:var(--wf-700); font-weight:600; margin-top:2px;}
+  .product-rating{font-size:10.5px; color:var(--wf-600); margin-top:3px; display:flex; align-items:center; gap:4px;}
+  .stars{color:var(--wf-800); letter-spacing:-1px; font-size:11px;}
+  .add-cart-btn{width:100%; margin-top:10px; font-family:inherit; font-weight:700; font-size:12px; padding:9px 0; border-radius:4px; border:none; background:var(--wf-900); color:#fff;}
+
+  .pagination{display:flex; justify-content:center; gap:5px; margin-top:26px;}
+  .page-item{width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:12px; border:1px solid var(--wf-300); border-radius:4px; color:var(--wf-600);}
+  .page-item.active{background:var(--wf-900); color:#fff; border-color:var(--wf-900);}
+
+  footer.gf{border-top:1px solid var(--wf-300); padding:24px 32px; display:flex; gap:32px; font-size:11px; color:var(--wf-500);}
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Marketplace Listing (Desktop) — v1.3</b> · UX-optimalisatie: paginagrootte vergroot naar 30 producten (5 kolommen × 6 rijen) zodat een bezoeker direct een groot assortiment ziet zonder snel te hoeven pagineren — grid-stijl, componenten en kaartopbouw ongewijzigd. Canonieke 1:1 productfoto-ratio behouden.</div>
+
+<div class="page">
+  <header class="gh">
+    <div class="logo-ph"></div>
+    <div class="searchbar">Zoek naar producten, merken, categorieën…</div>
+    <span class="icon-ph"></span><span class="icon-ph"></span>
+  </header>
+  <div class="page-head"><h1>Robotmaaiers</h1><div class="meta">312 producten — pagina 1 van 11 (30 per pagina)</div></div>
+
+  <div class="listing-grid">
+    <div class="filters">
+      <div class="filter-group"><h4>Prijs</h4>
+        <div class="filter-opt"><input type="checkbox">€0 – €100</div>
+        <div class="filter-opt"><input type="checkbox" checked>€100 – €300</div>
+      </div>
+      <div class="filter-group"><h4>Land van productie</h4>
+        <div class="filter-opt"><input type="checkbox">Nederland</div>
+        <div class="filter-opt"><input type="checkbox">Duitsland</div>
+      </div>
+      <div class="filter-group"><h4>Korting</h4>
+        <div class="filter-opt"><input type="checkbox">Alleen producten met korting</div>
+      </div>
+    </div>
+
+    <div class="results-col">
+      <div class="toolbar">
+        <div style="font-size:12px; color:var(--wf-600);">10 van 312 producten</div>
+        <select class="sort-select"><option>Sorteren: Populariteit</option></select>
+      </div>
+
+      <div class="product-grid">
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Hoge korting</span></div>
+          <div class="product-title">Robotmaaier X200</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">800 m²</span><span class="kenmerk-tag">App-bediening</span></div>
+          <div class="price-row"><span class="price-old">€ 299,00</span><span class="price-new">€ 239,00</span><span class="price-pct">−20%</span></div>
+          <div class="product-offers">3 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,4 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Compact</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">400 m²</span><span class="kenmerk-tag">Compact</span></div>
+          <div class="price-row"><span class="price-new">€ 189,00</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,1 · DE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Pro 400</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">1200 m²</span><span class="kenmerk-tag">GPS</span></div>
+          <div class="price-row"><span class="price-old">€ 379,00</span><span class="price-new">€ 349,00</span><span class="price-pct">−8%</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,6 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Mini</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">250 m²</span></div>
+          <div class="price-row"><span class="price-new">€ 159,00</span></div>
+          <div class="product-offers">4 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,0 · IT</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Korting</span></div>
+          <div class="product-title">Robotmaaier Silent 300</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">600 m²</span><span class="kenmerk-tag">Stil</span></div>
+          <div class="price-row"><span class="price-old">€ 279,00</span><span class="price-new">€ 249,00</span><span class="price-pct">−11%</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,3 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier X200 Plus</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">1000 m²</span><span class="kenmerk-tag">GPS</span></div>
+          <div class="price-row"><span class="price-new">€ 329,00</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,8 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Hoge korting</span></div>
+          <div class="product-title">Robotmaaier Basic</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">300 m²</span></div>
+          <div class="price-row"><span class="price-old">€ 149,00</span><span class="price-new">€ 119,00</span><span class="price-pct">−20%</span></div>
+          <div class="product-offers">3 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★☆☆</span> 3,8 · BE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Terrain</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">45% helling</span></div>
+          <div class="price-row"><span class="price-new">€ 419,00</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,2 · DE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Eco</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">500 m²</span><span class="kenmerk-tag">Zonnepaneel</span></div>
+          <div class="price-row"><span class="price-old">€ 219,00</span><span class="price-new">€ 199,00</span><span class="price-pct">−9%</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,1 · FR</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Connect</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">700 m²</span><span class="kenmerk-tag">Wifi</span></div>
+          <div class="price-row"><span class="price-new">€ 289,00</span></div>
+          <div class="product-offers">5 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,7 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Junior</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">150 m²</span></div>
+          <div class="price-row"><span class="price-new">€ 99,00</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★☆☆</span> 3,6 · ES</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Korting</span></div>
+          <div class="product-title">Robotmaaier Heavy Duty</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">2000 m²</span><span class="kenmerk-tag">4WD</span></div>
+          <div class="price-row"><span class="price-old">€ 599,00</span><span class="price-new">€ 519,00</span><span class="price-pct">−13%</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,9 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Slim</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">500 m²</span></div>
+          <div class="price-row"><span class="price-new">€ 209,00</span></div>
+          <div class="product-offers">3 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,2 · DE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier UltraQuiet</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">900 m²</span><span class="kenmerk-tag">48 dB</span></div>
+          <div class="price-row"><span class="price-new">€ 449,00</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,7 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Korting</span></div>
+          <div class="product-title">Robotmaaier StartPack</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">350 m²</span></div>
+          <div class="price-row"><span class="price-old">€ 179,00</span><span class="price-new">€ 149,00</span><span class="price-pct">−17%</span></div>
+          <div class="product-offers">4 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,0 · IT</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Hoge korting</span></div>
+          <div class="product-title">Robotmaaier X200 (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">800 m²</span><span class="kenmerk-tag">App-bediening</span></div>
+          <div class="price-row"><span class="price-old">€ 299,00</span><span class="price-new">€ 239,00</span><span class="price-pct">−20%</span></div>
+          <div class="product-offers">3 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,4 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Compact (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">400 m²</span><span class="kenmerk-tag">Compact</span></div>
+          <div class="price-row"><span class="price-new">€ 189,00</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,1 · DE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Pro 400 (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">1200 m²</span><span class="kenmerk-tag">GPS</span></div>
+          <div class="price-row"><span class="price-old">€ 379,00</span><span class="price-new">€ 349,00</span><span class="price-pct">−8%</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,6 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Mini (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">250 m²</span></div>
+          <div class="price-row"><span class="price-new">€ 159,00</span></div>
+          <div class="product-offers">4 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,0 · IT</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Korting</span></div>
+          <div class="product-title">Robotmaaier Silent 300 (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">600 m²</span><span class="kenmerk-tag">Stil</span></div>
+          <div class="price-row"><span class="price-old">€ 279,00</span><span class="price-new">€ 249,00</span><span class="price-pct">−11%</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,3 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier X200 Plus (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">1000 m²</span><span class="kenmerk-tag">GPS</span></div>
+          <div class="price-row"><span class="price-new">€ 329,00</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,8 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Hoge korting</span></div>
+          <div class="product-title">Robotmaaier Basic (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">300 m²</span></div>
+          <div class="price-row"><span class="price-old">€ 149,00</span><span class="price-new">€ 119,00</span><span class="price-pct">−20%</span></div>
+          <div class="product-offers">3 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★☆☆</span> 3,8 · BE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Terrain (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">45% helling</span></div>
+          <div class="price-row"><span class="price-new">€ 419,00</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,2 · DE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Eco (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">500 m²</span><span class="kenmerk-tag">Zonnepaneel</span></div>
+          <div class="price-row"><span class="price-old">€ 219,00</span><span class="price-new">€ 199,00</span><span class="price-pct">−9%</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,1 · FR</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Connect (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">700 m²</span><span class="kenmerk-tag">Wifi</span></div>
+          <div class="price-row"><span class="price-new">€ 289,00</span></div>
+          <div class="product-offers">5 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,7 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Junior (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">150 m²</span></div>
+          <div class="price-row"><span class="price-new">€ 99,00</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★☆☆</span> 3,6 · ES</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Korting</span></div>
+          <div class="product-title">Robotmaaier Heavy Duty (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">2000 m²</span><span class="kenmerk-tag">4WD</span></div>
+          <div class="price-row"><span class="price-old">€ 599,00</span><span class="price-new">€ 519,00</span><span class="price-pct">−13%</span></div>
+          <div class="product-offers">1 aanbieder</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,9 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier Slim (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">500 m²</span></div>
+          <div class="price-row"><span class="price-new">€ 209,00</span></div>
+          <div class="product-offers">3 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,2 · DE</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div>
+          <div class="product-title">Robotmaaier UltraQuiet (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">900 m²</span><span class="kenmerk-tag">48 dB</span></div>
+          <div class="price-row"><span class="price-new">€ 449,00</span></div>
+          <div class="product-offers">2 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★★</span> 4,7 · NL</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+        <div class="product-card">
+          <div class="product-img"></div>
+          <div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span><span class="dm-badge dm-badge-discount">Korting</span></div>
+          <div class="product-title">Robotmaaier StartPack (2)</div>
+          <div class="kenmerken-row"><span class="kenmerk-tag">350 m²</span></div>
+          <div class="price-row"><span class="price-old">€ 179,00</span><span class="price-new">€ 149,00</span><span class="price-pct">−17%</span></div>
+          <div class="product-offers">4 aanbieders</div>
+          <div class="product-rating"><span class="stars">★★★★☆</span> 4,0 · IT</div>
+          <button class="add-cart-btn">In winkelwagen</button>
+        </div>
+      </div>
+
+      <div class="pagination">
+        <div class="page-item">‹</div><div class="page-item active">1</div><div class="page-item">2</div><div class="page-item">3</div><div class="page-item">…</div><div class="page-item">32</div><div class="page-item">›</div>
+      </div>
+    </div>
+  </div>
+  <footer class="gf"><span>Over EuropMade</span><span>Klantenservice</span><span>Verkopen op EuropMade</span><span>Juridisch</span></footer>
+</div>
+
+<div class="annot">Punt 3/4: "Robotmaaier X200" toont €299,00 doorgestreept → €239,00 → −20% ⇒ label "Hoge korting" (≥20%). "Robotmaaier Pro 400" toont −8% ⇒ geen label (onder de 10%-drempel voor "Korting"). Punt 6: "In winkelwagen" gebruikt altijd de op dat moment automatisch geselecteerde Buy Box-aanbieding van dát product — bij >1 aanbieder wisselt de knop niets aan de Buy Box-logica zelf (ADR 0005 blijft van toepassing: de winnaar wordt server-side bepaald, niet hier op de kaart).</div>
+
+</body>
+</html>

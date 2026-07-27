@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Homepage (Mobiel, v1.0)</title>
+<style>
+  :root{
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:390px; margin:0 auto; background:#fff; border:1px solid var(--wf-400); border-radius:18px; overflow:hidden;}
+  .banner{max-width:390px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 14px; border-radius:4px; font-size:10.5px;}
+  .section-label{background:var(--wf-800); color:#fff; padding:5px 14px; font-size:9px; text-transform:uppercase; letter-spacing:.04em; font-weight:700;}
+
+  header.gh{display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:70px; height:16px; background:var(--wf-300); border-radius:2px;}
+  .search-ph{flex:1; height:32px; border:1.5px solid var(--wf-700); border-radius:6px; display:flex; align-items:center; padding:0 10px; color:var(--wf-600); font-size:11px;}
+  .icon-ph{width:20px; height:20px; border-radius:50%; background:var(--wf-200);}
+
+  .hero{padding:28px 14px; text-align:center; background:var(--wf-100);}
+  .hero h1{font-size:19px; font-weight:700; margin:0 0 8px; color:var(--wf-900);}
+  .hero p{font-size:11.5px; color:var(--wf-700); margin:0 0 14px;}
+  .hero-search{height:44px; border:2px solid var(--wf-800); border-radius:8px; display:flex; align-items:center; padding:0 12px; color:var(--wf-600); font-size:12px; background:#fff; margin-bottom:12px;}
+  .hero-badges{display:flex; justify-content:center; gap:6px; flex-wrap:wrap;}
+  .dm-badge{display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:600; padding:3px 7px; border-radius:9px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  .dm-badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+
+  .trust-bar{display:flex; flex-direction:column; gap:8px; padding:14px; border-bottom:1px solid var(--wf-200);}
+  .trust-item{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--wf-700);}
+  .trust-dot{width:6px; height:6px; border-radius:50%; background:var(--wf-700); flex-shrink:0;}
+
+  .section{padding:20px 14px;}
+  .section h2{font-size:15px; font-weight:700; color:var(--wf-900); margin:0 0 12px;}
+  .section .sub{font-size:10px; color:var(--wf-600); margin:-8px 0 12px;}
+
+  /* Categorieën: horizontale scroll op mobiel */
+  .category-scroll{display:flex; gap:10px; overflow-x:auto;}
+  .category-tile{flex:0 0 84px; border:1px solid var(--wf-300); border-radius:8px; padding:10px 6px; text-align:center;}
+  .category-tile .icon{width:32px; height:32px; border-radius:50%; background:var(--wf-200); margin:0 auto 6px;}
+  .category-tile .label{font-size:10px; font-weight:600; color:var(--wf-800);}
+
+  /* Producten: horizontale scroll op mobiel */
+  .product-scroll{display:flex; gap:10px; overflow-x:auto;}
+  .product-card{flex:0 0 140px; border:1px solid var(--wf-300); border-radius:8px; padding:9px;}
+  .product-img{background:var(--wf-100); height:90px; border-radius:6px; margin-bottom:7px;}
+  .product-badges{display:flex; gap:3px; margin-bottom:5px;}
+  .product-title{font-size:10.5px; font-weight:600; color:var(--wf-800); margin-bottom:3px;}
+  .product-price{font-size:12px; font-weight:700; color:var(--wf-900);}
+  .product-rating{font-size:9px; color:var(--wf-600); margin-top:3px;}
+
+  /* Advertentie: bewust kleiner formaat op mobiel (CRO-eis, spec sectie 4) */
+  .ad-slot{background:repeating-linear-gradient(45deg, var(--wf-100), var(--wf-100) 8px, #fff 8px, #fff 16px); border:1px dashed var(--wf-500); border-radius:8px; height:64px; display:flex; align-items:center; justify-content:center; position:relative; margin:0 14px;}
+  .ad-label{position:absolute; top:5px; left:8px; font-size:8px; text-transform:uppercase; color:var(--wf-600); background:#fff; padding:1px 5px; border-radius:3px; border:1px solid var(--wf-400);}
+  .ad-slot-content{font-size:9.5px; color:var(--wf-500);}
+
+  .retailer-stack{display:flex; flex-direction:column; gap:10px;}
+  .retailer-card{border:1px solid var(--wf-300); border-radius:8px; padding:12px;}
+  .retailer-card .row{display:flex; align-items:center; gap:8px;}
+  .dm-avatar{width:32px; height:32px; border-radius:50%; background:var(--wf-300); flex-shrink:0;}
+  .retailer-card .name{font-weight:700; font-size:12px;}
+  .retailer-card .meta{font-size:10px; color:var(--wf-600);}
+  .retailer-card .desc{font-size:10.5px; color:var(--wf-700); margin-top:6px;}
+
+  .story-img{background:var(--wf-100); border:1px solid var(--wf-300); border-radius:8px; height:130px; margin-bottom:12px;}
+  .story-text p{font-size:11px; color:var(--wf-700); line-height:1.6;}
+  .link-tiles{display:flex; gap:6px; margin-top:12px; flex-wrap:wrap;}
+
+  .newsletter{background:var(--wf-900); color:#fff; padding:22px 14px; text-align:center;}
+  .newsletter h2{color:#fff; margin-bottom:6px; font-size:14px;}
+  .newsletter p{font-size:10.5px; color:var(--wf-300); margin-bottom:12px;}
+  .newsletter-form{display:flex; flex-direction:column; gap:8px;}
+  .newsletter-form input{height:38px; border-radius:6px; border:none; padding:0 10px; font-size:11px;}
+  .btn-primary{background:var(--wf-800); color:#fff; font-family:inherit; font-weight:700; border-radius:6px; border:none; height:40px; font-size:11.5px;}
+
+  footer.gf{border-top:1px solid var(--wf-300); padding:14px; display:flex; flex-direction:column; gap:8px; font-size:10px; color:var(--wf-500);}
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Homepage (Mobiel ~375–428px) — v1.0</b> · "Verder als gast"-achtige prioriteitslogica hier vertaald naar: zoekbalk allereerst, Categorieën/Producten worden horizontale scroll-rijen, advertentie bewust klein (max. beperkt deel van het scherm, CRO-eis interne review).</div>
+
+<div class="device">
+  <div class="section-label">1 — Header</div>
+  <header class="gh"><div class="logo-ph"></div><div class="search-ph">Zoeken…</div><span class="icon-ph"></span></header>
+
+  <div class="section-label">2 — Hero</div>
+  <div class="hero">
+    <h1>Europese producten, rechtstreeks van de makers</h1>
+    <p>Weet precies wie iets maakt en bij wie je koopt.</p>
+    <div class="hero-search">Zoek naar producten, merken…</div>
+    <div class="hero-badges">
+      <span class="dm-badge dm-badge-solid">100% Europese productie</span>
+      <span class="dm-badge">Verified™</span>
+    </div>
+  </div>
+
+  <div class="section-label">3 — Trust Bar (gestapeld)</div>
+  <div class="trust-bar">
+    <div class="trust-item"><span class="trust-dot"></span>Verified™ productinformatie</div>
+    <div class="trust-item"><span class="trust-dot"></span>30 dagen retour</div>
+    <div class="trust-item"><span class="trust-dot"></span>Uitsluitend Europese producenten</div>
+    <div class="trust-item"><span class="trust-dot"></span>Veilig betalen</div>
+  </div>
+
+  <div class="section-label">4 — Categorieën (CMP-032, horizontale scroll)</div>
+  <div class="section">
+    <h2>Populaire categorieën</h2>
+    <div class="category-scroll">
+      <div class="category-tile"><div class="icon"></div><div class="label">Tuin</div></div>
+      <div class="category-tile"><div class="icon"></div><div class="label">Elektronica</div></div>
+      <div class="category-tile"><div class="icon"></div><div class="label">Mode</div></div>
+      <div class="category-tile"><div class="icon"></div><div class="label">Wonen</div></div>
+      <div class="category-tile"><div class="icon"></div><div class="label">Sport</div></div>
+    </div>
+  </div>
+
+  <div class="section-label">5 — Uitgelichte producten (CMP-017, horizontale scroll)</div>
+  <div class="section">
+    <h2>Uitgelicht deze week</h2>
+    <div class="sub">Nooit gesponsord</div>
+    <div class="product-scroll">
+      <div class="product-card"><div class="product-img"></div><div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div><div class="product-title">Robotmaaier X200</div><div class="product-price">Vanaf € 239,00</div><div class="product-rating">★ 4,4 · NL</div></div>
+      <div class="product-card"><div class="product-img"></div><div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div><div class="product-title">Tuinslang 20m</div><div class="product-price">Vanaf € 59,95</div><div class="product-rating">★ 4,2 · DE</div></div>
+      <div class="product-card"><div class="product-img"></div><div class="product-badges"><span class="dm-badge dm-badge-solid">Verified™</span></div><div class="product-title">Pan-set</div><div class="product-price">Vanaf € 89,00</div><div class="product-rating">★ 4,7 · IT</div></div>
+    </div>
+  </div>
+
+  <div class="section-label">6 — Advertentiebanner, positie 1 (CMP-033, bewust compact)</div>
+  <div style="padding:18px 0;"><div class="ad-slot"><span class="ad-label">Advertentie</span><span class="ad-slot-content">Positie 1</span></div></div>
+
+  <div class="section-label">7 — Uitgelichte Europese merken (CMP-015, gestapeld)</div>
+  <div class="section">
+    <h2>Europese makers</h2>
+    <div class="sub">Roterende selectie</div>
+    <div class="retailer-stack">
+      <div class="retailer-card"><div class="row"><div class="dm-avatar"></div><div><div class="name">Merknaam BV</div><div class="meta">★ 4,6 · Nederland</div></div></div><div class="desc">Producent van tuingereedschap.</div></div>
+      <div class="retailer-card"><div class="row"><div class="dm-avatar"></div><div><div class="name">Atelier Rossi</div><div class="meta">★ 4,8 · Italië</div></div></div><div class="desc">Keramiek, sinds 1962.</div></div>
+    </div>
+  </div>
+
+  <div class="section-label">8 — Advertentiebanner, positie 2 (CMP-033)</div>
+  <div style="padding:18px 0;"><div class="ad-slot" style="height:56px;"><span class="ad-label">Advertentie</span><span class="ad-slot-content">Positie 2</span></div></div>
+
+  <div class="section-label">9 — "Made in Europe"-verhaal</div>
+  <div class="section">
+    <div class="story-img"></div>
+    <div class="story-text">
+      <h2>Waarom EuropMade</h2>
+      <p>Uitsluitend producten die daadwerkelijk in Europa zijn geproduceerd, met gecontroleerde herkomstinformatie.</p>
+      <div class="link-tiles">
+        <span class="category-tile" style="flex:none; padding:7px 12px;">Over EuropMade</span>
+        <span class="category-tile" style="flex:none; padding:7px 12px;">Verified™ uitgelegd</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">10 — Nieuwsbrief</div>
+  <div class="newsletter">
+    <h2>Blijf op de hoogte</h2>
+    <p>Nieuwe Europese merken, direct in je inbox.</p>
+    <div class="newsletter-form"><input type="text" placeholder="naam@voorbeeld.nl"><button class="btn-primary">Aanmelden</button></div>
+  </div>
+
+  <div class="section-label">11 — Footer</div>
+  <footer class="gf"><span>Over EuropMade</span><span>Klantenservice</span><span>Verkopen op EuropMade</span><span>Juridisch</span></footer>
+</div>
+
+</body>
+</html>

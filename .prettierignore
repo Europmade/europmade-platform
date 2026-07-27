@@ -1,0 +1,10 @@
+node_modules
+.next
+.turbo
+.medusa
+dist
+build
+out
+coverage
+pnpm-lock.yaml
+*.md.bak

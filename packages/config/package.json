@@ -1,0 +1,14 @@
+{
+  "name": "@europmade/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gedeelde configuratie (TypeScript, ESLint, Tailwind) voor alle EuropMade-apps en -packages.",
+  "files": [
+    "tsconfig",
+    "eslint-preset.js",
+    "tailwind-preset.ts"
+  ],
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

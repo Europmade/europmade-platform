@@ -1,0 +1,37 @@
+{
+  "name": "@europmade/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EuropMade — publieke marketplace-frontend.",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings 0",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next .turbo node_modules"
+  },
+  "dependencies": {
+    "@europmade/ui": "workspace:*",
+    "@europmade/utils": "workspace:*",
+    "@europmade/types": "workspace:*",
+    "next": "^15.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@europmade/config": "workspace:*",
+    "@eslint/js": "^9.14.0",
+    "@next/eslint-plugin-next": "^15.0.3",
+    "@types/node": "^22.9.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.14.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.13.0"
+  }
+}

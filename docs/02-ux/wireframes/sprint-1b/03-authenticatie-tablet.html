@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Authenticatie-flow (Tablet, v1.1)</title>
+<style>
+  :root{ --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8; --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515; --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif; }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:460px; margin:0 auto 22px; background:#fff; border:1px solid var(--wf-400); border-radius:10px; overflow:hidden;}
+  .banner{max-width:834px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 16px; border-radius:4px; font-size:11px;}
+  .section-label{background:var(--wf-800); color:#fff; padding:5px 20px; font-size:9.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; max-width:460px; margin:0 auto;}
+  .fix{max-width:834px; margin:0 auto 18px; background:var(--wf-100); border-left:3px solid var(--wf-700); padding:7px 10px; font-size:10.5px; color:var(--wf-700);}
+
+  header.gh-min{display:flex; align-items:center; justify-content:center; padding:14px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:110px; height:20px; background:var(--wf-300); border-radius:2px;}
+
+  .auth-card{padding:28px 30px;}
+  .auth-card h1{font-size:17px; margin:0 0 5px; text-align:center;}
+  .auth-sub{font-size:11.5px; color:var(--wf-600); text-align:center; margin-bottom:18px;}
+  .field{margin-bottom:13px;}
+  .field label{display:block; font-size:11px; font-weight:600; color:var(--wf-700); margin-bottom:4px;}
+  .field input{width:100%; height:36px; border:1px solid var(--wf-400); border-radius:5px; padding:0 10px; font-size:12px; color:var(--wf-600);}
+  .field-hint{font-size:10px; color:var(--wf-500); margin-top:3px;}
+  .row-between{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; font-size:11px;}
+  .checkbox-row{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--wf-700);}
+  .checkbox-inline{width:14px; height:14px; border:1px solid var(--wf-500); border-radius:3px; flex-shrink:0; display:inline-block;}
+  .code-input{display:flex; gap:6px; justify-content:center; margin:14px 0;}
+  .code-box{width:36px; height:44px; border:1.5px solid var(--wf-400); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:var(--wf-800);}
+  .code-box.filled{border-color:var(--wf-800);}
+  .qr-ph{width:130px; height:130px; background:var(--wf-100); border:1px solid var(--wf-300); border-radius:6px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--wf-500); text-align:center;}
+  .manual-code{text-align:center; font-size:10px; color:var(--wf-500); margin-bottom:16px; font-family:monospace;}
+  .recovery-grid{display:grid; grid-template-columns:1fr 1fr; gap:7px; background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:6px; padding:12px; margin:14px 0; font-family:monospace; font-size:11px; color:var(--wf-800);}
+  .link{color:var(--wf-800); text-decoration:underline; text-decoration-style:dotted;}
+  .btn{font-family:inherit; font-weight:700; border-radius:5px; border:1px solid transparent;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:11px 0; width:100%; font-size:12.5px; text-align:center;}
+  .divider{display:flex; align-items:center; gap:8px; margin:16px 0; font-size:10px; color:var(--wf-500);}
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--wf-300);}
+  .switch-row{text-align:center; font-size:11.5px; color:var(--wf-600);}
+  .status-block{text-align:center; padding:32px 28px;}
+  .status-icon{width:46px; height:46px; border-radius:50%; background:var(--wf-900); color:#fff; font-size:22px; display:flex; align-items:center; justify-content:center; margin:0 auto 14px;}
+  .status-icon.envelope{background:#fff; border:2px solid var(--wf-800); color:var(--wf-800);}
+  .status-block h1{font-size:17px; margin:0 0 8px;}
+  .status-sub{font-size:12px; color:var(--wf-600); line-height:1.6; margin:0 auto 18px;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800); padding:9px 16px; font-size:11.5px; border-radius:5px;}
+</style>
+</head>
+<body>
+<div class="banner"><b>EuropMade — Wireframe: Authenticatie-flow (Tablet) — v1.1</b> · Nu inclusief 2FA-strategie (schermen 7–8). Eén nieuw component: CMP-040 (Code Input/OTP).</div>
+
+<div class="section-label">1 — Inloggen</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="auth-card">
+    <h1>Inloggen</h1>
+    <div class="auth-sub">Welkom terug bij EuropMade</div>
+    <div class="field"><label>E-mailadres</label><input type="text" placeholder="naam@voorbeeld.nl"></div>
+    <div class="field"><label>Wachtwoord</label><input type="text" placeholder="••••••••"></div>
+    <div class="row-between"><div class="checkbox-row"><span class="checkbox-inline"></span>Onthoud mij</div><span class="link">Wachtwoord vergeten?</span></div>
+    <button class="btn btn-primary">Inloggen</button>
+    <div class="divider">of</div>
+    <div class="switch-row">Nog geen account? <span class="link">Registreren</span></div>
+  </div>
+</div>
+
+<div class="section-label">2 — Registreren</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="auth-card">
+    <h1>Account aanmaken</h1>
+    <div class="auth-sub">Eén account voor kopen — en later ook verkopen</div>
+    <div class="field"><label>Naam</label><input type="text" placeholder="Voor- en achternaam"></div>
+    <div class="field"><label>E-mailadres</label><input type="text" placeholder="naam@voorbeeld.nl"></div>
+    <div class="field"><label>Wachtwoord</label><input type="text" placeholder="Minimaal 8 tekens"><div class="field-hint">Minimaal 8 tekens.</div></div>
+    <div class="row-between" style="margin-bottom:16px;"><div class="checkbox-row"><span class="checkbox-inline"></span>Akkoord met <span class="link">voorwaarden</span></div></div>
+    <button class="btn btn-primary">Account aanmaken</button>
+    <div class="divider">of</div>
+    <div class="switch-row">Al een account? <span class="link">Inloggen</span></div>
+  </div>
+</div>
+<div class="fix">Eén registratieflow — geen rolkeuze. Retailer/Producent-status volgt later via een aparte Partner Onboarding-flow.</div>
+
+<div class="section-label">3 — Wachtwoord vergeten</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="auth-card">
+    <h1>Wachtwoord vergeten</h1>
+    <div class="auth-sub">We sturen je een resetlink</div>
+    <div class="field"><label>E-mailadres</label><input type="text" placeholder="naam@voorbeeld.nl"></div>
+    <button class="btn btn-primary">Verstuur resetlink</button>
+    <div class="switch-row" style="margin-top:14px;">← Terug naar <span class="link">Inloggen</span></div>
+  </div>
+</div>
+
+<div class="section-label">4 — Nieuw wachtwoord instellen</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="auth-card">
+    <h1>Nieuw wachtwoord</h1>
+    <div class="auth-sub">Kies een nieuw wachtwoord</div>
+    <div class="field"><label>Nieuw wachtwoord</label><input type="text" placeholder="Minimaal 8 tekens"></div>
+    <div class="field"><label>Bevestig wachtwoord</label><input type="text" placeholder="Herhaal wachtwoord"></div>
+    <button class="btn btn-primary">Wachtwoord opslaan</button>
+  </div>
+</div>
+
+<div class="section-label">5 — Controleer je e-mail</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="status-block">
+    <div class="status-icon envelope">✉</div>
+    <h1>Controleer je e-mail</h1>
+    <div class="status-sub">We hebben een link gestuurd naar <b>naam@voorbeeld.nl</b>.</div>
+    <button class="btn-ghost">Opnieuw versturen</button>
+  </div>
+</div>
+
+<div class="section-label">6 — E-mailadres bevestigd</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="status-block">
+    <div class="status-icon">✓</div>
+    <h1>E-mailadres bevestigd!</h1>
+    <div class="status-sub">Je account is helemaal klaar.</div>
+    <button class="btn-primary" style="width:auto; padding:11px 22px;">Naar mijn account</button>
+  </div>
+</div>
+
+<div class="section-label">7 — Tweestapsverificatie instellen (2FA-setup)</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="auth-card">
+    <h1>Tweestapsverificatie instellen</h1>
+    <div class="auth-sub">Scan de QR-code met je authenticator-app</div>
+    <div class="qr-ph">QR-code</div>
+    <div class="manual-code">JBSW Y3DP EHPK 3PXP</div>
+    <div class="code-input">
+      <div class="code-box filled">4</div><div class="code-box filled">8</div><div class="code-box filled">1</div>
+      <div class="code-box filled">2</div><div class="code-box filled">9</div><div class="code-box">_</div>
+    </div>
+    <button class="btn-primary">Bevestigen</button>
+  </div>
+</div>
+<div class="fix">CMP-040 (nieuw): gesegmenteerde code-invoer met auto-doorspringen/plakken. Na bevestiging volgen de herstelcodes (verplichte "bewaard"-check), daarna 2FA actief.</div>
+
+<div class="section-label">8 — Inloggen met 2FA-code</div>
+<div class="device">
+  <header class="gh-min"><div class="logo-ph"></div></header>
+  <div class="auth-card">
+    <h1>Verificatiecode</h1>
+    <div class="auth-sub">Voer de code in uit je authenticator-app</div>
+    <div class="code-input">
+      <div class="code-box"></div><div class="code-box"></div><div class="code-box"></div>
+      <div class="code-box"></div><div class="code-box"></div><div class="code-box"></div>
+    </div>
+    <div class="checkbox-row" style="margin-bottom:14px;"><span class="checkbox-inline"></span>Vertrouw dit apparaat 30 dagen</div>
+    <button class="btn-primary">Bevestigen</button>
+    <div class="switch-row" style="margin-top:14px;">Geen toegang tot je app? <span class="link">Gebruik een herstelcode</span></div>
+  </div>
+</div>
+</body>
+</html>

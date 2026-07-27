@@ -1,0 +1,7 @@
+{
+  "extends": "@europmade/config/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "dom"]
+  },
+  "include": ["src"]
+}

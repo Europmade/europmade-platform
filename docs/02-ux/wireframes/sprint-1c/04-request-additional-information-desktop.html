@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Request Additional Information (Desktop)</title>
+<style>
+  :root{
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:#e8e8e8; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:32px 0;}
+  .page{max-width:900px; margin:0 auto 28px; background:#fff; border:1px solid var(--wf-400);}
+  .banner{max-width:1040px; margin:0 auto 20px; background:var(--wf-900); color:#fff; padding:12px 20px; border-radius:4px; font-size:12px;}
+  .section-label{background:var(--wf-800); color:#fff; padding:6px 24px; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; max-width:900px; margin:0 auto;}
+  .fix{max-width:1040px; margin:0 auto 20px; background:var(--wf-100); border-left:3px solid var(--wf-900); padding:8px 12px; font-size:11px; color:var(--wf-800);}
+
+  /* Admin Shell — generieke header (Admin Shell spec §1.1–1.8, nog geen eigen wireframe; hier opgebouwd uit uitsluitend bestaande primitieven) */
+  .admin-header{display:flex; align-items:center; justify-content:space-between; padding:12px 24px; border-bottom:1px solid var(--wf-300);}
+  .admin-header .ah-left{display:flex; align-items:center; gap:14px;}
+  .logo-ph{width:120px; height:22px; background:var(--wf-300); border-radius:2px;}
+  .ah-module{font-size:12px; font-weight:700; color:var(--wf-700); padding-left:14px; border-left:1px solid var(--wf-300);}
+  .ah-right{display:flex; align-items:center; gap:16px;}
+  .ah-search{width:200px; height:30px; border:1px solid var(--wf-400); border-radius:5px; background:var(--wf-100); font-size:11px; color:var(--wf-500); display:flex; align-items:center; padding:0 10px;}
+  .ah-icon{width:26px; height:26px; border-radius:50%; border:1px solid var(--wf-400); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--wf-600); position:relative;}
+  .ah-icon .dot{position:absolute; top:-2px; right:-2px; width:8px; height:8px; border-radius:50%; background:var(--wf-800); border:1.5px solid #fff;}
+  .ah-avatar{width:28px; height:28px; border-radius:50%; background:var(--wf-300);}
+
+  .breadcrumb{font-size:11.5px; color:var(--wf-500); padding:12px 24px; border-bottom:1px solid var(--wf-200);}
+  .breadcrumb b{color:var(--wf-800); font-weight:600;}
+
+  .content{padding:24px 28px;}
+  .content h1{font-size:19px; font-weight:700; margin:0 0 6px; color:var(--wf-900);}
+  .content-sub{font-size:12px; color:var(--wf-600); margin-bottom:20px;}
+
+  /* KPI-vak (Admin Shell §5, voorgesteld) */
+  .kpi-row{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;}
+  .kpi-card{border:1px solid var(--wf-300); border-radius:8px; padding:18px 20px; background:#fff;}
+  .kpi-value{font-size:30px; font-weight:700; color:var(--wf-900); line-height:1;}
+  .kpi-label{font-size:11.5px; color:var(--wf-600); margin-top:6px;}
+  .kpi-link{font-size:11px; color:var(--wf-700); text-decoration:underline; margin-top:8px; display:inline-block;}
+
+  /* Wachtrij-samenvatting-kaart (Admin Shell §5, voorgesteld) */
+  .queue-row{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;}
+  .queue-card{border:1px solid var(--wf-300); border-radius:8px; padding:18px 20px; background:#fff;}
+  .queue-card h3{font-size:13px; margin:0 0 6px; color:var(--wf-900);}
+  .queue-meta{font-size:11.5px; color:var(--wf-600); margin-bottom:14px;}
+
+  /* Takenlijst-item (Admin Shell §5, voorgesteld) */
+  .task-list{border:1px solid var(--wf-300); border-radius:8px; background:#fff;}
+  .task-item{display:flex; justify-content:space-between; align-items:center; padding:12px 18px; border-bottom:1px solid var(--wf-200); font-size:12px; color:var(--wf-700);}
+  .task-item:last-child{border-bottom:none;}
+  .task-link{font-size:11px; color:var(--wf-800); text-decoration:underline;}
+
+  .btn{font-family:inherit; font-weight:700; border-radius:5px; cursor:default; border:1px solid transparent;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:11px 22px; font-size:12.5px;}
+  .btn-secondary{background:#fff; color:var(--wf-800); border-color:var(--wf-500); padding:11px 22px; font-size:12.5px;}
+  .btn-ghost{background:none; border:1px solid var(--wf-500); color:var(--wf-800); padding:11px 20px; font-size:12px;}
+  .btn-destructive{background:#fff; color:var(--wf-900); border:1px dashed var(--wf-700); padding:11px 20px; font-size:12.5px;}
+  .btn-sm{padding:6px 14px; font-size:11px;}
+  .btn-row{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
+
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--wf-700); margin-bottom:5px;}
+  .field input, .field textarea{width:100%; border:1px solid var(--wf-400); border-radius:5px; padding:9px 12px; font-size:12.5px; color:var(--wf-600); font-family:inherit;}
+  .field textarea{min-height:90px; resize:none;}
+  .field-hint{font-size:10.5px; color:var(--wf-500); margin-top:4px;}
+  .field-count{font-size:10px; color:var(--wf-500); text-align:right; margin-top:3px;}
+
+  .notice{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:4px; padding:9px 11px; font-size:11.5px; color:var(--wf-700); margin-bottom:16px;}
+  .notice.notice--warning{border-style:solid; border-color:var(--wf-700);}
+
+  /* CMP-009 Tabs */
+  .tabs{display:flex; gap:0; border-bottom:1px solid var(--wf-300); padding:0 28px;}
+  .tab{font-size:12.5px; padding:12px 18px; color:var(--wf-500); border-bottom:2px solid transparent; font-weight:600;}
+  .tab .tab-count{color:var(--wf-500); font-weight:400;}
+  .tab.active{color:var(--wf-900); border-bottom-color:var(--wf-900);}
+
+  /* Zoek + filter */
+  .toolbar{display:flex; gap:10px; padding:16px 28px; align-items:center;}
+  .search-field{flex:1; height:36px; border:1px solid var(--wf-400); border-radius:5px; padding:0 12px; font-size:12px; color:var(--wf-500); display:flex; align-items:center;}
+  .filter-chip{height:36px; border:1px solid var(--wf-400); border-radius:5px; padding:0 12px; font-size:11.5px; color:var(--wf-700); display:flex; align-items:center; gap:6px;}
+
+  /* CMP-010 Table */
+  table.table{width:100%; border-collapse:collapse; font-size:12px;}
+  table.table th{text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--wf-500); padding:9px 28px; border-bottom:1px solid var(--wf-400);}
+  table.table td{padding:11px 28px; border-bottom:1px solid var(--wf-200); color:var(--wf-800);}
+  table.table tr:last-child td{border-bottom:none;}
+
+  /* CMP-008 Badge */
+  .badge{display:inline-block; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; padding:3px 9px; border-radius:10px; border:1px solid var(--wf-400); color:var(--wf-700); background:var(--wf-100);}
+  .badge-outline{background:transparent;}
+  .badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+
+  /* CMP-035 Pagination */
+  .pagination-row{display:flex; justify-content:space-between; align-items:center; padding:14px 28px;}
+  .pagination-meta{font-size:11px; color:var(--wf-500);}
+  .pagination{display:flex; gap:4px; align-items:center;}
+  .page-item{width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:11px; border:1px solid var(--wf-300); border-radius:3px; color:var(--wf-600);}
+  .page-item.active{background:var(--wf-900); color:#fff; border-color:var(--wf-900);}
+
+  /* CMP-036 Empty State */
+  .empty-state{text-align:center; padding:60px 28px; color:var(--wf-600);}
+  .empty-state .es-icon{width:44px; height:44px; border-radius:50%; border:1.5px dashed var(--wf-400); margin:0 auto 14px;}
+  .empty-state .es-title{font-size:14px; font-weight:700; color:var(--wf-800); margin-bottom:6px;}
+  .empty-state .es-sub{font-size:12px; color:var(--wf-600);}
+
+  /* Detailscherm — twee kolommen */
+  .detail-grid{display:grid; grid-template-columns:1.7fr 1fr; gap:20px; padding:24px 28px;}
+  .detail-block{border:1px solid var(--wf-200); border-radius:8px; padding:18px 20px; margin-bottom:16px;}
+  .detail-block:last-child{margin-bottom:0;}
+  .detail-block h3{font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--wf-500); margin:0 0 12px;}
+  .detail-row{display:flex; justify-content:space-between; font-size:12.5px; color:var(--wf-800); padding:5px 0;}
+  .detail-row .dr-label{color:var(--wf-600);}
+  .detail-link{font-size:11px; color:var(--wf-800); text-decoration:underline;}
+
+  /* CMP-041 File Upload — weergavemodus */
+  .upload-item{border:1px solid var(--wf-300); border-radius:6px; padding:10px 12px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; font-size:12px;}
+  .upload-item .uf-name{font-weight:600; color:var(--wf-800);}
+
+  /* Reviewer-checklist */
+  .checklist-row{display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--wf-700); margin-bottom:10px;}
+  .checkbox-inline{width:15px; height:15px; border:1px solid var(--wf-500); border-radius:3px; flex-shrink:0; margin-top:1px;}
+
+  /* AI-context kader */
+  .ai-box{border:1px dashed var(--wf-500); border-radius:6px; padding:14px 16px; font-size:11.5px; color:var(--wf-700); line-height:1.6;}
+  .ai-box .ai-line{margin-bottom:5px;}
+  .ai-box .ai-ok::before{content:"✓ "; color:var(--wf-800); font-weight:700;}
+  .ai-box .ai-warn::before{content:"⚠ "; color:var(--wf-800); font-weight:700;}
+
+  /* Actiebalk (detailscherm, sticky) */
+  .action-bar{display:flex; justify-content:space-between; padding:16px 28px; border-top:1px solid var(--wf-300); background:var(--wf-100);}
+
+  /* Status/Result composities */
+  .status-block{text-align:center; padding:44px 40px;}
+  .status-icon{width:56px; height:56px; border-radius:50%; background:var(--wf-900); color:#fff; font-size:26px; display:flex; align-items:center; justify-content:center; margin:0 auto 18px;}
+  .status-icon.pending{background:#fff; border:2px solid var(--wf-800); color:var(--wf-800);}
+  .status-icon.rejected{background:#fff; border:2px solid var(--wf-700); color:var(--wf-700);}
+  .status-icon.processing{background:#fff; border:2px dashed var(--wf-600); color:var(--wf-600);}
+  .status-block h1{font-size:19px; font-weight:700; margin:0 0 10px; color:var(--wf-900);}
+  .status-sub{font-size:12.5px; color:var(--wf-600); line-height:1.6; max-width:440px; margin:0 auto 18px;}
+  .status-badge{display:inline-block; font-size:11px; font-weight:600; padding:4px 10px; border-radius:10px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff; margin-bottom:14px;}
+  .reason-box{background:var(--wf-100); border:1px dashed var(--wf-700); border-radius:6px; padding:12px 16px; text-align:left; max-width:440px; margin:0 auto 16px; font-size:12px; color:var(--wf-800);}
+  .consequence-box{background:#fff; border:1px solid var(--wf-300); border-radius:6px; padding:12px 16px; text-align:left; max-width:440px; margin:0 auto 20px; font-size:11.5px; color:var(--wf-700); line-height:1.6;}
+
+  /* Historie-tijdlijn */
+  .timeline{padding:20px 28px;}
+  .timeline-item{display:flex; gap:14px; padding:14px 0; border-bottom:1px solid var(--wf-200);}
+  .timeline-item:last-child{border-bottom:none;}
+  .timeline-dot{width:9px; height:9px; border-radius:50%; background:var(--wf-800); margin-top:5px; flex-shrink:0;}
+  .timeline-meta{font-size:11px; color:var(--wf-500); margin-bottom:3px;}
+  .timeline-title{font-size:12.5px; font-weight:600; color:var(--wf-800); margin-bottom:3px;}
+  .timeline-detail{font-size:11.5px; color:var(--wf-700); line-height:1.5;}
+
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Verification Center — Request Additional Information (Sprint 1C)</b> · Verplicht, specifiek verzoek (Verification Center-spec §5/§6, hergebruikt patroon uit Partner Onboarding §2.8A). Geen generieke tekst toegestaan — het tekstveld is verplicht.</div>
+
+<div class="section-label">4a — Request Additional Information: leeg formulier</div>
+<div class="page">
+<header class="admin-header">
+    <div class="ah-left"><div class="logo-ph"></div><div class="ah-module">Verification Center</div></div>
+    <div class="ah-right">
+      <div class="ah-search">Zoeken...</div>
+      <div class="ah-icon">🔍</div>
+      <div class="ah-icon">🔔<span class="dot"></span></div>
+      <div class="ah-avatar"></div>
+    </div>
+  </header>
+  <div class="breadcrumb">... &gt; Houten fietsmand XL &gt; <b>Aanvullende informatie vragen</b></div>
+  <div class="content">
+    <h1>Aanvullende informatie vragen</h1>
+    <div class="content-sub">Product: Houten fietsmand XL — De Mandenmaker BV</div>
+
+    <div class="field">
+      <label>Wat heb je nodig van de producent?</label>
+      <textarea placeholder="Bijv. &quot;Het geüploade productiebewijsstuk toont geen adres — kun je een document uploaden waarop de productielocatie duidelijk zichtbaar is?&quot;"></textarea>
+      <div class="field-count">0 / 500 tekens</div>
+      
+    </div>
+
+    <div class="notice">
+      ⓘ Na verzenden keert de aanvraag terug naar "Aangevraagd." De producent ontvangt een notificatie met exact dit verzoek en kan het aanvullen. Er geldt geen maximum aantal aanvullingsronden.
+    </div>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-ghost">Annuleren</button>
+    <button class="btn btn-primary">Verzoek versturen</button>
+  </div>
+</div>
+<div class="fix"><b>Bron:</b> Verification Center-spec §5/§6. Verplicht tekstveld — nooit een generieke tekst. Geen limiet op het aantal aanvullingsronden.</div>
+<div class="section-label">4b — Request Additional Information: foutstaat (leeg verzonden)</div>
+<div class="page">
+<header class="admin-header">
+    <div class="ah-left"><div class="logo-ph"></div><div class="ah-module">Verification Center</div></div>
+    <div class="ah-right">
+      <div class="ah-search">Zoeken...</div>
+      <div class="ah-icon">🔍</div>
+      <div class="ah-icon">🔔<span class="dot"></span></div>
+      <div class="ah-avatar"></div>
+    </div>
+  </header>
+  <div class="breadcrumb">... &gt; Houten fietsmand XL &gt; <b>Aanvullende informatie vragen</b></div>
+  <div class="content">
+    <h1>Aanvullende informatie vragen</h1>
+    <div class="content-sub">Product: Houten fietsmand XL — De Mandenmaker BV</div>
+
+    <div class="field">
+      <label>Wat heb je nodig van de producent?</label>
+      <textarea placeholder="Bijv. &quot;Het geüploade productiebewijsstuk toont geen adres — kun je een document uploaden waarop de productielocatie duidelijk zichtbaar is?&quot;"></textarea>
+      <div class="field-count">0 / 500 tekens</div>
+      <div class="notice notice--warning">⚠ Dit veld is verplicht — een verzoek moet altijd specifiek zijn.</div>
+    </div>
+
+    <div class="notice">
+      ⓘ Na verzenden keert de aanvraag terug naar "Aangevraagd." De producent ontvangt een notificatie met exact dit verzoek en kan het aanvullen. Er geldt geen maximum aantal aanvullingsronden.
+    </div>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-ghost">Annuleren</button>
+    <button class="btn btn-primary">Verzoek versturen</button>
+  </div>
+</div>
+</body>
+</html>

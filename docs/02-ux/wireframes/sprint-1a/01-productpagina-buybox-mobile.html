@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>EuropMade — Wireframe: Productpagina + Buy Box (Mobiel, v1.2)</title>
+<style>
+  :root{
+    --wf-100:#f2f2f2; --wf-200:#e4e4e4; --wf-300:#cccccc; --wf-400:#a8a8a8;
+    --wf-500:#8a8a8a; --wf-600:#666666; --wf-700:#4a4a4a; --wf-800:#2c2c2c; --wf-900:#151515;
+    --wf-font: -apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{background:#dcdcdc; font-family:var(--wf-font); color:var(--wf-800); margin:0; padding:24px 0;}
+  .device{max-width:390px; margin:0 auto; background:#fff; border:1px solid var(--wf-400); border-radius:18px; overflow:hidden; position:relative;}
+  .banner{max-width:390px; margin:0 auto 16px; background:var(--wf-900); color:#fff; padding:10px 14px; border-radius:4px; font-size:10.5px;}
+  .annot{margin:14px; background:var(--wf-100); border-left:3px solid var(--wf-700); padding:7px 9px; font-size:9.5px; color:var(--wf-700);}
+
+  header.gh{display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--wf-300);}
+  .logo-ph{width:70px; height:16px; background:var(--wf-300); border-radius:2px;}
+  .search-ph{flex:1; height:30px; border:1px solid var(--wf-400); border-radius:6px; display:flex; align-items:center; padding:0 8px; color:var(--wf-500); font-size:11px;}
+  .icon-ph{width:20px; height:20px; border-radius:50%; background:var(--wf-200);}
+
+  .breadcrumb{font-size:10px; color:var(--wf-500); padding:10px 14px 0;}
+  .content{padding-bottom:88px;}
+  .gallery-main{margin:10px 14px 0; background:var(--wf-100); border:1px solid var(--wf-300); border-radius:8px; height:220px; display:flex; align-items:center; justify-content:center; color:var(--wf-500); font-size:11px;}
+  .dots{display:flex; justify-content:center; gap:5px; margin:8px 0;}
+  .dot{width:5px; height:5px; border-radius:50%; background:var(--wf-300);}
+  .dot.active{background:var(--wf-700);}
+
+  .product-info{padding:0 14px;}
+  h1{font-size:16px; font-weight:700; margin:4px 0 6px; color:var(--wf-900);}
+  .rating-line{font-size:11px; color:var(--wf-600); margin-bottom:8px;}
+  .offers-hint{font-size:11px; font-weight:600; color:var(--wf-800); background:var(--wf-100); display:inline-block; padding:4px 8px; border-radius:4px; margin-bottom:10px;}
+  .badge-row{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .dm-badge{display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:600; padding:3px 7px; border-radius:9px; border:1px solid var(--wf-400); color:var(--wf-700); background:#fff;}
+  .dm-badge-solid{background:var(--wf-800); color:#fff; border-color:var(--wf-800);}
+  .dm-badge-verified{background:var(--wf-900); color:#fff; border-color:var(--wf-900); font-weight:700;}
+  .info-dot{width:12px; height:12px; border-radius:50%; border:1px solid var(--wf-500); color:var(--wf-600); font-size:8px; display:inline-flex; align-items:center; justify-content:center;}
+
+  .variant-block{margin-bottom:10px;}
+  .variant-label{font-size:10px; color:var(--wf-600); margin-bottom:5px; font-weight:600;}
+  .variant-options{display:flex; gap:6px; flex-wrap:wrap;}
+  .variant-swatch{min-width:30px; height:28px; padding:0 8px; border:1.5px solid var(--wf-400); border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10.5px; color:var(--wf-700); background:#fff;}
+  .variant-swatch.is-selected{border-color:var(--wf-900); border-width:2px; font-weight:700;}
+  .variant-color{width:20px; height:20px; border-radius:50%; border:1.5px solid var(--wf-400);}
+
+  .p-intro{font-size:11px; line-height:1.6; color:var(--wf-700); margin:8px 0 0;}
+
+  .buybox-inline{margin:0 14px 14px; border:2px solid var(--wf-800); border-radius:10px; padding:14px;}
+  .bb-label-row{display:flex; align-items:center; justify-content:space-between;}
+  .bb-label{font-size:9.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--wf-600);}
+  .retailer-indicator{font-size:10.5px; color:var(--wf-700); margin-top:6px;}
+  .dm-avatar-sm{width:14px; height:14px; border-radius:50%; background:var(--wf-300); display:inline-block; vertical-align:-2px; margin-right:4px;}
+  .bb-price{font-size:22px; font-weight:700; color:var(--wf-900); margin-top:4px;}
+  .bb-badges{display:flex; flex-wrap:wrap; gap:5px; margin:10px 0;}
+  .btn{font-family:inherit; font-weight:700; border-radius:6px; border:1px solid transparent;}
+  .btn-primary{background:var(--wf-900); color:#fff; padding:11px 0; width:100%; font-size:13px; text-align:center;}
+  .btn-secondary{background:#fff; color:var(--wf-800); border-color:var(--wf-500);}
+  .btn-secondary.btn-secondary--full{width:100%; font-size:12px; padding:8px 0; border-radius:6px; text-align:center;}
+  .notice{background:var(--wf-100); border:1px dashed var(--wf-400); border-radius:5px; padding:7px 8px; font-size:9.5px; color:var(--wf-700); margin-top:8px;}
+  .bb-toggle{font-size:11px; color:var(--wf-700); text-align:center; margin-top:10px; padding-top:10px; border-top:1px dashed var(--wf-300);}
+
+  .highlights{margin:14px; border-top:1px solid var(--wf-200); padding-top:12px;}
+  .t-caption{font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--wf-500); margin-bottom:6px;}
+  .highlight-row{display:flex; gap:6px; align-items:flex-start; font-size:12px; color:var(--wf-700); margin-bottom:6px;}
+  .bullet{width:4px; height:4px; border-radius:50%; background:var(--wf-500); flex-shrink:0; margin-top:5px;}
+
+  .section{padding:0 14px 20px;}
+  .section h2{font-size:14px; font-weight:700; color:var(--wf-900); margin-bottom:10px; border-bottom:1px solid var(--wf-200); padding-bottom:8px;}
+
+  .pgb-strip{display:flex; gap:8px; overflow-x:auto;}
+  .pgb-card{flex:0 0 150px; border:1px solid var(--wf-300); border-radius:8px; padding:8px; display:flex; gap:8px; align-items:center;}
+  .pgb-img{width:36px; height:36px; background:var(--wf-100); border-radius:5px; flex-shrink:0;}
+  .pgb-title{font-size:10px; font-weight:600;}
+  .pgb-price{font-size:11px; font-weight:700; color:var(--wf-900);}
+
+  .offer-card-m{border:1px solid var(--wf-400); border-radius:8px; padding:12px; margin-bottom:10px;}
+  .offer-card-m.winner{border-color:var(--wf-800); background:var(--wf-100);}
+  .oc-top{display:flex; justify-content:space-between; align-items:center;}
+  .oc-price{font-size:16px; font-weight:700;}
+  .oc-badges{display:flex; flex-wrap:wrap; gap:5px; margin:8px 0;}
+  .row-collapsed{display:none;}
+  .row-collapsed.is-expanded{display:block;}
+  .show-more-btn{width:100%; margin-top:6px; font-family:inherit; font-size:12px; padding:9px 0; border-radius:6px; border:1px solid var(--wf-700); background:#fff; color:var(--wf-800); font-weight:600;}
+
+  /* Punt 9: swipebare tabs, geen vaste balk */
+  .tabs-scroll{display:flex; gap:0; overflow-x:auto; -webkit-overflow-scrolling:touch; border-bottom:1px solid var(--wf-300); margin-bottom:12px; scroll-snap-type:x proximity;}
+  .tab{font-size:11.5px; padding:8px 12px; color:var(--wf-500); border-bottom:2px solid transparent; flex-shrink:0; white-space:nowrap; scroll-snap-align:start;}
+  .tab.active{color:var(--wf-900); border-bottom-color:var(--wf-900); font-weight:700;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:block;}
+  .description-text p{font-size:11px; line-height:1.6; color:var(--wf-700); margin:0 0 8px;}
+  .clamp-10{max-height:11em; overflow:hidden;}
+  .show-more-btn-text{width:100%; margin-top:6px; font-family:inherit; font-size:11.5px; padding:9px 0; border-radius:6px; border:1px solid var(--wf-700); background:#fff; color:var(--wf-800); font-weight:600;}
+  .spec-row{display:flex; justify-content:space-between; font-size:12px; padding:7px 0; border-bottom:1px solid var(--wf-200);}
+  .spec-row span:first-child{color:var(--wf-500);}
+  .suitable-list .highlight-row{font-size:11.5px; color:var(--wf-700); margin-bottom:6px;}
+
+  .review-header{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .review-header h3{font-size:12px; margin:0;}
+  .add-review-btn{font-family:inherit; font-size:10.5px; padding:6px 10px; border-radius:5px; border:1px solid var(--wf-700); background:#fff; color:var(--wf-800); font-weight:600;}
+  .t-small{font-size:10px; color:var(--wf-600); margin-bottom:8px; display:block;}
+  .review-item{border-top:1px solid var(--wf-200); padding:8px 0; font-size:11px; color:var(--wf-700);}
+  .verified-purchase{font-size:8.5px; color:var(--wf-700); font-weight:600; background:var(--wf-100); border:1px solid var(--wf-400); border-radius:8px; padding:2px 6px; display:inline-block; margin-left:4px;}
+
+  .faq-item{border-bottom:1px solid var(--wf-200); padding:9px 0;}
+  .faq-item:last-child{border-bottom:none;}
+  .faq-q{font-size:11.5px; font-weight:700; color:var(--wf-800); margin-bottom:4px;}
+  .faq-a{font-size:11px; color:var(--wf-700); line-height:1.5;}
+
+  .related-scroll{display:flex; gap:8px; overflow-x:auto;}
+  .rel-card{flex:0 0 108px; border:1px solid var(--wf-300); border-radius:6px; padding:8px;}
+  .rel-img{background:var(--wf-100); height:60px; border-radius:4px; margin-bottom:5px;}
+  .rel-line{height:6px; background:var(--wf-200); border-radius:2px; margin-bottom:4px;}
+
+  .sticky-bar{position:sticky; bottom:0; left:0; right:0; background:#fff; border-top:1px solid var(--wf-400); padding:10px 14px; display:flex; align-items:center; gap:10px; box-shadow:0 -2px 6px rgba(0,0,0,0.06);}
+  .sb-price-block{flex-shrink:0;}
+  .sb-price{font-size:16px; font-weight:700; color:var(--wf-900);}
+  .sb-sub{font-size:9.5px; color:var(--wf-600);}
+  .btn-primary.btn-primary--bar{flex:1; width:auto; font-size:12.5px; padding:11px 0; border-radius:6px; text-align:center;}
+  footer.gf{border-top:1px solid var(--wf-300); padding:14px; display:flex; flex-direction:column; gap:8px; font-size:10px; color:var(--wf-500);}
+</style>
+</head>
+<body>
+
+<div class="banner"><b>EuropMade — Wireframe: Productpagina + Buy Box (Mobiel) — v1.2</b> · PO-geautoriseerde revisie. <b>Punt 9:</b> tabs zijn nu een horizontaal swipebare strook (<code>overflow-x:auto</code> + <code>scroll-snap</code>), geen vaste, niet-scrollende balk meer. Sticky bottom bar (CMP-028) blijft ongewijzigd — die staat los van de tabs.</div>
+
+<div class="device">
+  <header class="gh"><div class="logo-ph"></div><div class="search-ph">Zoeken…</div><span class="icon-ph"></span></header>
+  <div class="breadcrumb">Home &gt; Robotmaaiers</div>
+
+  <div class="content">
+    <div class="gallery-main">Hoofdafbeelding</div>
+    <div class="dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+
+    <div class="product-info">
+      <h1>Robotmaaier X200 Draadloos</h1>
+      <div class="rating-line">★★★★☆ 4,4 — 328 productreviews</div>
+      <div class="offers-hint">Vanaf € 239,00 · 3 aanbieders ↓</div>
+      <div class="badge-row">
+        <span class="dm-badge dm-badge-verified">✓ Verified™</span>
+        <span class="dm-badge">Gemaakt in NL</span>
+        <span class="dm-badge">EU-eigendom: 100% <span class="info-dot">ⓘ</span></span>
+      </div>
+      <div class="variant-block">
+        <div class="variant-label">Kleur</div>
+        <div class="variant-options">
+          <div class="variant-swatch is-selected"><span class="variant-color" style="background:#2c2c2c;"></span></div>
+          <div class="variant-swatch"><span class="variant-color" style="background:#8a8a8a;"></span></div>
+        </div>
+      </div>
+      <p class="p-intro">De Robotmaaier X200 maait tot 800 m² gazon volledig automatisch.</p>
+    </div>
+
+    <div class="buybox-inline">
+      <div class="bb-label-row"><span class="bb-label">Automatisch geselecteerd</span><span class="info-dot">ⓘ</span></div>
+      <div class="retailer-indicator"><span class="dm-avatar-sm"></span>Retailer X · ★ 4,6</div>
+      <div class="bb-price">€ 249,00</div>
+      <div class="bb-badges">
+        <span class="dm-badge dm-badge-solid">Morgen in huis</span>
+        <span class="dm-badge">Gratis verzending</span>
+        <span class="dm-badge">30 dagen retour</span>
+      </div>
+      <button class="btn btn-primary">In winkelwagen</button>
+      <div class="notice">ⓘ Geselecteerd op basis van prijs, levertijd, beoordeling, voorraad, betrouwbaarheid.</div>
+      <div class="bb-toggle">Alle 3 aanbieders bekijken ▾</div>
+    </div>
+
+    <div class="section">
+      <h2>Past goed bij</h2>
+      <div class="pgb-strip">
+        <div class="pgb-card"><div class="pgb-img"></div><div><div class="pgb-title">Vervangmes-set</div><div class="pgb-price">€ 24,95</div></div></div>
+        <div class="pgb-card"><div class="pgb-img"></div><div><div class="pgb-title">Begrenzingskabel</div><div class="pgb-price">€ 34,50</div></div></div>
+        <div class="pgb-card"><div class="pgb-img"></div><div><div class="pgb-title">Onderhoudsset</div><div class="pgb-price">€ 19,00</div></div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Alle aanbieders (3)</h2>
+      <div class="offer-card-m winner">
+        <div class="oc-top"><span class="retailer-indicator" style="margin:0;"><span class="dm-avatar-sm"></span>Retailer X</span><span class="dm-badge dm-badge-solid">Geselecteerd</span></div>
+        <div class="oc-price">€ 249,00</div>
+        <div class="oc-badges"><span class="dm-badge">Morgen</span><span class="dm-badge">Gratis verz.</span><span class="dm-badge">30 dgn retour</span><span class="dm-badge">★ 4,6</span></div>
+      </div>
+      <div class="offer-card-m">
+        <div class="oc-top"><span class="retailer-indicator" style="margin:0;"><span class="dm-avatar-sm"></span>Retailer Y</span></div>
+        <div class="oc-price">€ 255,00</div>
+        <div class="oc-badges"><span class="dm-badge">2–3 dgn</span><span class="dm-badge">€4,95 verz.</span><span class="dm-badge">14 dgn retour</span><span class="dm-badge">★ 4,3</span></div>
+        <button class="btn btn-secondary btn-secondary--full">Deze aanbieder tonen</button>
+      </div>
+      <div class="offer-card-m">
+        <div class="oc-top"><span class="retailer-indicator" style="margin:0;"><span class="dm-avatar-sm"></span>Retailer Z</span></div>
+        <div class="oc-price">€ 239,00</div>
+        <div class="oc-badges"><span class="dm-badge">5 dgn</span><span class="dm-badge">Gratis verz.</span><span class="dm-badge">30 dgn retour</span><span class="dm-badge">★ 4,1</span></div>
+        <button class="btn btn-secondary btn-secondary--full">Deze aanbieder tonen</button>
+      </div>
+      <div class="annot">Voorbeeld met 3 aanbieders (allemaal al zichtbaar). Bij >3 tonen aanbieders 4+ de class <code>row-collapsed</code>, met een "Bekijk alle aanbieders"-knop (CMP-038) eronder.</div>
+    </div>
+
+    <div class="section">
+      <div class="tabs-scroll">
+        <div class="tab active">Omschrijving</div>
+        <div class="tab">Geschikt voor</div>
+        <div class="tab">Specificaties</div>
+        <div class="tab">Downloads</div>
+        <div class="tab">Productreviews</div>
+        <div class="tab">Verkopersreviews</div>
+      </div>
+      <div class="tab-panel active">
+        <div class="description-text clamp-10">
+          <p>De Robotmaaier X200 is ontwikkeld voor tuinbezitters die een verzorgd gazon willen zonder er zelf tijd in te steken.</p>
+          <p>Ontworpen en geassembleerd in Nederland.</p>
+        </div>
+        <button class="show-more-btn-text">Meer tonen ▾</button>
+      </div>
+      <div class="tab-panel">
+        <div class="suitable-list">
+          <div class="highlight-row"><span class="bullet"></span>Tuinen tot 800 m²</div>
+          <div class="highlight-row"><span class="bullet"></span>Vlak tot licht hellend terrein</div>
+        </div>
+      </div>
+      <div class="tab-panel">
+        <div class="spec-row"><span>Werkgebied</span><span>Tot 800 m²</span></div>
+        <div class="spec-row"><span>Gewicht</span><span>9,8 kg</span></div>
+      </div>
+      <div class="tab-panel"><p style="font-size:11px; color:var(--wf-600);">Handleiding (placeholder).</p></div>
+      <div class="tab-panel">
+        <div class="review-header"><h3>Productreviews</h3><button class="add-review-btn">+ Toevoegen</button></div>
+        <span class="t-small">★★★★☆ 4,4 — 328 reviews</span>
+        <div class="review-item">★★★★★ "Maait het hele gazon..." <span class="verified-purchase">✓ Geverifieerd</span></div>
+      </div>
+      <div class="tab-panel">
+        <div class="review-header"><h3>Verkopersreviews</h3><button class="add-review-btn">+ Toevoegen</button></div>
+        <span class="t-small">★★★★★ 4,6 — 1.204 reviews</span>
+        <div class="review-item">★★★★★ "Snel geleverd..." <span class="verified-purchase">✓ Geverifieerd</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Veelgestelde vragen</h2>
+      <div class="faq-item"><div class="faq-q">Is dit geschikt voor een tuin met obstakels?</div><div class="faq-a">Ja, via de app.</div></div>
+      <div class="faq-item"><div class="faq-q">Geldt de garantie bij elke aanbieder?</div><div class="faq-a">Ja, ongeacht de aanbieder.</div></div>
+    </div>
+
+    <div class="section">
+      <h2>Gerelateerde producten</h2>
+      <div class="related-scroll">
+        <div class="rel-card"><div class="rel-img"></div><div class="rel-line" style="width:80%"></div><div class="rel-line" style="width:50%"></div></div>
+        <div class="rel-card"><div class="rel-img"></div><div class="rel-line" style="width:80%"></div><div class="rel-line" style="width:50%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sticky-bar">
+    <div class="sb-price-block"><div class="sb-price">€ 249,00</div><div class="sb-sub">Retailer X · morgen in huis</div></div>
+    <button class="btn btn-primary btn-primary--bar">In winkelwagen</button>
+  </div>
+</div>
+
+<div class="annot" style="max-width:390px; margin:16px auto;">De sticky bottom bar (CMP-028) blijft bestaan — punt 9 doelt uitsluitend op de tabs-balk zelf, die voorheen als vaste rij was opgebouwd en nu expliciet swipebaar/scrollbaar is met scroll-snap.</div>
+
+</body>
+</html>
