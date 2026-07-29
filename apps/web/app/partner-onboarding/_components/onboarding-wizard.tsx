@@ -23,6 +23,7 @@ import {
   submitOnboarding,
   submitOnboardingAddition,
   updateOnboardingDraft,
+  uploadOnboardingDocument,
   type OnboardingRecord,
 } from "../_lib/partner-onboarding-api";
 
@@ -312,13 +313,47 @@ export function OnboardingWizard() {
     (!roles.is_producer_or_brand_owner || documents.production_proof) &&
     (!roles.is_distributor || documents.authorization_proof);
 
-  function handleDocumentsNext() {
+  async function handleDocumentsNext() {
     setError(null);
     if (!requiredDocumentsPresent) {
       setError("Upload alle voor je gekozen rol(len) verplichte documenten voordat je verdergaat.");
       return;
     }
-    goToStep(4);
+    setIsBusy(true);
+    try {
+      const uploads: { type: string; file: File }[] = [];
+      if (documents.identity_document) {
+        uploads.push({ type: "identity_document", file: documents.identity_document });
+      }
+      if (documents.chamber_of_commerce_extract) {
+        uploads.push({
+          type: "chamber_of_commerce_extract",
+          file: documents.chamber_of_commerce_extract,
+        });
+      }
+      if (documents.production_proof) {
+        uploads.push({ type: "production_proof", file: documents.production_proof });
+      }
+      if (documents.authorization_proof) {
+        uploads.push({ type: "authorization_proof", file: documents.authorization_proof });
+      }
+      if (documents.additional_certifications) {
+        uploads.push({
+          type: "additional_certifications",
+          file: documents.additional_certifications,
+        });
+      }
+      for (const item of uploads) {
+        await uploadOnboardingDocument(item.type, item.file);
+      }
+      goToStep(4);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Documentupload is niet gelukt.",
+      );
+    } finally {
+      setIsBusy(false);
+    }
   }
 
   const isAddition = onboarding?.onboarding_status === "Aanvullende informatie vereist";
@@ -669,7 +704,9 @@ export function OnboardingWizard() {
               <Button variant="ghost" onClick={() => goToStep(2)}>
                 ← Terug
               </Button>
-              <Button onClick={handleDocumentsNext}>Volgende</Button>
+              <Button onClick={handleDocumentsNext} disabled={isBusy}>
+                {isBusy ? "Bezig…" : "Volgende"}
+              </Button>
             </div>
           </div>
         )}

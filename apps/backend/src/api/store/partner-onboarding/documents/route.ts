@@ -33,9 +33,8 @@ export async function POST(
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) {
-  const file = (
-    req as AuthenticatedMedusaRequest & { files?: UploadedFile[] }
-  ).files?.[0]
+  const file = (req as AuthenticatedMedusaRequest & { file?: UploadedFile })
+    .file
   const documentType = req.body && (req.body as Record<string, unknown>).document_type
 
   if (!file) {

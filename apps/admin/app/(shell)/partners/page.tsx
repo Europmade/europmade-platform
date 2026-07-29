@@ -37,7 +37,6 @@ export default function PartnersOverviewPage() {
     all: 0,
     queue: 0,
     active: 0,
-    blocked: 0,
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +57,6 @@ export default function PartnersOverviewPage() {
         all: allC.count,
         queue: queueC.count,
         active: activeC.count,
-        blocked: 0,
       });
     } catch (err) {
       setError(

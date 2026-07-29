@@ -68,8 +68,6 @@ export default function PartnerDetailPage() {
 
   const name = partner.company?.legal_name ?? "Partner";
   const inReview = partner.onboarding_status === "In beoordeling";
-  const canBlock =
-    partner.onboarding_status === "Goedgekeurd" && !partner.is_blocked;
   const docs = partner.documents;
 
   return (
@@ -126,9 +124,6 @@ export default function PartnerDetailPage() {
             {partner.review_note && (
               <DetailRow label="Reviewnotitie" value={partner.review_note} />
             )}
-            {partner.blocked_reason && (
-              <DetailRow label="Blokkeerreden" value={partner.blocked_reason} />
-            )}
           </div>
 
           <div className="rounded-lg border border-wf-200 p-5">
@@ -167,12 +162,11 @@ export default function PartnerDetailPage() {
           </p>
           <p>
             Status: <strong>{partner.onboarding_status}</strong>
-            {partner.is_blocked ? " (geblokkeerd)" : ""}
           </p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-wf-300 bg-wf-100 px-0 py-4 tablet:px-0">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 border-t border-wf-300 bg-wf-100 px-0 py-4">
         <div className="flex flex-wrap gap-2.5">
           {inReview && (
             <Button
@@ -180,14 +174,6 @@ export default function PartnerDetailPage() {
               onClick={() => router.push(`/partners/${id}/reject`)}
             >
               Afwijzen
-            </Button>
-          )}
-          {canBlock && (
-            <Button
-              variant="destructive"
-              onClick={() => router.push(`/partners/${id}/block`)}
-            >
-              Blokkeren
             </Button>
           )}
         </div>

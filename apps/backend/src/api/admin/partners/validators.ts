@@ -35,9 +35,3 @@ export const AdminRequestPartnerOnboardingInfo = z.object({
 export type AdminRequestPartnerOnboardingInfoInput = z.infer<
   typeof AdminRequestPartnerOnboardingInfo
 >
-
-/** Blokkeren vereist altijd een reden — S3-02-05 acceptatiecriterium. */
-export const AdminBlockPartner = z.object({
-  reason: z.string().trim().min(1, "Een blokkeerreden is verplicht."),
-})
-export type AdminBlockPartnerInput = z.infer<typeof AdminBlockPartner>

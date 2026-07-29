@@ -14,15 +14,8 @@ const QUEUE_STATUSES = [
 ] as const
 
 /**
- * Reviewer-overzicht (S3-02-05) — tabs Alle / Aanvragen / Actief uit
- * wireframe partner-01. ANDERS dan GET /admin/partners (S3-02-04,
- * uitsluitend Goedgekeurd, partner-center/spec.md).
- *
- * - queue  = Aanvragen (Ingediend / In beoordeling / Aanvullende info)
- * - active = Actief (Goedgekeurd én niet geblokkeerd)
- * - all    = Alles behalve Concept (nooit-ingediende concepten horen
- *            niet in een reviewer-overzicht)
- * - blocked = Geblokkeerde goedgekeurde partners
+ * Reviewer-overzicht (S3-02-05) — tabs Alle / Aanvragen / Actief.
+ * Geen Blokkeren/lifecycle (ADR-0006 / partner-center/spec.md §1.2).
  */
 export async function GET(
   req: AuthenticatedMedusaRequest,
@@ -70,14 +63,7 @@ export async function GET(
         return false
       }
     } else if (query.tab === "active") {
-      if (
-        seller.onboarding_status !== ONBOARDING_STATUS.GOEDGEKEURD ||
-        seller.is_blocked
-      ) {
-        return false
-      }
-    } else if (query.tab === "blocked") {
-      if (!seller.is_blocked) {
+      if (seller.onboarding_status !== ONBOARDING_STATUS.GOEDGEKEURD) {
         return false
       }
     }
@@ -112,7 +98,6 @@ export async function GET(
       is_producer_or_brand_owner: seller.is_producer_or_brand_owner,
       is_distributor: seller.is_distributor,
       onboarding_status: seller.onboarding_status,
-      is_blocked: seller.is_blocked,
       approved_at: seller.approved_at,
       created_at: seller.created_at,
       updated_at: seller.updated_at,

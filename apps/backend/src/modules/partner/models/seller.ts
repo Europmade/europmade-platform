@@ -53,18 +53,7 @@ const Seller = model
     production_proof_file_id: model.text().nullable(),
     authorization_proof_file_id: model.text().nullable(),
     additional_certifications_file_id: model.text().nullable(),
-    // Blokkeren (S3-02-05 / wireframe partner-05) — geen nieuwe
-    // onboarding_status (Deel A.3-enum blijft bevroren). Separatie van
-    // Partner Onboarding-status: een goedgekeurde partner kan geblokkeerd
-    // worden zonder de onboarding-historie te herschrijven.
-    is_blocked: model.boolean().default(false),
-    blocked_reason: model.text().nullable(),
-    blocked_at: model.dateTime().nullable(),
   })
-  .indexes([
-    { on: ["company_id"] },
-    { on: ["onboarding_status"] },
-    { on: ["is_blocked"] },
-  ])
+  .indexes([{ on: ["company_id"] }, { on: ["onboarding_status"] }])
 
 export default Seller

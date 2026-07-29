@@ -3,6 +3,7 @@ import {
   validateAndTransformBody,
   authenticate,
 } from "@medusajs/framework/http"
+import multer from "multer"
 import {
   StoreStartPartnerOnboarding,
   StoreUpdatePartnerOnboardingDraft,
@@ -11,14 +12,17 @@ import {
 import {
   AdminRejectPartnerOnboarding,
   AdminRequestPartnerOnboardingInfo,
-  AdminBlockPartner,
 } from "./admin/partners/validators"
+
+const documentUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+})
 
 /**
  * S3-02-02 — Partner Onboarding-statusverloop.
  * S3-02-04 — Partnerbeheer (admin, uitsluitend lezend, Goedgekeurd).
- * S3-02-05 — Partnerbeheer UI-ondersteuning (reviewer-overzicht/-detail,
- *            blokkeren).
+ * S3-02-05 — Partnerbeheer UI (reviewer-overzicht/-detail; geen Blokkeren, ADR-0006).
  */
 export default defineMiddlewares({
   routes: [
@@ -57,6 +61,14 @@ export default defineMiddlewares({
       middlewares: [authenticate("customer", ["session", "bearer"])],
     },
     {
+      matcher: "/store/partner-onboarding/documents",
+      methods: ["POST"],
+      middlewares: [
+        authenticate("customer", ["session", "bearer"]),
+        documentUpload.single("file"),
+      ],
+    },
+    {
       matcher: "/admin/partners",
       methods: ["GET"],
       middlewares: [authenticate("user", ["session", "bearer"])],
@@ -85,14 +97,6 @@ export default defineMiddlewares({
       middlewares: [
         authenticate("user", ["session", "bearer"]),
         validateAndTransformBody(AdminRequestPartnerOnboardingInfo),
-      ],
-    },
-    {
-      matcher: "/admin/partners/:id/block",
-      methods: ["POST"],
-      middlewares: [
-        authenticate("user", ["session", "bearer"]),
-        validateAndTransformBody(AdminBlockPartner),
       ],
     },
     {

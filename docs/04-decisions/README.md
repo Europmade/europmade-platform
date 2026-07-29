@@ -13,3 +13,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0003](./0003-sponsored-products-post-mvp.md) | Sponsored Products voorbereid in architectuur, buiten MVP-scope | Geaccepteerd | Buy Box, MVP-scope |
 | [0004](./0004-buy-box-tiebreaker-order.md) | Buy Box-tiebreaker-volgorde bij exact gelijke score | Geaccepteerd | Buy Box |
 | [0005](./0005-buy-box-server-side-only.md) | Buy Box wordt uitsluitend server-side berekend | Geaccepteerd | Buy Box, technische architectuur |
+| [0006](./0006-partner-lifecycle-post-mvp.md) | Partner Lifecycle Management (Blokkeren/schorsen) buiten MVP-scope | Geaccepteerd | Partner Center, MVP-scope |

@@ -65,6 +65,7 @@ export interface OnboardingRecord {
     | "Goedgekeurd"
     | "Afgekeurd";
   approved_at: string | null;
+  review_note: string | null;
   // Bestaat pas nadat de Bedrijfsgegevens-stap is opgeslagen — vóór dat
   // moment (net na "Partner kiezen") is er nog geen company.
   company: OnboardingCompany | null;
@@ -128,6 +129,41 @@ export function submitOnboardingAddition() {
     "/store/partner-onboarding/submit-addition",
     { method: "POST" },
   );
+}
+
+/**
+ * POST /store/partner-onboarding/documents — multipart upload (spec §2.7/§2.9).
+ * Geen JSON Content-Type: de browser zet de multipart-boundary zelf.
+ */
+export async function uploadOnboardingDocument(
+  documentType: string,
+  file: File,
+) {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("document_type", documentType);
+
+  const response = await fetch(`${BACKEND_URL}/store/partner-onboarding/documents`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(PUBLISHABLE_KEY ? { "x-publishable-api-key": PUBLISHABLE_KEY } : {}),
+    },
+    body: form,
+  });
+
+  const body: unknown = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    const message =
+      body &&
+      typeof body === "object" &&
+      "message" in body &&
+      typeof body.message === "string"
+        ? body.message
+        : "Documentupload is niet gelukt.";
+    throw new PartnerOnboardingApiError(message, response.status);
+  }
+  return body as { onboarding: OnboardingRecord };
 }
 
 /** GET /store/customers/me — standaard Medusa Store-endpoint, voor het e-mailadres bij de verificatiegate. */

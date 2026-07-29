@@ -1,5 +1,6 @@
 /**
  * Partnerbeheer admin-API (S3-02-04 + S3-02-05).
+ * Geen Blokkeren — ADR-0006 / partner-center/spec.md.
  */
 
 const BACKEND_URL =
@@ -46,7 +47,7 @@ export type OnboardingStatus =
   | "Goedgekeurd"
   | "Afgekeurd";
 
-export type OverviewTab = "all" | "queue" | "active" | "blocked";
+export type OverviewTab = "all" | "queue" | "active";
 
 export interface PartnerListItem {
   id: string;
@@ -54,7 +55,6 @@ export interface PartnerListItem {
   is_producer_or_brand_owner: boolean;
   is_distributor: boolean;
   onboarding_status: OnboardingStatus;
-  is_blocked: boolean;
   approved_at: string | null;
   created_at: string;
   updated_at: string;
@@ -72,9 +72,6 @@ export interface PartnerDetail {
   is_producer_or_brand_owner: boolean;
   is_distributor: boolean;
   onboarding_status: OnboardingStatus;
-  is_blocked: boolean;
-  blocked_reason: string | null;
-  blocked_at: string | null;
   approved_at: string | null;
   review_note: string | null;
   created_at: string;
@@ -143,13 +140,6 @@ export function requestAdditionalInfo(id: string, message: string) {
   );
 }
 
-export function blockPartner(id: string, reason: string) {
-  return request<{ partner: unknown }>(`/admin/partners/${id}/block`, {
-    method: "POST",
-    body: JSON.stringify({ reason }),
-  });
-}
-
 export function formatRoles(p: {
   is_retailer: boolean;
   is_producer_or_brand_owner: boolean;
@@ -164,9 +154,7 @@ export function formatRoles(p: {
 
 export function displayStatus(p: {
   onboarding_status: OnboardingStatus;
-  is_blocked: boolean;
 }): string {
-  if (p.is_blocked) return "Geblokkeerd";
   if (p.onboarding_status === "Goedgekeurd") return "Actief";
   return p.onboarding_status;
 }

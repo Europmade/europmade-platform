@@ -56,12 +56,14 @@ export default function PartnerOnboardingStatusPage() {
   }
 
   if (onboarding.onboarding_status === "Concept") {
-    // Een Concept hoort niet op de statuspagina te landen — terug naar de flow.
     router.replace("/partner-onboarding");
     return null;
   }
 
-  if (onboarding.onboarding_status === "Ingediend" || onboarding.onboarding_status === "In beoordeling") {
+  if (
+    onboarding.onboarding_status === "Ingediend" ||
+    onboarding.onboarding_status === "In beoordeling"
+  ) {
     return (
       <StatusScreen icon="⏳" variant="pending" badge="In beoordeling" title="Je aanvraag wordt beoordeeld">
         Dit duurt meestal minder dan één werkdag. Je ontvangt een e-mail zodra er een beslissing is.
@@ -82,8 +84,6 @@ export default function PartnerOnboardingStatusPage() {
         badge="Goedgekeurd"
         title="Welkom als partner!"
         actions={
-          // Doelpagina (2FA-instellen) valt buiten deze ticketscope — zie
-          // implementatierapport S3-02-03.
           <Button onClick={() => router.push("/account/two-factor-setup")}>
             Tweestapsverificatie instellen
           </Button>
@@ -109,9 +109,9 @@ export default function PartnerOnboardingStatusPage() {
         }
       >
         <div className="rounded-md border border-dashed border-wf-700 bg-wf-100 px-4 py-3 text-left text-xs text-wf-800">
-          De specifieke afkeurreden per onderdeel is nog niet beschikbaar via de API (zie
-          implementatierapport S3-02-02) — pas je gegevens aan en dien de aanvraag opnieuw in, of neem
-          contact op met EuropMade voor meer toelichting.
+          {onboarding.review_note?.trim()
+            ? onboarding.review_note
+            : "Er is geen specifieke afkeurreden vastgelegd. Pas je gegevens aan en dien de aanvraag opnieuw in, of neem contact op met EuropMade."}
         </div>
       </StatusScreen>
     );
@@ -128,9 +128,9 @@ export default function PartnerOnboardingStatusPage() {
       }
     >
       <div className="rounded-md border border-dashed border-wf-700 bg-wf-100 px-4 py-3 text-left text-xs text-wf-800">
-        De specifieke vraag van de reviewer is nog niet beschikbaar via de API (zie
-        implementatierapport S3-02-02) — ga naar je aanvraag om de gevraagde onderdelen te
-        controleren en opnieuw in te dienen.
+        {onboarding.review_note?.trim()
+          ? onboarding.review_note
+          : "Controleer de gevraagde onderdelen in je aanvraag en dien opnieuw in."}
       </div>
     </StatusScreen>
   );

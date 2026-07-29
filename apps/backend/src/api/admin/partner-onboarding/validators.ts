@@ -3,13 +3,11 @@ import { z } from "@medusajs/framework/zod"
 /**
  * Reviewer-wachtrij/overzicht (S3-02-05) — tabs Alle / Aanvragen / Actief.
  * ANDERS dan GET /admin/partners (S3-02-04, uitsluitend Goedgekeurd).
+ * Geen "blocked"-tab — Partner Lifecycle buiten MVP (ADR-0006).
  */
 export const AdminListPartnerOnboardingQuery = z.object({
   q: z.string().trim().min(1).optional(),
-  tab: z
-    .enum(["queue", "active", "blocked", "all"])
-    .optional()
-    .default("queue"),
+  tab: z.enum(["queue", "active", "all"]).optional().default("queue"),
   is_retailer: z.enum(["true", "false"]).optional(),
   is_producer_or_brand_owner: z.enum(["true", "false"]).optional(),
   is_distributor: z.enum(["true", "false"]).optional(),

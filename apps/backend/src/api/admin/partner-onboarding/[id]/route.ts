@@ -8,10 +8,8 @@ import PartnerModuleService from "../../../../modules/partner/service"
 import { ONBOARDING_STATUS } from "../../../../workflows/partner-onboarding"
 
 /**
- * Reviewer-detail (S3-02-05) — toont een aanvraag of goedgekeurde partner
- * voor beoordeling/acties. Concept wordt niet getoond (nog niet ingediend).
- * Verschilt van GET /admin/partners/:id (S3-02-04) die uitsluitend
- * Goedgekeurd toont.
+ * Reviewer-detail (S3-02-05) — aanvraag of goedgekeurde partner.
+ * Concept wordt niet getoond. Geen lifecycle/blokkeer-velden (ADR-0006).
  */
 export async function GET(
   req: AuthenticatedMedusaRequest,
@@ -48,9 +46,6 @@ export async function GET(
       is_producer_or_brand_owner: seller.is_producer_or_brand_owner,
       is_distributor: seller.is_distributor,
       onboarding_status: seller.onboarding_status,
-      is_blocked: seller.is_blocked,
-      blocked_reason: seller.blocked_reason,
-      blocked_at: seller.blocked_at,
       approved_at: seller.approved_at,
       review_note: seller.review_note,
       created_at: seller.created_at,
