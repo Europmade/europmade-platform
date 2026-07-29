@@ -1,0 +1,12 @@
+---
+description: Nooit production builds draaien terwijl lokale dev-servers actief zijn (voorkomt .next-cachecorruptie)
+alwaysApply: true
+---
+
+# Dev-server / build-veiligheid
+
+- Draai **nooit** een production build (`pnpm build`, `next build`, `medusa build` of vergelijkbaar) terwijl de gebruiker's lokale `pnpm dev`-servers actief zijn. Beide processen delen dezelfde `.next`/`.medusa`-buildmap; een production build overschrijft de dev-artifacts en breekt de draaiende dev-server (ENOENT op manifest-/buildbestanden).
+- Controleer vóór je een build-commando uitvoert altijd eerst de `terminals`-map op actieve `dev`-processen (bv. `next dev`, `medusa develop`) voor de betrokken app.
+- Gebruik tijdens ticketontwikkeling en bugfixes uitsluitend de al actieve dev-servers om te verifiëren (hot reload) — geen aparte build nodig om functioneel te testen.
+- Als een production build voor de opdracht toch echt nodig is (bijv. omdat de gebruiker expliciet build/typecheck/lint-resultaten vraagt in een implementatierapport), vraag dan eerst expliciet aan de gebruiker om de betreffende dev-server(s) af te sluiten voordat je de build start, en laat de gebruiker die daarna zelf weer opstarten (of vraag toestemming om dat zelf te doen).
+- Als de dev-cache toch corrupt raakt (ENOENT op `app-build-manifest.json`, `_buildManifest.js.tmp`, e.d.): ruim uitsluitend de `.next`-map (of `.medusa` voor de backend) op en start **alleen** de dev-server opnieuw. Voer in dat geval geen production build uit.

@@ -1,0 +1,217 @@
+
+> @europmade/backend@0.1.0 dev C:\Users\sjoer\EuropMade\apps\backend
+> medusa develop
+
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Linting project...
+[32minfo[39m:    [Watcher] Using standard dev server (restart on file change)
+[32minfo[39m:    [Watcher] Watching filesystem to reload dev server on file change
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+- Creating server
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Skipping instrumentation registration. No register function found.
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    No link to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\links. skipped.
+[33mwarn[39m:    Local Event Bus installed. This is not recommended for production.
+[32minfo[39m:    Locking module: Using "in-memory" as default.
+[32minfo[39m:    No workflow to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\workflows. skipped.
+[32minfo[39m:    No subscriber to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\subscribers. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+medusa@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.19.43__clfhp5ah45ktuteiq4dlp74kpy\node_modules\@medusajs\medusa\dist\jobs. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\jobs. skipped.
+√ Server is ready on port: 9000 – 29459ms
+[32minfo[39m:    Admin URL → http://localhost:9000/app
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 592.666 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 175.258 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 52.456 ms
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 405.017 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 123.932 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 29.304 ms
+[32minfo[39m:    Kies ten minste één rol (Retailer, Producent/Merkhouder en/of Distributeur).
+[32mhttp[39m:    POST /store/partner-onboarding ← - (400) - 102.127 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← - (201) - 102.270 ms
+[32mhttp[39m:    OPTIONS /auth/customer/emailpass/register ← http://localhost:3000/ (204) - 3.108 ms
+[32minfo[39m:    Identity with email already exists
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← http://localhost:3000/ (401) - 39.459 ms
+[32mhttp[39m:    OPTIONS /auth/customer/emailpass/register ← http://localhost:3000/ (204) - 0.836 ms
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← http://localhost:3000/ (200) - 576.568 ms
+[32mhttp[39m:    OPTIONS /store/customers ← http://localhost:3000/ (204) - 2.105 ms
+[32mhttp[39m:    POST /store/customers ← http://localhost:3000/ (200) - 104.285 ms
+[32mhttp[39m:    OPTIONS /auth/token/refresh ← http://localhost:3000/ (204) - 1.211 ms
+[32mhttp[39m:    POST /auth/token/refresh ← http://localhost:3000/ (200) - 22.379 ms
+[32mhttp[39m:    OPTIONS /auth/session ← http://localhost:3000/ (204) - 1.548 ms
+[32mhttp[39m:    POST /auth/session ← http://localhost:3000/ (200) - 5.134 ms
+[32mhttp[39m:    OPTIONS /store/customers/me ← http://localhost:3000/ (204) - 3.589 ms
+[32mhttp[39m:    OPTIONS /store/customers/me ← http://localhost:3000/ (204) - 1.739 ms
+[32mhttp[39m:    GET /store/customers/me ← http://localhost:3000/ (200) - 40.723 ms
+[32mhttp[39m:    GET /store/customers/me ← http://localhost:3000/ (304) - 34.135 ms
+[32mhttp[39m:    OPTIONS /store/partner-onboarding ← http://localhost:3000/ (204) - 2.655 ms
+[32mhttp[39m:    GET /store/partner-onboarding ← http://localhost:3000/ (404) - 29.822 ms
+[32mhttp[39m:    OPTIONS /store/partner-onboarding ← http://localhost:3000/ (204) - 2.477 ms
+[32minfo[39m:    Company with chamber_of_commerce_number: , country_code: , already exists.
+[32mhttp[39m:    POST /store/partner-onboarding ← http://localhost:3000/ (400) - 186.747 ms
+[32minfo[39m:    [Watcher] modified src\modules\partner\models\seller.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 1678.89ms
+[32minfo[39m:    [Watcher] modified src\modules\partner\models\company.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 853.10ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\steps.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 828.46ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\steps.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 974.34ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\steps.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 1056.00ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\workflows.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 804.14ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\workflows.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 844.66ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\workflows.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 751.01ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\workflows.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 1099.13ms
+[32minfo[39m:    [Watcher] modified src\api\store\partner-onboarding\route.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 762.68ms
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+- Creating server
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Skipping instrumentation registration. No register function found.
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    No link to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\links. skipped.
+[32minfo[39m:    [Watcher] modified src\api\store\partner-onboarding\validators.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 636.42ms
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+- Creating server
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Skipping instrumentation registration. No register function found.
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    No link to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\links. skipped.
+[33mwarn[39m:    Local Event Bus installed. This is not recommended for production.
+[32minfo[39m:    Locking module: Using "in-memory" as default.
+[32minfo[39m:    No workflow to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\workflows. skipped.
+[32minfo[39m:    No subscriber to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\subscribers. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+medusa@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.19.43__clfhp5ah45ktuteiq4dlp74kpy\node_modules\@medusajs\medusa\dist\jobs. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\jobs. skipped.
+√ Server is ready on port: 9000 – 53240ms
+[32minfo[39m:    Admin URL → http://localhost:9000/app
+[32minfo[39m:    [Watcher] created src\modules\partner\migrations\Migration20260729120828.ts created: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 1373.85ms
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+- Creating server
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Skipping instrumentation registration. No register function found.
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    No link to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\links. skipped.
+[32minfo[39m:    [Watcher] modified src\modules\partner\migrations\Migration20260729120828.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 869.26ms
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+- Creating server
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Skipping instrumentation registration. No register function found.
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    No link to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\links. skipped.
+[33mwarn[39m:    Local Event Bus installed. This is not recommended for production.
+[32minfo[39m:    Locking module: Using "in-memory" as default.
+[32minfo[39m:    No workflow to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\workflows. skipped.
+[32minfo[39m:    No subscriber to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\subscribers. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+medusa@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.19.43__clfhp5ah45ktuteiq4dlp74kpy\node_modules\@medusajs\medusa\dist\jobs. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\jobs. skipped.
+√ Server is ready on port: 9000 – 40872ms
+[32minfo[39m:    Admin URL → http://localhost:9000/app
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 511.777 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 137.194 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 31.089 ms
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 330.164 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 98.329 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 22.416 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← - (201) - 52.993 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← - (201) - 45.683 ms
+[32mhttp[39m:    PATCH /store/partner-onboarding ← - (200) - 113.529 ms
+[32mhttp[39m:    PATCH /store/partner-onboarding ← - (200) - 88.752 ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\steps.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 865.06ms
+[32minfo[39m:    [Watcher] modified src\workflows\partner-onboarding\steps.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 877.21ms
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+- Creating server
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Skipping instrumentation registration. No register function found.
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    No link to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\links. skipped.
+[33mwarn[39m:    Local Event Bus installed. This is not recommended for production.
+[32minfo[39m:    Locking module: Using "in-memory" as default.
+[32minfo[39m:    No workflow to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\workflows. skipped.
+[32minfo[39m:    No subscriber to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\subscribers. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+medusa@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.19.43__clfhp5ah45ktuteiq4dlp74kpy\node_modules\@medusajs\medusa\dist\jobs. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\jobs. skipped.
+√ Server is ready on port: 9000 – 21560ms
+[32minfo[39m:    Admin URL → http://localhost:9000/app
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 519.204 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 160.337 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 25.728 ms
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 317.479 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 70.365 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 17.542 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← - (201) - 63.425 ms
+[32mhttp[39m:    PATCH /store/partner-onboarding ← - (200) - 68.998 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← - (201) - 34.232 ms
+[32minfo[39m:    Company with chamber_of_commerce_number: 99998888, country_code: NL, already exists.
+[32mhttp[39m:    PATCH /store/partner-onboarding ← - (400) - 93.343 ms
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 194.074 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 59.422 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 14.623 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← - (201) - 29.638 ms
+[32mhttp[39m:    GET /store/partner-onboarding ← - (200) - 16.467 ms
+[32mhttp[39m:    PATCH /store/partner-onboarding ← - (200) - 51.281 ms
+[32mhttp[39m:    GET /store/partner-onboarding ← - (200) - 18.478 ms
+[32minfo[39m:    [partner-onboarding] indienen: seller=sell_01KYPY2C24HZ8NJV6KY4HK2J93 "Concept" -> "Ingediend"
+[32minfo[39m:    [partner-onboarding] automatische start beoordeling: seller=sell_01KYPY2C24HZ8NJV6KY4HK2J93 "Ingediend" -> "In beoordeling"
+[32mhttp[39m:    POST /store/partner-onboarding/submit ← - (200) - 67.540 ms
+[32mhttp[39m:    GET /store/partner-onboarding ← - (200) - 25.011 ms
+[32mhttp[39m:    OPTIONS /store/partner-onboarding ← http://localhost:3000/ (204) - 1.479 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← http://localhost:3000/ (401) - 18.014 ms
+[32mhttp[39m:    OPTIONS /store/customers/me ← http://localhost:3000/ (204) - 3.771 ms
+[32mhttp[39m:    GET /store/customers/me ← http://localhost:3000/ (401) - 26.580 ms
+[32minfo[39m:    [Watcher] modified src\api\admin\partners\validators.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 2021.65ms
+[32minfo[39m:    [Watcher] created src\api\admin\partners\route.ts created: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 1572.96ms
+[32minfo[39m:    [Watcher] created src\api\admin\partners\[id]\route.ts created: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 1088.96ms
+[32minfo[39m:    [Watcher] modified src\api\middlewares.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 1266.32ms
+[32minfo[39m:    [Watcher] modified src\api\middlewares.ts modified: restarting dev server
+[32minfo[39m:    [Watcher] Reloaded in 867.99ms
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+- Creating server
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    Skipping instrumentation registration. No register function found.
+[32minfo[39m:    redisUrl not found. A fake redis instance will be used.
+[32minfo[39m:    No link to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\links. skipped.
+[33mwarn[39m:    Local Event Bus installed. This is not recommended for production.
+[32minfo[39m:    Locking module: Using "in-memory" as default.
+[32minfo[39m:    No workflow to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\workflows. skipped.
+[32minfo[39m:    No subscriber to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\subscribers. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+draft-order@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.1_6dnf7xq5rxah7ps36o6zio356a\node_modules\@medusajs\draft-order\.medusa\server\src\jobs. skipped.
+[32minfo[39m:    No job to load from C:\Users\sjoer\EuropMade\node_modules\.pnpm\@medusajs+medusa@2.18.0_@medusajs+admin-sdk@2.18.0_@medusajs+cli@2.18.0_@types+node@20.19.43__clfhp5ah45ktuteiq4dlp74kpy\node_modules\@medusajs\medusa\dist\jobs. skipped.
+√ Server is ready on port: 9000 – 49605ms
+[32minfo[39m:    Admin URL → http://localhost:9000/app
+[32mhttp[39m:    POST /auth/user/emailpass ← - (200) - 347.605 ms
+[32mhttp[39m:    POST /auth/customer/emailpass/register ← - (200) - 275.104 ms
+[32mhttp[39m:    POST /store/customers ← - (200) - 116.574 ms
+[32mhttp[39m:    POST /auth/token/refresh ← - (200) - 23.764 ms
+[32mhttp[39m:    POST /store/partner-onboarding ← - (201) - 45.021 ms
+[32mhttp[39m:    PATCH /store/partner-onboarding ← - (200) - 77.704 ms
+[32minfo[39m:    [partner-onboarding] indienen: seller=sell_01KYPZSVE6G07Y8SMB9TB92BPT "Concept" -> "Ingediend"
+[32minfo[39m:    [partner-onboarding] automatische start beoordeling: seller=sell_01KYPZSVE6G07Y8SMB9TB92BPT "Ingediend" -> "In beoordeling"
+[32mhttp[39m:    POST /store/partner-onboarding/submit ← - (200) - 72.979 ms
+[32minfo[39m:    [partner-onboarding] goedgekeurd: seller=sell_01KYPZSVE6G07Y8SMB9TB92BPT "In beoordeling" -> "Goedgekeurd" (actor=user_01KYPZNDC3EWJ6MN5YCVZMRPAY)
+[32mhttp[39m:    POST /admin/partners/sell_01KYPZSVE6G07Y8SMB9TB92BPT/approve ← - (200) - 34.867 ms
+[32mhttp[39m:    GET /admin/partners ← - (200) - 16.964 ms
+[32mhttp[39m:    GET /admin/partners?q=Partner%20Center%20Test ← - (200) - 10.073 ms
+[32mhttp[39m:    GET /admin/partners?is_retailer=true&country_code=NL ← - (200) - 11.716 ms
+[32mhttp[39m:    GET /admin/partners?is_distributor=true ← - (200) - 9.557 ms
+[32minfo[39m:    [partner-center] partnerdetail geopend: seller=sell_01KYPZSVE6G07Y8SMB9TB92BPT door actor=user_01KYPZNDC3EWJ6MN5YCVZMRPAY
+[32mhttp[39m:    GET /admin/partners/sell_01KYPZSVE6G07Y8SMB9TB92BPT ← - (200) - 13.361 ms
+[32mhttp[39m:    GET /admin/partners/sell_01KYPZSVE6G07Y8SMB9TB92BPT ← - (401) - 1.691 ms
+[32mhttp[39m:    GET /admin/partners/sell_nonexistent ← - (404) - 12.883 ms
+[32mhttp[39m:    POST /auth/user/emailpass ← - (200) - 269.926 ms
+[32mhttp[39m:    GET /admin/partners/sell_01KYPY2C24HZ8NJV6KY4HK2J93 ← - (404) - 7.068 ms
+[32mhttp[39m:    GET /admin/partners?limit=100 ← - (200) - 13.237 ms

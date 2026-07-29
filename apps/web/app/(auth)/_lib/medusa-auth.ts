@@ -85,6 +85,23 @@ export function createCustomer(
   });
 }
 
+/**
+ * POST /auth/token/refresh — ververst een token nadat de bijbehorende actor
+ * (hier: Customer) is aangemaakt/gekoppeld. Vereist tussen `createCustomer`
+ * en `createSession`: het token van `registerAuthIdentity` heeft op het
+ * moment van uitgifte nog een leeg `actor_id` (de auth identity is dan nog
+ * niet gekoppeld) — zonder deze verversing bevat de sessie een token zonder
+ * `actor_id`, waardoor elke latere beveiligde `/store/*`-aanroep (incl.
+ * `/store/customers/me`) ten onrechte 401 geeft. Zie Medusa-documentatie
+ * "Registration Token" / "Refresh Token"-route.
+ */
+export function refreshToken(token: string) {
+  return request<{ token: string }>("/auth/token/refresh", {
+    method: "POST",
+    auth: token,
+  });
+}
+
 /** POST /auth/session — server-side sessie aanmaken (httpOnly cookie). */
 export function createSession(token: string) {
   return request<{ user: unknown }>("/auth/session", {

@@ -53,7 +53,7 @@ export interface OnboardingCompany {
 export interface OnboardingRecord {
   id: string;
   customer_id: string;
-  company_id: string;
+  company_id: string | null;
   is_retailer: boolean;
   is_producer_or_brand_owner: boolean;
   is_distributor: boolean;
@@ -65,7 +65,9 @@ export interface OnboardingRecord {
     | "Goedgekeurd"
     | "Afgekeurd";
   approved_at: string | null;
-  company: OnboardingCompany;
+  // Bestaat pas nadat de Bedrijfsgegevens-stap is opgeslagen — vóór dat
+  // moment (net na "Partner kiezen") is er nog geen company.
+  company: OnboardingCompany | null;
 }
 
 export interface RoleSelection {
@@ -89,8 +91,13 @@ export function getOnboarding() {
   });
 }
 
-/** POST /store/partner-onboarding — starten (server-side e-mailverificatie-gate). */
-export function startOnboarding(data: RoleSelection & { company: CompanyDraftInput }) {
+/**
+ * POST /store/partner-onboarding — starten (server-side
+ * e-mailverificatie-gate). Slaat uitsluitend de rolkeuze op; er bestaat op
+ * dit moment nog geen `company` (die ontstaat pas bij de Bedrijfsgegevens-
+ * stap, via `updateOnboardingDraft`).
+ */
+export function startOnboarding(data: RoleSelection) {
   return request<{ onboarding: OnboardingRecord }>("/store/partner-onboarding", {
     method: "POST",
     body: JSON.stringify(data),

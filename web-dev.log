@@ -1,0 +1,32 @@
+
+> @europmade/web@0.1.0 dev C:\Users\sjoer\EuropMade\apps\web
+> next dev --turbopack
+
+   ▲ Next.js 15.5.22 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://172.28.240.1:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 7s
+ ○ Compiling /register ...
+ ✓ Compiled /register in 13.9s
+ GET /register 200 in 16582ms
+ ○ Compiling /partner-onboarding ...
+ ✓ Compiled /partner-onboarding in 1338ms
+ GET /partner-onboarding 200 in 1901ms
+ ✓ Compiled in 700ms
+ ✓ Compiled in 500ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1125ms
+ GET / 200 in 1646ms
+ GET /register 200 in 503ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 575ms
+ GET /login 200 in 955ms
+ GET /partner-onboarding 200 in 609ms
+ ✓ Compiled /partner-onboarding/status in 441ms
+ GET /partner-onboarding/status 200 in 749ms
+ GET /partner-onboarding 200 in 872ms
+ GET /login?redirect=%2Fpartner-onboarding 200 in 771ms
+ GET /login?redirect=/partner-onboarding 200 in 1217ms

@@ -32,7 +32,7 @@ export default function PartnerOnboardingStatusPage() {
       .catch((err) => {
         if (cancelled) return;
         if (err instanceof PartnerOnboardingApiError && err.status === 401) {
-          router.replace("/login");
+          router.replace("/login?redirect=/partner-onboarding/status");
           return;
         }
         router.replace("/partner-onboarding");

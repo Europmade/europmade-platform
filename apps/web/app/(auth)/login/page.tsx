@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, CodeInput, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
 import { createSession, login, verifyMfaChallenge } from "../_lib/medusa-auth";
@@ -15,8 +15,18 @@ type Step =
 // van de twee velden onjuist is (authenticatie/spec.md §1.2).
 const GENERIC_LOGIN_ERROR = "E-mailadres of wachtwoord onjuist.";
 
-export default function LoginPage() {
+// Alleen interne, relatieve paden toestaan als terugkeer-bestemming na login
+// (voorkomt een open redirect via een gemanipuleerde `redirect`-queryparam).
+function sanitizeRedirectTarget(value: string | null): string {
+  if (!value) return "/";
+  if (!value.startsWith("/") || value.startsWith("//")) return "/";
+  return value;
+}
+
+function LoginPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = sanitizeRedirectTarget(searchParams.get("redirect"));
   const [step, setStep] = useState<Step>({ name: "credentials" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +38,7 @@ export default function LoginPage() {
 
   async function finishLogin(token: string) {
     await createSession(token);
-    router.push("/");
+    router.push(redirectTo);
     router.refresh();
   }
 
@@ -196,5 +206,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </AuthCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

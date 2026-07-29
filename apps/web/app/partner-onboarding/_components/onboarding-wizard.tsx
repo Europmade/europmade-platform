@@ -160,7 +160,7 @@ export function OnboardingWizard() {
         if (cancelled) return;
         setCustomerEmail(customer.email);
       } catch {
-        router.replace("/login");
+        router.replace("/login?redirect=/partner-onboarding");
         return;
       }
 
@@ -189,14 +189,19 @@ export function OnboardingWizard() {
           is_producer_or_brand_owner: existing.is_producer_or_brand_owner,
           is_distributor: existing.is_distributor,
         });
-        setCompany((prev) => ({
-          ...prev,
-          legal_name: existing.company.legal_name,
-          chamber_of_commerce_number: existing.company.chamber_of_commerce_number,
-          vat_number: existing.company.vat_number ?? "",
-          country_code: existing.company.country_code,
-          iban: existing.company.iban,
-        }));
+        // `company` bestaat pas nadat de Bedrijfsgegevens-stap is opgeslagen
+        // (net na "Partner kiezen" is dit nog `null`).
+        if (existing.company) {
+          const existingCompany = existing.company;
+          setCompany((prev) => ({
+            ...prev,
+            legal_name: existingCompany.legal_name,
+            chamber_of_commerce_number: existingCompany.chamber_of_commerce_number,
+            vat_number: existingCompany.vat_number ?? "",
+            country_code: existingCompany.country_code,
+            iban: existingCompany.iban,
+          }));
+        }
         setPhase({ name: "wizard", step: 0 });
       } catch {
         setPhase({ name: "welcome" });
@@ -217,30 +222,15 @@ export function OnboardingWizard() {
   const anyRoleSelected = roles.is_retailer || roles.is_producer_or_brand_owner || roles.is_distributor;
   const needsProductionVerification = roles.is_producer_or_brand_owner || roles.is_distributor;
 
-  async function handleStartAanmelding() {
+  function handleStartAanmelding() {
+    // De S3-02-02-API vereist minstens één geselecteerde rol bij het aanmaken
+    // van een Concept (createOnboardingDraftStep), die pas in stap 0 ("Partner
+    // kiezen") bekend wordt. Deze knop opent daarom alleen de wizard; het
+    // daadwerkelijke aanmaken (met de e-mailverificatie-gate, spec §1.8)
+    // gebeurt in handleRolesNext zodra de rol/rollen bekend zijn.
     setError(null);
     setVerificationGateError(false);
-    setIsBusy(true);
-    try {
-      // Server-side e-mailverificatie-gate (spec §1.8) — afgedwongen door de
-      // bestaande S3-02-02-API zelf, hier uitsluitend afgevangen.
-      const { onboarding: created } = await startOnboarding({
-        is_retailer: false,
-        is_producer_or_brand_owner: false,
-        is_distributor: false,
-        company: {},
-      });
-      setOnboarding(created);
-      setPhase({ name: "wizard", step: 0 });
-    } catch (err) {
-      if (err instanceof PartnerOnboardingApiError && /e-mailadres/i.test(err.message)) {
-        setVerificationGateError(true);
-      } else {
-        setError("Onboarding starten is niet gelukt. Probeer het opnieuw.");
-      }
-    } finally {
-      setIsBusy(false);
-    }
+    setPhase({ name: "wizard", step: 0 });
   }
 
   async function handleResendVerification() {
@@ -269,14 +259,20 @@ export function OnboardingWizard() {
         const { onboarding: updated } = await updateOnboardingDraft({ ...roles });
         setOnboarding(updated);
       } else {
-        const { onboarding: created } = await startOnboarding({
-          ...roles,
-          company: {},
-        });
+        // Server-side e-mailverificatie-gate (spec §1.8) — afgedwongen door de
+        // bestaande S3-02-02-API zelf, hier uitsluitend afgevangen. Slaat
+        // uitsluitend de rolkeuze op; er wordt hier geen company aangemaakt
+        // (die ontstaat pas bij handleCompanyNext hieronder).
+        const { onboarding: created } = await startOnboarding(roles);
         setOnboarding(created);
       }
       goToStep(1);
     } catch (err) {
+      if (!onboarding && err instanceof PartnerOnboardingApiError && /e-mailadres/i.test(err.message)) {
+        setVerificationGateError(true);
+        setPhase({ name: "welcome" });
+        return;
+      }
       setError(err instanceof Error ? err.message : "Opslaan is niet gelukt.");
     } finally {
       setIsBusy(false);

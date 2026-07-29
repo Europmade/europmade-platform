@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Checkbox, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
-import { createCustomer, createSession, registerAuthIdentity } from "../_lib/medusa-auth";
+import {
+  createCustomer,
+  createSession,
+  refreshToken,
+  registerAuthIdentity,
+} from "../_lib/medusa-auth";
 
 // Eén registratieflow — geen rolkeuze, geen aparte velden voor "ik ben een
 // retailer/producent" (authenticatie/spec.md §1.3, wireframe-fix screen 2).
@@ -32,9 +37,23 @@ export default function RegisterPage() {
         first_name: firstName || undefined,
         last_name: rest.join(" ") || undefined,
       });
+      // Het registratietoken heeft nu pas een gekoppeld actor_id — verversen
+      // vóór de sessie wordt aangemaakt, anders is de sessie niet bruikbaar
+      // voor beveiligde /store/*-aanroepen (o.a. Partner Onboarding, S3-02-03).
+      const { token: sessionToken } = await refreshToken(token);
       // Account is direct aangemaakt en direct bruikbaar (spec §1.3) — meteen inloggen.
-      await createSession(token);
-      router.push(`/check-email?context=register&email=${encodeURIComponent(email)}`);
+      await createSession(sessionToken);
+      // Development-only: uitsluitend wanneer NODE_ENV=development (automatisch
+      // gezet door `next dev`, nooit door `next build`/`next start`) direct door
+      // naar Partner Onboarding, zonder de verificatiemail-stap — symmetrisch met
+      // de dev-only bypass in `requireVerifiedEmailStep` (backend). In elke
+      // andere omgeving (production) blijft de bestaande "Controleer je e-mail"-
+      // stap ongewijzigd verplicht.
+      if (process.env.NODE_ENV === "development") {
+        router.push("/partner-onboarding");
+      } else {
+        router.push(`/check-email?context=register&email=${encodeURIComponent(email)}`);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       if (message.includes("already exists")) {
