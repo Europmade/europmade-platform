@@ -10,7 +10,12 @@ export const nextJsConfig = tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["**/.next/**", "**/dist/**", "**/node_modules/**"],
+    // next-env.d.ts is een door Next.js zelf beheerd, gitignored bestand
+    // ("This file should not be edited") dat bij elke `next dev`/`next build`
+    // opnieuw wordt gegenereerd (Next.js 15: incl. een typed-routes-referentie)
+    // — geen brongebied van een specifiek ticket, dus hier uitgesloten van lint
+    // in plaats van het gegenereerde bestand zelf aan te passen.
+    ignores: ["**/.next/**", "**/dist/**", "**/node_modules/**", "**/next-env.d.ts"],
   },
   {
     plugins: {
