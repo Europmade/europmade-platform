@@ -11,19 +11,14 @@ import {
 import {
   AdminRejectPartnerOnboarding,
   AdminRequestPartnerOnboardingInfo,
+  AdminBlockPartner,
 } from "./admin/partners/validators"
 
 /**
  * S3-02-02 — Partner Onboarding-statusverloop.
- * S3-02-04 — Partnerbeheer (admin, uitsluitend lezend).
- *
- * Store-routes: standaard Medusa Customer-sessieauthenticatie
- * (`authenticate("customer", ...)`, zelfde patroon als alle overige
- * Store-endpoints, `authenticatie/spec.md`, server-side sessiebeheer).
- * Admin-routes (reviewer-beslissingen + Partnerbeheer-overzicht/-detail):
- * standaard Medusa Admin User-authenticatie (`authenticate("user", ...)`) —
- * geen extra, zelfgebouwde RBAC-laag (die is nog niet in scope van dit
- * ticket, zelfde afspraak als bij S3-02-02's admin-routes).
+ * S3-02-04 — Partnerbeheer (admin, uitsluitend lezend, Goedgekeurd).
+ * S3-02-05 — Partnerbeheer UI-ondersteuning (reviewer-overzicht/-detail,
+ *            blokkeren).
  */
 export default defineMiddlewares({
   routes: [
@@ -91,6 +86,24 @@ export default defineMiddlewares({
         authenticate("user", ["session", "bearer"]),
         validateAndTransformBody(AdminRequestPartnerOnboardingInfo),
       ],
+    },
+    {
+      matcher: "/admin/partners/:id/block",
+      methods: ["POST"],
+      middlewares: [
+        authenticate("user", ["session", "bearer"]),
+        validateAndTransformBody(AdminBlockPartner),
+      ],
+    },
+    {
+      matcher: "/admin/partner-onboarding",
+      methods: ["GET"],
+      middlewares: [authenticate("user", ["session", "bearer"])],
+    },
+    {
+      matcher: "/admin/partner-onboarding/:id",
+      methods: ["GET"],
+      middlewares: [authenticate("user", ["session", "bearer"])],
     },
   ],
 })

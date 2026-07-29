@@ -1,7 +1,9 @@
 import {
   createWorkflow,
+  transform,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
+import { uploadFilesWorkflow } from "@medusajs/medusa/core-flows"
 import {
   requireVerifiedEmailStep,
   requireNoExistingOnboardingStep,
@@ -10,10 +12,12 @@ import {
   assertReadyForSubmissionStep,
   transitionOnboardingStatusStep,
   emitSellerOnboardedEventStep,
+  storeOnboardingDocumentStep,
   CompanyDraftFields,
 } from "./steps"
 import { ONBOARDING_STATUS } from "./status-flow"
 import { OnboardingRoleSelection } from "./validation"
+import { DocumentType } from "./documents"
 
 /**
  * Start Partner Onboarding — spec §2.2 stap 1/2 ("Welkom" + "Partner
@@ -151,6 +155,52 @@ export const rejectPartnerOnboardingWorkflow = createWorkflow(
       actor: input.actor,
     })
     return new WorkflowResponse(rejected)
+  }
+)
+
+/**
+ * Documentupload (spec §2.7/§2.9/§2.2 stap 4) — slaat het bestand op via de
+ * standaard Medusa File-module (`uploadFilesWorkflow`, `access: "private"`,
+ * spec-Beveiligingseisen "nooit direct publiek toegankelijk") en koppelt de
+ * teruggegeven file-id aan `seller`. Vervangt een eerder document van
+ * hetzelfde type als de partner opnieuw uploadt (bijv. na "Aanvullende
+ * informatie vereist" op precies dat onderdeel, spec §2.13).
+ */
+export const uploadPartnerOnboardingDocumentWorkflow = createWorkflow(
+  "upload-partner-onboarding-document",
+  (input: {
+    sellerId: string
+    documentType: DocumentType
+    filename: string
+    mimeType: string
+    content: string
+  }) => {
+    const uploaded = uploadFilesWorkflow.runAsStep({
+      input: {
+        files: [
+          {
+            filename: input.filename,
+            mimeType: input.mimeType,
+            content: input.content,
+            access: "private",
+          },
+        ],
+      },
+    })
+
+    // uploadFilesWorkflow retourneert een array van FileDTO — één element per
+    // meegegeven bestand (hier altijd precies één). Array-indexering op een
+    // workflow-stepoutput moet via `transform` (geen directe JS-indexering
+    // op workflow-constructietijd).
+    const fileId = transform({ uploaded }, (data) => data.uploaded[0].id)
+
+    const updated = storeOnboardingDocumentStep({
+      sellerId: input.sellerId,
+      documentType: input.documentType,
+      fileId,
+    })
+
+    return new WorkflowResponse(updated)
   }
 )
 

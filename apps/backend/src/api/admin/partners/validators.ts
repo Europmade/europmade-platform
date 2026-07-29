@@ -2,9 +2,7 @@ import { z } from "@medusajs/framework/zod"
 
 /**
  * Partneroverzicht — partner-center/spec.md §2: zoeken (bedrijfsnaam/KvK-
- * nummer, de enige doorzoekbare tekstvelden die daadwerkelijk op `company`
- * bestaan) en filteren (rol, land). `is_*`-filters komen als querystring-
- * tekst binnen ("true"/"false"), vandaar het enum in plaats van z.boolean().
+ * nummer) en filteren (rol, land).
  */
 export const AdminListPartnersQuery = z.object({
   q: z.string().trim().min(1).optional(),
@@ -26,8 +24,7 @@ export type AdminRejectPartnerOnboardingInput = z.infer<
 >
 
 /**
- * Aanvullende informatie vragen vereist een specifiek, per-onderdeel
- * benoemd verzoek — spec §2.8A ("nooit een generieke tekst").
+ * Aanvullende informatie vragen vereist een specifiek verzoek — spec §2.8A.
  */
 export const AdminRequestPartnerOnboardingInfo = z.object({
   message: z
@@ -38,3 +35,9 @@ export const AdminRequestPartnerOnboardingInfo = z.object({
 export type AdminRequestPartnerOnboardingInfoInput = z.infer<
   typeof AdminRequestPartnerOnboardingInfo
 >
+
+/** Blokkeren vereist altijd een reden — S3-02-05 acceptatiecriterium. */
+export const AdminBlockPartner = z.object({
+  reason: z.string().trim().min(1, "Een blokkeerreden is verplicht."),
+})
+export type AdminBlockPartnerInput = z.infer<typeof AdminBlockPartner>

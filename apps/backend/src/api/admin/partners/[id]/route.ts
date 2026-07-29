@@ -46,7 +46,7 @@ export async function GET(
     return
   }
 
-  if (seller.onboarding_status !== "Goedgekeurd") {
+  if (seller.onboarding_status !== "Goedgekeurd" || seller.is_blocked) {
     res.status(404).json({ message: "Partner niet gevonden." })
     return
   }

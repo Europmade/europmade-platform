@@ -56,7 +56,7 @@ export async function GET(
   }
 
   const approvedPartners = await partnerService.listSellers(
-    { onboarding_status: "Goedgekeurd", ...roleFilter },
+    { onboarding_status: "Goedgekeurd", is_blocked: false, ...roleFilter },
     { relations: ["company"] }
   )
 

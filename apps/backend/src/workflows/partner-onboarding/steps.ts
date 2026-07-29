@@ -19,6 +19,11 @@ import {
   OnboardingRoleSelection,
   validateCompanyForSubmission,
 } from "./validation"
+import {
+  DOCUMENT_FILE_ID_COLUMN,
+  DocumentType,
+  requiredDocumentTypesForRoles,
+} from "./documents"
 
 /**
  * Verplichte e-mailverificatie vóór onboarding kan starten — spec §1.8:
@@ -299,6 +304,20 @@ export const assertReadyForSubmissionStep = createStep(
 
     const errors = validateCompanyForSubmission(seller.company ?? {})
 
+    const requiredDocuments = requiredDocumentTypesForRoles({
+      is_retailer: seller.is_retailer,
+      is_producer_or_brand_owner: seller.is_producer_or_brand_owner,
+      is_distributor: seller.is_distributor,
+    })
+    const missingDocuments = requiredDocuments.filter(
+      (type) => !seller[DOCUMENT_FILE_ID_COLUMN[type] as keyof typeof seller]
+    )
+    if (missingDocuments.length > 0) {
+      errors.push(
+        `Upload eerst alle voor je rol(len) verplichte documenten: ${missingDocuments.join(", ")}.`
+      )
+    }
+
     if (!input.acceptedTerms) {
       errors.push(
         "Je moet akkoord gaan met de Partnervoorwaarden en het verwerkersaddendum voordat je kunt indienen."
@@ -358,10 +377,20 @@ export const transitionOnboardingStatusStep = createStep(
     assertTransitionAllowed(seller.onboarding_status, input.to)
 
     const previousStatus = seller.onboarding_status
+    const previousReviewNote = seller.review_note
     const updated = await partnerService.updateSellers({
       id: seller.id,
       onboarding_status: input.to,
       approved_at: input.to === "Goedgekeurd" ? new Date() : seller.approved_at,
+      // Reviewnotitie (afkeurreden / aanvullende-informatieverzoek) wordt
+      // vanaf S3-02-05 daadwerkelijk bewaard (zie `seller.review_note`,
+      // toegevoegd in dit ticket) zodat zowel de partner-statuspagina als
+      // het reviewer-detailscherm de exacte reden kunnen tonen — voorheen
+      // (S3-02-02) uitsluitend gelogd, zie toelichting bij het model.
+      // Bij Goedkeuren wordt een eventuele eerdere notitie niet gewist
+      // (blijft zichtbaar als afgeronde geschiedenis), tenzij expliciet een
+      // nieuwe notitie wordt meegegeven.
+      review_note: input.reviewNote ?? seller.review_note,
     })
 
     logger.info(
@@ -374,6 +403,7 @@ export const transitionOnboardingStatusStep = createStep(
       sellerId: seller.id,
       previousStatus,
       previousApprovedAt: seller.approved_at,
+      previousReviewNote,
     })
   },
   async (compensateInput, { container }) => {
@@ -383,6 +413,56 @@ export const transitionOnboardingStatusStep = createStep(
       id: compensateInput.sellerId,
       onboarding_status: compensateInput.previousStatus,
       approved_at: compensateInput.previousApprovedAt,
+      review_note: compensateInput.previousReviewNote,
+    })
+  }
+)
+
+/**
+ * Documentupload opslaan (spec §2.7/§2.9/§2.2 stap 4) — het daadwerkelijke
+ * bestand is op dit moment al via `uploadFilesWorkflow` (Medusa File-module,
+ * `access: "private"`) opgeslagen; deze step koppelt uitsluitend de
+ * teruggegeven file-id aan de juiste kolom op `seller`. Alleen toegestaan
+ * zolang de aanvraag nog bewerkbaar is (`EDITABLE_STATUSES`, zelfde regel
+ * als `updateOnboardingDraftStep`) — voorkomt dat een document wordt
+ * vervangen ná indiening, terwijl de reviewer het al beoordeelt.
+ */
+export const storeOnboardingDocumentStep = createStep(
+  "store-onboarding-document",
+  async (
+    input: { sellerId: string; documentType: DocumentType; fileId: string },
+    { container }
+  ) => {
+    const partnerService: PartnerModuleService = container.resolve(PARTNER_MODULE)
+    const seller = await partnerService.retrieveSeller(input.sellerId)
+
+    if (!EDITABLE_STATUSES.includes(seller.onboarding_status as OnboardingStatus)) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        `Deze aanvraag kan niet meer bewerkt worden in status "${seller.onboarding_status}" (spec §1.2).`
+      )
+    }
+
+    const column = DOCUMENT_FILE_ID_COLUMN[input.documentType]
+    const previousFileId = (seller as unknown as Record<string, string | null>)[column]
+
+    const updated = await partnerService.updateSellers({
+      id: seller.id,
+      [column]: input.fileId,
+    })
+
+    return new StepResponse(updated, {
+      sellerId: seller.id,
+      column,
+      previousFileId,
+    })
+  },
+  async (compensateInput, { container }) => {
+    if (!compensateInput) return
+    const partnerService: PartnerModuleService = container.resolve(PARTNER_MODULE)
+    await partnerService.updateSellers({
+      id: compensateInput.sellerId,
+      [compensateInput.column]: compensateInput.previousFileId,
     })
   }
 )
