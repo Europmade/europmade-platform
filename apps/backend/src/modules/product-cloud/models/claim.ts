@@ -14,6 +14,8 @@ const Claim = model
     }),
     claimant_seller_id: model.text(),
     status: model.enum(["In beoordeling", "Goedgekeurd", "Afgewezen"]),
+    // ADR-0010 — verplicht bij Afgewezen (product-management §5).
+    decision_reason: model.text().nullable(),
     ai_metadata_id: model.text().nullable(),
   })
   .indexes([{ on: ["product_id"] }, { on: ["status"] }])

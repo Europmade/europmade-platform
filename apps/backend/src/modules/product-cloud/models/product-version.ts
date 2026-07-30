@@ -1,6 +1,7 @@
 import { model } from "@medusajs/framework/utils"
 import Product from "./product"
 import AttributeValue from "./attribute-value"
+import ProductMedia from "./media"
 
 /**
  * ProductVersion — Blueprint `02-database-model.md` Deel B.3.
@@ -26,6 +27,9 @@ const ProductVersion = model
     ]),
     created_by_seller_id: model.text(),
     attribute_values: model.hasMany(() => AttributeValue, {
+      mappedBy: "product_version",
+    }),
+    media_items: model.hasMany(() => ProductMedia, {
       mappedBy: "product_version",
     }),
   })

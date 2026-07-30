@@ -1,0 +1,85 @@
+import { z } from "@medusajs/framework/zod"
+
+export const StoreEanMatchBody = z.object({
+  identifier_value: z.string().trim().min(1),
+  identifier_type: z.enum(["GTIN", "MPN"]).optional(),
+  country_scope: z.string().trim().min(1).nullable().optional(),
+  draft_product_id: z.string().trim().min(1).optional(),
+  candidate_product_ids: z.array(z.string().trim().min(1)).optional(),
+})
+export type StoreEanMatchBodyInput = z.infer<typeof StoreEanMatchBody>
+
+const MediaInput = z.object({
+  media_type: z.enum(["Hoofdafbeelding", "Overige afbeelding", "Video"]),
+  storage_reference: z.string().trim().min(1),
+})
+
+export const StoreCreateProductBody = z.object({
+  brand_id: z.string().trim().min(1),
+  manufacturer_id: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  category_name: z.string().trim().min(1).optional().default("Algemeen"),
+  identifier_type: z.enum(["GTIN", "MPN"]).optional().default("GTIN"),
+  identifier_value: z.string().trim().min(1),
+  country_scope: z.string().trim().min(1).nullable().optional(),
+  create_as_retailer: z.boolean().optional(),
+  variant_type: z
+    .enum([
+      "Kleur",
+      "Maat",
+      "Inhoud",
+      "Vermogen",
+      "Spanning",
+      "Materiaal",
+      "Uitvoering",
+      "Bundel",
+    ])
+    .optional(),
+  variant_value: z.string().trim().min(1).optional(),
+  media: z.array(MediaInput).optional(),
+})
+export type StoreCreateProductBodyInput = z.infer<typeof StoreCreateProductBody>
+
+export const StoreUpsertConceptBody = z.object({
+  title: z.string().trim().min(1).optional(),
+  description: z.string().trim().min(1).optional(),
+})
+export type StoreUpsertConceptBodyInput = z.infer<typeof StoreUpsertConceptBody>
+
+export const StoreAddMediaBody = z.object({
+  version_id: z.string().trim().min(1),
+  media_type: z.enum(["Hoofdafbeelding", "Overige afbeelding", "Video"]),
+  storage_reference: z.string().trim().min(1),
+})
+export type StoreAddMediaBodyInput = z.infer<typeof StoreAddMediaBody>
+
+export const StoreOwnerLifecycleBody = z.object({
+  target_status: z.enum(["Uitlopend", "Niet meer leverbaar"]),
+})
+export type StoreOwnerLifecycleBodyInput = z.infer<
+  typeof StoreOwnerLifecycleBody
+>
+
+export const StoreSubmitClaimBody = z.object({
+  product_id: z.string().trim().min(1),
+})
+export type StoreSubmitClaimBodyInput = z.infer<typeof StoreSubmitClaimBody>
+
+export const StoreSubmitChangeProposalBody = z.object({
+  product_id: z.string().trim().min(1),
+  proposed_title: z.string().trim().min(1).nullable().optional(),
+  proposed_description: z.string().trim().min(1).nullable().optional(),
+  toelichting: z.string().trim().min(1),
+})
+export type StoreSubmitChangeProposalBodyInput = z.infer<
+  typeof StoreSubmitChangeProposalBody
+>
+
+export const StoreDecideChangeProposalBody = z.object({
+  decision: z.enum(["accept", "reject"]),
+  decision_reason: z.string().trim().min(1).optional(),
+})
+export type StoreDecideChangeProposalBodyInput = z.infer<
+  typeof StoreDecideChangeProposalBody
+>

@@ -38,3 +38,26 @@ export const AdminSeedProductWithEanBody = z.object({
 export type AdminSeedProductWithEanBodyInput = z.infer<
   typeof AdminSeedProductWithEanBody
 >
+
+export const AdminDecideClaimBody = z.object({
+  decision: z.enum(["approve", "reject"]),
+  decision_reason: z.string().trim().min(1).optional(),
+})
+export type AdminDecideClaimBodyInput = z.infer<typeof AdminDecideClaimBody>
+
+export const AdminArchiveProductBody = z.object({
+  target_status: z.literal("Gearchiveerd"),
+})
+export type AdminArchiveProductBodyInput = z.infer<
+  typeof AdminArchiveProductBody
+>
+
+export const AdminDecideChangeProposalBody = z.object({
+  decision: z.enum(["accept", "reject"]),
+  decision_reason: z.string().trim().min(1).optional(),
+  /** Seller-id namens wie de beheerder beslist (audit). */
+  acting_seller_id: z.string().trim().min(1).optional(),
+})
+export type AdminDecideChangeProposalBodyInput = z.infer<
+  typeof AdminDecideChangeProposalBody
+>

@@ -28,10 +28,10 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-02-03 | EPIC-02 | Niet gestart | — | — | — |
 | S3-02-04 | EPIC-02 | Niet gestart | — | — | — |
 | S3-02-05 | EPIC-02 | Niet gestart | — | — | — |
-| S3-03-01 | EPIC-03 | Niet gestart | — | — | — |
-| S3-03-02 | EPIC-03 | Niet gestart | — | — | — |
-| S3-03-03 | EPIC-03 | Niet gestart | — | — | — |
-| S3-03-04 | EPIC-03 | Niet gestart | — | — | — |
+| S3-03-01 | EPIC-03 | **Gereed** | — | 2026-07-30 | Product Cloud Deel B-modellen + migraties (ADR-0008) |
+| S3-03-02 | EPIC-03 | **Gereed** | — | 2026-07-30 | Moderation + Verification-modules (B.13/B.14) |
+| S3-03-03 | EPIC-03 | **Gereed** | — | 2026-07-30 | EAN-matching workflow + admin-testroutes (ADR-0007) |
+| S3-03-04 | EPIC-03 | **Gereed** | — | 2026-07-30 | Product-CRUD API, Retailer Created, claims, wijzigingsvoorstellen (ADR-0009/0010); E2E groen |
 | S3-03-05 | EPIC-03 | Niet gestart | — | — | — |
 | S3-03-06 | EPIC-03 | Niet gestart | — | — | — |
 | S3-03-07 | EPIC-03 | Niet gestart | — | — | — |

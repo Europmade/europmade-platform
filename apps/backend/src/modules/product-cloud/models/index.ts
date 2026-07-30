@@ -13,6 +13,8 @@ import Dispute from "./dispute"
 import MatchCandidate from "./match-candidate"
 import MergeRecord from "./merge-record"
 import SplitRecord from "./split-record"
+import ProductMedia from "./media"
+import ChangeProposal from "./change-proposal"
 
 export {
   ProductFamily,
@@ -30,4 +32,6 @@ export {
   MatchCandidate,
   MergeRecord,
   SplitRecord,
+  ProductMedia,
+  ChangeProposal,
 }

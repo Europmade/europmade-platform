@@ -16,30 +16,47 @@ import {
 import {
   AdminEanMatchBody,
   AdminSeedProductWithEanBody,
+  AdminDecideClaimBody,
+  AdminArchiveProductBody,
+  AdminDecideChangeProposalBody,
 } from "./admin/product-cloud/validators"
+import {
+  StoreEanMatchBody,
+  StoreCreateProductBody,
+  StoreUpsertConceptBody,
+  StoreAddMediaBody,
+  StoreOwnerLifecycleBody,
+  StoreSubmitClaimBody,
+  StoreSubmitChangeProposalBody,
+  StoreDecideChangeProposalBody,
+} from "./store/product-cloud/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
 })
 
+const customerAuth = authenticate("customer", ["session", "bearer"])
+const adminAuth = authenticate("user", ["session", "bearer"])
+
 /**
  * S3-02-02 — Partner Onboarding.
  * S3-02-04/05 — Partnerbeheer.
- * S3-03-03 — EAN-matching (dunne admin-testroutes; volledige CRUD = S3-03-04).
+ * S3-03-03 — EAN-matching.
+ * S3-03-04 — Product-CRUD + Retailer Created + claims + wijzigingsvoorstellen.
  */
 export default defineMiddlewares({
   routes: [
     {
       matcher: "/store/partner-onboarding",
       methods: ["GET"],
-      middlewares: [authenticate("customer", ["session", "bearer"])],
+      middlewares: [customerAuth],
     },
     {
       matcher: "/store/partner-onboarding",
       methods: ["POST"],
       middlewares: [
-        authenticate("customer", ["session", "bearer"]),
+        customerAuth,
         validateAndTransformBody(StoreStartPartnerOnboarding),
       ],
     },
@@ -47,7 +64,7 @@ export default defineMiddlewares({
       matcher: "/store/partner-onboarding",
       methods: ["PATCH"],
       middlewares: [
-        authenticate("customer", ["session", "bearer"]),
+        customerAuth,
         validateAndTransformBody(StoreUpdatePartnerOnboardingDraft),
       ],
     },
@@ -55,43 +72,128 @@ export default defineMiddlewares({
       matcher: "/store/partner-onboarding/submit",
       methods: ["POST"],
       middlewares: [
-        authenticate("customer", ["session", "bearer"]),
+        customerAuth,
         validateAndTransformBody(StoreSubmitPartnerOnboarding),
       ],
     },
     {
       matcher: "/store/partner-onboarding/submit-addition",
       methods: ["POST"],
-      middlewares: [authenticate("customer", ["session", "bearer"])],
+      middlewares: [customerAuth],
     },
     {
       matcher: "/store/partner-onboarding/documents",
       methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/store/product-cloud/ean-match",
+      methods: ["POST"],
+      middlewares: [customerAuth, validateAndTransformBody(StoreEanMatchBody)],
+    },
+    {
+      matcher: "/store/product-cloud/products",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products",
+      methods: ["POST"],
       middlewares: [
-        authenticate("customer", ["session", "bearer"]),
-        documentUpload.single("file"),
+        customerAuth,
+        validateAndTransformBody(StoreCreateProductBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/versions",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreUpsertConceptBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/versions/:versionId/submit",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/versions/:versionId/publish",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/media",
+      methods: ["POST"],
+      middlewares: [customerAuth, validateAndTransformBody(StoreAddMediaBody)],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/lifecycle",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreOwnerLifecycleBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/claims",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/claims",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreSubmitClaimBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/change-proposals",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/change-proposals",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreSubmitChangeProposalBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/change-proposals/:id/decide",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreDecideChangeProposalBody),
       ],
     },
     {
       matcher: "/admin/partners",
       methods: ["GET"],
-      middlewares: [authenticate("user", ["session", "bearer"])],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/admin/partners/:id",
       methods: ["GET"],
-      middlewares: [authenticate("user", ["session", "bearer"])],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/admin/partners/:id/approve",
       methods: ["POST"],
-      middlewares: [authenticate("user", ["session", "bearer"])],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/admin/partners/:id/reject",
       methods: ["POST"],
       middlewares: [
-        authenticate("user", ["session", "bearer"]),
+        adminAuth,
         validateAndTransformBody(AdminRejectPartnerOnboarding),
       ],
     },
@@ -99,34 +201,67 @@ export default defineMiddlewares({
       matcher: "/admin/partners/:id/request-additional-info",
       methods: ["POST"],
       middlewares: [
-        authenticate("user", ["session", "bearer"]),
+        adminAuth,
         validateAndTransformBody(AdminRequestPartnerOnboardingInfo),
       ],
     },
     {
       matcher: "/admin/partner-onboarding",
       methods: ["GET"],
-      middlewares: [authenticate("user", ["session", "bearer"])],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/admin/partner-onboarding/:id",
       methods: ["GET"],
-      middlewares: [authenticate("user", ["session", "bearer"])],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/admin/product-cloud/seed",
       methods: ["POST"],
       middlewares: [
-        authenticate("user", ["session", "bearer"]),
+        adminAuth,
         validateAndTransformBody(AdminSeedProductWithEanBody),
       ],
     },
     {
       matcher: "/admin/product-cloud/ean-match",
       methods: ["POST"],
+      middlewares: [adminAuth, validateAndTransformBody(AdminEanMatchBody)],
+    },
+    {
+      matcher: "/admin/product-cloud/products",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/:id/lifecycle",
+      methods: ["POST"],
       middlewares: [
-        authenticate("user", ["session", "bearer"]),
-        validateAndTransformBody(AdminEanMatchBody),
+        adminAuth,
+        validateAndTransformBody(AdminArchiveProductBody),
+      ],
+    },
+    {
+      matcher: "/admin/product-cloud/claims",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/claims/:id/decide",
+      methods: ["POST"],
+      middlewares: [adminAuth, validateAndTransformBody(AdminDecideClaimBody)],
+    },
+    {
+      matcher: "/admin/product-cloud/change-proposals/:id/decide",
+      methods: ["POST"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminDecideChangeProposalBody),
       ],
     },
   ],

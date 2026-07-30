@@ -15,11 +15,13 @@ import {
   MatchCandidate,
   MergeRecord,
   SplitRecord,
+  ProductMedia,
+  ChangeProposal,
 } from "./models"
 
 /**
  * Product Cloud-module — Blueprint `11-medusa-architecture.md` §3 + ADR-0008.
- * Deel B (exclusief B.13 ModerationCase, B.14 ProductOrigin).
+ * Deel B (+ B.15 media) + ADR-0009 ChangeProposal.
  */
 class ProductCloudModuleService extends MedusaService({
   ProductFamily,
@@ -37,6 +39,8 @@ class ProductCloudModuleService extends MedusaService({
   MatchCandidate,
   MergeRecord,
   SplitRecord,
+  ProductMedia,
+  ChangeProposal,
 }) {}
 
 export default ProductCloudModuleService
