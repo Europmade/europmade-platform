@@ -29,5 +29,8 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/verification",
     },
+    {
+      resolve: "./src/modules/order-service",
+    },
   ],
 })

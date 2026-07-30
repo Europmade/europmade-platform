@@ -41,8 +41,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-04-03 | EPIC-04 | **Gereed** | — | 2026-07-30 | Offer PATCH/DELETE + §2.2 events; BuyBoxRecomputed bij elke mutatie |
 | S3-04-04 | EPIC-04 | **Gereed** | — | 2026-07-30 | product-05 Buy Box-positie (winnaar/concurrenten/weging) |
 | S3-04-05 | EPIC-04 | **Gereed** | — | 2026-07-30 | ADR-0020 cachebeleid; C.4 prefer_cache read-path |
-| S3-05-01 | EPIC-05 | Niet gestart | — | — | — |
-| S3-05-02 | EPIC-05 | Niet gestart | — | — | — |
+| S3-05-01 | EPIC-05 | **Gereed** | — | 2026-07-30 | Deel D + G.9 in orderService-module (ADR-0021) |
+| S3-05-02 | EPIC-05 | **Gereed** | — | 2026-07-30 | Checkout place/revalidate + split + exception resolve; §2.3 events |
 | S3-05-03 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-04 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-05 | EPIC-05 | Niet gestart | — | — | — |

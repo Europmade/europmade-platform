@@ -28,3 +28,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0018](./0018-psp-webhook-integration-security.md) | Integratiebeveiliging / Event Security (PSP-webhooks) — Blueprint ADR-01 | Geaccepteerd | Security, Payment, Integraties |
 | [0019](./0019-buy-box-engine-defaults-and-missing-factors.md) | Buy Box-engine: defaultweging en ontbrekende factoren (S3-04-02) | Geaccepteerd | Buy Box, Commerce Cloud |
 | [0020](./0020-buy-box-cache-persistence.md) | Buy Box-cache-persistentie (Blueprint ADR-31) | Geaccepteerd | Buy Box, Commerce Cloud, Caching |
+| [0021](./0021-order-service-custom-deel-d.md) | Order-service Deel D als custom module naast Medusa Payment | Geaccepteerd | Order-service, Medusa-architectuur |

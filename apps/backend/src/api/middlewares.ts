@@ -31,6 +31,11 @@ import {
   StoreDecideChangeProposalBody,
 } from "./store/product-cloud/validators"
 import { StoreUpsertOfferBody, StorePatchOfferBody } from "./store/commerce-cloud/validators"
+import {
+  StoreCheckoutRevalidateBody,
+  StoreCheckoutPlaceBody,
+  AdminResolveExceptionBody,
+} from "./store/order-service/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
@@ -210,6 +215,45 @@ export default defineMiddlewares({
       matcher: "/store/commerce-cloud/buy-box",
       methods: ["GET"],
       middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/checkout/revalidate",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreCheckoutRevalidateBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/checkout/place",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreCheckoutPlaceBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/orders",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/orders/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/admin/order-service/exceptions",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/order-service/orders/:id/resolve-exception",
+      methods: ["POST"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminResolveExceptionBody),
+      ],
     },
     {
       matcher: "/admin/partners",
