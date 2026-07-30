@@ -22,6 +22,12 @@ const OwnershipRecord = model
     { on: ["seller_id"] },
     { on: ["valid_from"] },
     { on: ["valid_until"] },
+    {
+      on: ["product_id"],
+      unique: true,
+      where: "deleted_at IS NULL AND valid_until IS NULL",
+      name: "IDX_ownership_record_product_id_active_unique",
+    },
   ])
 
 export default OwnershipRecord

@@ -27,13 +27,6 @@ type ProductRow = {
   lifecycle_status: string
 }
 
-type OwnershipRow = {
-  id: string
-  product_id: string
-  seller_id: string
-  valid_until: Date | string | null
-}
-
 export type SubmitClaimInput = {
   product_id: string
   claimant_seller_id: string
@@ -179,77 +172,20 @@ export const decideClaimStep = createStep(
     const product = (await productCloud.retrieveProduct(
       claim.product_id
     )) as ProductRow
-    const now = new Date()
-
-    const currentOwnership = (await productCloud.listOwnershipRecords({
-      product_id: product.id,
-      valid_until: null,
-    })) as OwnershipRow[]
-    for (const own of currentOwnership) {
-      await productCloud.updateOwnershipRecords({
-        id: own.id,
-        valid_until: now,
-      })
-    }
-
-    await productCloud.createOwnershipRecords({
-      product_id: product.id,
-      seller_id: claim.claimant_seller_id,
-      valid_from: now,
-      valid_until: null,
-      transfer_reason: `Claim goedgekeurd: ${claim.id}`,
-    })
-
-    const lifecyclePatch: { id: string; current_owner_seller_id: string; lifecycle_status?: string } =
-      {
-        id: product.id,
-        current_owner_seller_id: claim.claimant_seller_id,
-      }
-    if (product.lifecycle_status === "Retailer Created") {
-      lifecyclePatch.lifecycle_status = "Concept gecontroleerd"
-    }
-
-    await productCloud.updateProducts(lifecyclePatch)
 
     // marketplace-core §9 stap 6: openstaande wijzigingsvoorstellen blijven
     // product-gebonden; nieuwe eigenaar ziet ze in de inbox (geen aparte reassignment-kolom).
-
-    const updated = await productCloud.updateClaims({
-      id: claim.id,
-      status: "Goedgekeurd",
-      decision_reason: null,
-    })
-
-    // Overige open claims op dit product afwijzen (dispute-resolutie).
-    const others = (await productCloud.listClaims({
+    const updated = await productCloud.approveClaimTransfer({
+      claim_id: claim.id,
       product_id: product.id,
-      status: "In beoordeling",
-    })) as ClaimRow[]
-    for (const other of others) {
-      if (other.id === claim.id) continue
-      await productCloud.updateClaims({
-        id: other.id,
-        status: "Afgewezen",
-        decision_reason:
-          "Andere claim goedgekeurd; eigendom is overgedragen.",
-      })
-    }
-
-    const openDisputes = await productCloud.listDisputes({
-      product_id: product.id,
-      status: "Open",
+      claimant_seller_id: claim.claimant_seller_id,
+      current_lifecycle_status: product.lifecycle_status,
     })
-    for (const d of openDisputes) {
-      await productCloud.updateDisputes({
-        id: d.id,
-        status: "Overdracht",
-      })
-    }
 
     logger.info(
       `[audit] claim approved claim=${claim.id} product=${product.id} new_owner=${claim.claimant_seller_id}`
     )
-    return new StepResponse(Array.isArray(updated) ? updated[0] : updated)
+    return new StepResponse(updated)
   }
 )
 

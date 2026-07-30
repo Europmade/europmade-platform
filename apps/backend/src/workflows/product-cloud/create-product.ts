@@ -110,62 +110,20 @@ export const createProductCloudStep = createStep(
 
     const lifecycle_status = resolveCreateLifecycle(input)
 
-    const product = await productCloud.createProducts({
+    const created = await productCloud.createProductGraph({
+      seller_id: input.seller_id,
       brand_id: input.brand_id,
       manufacturer_id: input.manufacturer_id,
-      current_owner_seller_id: input.seller_id,
       lifecycle_status,
-    })
-
-    await productCloud.createOwnershipRecords({
-      product_id: product.id,
-      seller_id: input.seller_id,
-      valid_from: new Date(),
-      valid_until: null,
-      transfer_reason: null,
-    })
-
-    const version = await productCloud.createProductVersions({
-      product_id: product.id,
-      version_number: 1,
       title: input.title,
       description: input.description,
-      publication_status: "Concept",
-      created_by_seller_id: input.seller_id,
-    })
-
-    for (const m of input.media ?? []) {
-      await productCloud.createProductMedias({
-        product_version_id: version.id,
-        media_type: m.media_type,
-        storage_reference: m.storage_reference,
-      })
-    }
-
-    const variant = await productCloud.createProductVariants({
-      product_id: product.id,
-      variant_type: input.variant_type ?? "Uitvoering",
-      variant_value: input.variant_value ?? "Standaard",
-    })
-
-    const identifier = await productCloud.createIdentifiers({
-      product_variant_id: variant.id,
+      category_name: input.category_name,
       identifier_type: input.identifier_type,
-      identifier_value: input.identifier_value.trim(),
-      country_scope: input.country_scope ?? null,
-    })
-
-    let category = (
-      await productCloud.listCategories({ name: input.category_name })
-    )[0]
-    if (!category) {
-      category = await productCloud.createCategories({
-        name: input.category_name,
-      })
-    }
-    await productCloud.createProductCategories({
-      product_id: product.id,
-      category_id: category.id,
+      identifier_value: input.identifier_value,
+      country_scope: input.country_scope,
+      variant_type: input.variant_type,
+      variant_value: input.variant_value,
+      media: input.media,
     })
 
     if (match.outcome === "uncertain") {
@@ -174,22 +132,22 @@ export const createProductCloudStep = createStep(
           identifier_value: input.identifier_value,
           identifier_type: input.identifier_type,
           country_scope: input.country_scope ?? null,
-          draft_product_id: product.id,
+          draft_product_id: created.product_id,
           candidate_product_ids: undefined,
         },
       })
     }
 
     logger.info(
-      `[audit] product-cloud created product=${product.id} lifecycle=${lifecycle_status} seller=${input.seller_id}`
+      `[audit] product-cloud created product=${created.product_id} lifecycle=${lifecycle_status} seller=${input.seller_id}`
     )
 
     return new StepResponse<CreateProductCloudResult>({
       created: true,
-      product_id: product.id,
-      version_id: version.id,
-      variant_id: variant.id,
-      identifier_id: identifier.id,
+      product_id: created.product_id,
+      version_id: created.version_id,
+      variant_id: created.variant_id,
+      identifier_id: created.identifier_id,
       lifecycle_status,
     })
   }

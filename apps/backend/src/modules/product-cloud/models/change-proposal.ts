@@ -1,4 +1,5 @@
 import { model } from "@medusajs/framework/utils"
+import Product from "./product"
 
 /**
  * ChangeProposal — ADR-0009 / marketplace-core §19 / product-management Wijzigingsvoorstel-API.
@@ -6,7 +7,10 @@ import { model } from "@medusajs/framework/utils"
 const ChangeProposal = model
   .define("change_proposal", {
     id: model.id({ prefix: "chpr" }).primaryKey(),
-    product_id: model.text(),
+    product: model.belongsTo(() => Product, {
+      mappedBy: "change_proposals",
+      foreignKeyName: "product_id",
+    }),
     submitter_seller_id: model.text(),
     proposed_title: model.text().nullable(),
     proposed_description: model.text().nullable(),

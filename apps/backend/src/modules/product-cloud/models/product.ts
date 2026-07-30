@@ -6,6 +6,10 @@ import ProductCategory from "./product-category"
 import OwnershipRecord from "./ownership-record"
 import Claim from "./claim"
 import Dispute from "./dispute"
+import MatchCandidate from "./match-candidate"
+import MergeRecord from "./merge-record"
+import SplitRecord from "./split-record"
+import ChangeProposal from "./change-proposal"
 
 /**
  * Product — Blueprint `02-database-model.md` Deel B.2.
@@ -43,6 +47,27 @@ const Product = model
     }),
     claims: model.hasMany(() => Claim, { mappedBy: "product" }),
     disputes: model.hasMany(() => Dispute, { mappedBy: "product" }),
+    change_proposals: model.hasMany(() => ChangeProposal, {
+      mappedBy: "product",
+    }),
+    match_candidates_a: model.hasMany(() => MatchCandidate, {
+      mappedBy: "product_a",
+    }),
+    match_candidates_b: model.hasMany(() => MatchCandidate, {
+      mappedBy: "product_b",
+    }),
+    merge_records_surviving: model.hasMany(() => MergeRecord, {
+      mappedBy: "surviving_product",
+    }),
+    merge_records_merged: model.hasMany(() => MergeRecord, {
+      mappedBy: "merged_product",
+    }),
+    split_records_original: model.hasMany(() => SplitRecord, {
+      mappedBy: "original_product",
+    }),
+    split_records_new: model.hasMany(() => SplitRecord, {
+      mappedBy: "new_product",
+    }),
   })
   .indexes([
     { on: ["brand_id"] },

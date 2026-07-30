@@ -279,51 +279,21 @@ export const publishVersionStep = createStep(
       )
     }
 
-    const published = (await productCloud.listProductVersions({
+    const result = await productCloud.publishVersionGraph({
       product_id: input.product_id,
-      publication_status: "Gepubliceerd",
-    })) as ProductVersionRow[]
-    for (const prev of published) {
-      await productCloud.updateProductVersions({
-        id: prev.id,
-        publication_status: "Gearchiveerd",
-      })
-    }
-
-    const updated = await productCloud.updateProductVersions({
-      id: version.id,
-      publication_status: "Gepubliceerd",
+      version_id: version.id,
+      current_lifecycle_status: product.lifecycle_status,
     })
-    const publishedVersion = (
-      Array.isArray(updated) ? updated[0] : updated
-    ) as ProductVersionRow
 
-    let lifecycle_status = product.lifecycle_status
-    if (
-      product.lifecycle_status === "Retailer Created" ||
-      product.lifecycle_status === "Concept gecontroleerd"
-    ) {
-      // §3A: eerste publicatie → Actief (via Concept gecontroleerd indien nodig).
-      if (product.lifecycle_status === "Retailer Created") {
-        await productCloud.updateProducts({
-          id: product.id,
-          lifecycle_status: "Concept gecontroleerd",
-        })
-      }
-      const after = await productCloud.updateProducts({
-        id: product.id,
-        lifecycle_status: "Actief",
-      })
-      lifecycle_status = (Array.isArray(after) ? after[0] : after)
-        .lifecycle_status
+    if (result.lifecycle_status === "Actief" && product.lifecycle_status !== "Actief") {
       logger.info(
         `[audit] lifecycle →Actief product=${product.id} trigger=first_publish`
       )
     }
 
     return new StepResponse({
-      version: publishedVersion,
-      lifecycle_status,
+      version: result.version as ProductVersionRow,
+      lifecycle_status: result.lifecycle_status,
     })
   }
 )
