@@ -21,6 +21,9 @@ module.exports = defineConfig({
       resolve: "./src/modules/product-cloud",
     },
     {
+      resolve: "./src/modules/commerce-cloud",
+    },
+    {
       resolve: "./src/modules/moderation",
     },
     {

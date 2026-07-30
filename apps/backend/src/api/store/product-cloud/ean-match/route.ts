@@ -30,12 +30,12 @@ export async function POST(
     },
   })
 
-  const preferred = {
-    identifier_type: body.identifier_type ?? "GTIN",
-    identifier_value: body.identifier_value.trim(),
-  }
-
   if (result.outcome === "exact_match" && result.product_id) {
+    const preferred = {
+      identifier_id: result.identifier_id,
+      identifier_type: body.identifier_type ?? "GTIN",
+      identifier_value: body.identifier_value.trim(),
+    }
     const product_preview = await buildProductCloudPreview(
       productCloud,
       result.product_id,
@@ -52,6 +52,10 @@ export async function POST(
   }
 
   if (result.outcome === "uncertain") {
+    const preferred = {
+      identifier_type: body.identifier_type ?? "GTIN",
+      identifier_value: body.identifier_value.trim(),
+    }
     const candidateIds = new Set<string>()
     if (result.match_candidate_ids?.length) {
       const candidates = await productCloud.listMatchCandidates({

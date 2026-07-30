@@ -33,6 +33,7 @@ export async function GET(
       ...product,
       title: preview.title,
       category_names: preview.category_names,
+      identifier_id: preview.identifier_id,
       identifier_type: preview.identifier_type,
       identifier_value: preview.identifier_value,
     })
@@ -80,6 +81,7 @@ export async function POST(
       created: false,
       exact_match_existing: true,
       product_id: result.product_id,
+      identifier_id: result.identifier_id,
       message:
         "Exacte EAN-match: koppel een Offer aan het bestaande product (Commerce Cloud), maak geen duplicaat.",
     })

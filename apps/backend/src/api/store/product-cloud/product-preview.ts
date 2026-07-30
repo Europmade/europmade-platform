@@ -7,6 +7,7 @@ export type ProductCloudPreview = {
   manufacturer_id: string
   lifecycle_status: string
   category_names: string[]
+  identifier_id: string | null
   identifier_type: string | null
   identifier_value: string | null
 }
@@ -42,6 +43,7 @@ type VariantRow = {
 }
 
 type IdentifierRow = {
+  id: string
   product_variant_id: string
   identifier_type: string
   identifier_value: string
@@ -66,6 +68,7 @@ export async function buildProductCloudPreview(
   productCloud: ProductCloudModuleService,
   productId: string,
   preferredIdentifier?: {
+    identifier_id?: string
     identifier_type?: string
     identifier_value?: string
   }
@@ -89,12 +92,14 @@ export async function buildProductCloudPreview(
         })) as CategoryRow[])
       : []
 
+  let identifier_id: string | null =
+    preferredIdentifier?.identifier_id ?? null
   let identifier_type: string | null =
     preferredIdentifier?.identifier_type ?? null
   let identifier_value: string | null =
     preferredIdentifier?.identifier_value ?? null
 
-  if (!identifier_value) {
+  if (!identifier_value || !identifier_id) {
     const variants = (await productCloud.listProductVariants({
       product_id: productId,
     })) as VariantRow[]
@@ -102,8 +107,14 @@ export async function buildProductCloudPreview(
       const ids = (await productCloud.listIdentifiers({
         product_variant_id: variant.id,
       })) as IdentifierRow[]
-      const gtin = ids.find((i) => i.identifier_type === "GTIN") ?? ids[0]
+      const preferred =
+        identifier_value != null
+          ? ids.find((i) => i.identifier_value === identifier_value)
+          : undefined
+      const gtin =
+        preferred ?? ids.find((i) => i.identifier_type === "GTIN") ?? ids[0]
       if (gtin) {
+        identifier_id = gtin.id
         identifier_type = gtin.identifier_type
         identifier_value = gtin.identifier_value
         break
@@ -118,6 +129,7 @@ export async function buildProductCloudPreview(
     manufacturer_id: product.manufacturer_id,
     lifecycle_status: product.lifecycle_status,
     category_names: categories.map((c) => c.name),
+    identifier_id,
     identifier_type,
     identifier_value,
   }

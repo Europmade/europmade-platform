@@ -53,6 +53,7 @@ export type ProductCloudPreview = {
   manufacturer_id: string
   lifecycle_status: string
   category_names: string[]
+  identifier_id: string | null
   identifier_type: string | null
   identifier_value: string | null
 }
@@ -65,6 +66,7 @@ export type CatalogProduct = {
   current_owner_seller_id: string
   title: string | null
   category_names: string[]
+  identifier_id: string | null
   identifier_type: string | null
   identifier_value: string | null
 }
@@ -81,6 +83,31 @@ export type EanMatchResponse = {
   candidate_previews?: ProductCloudPreview[]
 }
 
+export type CreateProductInput = {
+  brand_id: string
+  manufacturer_id: string
+  title: string
+  description: string
+  category_name: string
+  identifier_type: "GTIN" | "MPN"
+  identifier_value: string
+  create_as_retailer?: boolean
+  media?: Array<{
+    media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
+    storage_reference: string
+  }>
+}
+
+export type CreateProductResponse = {
+  created: boolean
+  exact_match_existing?: boolean
+  product_id: string
+  version_id?: string
+  variant_id?: string
+  identifier_id?: string
+  message?: string
+}
+
 export function listOwnProducts() {
   return request<{ products: CatalogProduct[]; count: number }>(
     "/store/product-cloud/products"
@@ -94,5 +121,12 @@ export function matchByEan(identifier_value: string) {
       identifier_value,
       identifier_type: "GTIN",
     }),
+  })
+}
+
+export function createProduct(body: CreateProductInput) {
+  return request<CreateProductResponse>("/store/product-cloud/products", {
+    method: "POST",
+    body: JSON.stringify(body),
   })
 }

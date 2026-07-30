@@ -128,6 +128,9 @@ export default function SellerProductsPage() {
                 <th className="border-b border-wf-400 px-7 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-wf-500">
                   Categorie
                 </th>
+                <th className="border-b border-wf-400 px-7 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-wf-500">
+                  Aanbod
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -146,6 +149,18 @@ export default function SellerProductsPage() {
                     {p.category_names?.length
                       ? p.category_names.join(" > ")
                       : "—"}
+                  </td>
+                  <td className="border-b border-wf-200 px-7 py-2.5">
+                    {p.identifier_id ? (
+                      <Link
+                        href={`/seller/products/offer?identifier_id=${encodeURIComponent(p.identifier_id)}`}
+                        className="text-xs font-semibold text-wf-800 underline"
+                      >
+                        Commercieel
+                      </Link>
+                    ) : (
+                      <span className="text-wf-500">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

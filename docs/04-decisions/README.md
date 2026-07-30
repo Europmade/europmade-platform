@@ -19,5 +19,9 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0009](./0009-change-proposal-entity.md) | ChangeProposal-entiteit voor de bevroren Wijzigingsvoorstel-API | Geaccepteerd | Product Cloud, Product Management |
 | [0010](./0010-claim-decision-reason.md) | Claim `decision_reason` voor afwijzen-met-reden | Geaccepteerd | Product Cloud, Claim-API |
 | [0011](./0011-minimal-seller-shell-for-s3-03-05.md) | Minimale Seller-shell als scaffold voor S3-03-05 | Geaccepteerd | Seller Dashboard, UX |
-| [0012](./0012-match-ui-commerce-stubs-and-uncertain.md) | Match-UI stubs: Commerce Cloud + uncertain zonder P0-wireframe | Geaccepteerd | Seller Dashboard, Product Cloud |
+| [0012](./0012-match-ui-commerce-stubs-and-uncertain.md) | Match-UI stubs: Commerce Cloud + uncertain zonder P0-wireframe | Geaccepteerd (Commerce-stubs vervangen door [0017](./0017-match-ui-commerce-stubs-lifted.md)) | Seller Dashboard, Product Cloud |
 | [0013](./0013-product-cloud-match-and-list-preview.md) | Product Cloud-preview op EAN-match en cataloguslijst | Geaccepteerd | Product Cloud, Store API |
+| [0014](./0014-offer-crud-without-buy-box-engine.md) | Offer-CRUD zonder Buy Box-engine in Seller→Commerce-batch | Geaccepteerd | Commerce Cloud, MVP-scope |
+| [0015](./0015-commerce-cloud-soft-refs.md) | Commerce Cloud soft refs naar Seller en Identifier | Geaccepteerd | Commerce Cloud, Medusa-architectuur |
+| [0016](./0016-retailer-created-form-soft-brand-and-upload-ref.md) | Retailer Created-formulier: vrije merktekst en media-referentie | Geaccepteerd | Seller Dashboard, Product Cloud |
+| [0017](./0017-match-ui-commerce-stubs-lifted.md) | Match-UI Commerce-stubs opgeheven door S3-03-06 / Offer-CRUD | Geaccepteerd | Seller Dashboard, Commerce Cloud |

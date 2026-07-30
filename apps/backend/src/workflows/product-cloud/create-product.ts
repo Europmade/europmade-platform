@@ -104,6 +104,7 @@ export const createProductCloudStep = createStep(
       return new StepResponse<CreateProductCloudResult>({
         created: false,
         product_id: match.product_id,
+        identifier_id: match.identifier_id,
         exact_match_existing: true,
       })
     }

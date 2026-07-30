@@ -200,7 +200,7 @@ export default function SellerProductAddPage() {
                 <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
                   Jouw aanbod — commerciële gegevens
                 </h3>
-                <div className="mb-3.5">
+                  <div className="mb-3.5">
                   <label className="mb-1.5 block text-xs font-semibold text-wf-700">
                     Prijs
                   </label>
@@ -212,9 +212,9 @@ export default function SellerProductAddPage() {
                   </label>
                   <Input placeholder="Aantal" disabled />
                 </div>
-                <Notice variant="warning">
-                  Prijs en voorraad horen bij Commerce Cloud (Offer). Aanbod
-                  aanmaken volgt in EPIC-04 / S3-03-06 (ADR-0012).
+                <Notice>
+                  Prijs en voorraad stel je in op het volgende scherm (Commerce
+                  Cloud Offer).
                 </Notice>
               </div>
             </div>
@@ -238,7 +238,27 @@ export default function SellerProductAddPage() {
             >
               Terug naar zoeken
             </Button>
-            <Button variant="disabled" type="button" disabled>
+            <Button
+              type="button"
+              disabled={
+                !view.data.identifier_id &&
+                !view.data.product_preview?.identifier_id
+              }
+              onClick={() => {
+                const id =
+                  view.data.identifier_id ??
+                  view.data.product_preview?.identifier_id
+                if (!id) {
+                  setError(
+                    "Identifier ontbreekt — zoek opnieuw of neem contact op."
+                  )
+                  return
+                }
+                router.push(
+                  `/seller/products/offer?identifier_id=${encodeURIComponent(id)}`
+                )
+              }}
+            >
               Aanbod aanmaken
             </Button>
           </div>
