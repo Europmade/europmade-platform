@@ -18,3 +18,6 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0008](./0008-product-cloud-custom-deel-b-tables.md) | Product Cloud Deel B-tabellen als custom module (naast Medusa Product) | Geaccepteerd | Product Cloud, Medusa-architectuur |
 | [0009](./0009-change-proposal-entity.md) | ChangeProposal-entiteit voor de bevroren Wijzigingsvoorstel-API | Geaccepteerd | Product Cloud, Product Management |
 | [0010](./0010-claim-decision-reason.md) | Claim `decision_reason` voor afwijzen-met-reden | Geaccepteerd | Product Cloud, Claim-API |
+| [0011](./0011-minimal-seller-shell-for-s3-03-05.md) | Minimale Seller-shell als scaffold voor S3-03-05 | Geaccepteerd | Seller Dashboard, UX |
+| [0012](./0012-match-ui-commerce-stubs-and-uncertain.md) | Match-UI stubs: Commerce Cloud + uncertain zonder P0-wireframe | Geaccepteerd | Seller Dashboard, Product Cloud |
+| [0013](./0013-product-cloud-match-and-list-preview.md) | Product Cloud-preview op EAN-match en cataloguslijst | Geaccepteerd | Product Cloud, Store API |

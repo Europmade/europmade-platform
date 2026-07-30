@@ -7,8 +7,9 @@ import type ProductCloudModuleService from "../../../../modules/product-cloud/se
 import { createProductCloudWorkflow } from "../../../../workflows/product-cloud"
 import { resolveApprovedSeller } from "../resolve-seller"
 import type { StoreCreateProductBodyInput } from "../validators"
+import { buildProductCloudPreview } from "../product-preview"
 
-/** Eigen catalogus (eigenaarschap) — PM §8/§9. */
+/** Eigen catalogus (eigenaarschap) — PM §8/§9 + ADR-0013 preview-velden. */
 export async function GET(
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
@@ -25,7 +26,19 @@ export async function GET(
     current_owner_seller_id: seller.id,
   })
 
-  res.json({ products, count: products.length })
+  const enriched = []
+  for (const product of products) {
+    const preview = await buildProductCloudPreview(productCloud, product.id)
+    enriched.push({
+      ...product,
+      title: preview.title,
+      category_names: preview.category_names,
+      identifier_type: preview.identifier_type,
+      identifier_value: preview.identifier_value,
+    })
+  }
+
+  res.json({ products: enriched, count: enriched.length })
 }
 
 /**
