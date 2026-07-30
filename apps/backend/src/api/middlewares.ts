@@ -30,7 +30,7 @@ import {
   StoreSubmitChangeProposalBody,
   StoreDecideChangeProposalBody,
 } from "./store/product-cloud/validators"
-import { StoreUpsertOfferBody } from "./store/commerce-cloud/validators"
+import { StoreUpsertOfferBody, StorePatchOfferBody } from "./store/commerce-cloud/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
@@ -191,6 +191,19 @@ export default defineMiddlewares({
     {
       matcher: "/store/commerce-cloud/offers/:id",
       methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/commerce-cloud/offers/:id",
+      methods: ["PATCH"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StorePatchOfferBody),
+      ],
+    },
+    {
+      matcher: "/store/commerce-cloud/offers/:id",
+      methods: ["DELETE"],
       middlewares: [customerAuth],
     },
     {

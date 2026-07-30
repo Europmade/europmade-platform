@@ -1,4 +1,11 @@
-export { upsertOfferWorkflow, type UpsertOfferInput } from "./upsert-offer"
+export {
+  upsertOfferWorkflow,
+  patchOfferWorkflow,
+  withdrawOfferWorkflow,
+  type UpsertOfferInput,
+  type PatchOfferInput,
+  type WithdrawOfferInput,
+} from "./upsert-offer"
 export {
   recomputeBuyBoxWorkflow,
   type RecomputeBuyBoxInput,

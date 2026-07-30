@@ -38,9 +38,9 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-03-08 | EPIC-03 | Niet gestart | — | — | — |
 | S3-04-01 | EPIC-04 | **Gereed** | — | 2026-07-30 | Offer / Inventory / Price (ADR-0014/0015) |
 | S3-04-02 | EPIC-04 | **Gereed** | — | 2026-07-30 | Buy Box-engine server-side (ADR-0004/0005/0019); `buy_box_computation` + BuyBoxRecomputed |
-| S3-04-03 | EPIC-04 | Niet gestart | — | — | — |
-| S3-04-04 | EPIC-04 | Niet gestart | — | — | — |
-| S3-04-05 | EPIC-04 | Niet gestart | — | — | — |
+| S3-04-03 | EPIC-04 | **Gereed** | — | 2026-07-30 | Offer PATCH/DELETE + §2.2 events; BuyBoxRecomputed bij elke mutatie |
+| S3-04-04 | EPIC-04 | **Gereed** | — | 2026-07-30 | product-05 Buy Box-positie (winnaar/concurrenten/weging) |
+| S3-04-05 | EPIC-04 | **Gereed** | — | 2026-07-30 | ADR-0020 cachebeleid; C.4 prefer_cache read-path |
 | S3-05-01 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-02 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-03 | EPIC-05 | Niet gestart | — | — | — |

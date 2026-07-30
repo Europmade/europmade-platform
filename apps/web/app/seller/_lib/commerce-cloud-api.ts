@@ -1,5 +1,5 @@
 /**
- * Store Commerce Cloud-client — Offer prijs/voorraad (ADR-0014).
+ * Store Commerce Cloud-client — Offer CRUD + Buy Box (S3-04-03/04).
  */
 
 const BACKEND_URL =
@@ -73,6 +73,28 @@ export type OfferListItem = {
   total_price: number | null
 }
 
+export type BuyBoxWeights = {
+  price: number
+  delivery: number
+  seller_review: number
+  stock: number
+  performance: number
+  returns: number
+}
+
+export type OfferBuyBoxPosition = {
+  status: string
+  source?: string
+  winning_offer_id?: string | null
+  is_winner?: boolean
+  rank?: number | null
+  ranked_count?: number
+  competing_offer_count?: number
+  weights?: BuyBoxWeights
+  computed_at?: string | Date
+  message?: string
+}
+
 export type UpsertOfferInput = {
   identifier_id: string
   region_code: string
@@ -95,7 +117,16 @@ export type UpsertOfferResult = {
       is_winner: boolean
       score: number
     }>
+    weights?: BuyBoxWeights
+    computed_at?: string | Date
   }
+}
+
+export type PatchOfferInput = {
+  quantity_available?: number
+  base_price?: number
+  shipping_cost?: number
+  vat_rate?: number
 }
 
 export type OfferDetailResponse = {
@@ -112,14 +143,7 @@ export type OfferDetailResponse = {
     identifier_type: string | null
     identifier_value: string | null
   }
-  buy_box: {
-    status: string
-    message?: string
-    winning_offer_id?: string | null
-    is_winner?: boolean
-    rank?: number | null
-    ranked_count?: number
-  }
+  buy_box: OfferBuyBoxPosition
 }
 
 export function listOffers(params?: {
@@ -145,5 +169,23 @@ export function upsertOffer(body: UpsertOfferInput) {
   return request<UpsertOfferResult>("/store/commerce-cloud/offers", {
     method: "POST",
     body: JSON.stringify(body),
+  })
+}
+
+export function patchOffer(id: string, body: PatchOfferInput) {
+  return request<UpsertOfferResult>(`/store/commerce-cloud/offers/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  })
+}
+
+export function withdrawOffer(id: string) {
+  return request<{
+    withdrawn: boolean
+    offer_id: string
+    identifier_id: string
+    region_code: string
+  }>(`/store/commerce-cloud/offers/${id}`, {
+    method: "DELETE",
   })
 }

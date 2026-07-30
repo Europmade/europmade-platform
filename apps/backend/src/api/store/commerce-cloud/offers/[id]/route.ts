@@ -7,11 +7,34 @@ import { COMMERCE_CLOUD_MODULE } from "../../../../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../../../../modules/commerce-cloud/service"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
+import {
+  patchOfferWorkflow,
+  withdrawOfferWorkflow,
+} from "../../../../../workflows/commerce-cloud"
 import { resolveApprovedSeller } from "../../../product-cloud/resolve-seller"
 import { buildProductCloudPreview } from "../../../product-cloud/product-preview"
 import { loadBuyBoxForIdentifier } from "../../buy-box-helpers"
+import type { StorePatchOfferBodyInput } from "../../validators"
 
 type RouteParams = { id: string }
+
+function mapOwnBuyBox(
+  buy_box: Awaited<ReturnType<typeof loadBuyBoxForIdentifier>>,
+  offerId: string
+) {
+  const own = buy_box.ranked.find((r) => r.offer_id === offerId)
+  return {
+    status: "computed" as const,
+    source: "recompute" as const,
+    winning_offer_id: buy_box.winning_offer_id,
+    is_winner: own?.is_winner ?? false,
+    rank: own?.rank ?? null,
+    ranked_count: buy_box.ranked.length,
+    competing_offer_count: Math.max(0, buy_box.ranked.length - (own ? 1 : 0)),
+    weights: buy_box.weights,
+    computed_at: buy_box.computed_at,
+  }
+}
 
 /** Eigen Offer-detail + Product Cloud-preview + Buy Box-positie. */
 export async function GET(
@@ -64,7 +87,6 @@ export async function GET(
     offer.identifier_id,
     offer.region_code
   )
-  const own = buy_box.ranked.find((r) => r.offer_id === offer.id)
 
   res.json({
     offer,
@@ -75,14 +97,65 @@ export async function GET(
         ? Number(price.base_price) + Number(price.shipping_cost)
         : null,
     product_preview,
-    buy_box: {
-      status: "computed",
-      winning_offer_id: buy_box.winning_offer_id,
-      is_winner: own?.is_winner ?? false,
-      rank: own?.rank ?? null,
-      ranked_count: buy_box.ranked.length,
-      weights: buy_box.weights,
-      computed_at: buy_box.computed_at,
+    buy_box: mapOwnBuyBox(buy_box, offer.id),
+  })
+}
+
+/** Gedeeltelijke prijs-/voorraadupdate (S3-04-03). */
+export async function PATCH(
+  req: AuthenticatedMedusaRequest<StorePatchOfferBodyInput>,
+  res: MedusaResponse
+) {
+  const seller = await resolveApprovedSeller(
+    req.scope,
+    req.auth_context.actor_id
+  )
+  const { id } = req.params as RouteParams
+  const body = req.validatedBody
+
+  const { result } = await patchOfferWorkflow(req.scope).run({
+    input: {
+      seller_id: seller.id,
+      offer_id: id,
+      quantity_available: body.quantity_available,
+      base_price: body.base_price,
+      shipping_cost: body.shipping_cost,
+      vat_rate: body.vat_rate,
     },
+  })
+
+  res.json({
+    offer_id: result.offer_id,
+    inventory_id: result.inventory_id,
+    price_id: result.price_id,
+    created: false,
+    buy_box: result.buy_box,
+  })
+}
+
+/** Soft-withdraw Offer → OfferWithdrawn + BuyBoxRecomputed (S3-04-03). */
+export async function DELETE(
+  req: AuthenticatedMedusaRequest,
+  res: MedusaResponse
+) {
+  const seller = await resolveApprovedSeller(
+    req.scope,
+    req.auth_context.actor_id
+  )
+  const { id } = req.params as RouteParams
+
+  const { result } = await withdrawOfferWorkflow(req.scope).run({
+    input: {
+      seller_id: seller.id,
+      offer_id: id,
+    },
+  })
+
+  res.json({
+    withdrawn: true,
+    offer_id: result.offer_id,
+    identifier_id: result.identifier_id,
+    region_code: result.region_code,
+    buy_box: result.buy_box,
   })
 }

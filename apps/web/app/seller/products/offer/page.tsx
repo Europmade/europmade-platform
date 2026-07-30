@@ -2,12 +2,14 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Button, Input, Notice } from "@europmade/ui"
+import { Badge, Button, Input, Notice } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
 import {
   CommerceCloudApiError,
+  getOffer,
   listOffers,
   upsertOffer,
+  type OfferBuyBoxPosition,
   type OfferListItem,
 } from "../../_lib/commerce-cloud-api"
 import {
@@ -29,6 +31,102 @@ function formatEuro(n: number): string {
   return `€ ${n.toFixed(2).replace(".", ",")}`
 }
 
+function formatWeightPct(n: number): string {
+  return `${Math.round(n * 100)}%`
+}
+
+const WEIGHT_LABELS: Array<{ key: keyof NonNullable<OfferBuyBoxPosition["weights"]>; label: string }> = [
+  { key: "price", label: "Prijs" },
+  { key: "delivery", label: "Levertijd" },
+  { key: "seller_review", label: "Verkopersreview" },
+  { key: "stock", label: "Voorraad" },
+  { key: "performance", label: "Performance" },
+  { key: "returns", label: "Retourprestaties" },
+]
+
+function BuyBoxPositionPanel({
+  position,
+  offerId,
+}: {
+  position: OfferBuyBoxPosition | null
+  offerId: string | null
+}) {
+  const [weightsOpen, setWeightsOpen] = useState(false)
+
+  if (!offerId) {
+    return (
+      <div className="rounded-lg border border-wf-200 p-5">
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+          Buy Box-positie
+        </h3>
+        <p className="text-[11px] text-wf-600">
+          Nog geen aanbod voor deze identifier/regio. Na opslaan toont de server
+          je Buy Box-positie.
+        </p>
+      </div>
+    )
+  }
+
+  if (!position || position.status !== "computed") {
+    return (
+      <div className="rounded-lg border border-wf-200 p-5">
+        <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+          Buy Box-positie
+        </h3>
+        <Notice>Buy Box-positie wordt geladen…</Notice>
+      </div>
+    )
+  }
+
+  const statusLabel = position.is_winner
+    ? "Buy Box-winnaar"
+    : position.rank != null
+      ? `Positie #${position.rank}`
+      : "Niet in ranking"
+
+  const competing =
+    position.competing_offer_count ??
+    Math.max(0, (position.ranked_count ?? 0) - (position.rank != null ? 1 : 0))
+
+  return (
+    <div className="rounded-lg border border-wf-200 p-5">
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+        Buy Box-positie
+      </h3>
+      <div className="mb-2.5 flex items-center justify-between gap-3 text-xs">
+        <span className="text-wf-600">Huidige status</span>
+        <Badge variant={position.is_winner ? "solid" : "outline"}>
+          {statusLabel}
+        </Badge>
+      </div>
+      <div className="mb-2.5 flex items-center justify-between gap-3 text-xs">
+        <span className="text-wf-600">Concurrerende aanbieders</span>
+        <span className="font-semibold text-wf-900">{competing}</span>
+      </div>
+      <button
+        type="button"
+        className="text-xs font-semibold text-wf-800 underline decoration-dotted"
+        onClick={() => setWeightsOpen((open) => !open)}
+      >
+        {weightsOpen ? "Verberg wegingsfactoren" : "Bekijk wegingsfactoren"}
+      </button>
+      {weightsOpen && position.weights ? (
+        <ul className="mt-3 space-y-1.5 border-t border-wf-200 pt-3 text-[11px] text-wf-700">
+          {WEIGHT_LABELS.map(({ key, label }) => (
+            <li key={key} className="flex justify-between gap-2">
+              <span>{label}</span>
+              <span className="font-semibold">
+                {formatWeightPct(position.weights![key])}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <p className="mt-3 text-[10.5px] text-wf-500">Offer: {offerId}</p>
+    </div>
+  )
+}
+
 function SellerProductOfferInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -44,6 +142,7 @@ function SellerProductOfferInner() {
   const [existing, setExisting] = useState<OfferListItem | null | "loading">(
     "loading"
   )
+  const [buyBox, setBuyBox] = useState<OfferBuyBoxPosition | null>(null)
   const [basePrice, setBasePrice] = useState("")
   const [shipping, setShipping] = useState("")
   const [quantity, setQuantity] = useState("")
@@ -66,7 +165,7 @@ function SellerProductOfferInner() {
       listOwnProducts(),
       listOffers({ identifier_id: identifierId, region_code: regionCode }),
     ])
-      .then(([productsRes, offersRes]) => {
+      .then(async ([productsRes, offersRes]) => {
         if (cancelled) return
         setCatalog(productsRes.products)
         setPreviewTitle(offersRes.product_preview?.title ?? null)
@@ -78,6 +177,12 @@ function SellerProductOfferInner() {
         }
         if (hit?.inventory) {
           setQuantity(String(hit.inventory.quantity_available))
+        }
+        if (hit?.offer.id) {
+          const detail = await getOffer(hit.offer.id)
+          if (!cancelled) setBuyBox(detail.buy_box)
+        } else {
+          setBuyBox(null)
         }
       })
       .catch((err: unknown) => {
@@ -140,15 +245,18 @@ function SellerProductOfferInner() {
         vat_rate: 0.21,
       })
       setSavedMessage(
-        result.created
-          ? "Aanbod aangemaakt. Buy Box-positie volgt later (ADR-0014)."
-          : "Aanbod bijgewerkt. Buy Box-positie volgt later (ADR-0014)."
+        result.created ? "Aanbod aangemaakt." : "Aanbod bijgewerkt."
       )
       const refreshed = await listOffers({
         identifier_id: identifierId,
         region_code: regionCode,
       })
-      setExisting(refreshed.offers[0] ?? null)
+      const hit = refreshed.offers[0] ?? null
+      setExisting(hit)
+      if (hit?.offer.id) {
+        const detail = await getOffer(hit.offer.id)
+        setBuyBox(detail.buy_box)
+      }
     } catch (err: unknown) {
       setError(
         err instanceof CommerceCloudApiError
@@ -159,6 +267,9 @@ function SellerProductOfferInner() {
       setBusy(false)
     }
   }
+
+  const offerId =
+    existing && existing !== "loading" ? existing.offer.id : null
 
   return (
     <SellerGate
@@ -240,25 +351,7 @@ function SellerProductOfferInner() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-wf-200 p-5">
-              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-                Buy Box-positie
-              </h3>
-              <Notice>
-                {existing && existing !== "loading"
-                  ? "Buy Box wordt server-side herberekend bij opslaan (S3-04-02 / ADR-0005). Positie-UI volgt in S3-04-04."
-                  : "Na opslaan herberekent de server de Buy Box (ADR-0005). Volledige positie-UI volgt in S3-04-04."}
-              </Notice>
-              {existing && existing !== "loading" ? (
-                <p className="mt-3 text-[11px] text-wf-600">
-                  Opgeslagen offer: {existing.offer.id}
-                </p>
-              ) : (
-                <p className="mt-3 text-[11px] text-wf-600">
-                  Nog geen aanbod voor deze identifier/regio.
-                </p>
-              )}
-            </div>
+            <BuyBoxPositionPanel position={buyBox} offerId={offerId} />
           </div>
 
           {error ? (
@@ -292,7 +385,7 @@ function SellerProductOfferInner() {
   )
 }
 
-/** product-05 — commerciële gegevens / Offer (S3-03-06 + ADR-0014). */
+/** product-05 — commerciële gegevens / Buy Box-positie (S3-04-03/04). */
 export default function SellerProductOfferPage() {
   return (
     <Suspense

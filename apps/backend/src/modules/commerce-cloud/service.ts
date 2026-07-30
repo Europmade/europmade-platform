@@ -2,6 +2,7 @@ import {
   InjectManager,
   InjectTransactionManager,
   MedusaContext,
+  MedusaError,
   MedusaService,
 } from "@medusajs/framework/utils"
 import type { Context } from "@medusajs/framework/types"
@@ -35,6 +36,27 @@ export type UpsertOfferGraphResult = {
   inventory_id: string
   price_id: string
   created: boolean
+  inventory_changed: boolean
+  price_changed: boolean
+  previous_quantity_available: number | null
+  previous_base_price: number | null
+  previous_shipping_cost: number | null
+  previous_vat_rate: number | null
+}
+
+export type PatchOfferGraphInput = {
+  offer_id: string
+  quantity_available?: number
+  base_price?: number
+  shipping_cost?: number
+  vat_rate?: number
+}
+
+export type WithdrawOfferResult = {
+  offer_id: string
+  identifier_id: string
+  region_code: string
+  seller_id: string
 }
 
 export type PersistBuyBoxInput = {
@@ -90,15 +112,31 @@ class CommerceCloudModuleService extends MedusaService({
         sharedContext
       )
 
+      const previous_quantity_available =
+        inventories[0] != null
+          ? Number(inventories[0].quantity_available)
+          : null
+      const previous_base_price =
+        prices[0] != null ? Number(prices[0].base_price) : null
+      const previous_shipping_cost =
+        prices[0] != null ? Number(prices[0].shipping_cost) : null
+      const previous_vat_rate =
+        prices[0] != null ? Number(prices[0].vat_rate) : null
+
       let inventory_id = inventories[0]?.id
+      let inventory_changed = false
       if (inventory_id) {
-        await this.updateOfferInventories(
-          {
-            id: inventory_id,
-            quantity_available: input.quantity_available,
-          },
-          sharedContext
-        )
+        inventory_changed =
+          previous_quantity_available !== input.quantity_available
+        if (inventory_changed) {
+          await this.updateOfferInventories(
+            {
+              id: inventory_id,
+              quantity_available: input.quantity_available,
+            },
+            sharedContext
+          )
+        }
       } else {
         const inv = await this.createOfferInventories(
           {
@@ -108,19 +146,27 @@ class CommerceCloudModuleService extends MedusaService({
           sharedContext
         )
         inventory_id = inv.id
+        inventory_changed = true
       }
 
       let price_id = prices[0]?.id
+      let price_changed = false
       if (price_id) {
-        await this.updateOfferPrices(
-          {
-            id: price_id,
-            base_price: input.base_price,
-            shipping_cost: input.shipping_cost,
-            vat_rate: input.vat_rate,
-          },
-          sharedContext
-        )
+        price_changed =
+          previous_base_price !== input.base_price ||
+          previous_shipping_cost !== input.shipping_cost ||
+          previous_vat_rate !== input.vat_rate
+        if (price_changed) {
+          await this.updateOfferPrices(
+            {
+              id: price_id,
+              base_price: input.base_price,
+              shipping_cost: input.shipping_cost,
+              vat_rate: input.vat_rate,
+            },
+            sharedContext
+          )
+        }
       } else {
         const price = await this.createOfferPrices(
           {
@@ -132,6 +178,7 @@ class CommerceCloudModuleService extends MedusaService({
           sharedContext
         )
         price_id = price.id
+        price_changed = true
       }
 
       return {
@@ -139,6 +186,12 @@ class CommerceCloudModuleService extends MedusaService({
         inventory_id,
         price_id,
         created: false,
+        inventory_changed,
+        price_changed,
+        previous_quantity_available,
+        previous_base_price,
+        previous_shipping_cost,
+        previous_vat_rate,
       }
     }
 
@@ -174,6 +227,112 @@ class CommerceCloudModuleService extends MedusaService({
       inventory_id: inventory.id,
       price_id: price.id,
       created: true,
+      inventory_changed: true,
+      price_changed: true,
+      previous_quantity_available: null,
+      previous_base_price: null,
+      previous_shipping_cost: null,
+      previous_vat_rate: null,
+    }
+  }
+
+  @InjectManager()
+  async patchOfferGraph(
+    input: PatchOfferGraphInput,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<UpsertOfferGraphResult> {
+    return await this.patchOfferGraph_(input, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async patchOfferGraph_(
+    input: PatchOfferGraphInput,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<UpsertOfferGraphResult> {
+    const offer = await this.retrieveOffer(input.offer_id, {}, sharedContext)
+    const inventories = await this.listOfferInventories(
+      { offer_id: offer.id },
+      {},
+      sharedContext
+    )
+    const prices = await this.listOfferPrices(
+      { offer_id: offer.id },
+      {},
+      sharedContext
+    )
+
+    if (!inventories[0] || !prices[0]) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Offer mist inventory of price."
+      )
+    }
+
+    const quantity =
+      input.quantity_available ?? Number(inventories[0].quantity_available)
+    const base_price = input.base_price ?? Number(prices[0].base_price)
+    const shipping_cost =
+      input.shipping_cost ?? Number(prices[0].shipping_cost)
+    const vat_rate = input.vat_rate ?? Number(prices[0].vat_rate)
+
+    return await this.upsertOfferGraph_(
+      {
+        seller_id: offer.seller_id,
+        identifier_id: offer.identifier_id,
+        region_code: offer.region_code,
+        quantity_available: quantity,
+        base_price,
+        shipping_cost,
+        vat_rate,
+      },
+      sharedContext
+    )
+  }
+
+  @InjectManager()
+  async withdrawOffer(
+    offerId: string,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<WithdrawOfferResult> {
+    return await this.withdrawOffer_(offerId, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async withdrawOffer_(
+    offerId: string,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<WithdrawOfferResult> {
+    const offer = await this.retrieveOffer(offerId, {}, sharedContext)
+    const inventories = await this.listOfferInventories(
+      { offer_id: offer.id },
+      {},
+      sharedContext
+    )
+    const prices = await this.listOfferPrices(
+      { offer_id: offer.id },
+      {},
+      sharedContext
+    )
+
+    if (inventories.length > 0) {
+      await this.softDeleteOfferInventories(
+        inventories.map((row) => row.id),
+        sharedContext
+      )
+    }
+    if (prices.length > 0) {
+      await this.softDeleteOfferPrices(
+        prices.map((row) => row.id),
+        sharedContext
+      )
+    }
+    await this.softDeleteOffers([offer.id], sharedContext)
+
+    return {
+      offer_id: offer.id,
+      identifier_id: offer.identifier_id,
+      region_code: offer.region_code,
+      seller_id: offer.seller_id,
     }
   }
 

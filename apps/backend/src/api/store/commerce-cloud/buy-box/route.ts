@@ -4,11 +4,14 @@ import type {
 } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
 import { resolveApprovedSeller } from "../../product-cloud/resolve-seller"
-import { loadBuyBoxForIdentifier } from "../buy-box-helpers"
+import {
+  loadBuyBoxForIdentifier,
+  loadCachedWinner,
+} from "../buy-box-helpers"
 
 /**
- * Server-side Buy Box-resultaat (ADR-0005) voor identifier × regio.
- * Herberekent en persisteert cache (C.4).
+ * Server-side Buy Box-resultaat (ADR-0005 / ADR-0020).
+ * Default: read-through recompute. `prefer_cache=true`: C.4 winner-only.
  */
 export async function GET(
   req: AuthenticatedMedusaRequest,
@@ -24,6 +27,8 @@ export async function GET(
     typeof req.query.region_code === "string"
       ? req.query.region_code.trim()
       : "NL"
+  const preferCache =
+    req.query.prefer_cache === "true" || req.query.prefer_cache === "1"
 
   if (!identifierId) {
     throw new MedusaError(
@@ -32,11 +37,28 @@ export async function GET(
     )
   }
 
+  if (preferCache) {
+    const cached = await loadCachedWinner(
+      req.scope,
+      identifierId,
+      regionCode
+    )
+    if (cached) {
+      res.json({ buy_box: cached })
+      return
+    }
+  }
+
   const buy_box = await loadBuyBoxForIdentifier(
     req.scope,
     identifierId,
     regionCode
   )
 
-  res.json({ buy_box })
+  res.json({
+    buy_box: {
+      source: "recompute",
+      ...buy_box,
+    },
+  })
 }
