@@ -109,5 +109,11 @@ export async function POST(
     },
   })
 
-  res.status(result.created ? 201 : 200).json(result)
+  res.status(result.created ? 201 : 200).json({
+    offer_id: result.offer_id,
+    inventory_id: result.inventory_id,
+    price_id: result.price_id,
+    created: result.created,
+    buy_box: result.buy_box,
+  })
 }

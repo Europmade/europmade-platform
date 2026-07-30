@@ -147,7 +147,8 @@ if ($list.json.product_preview.title -ne "S306 Headset $ts") { throw "preview ti
 Write-Host "=== Get offer detail ==="
 $detail = Invoke-Json "$backend/store/commerce-cloud/offers/$offerId" "GET" $rH $null
 if ($detail.status -ne 200) { throw "detail $($detail.raw)" }
-if ($detail.json.buy_box.status -ne "deferred") { throw "buy_box $($detail.raw)" }
+if ($detail.json.buy_box.status -ne "computed") { throw "buy_box $($detail.raw)" }
+if (-not $detail.json.buy_box.winning_offer_id) { throw "missing winning_offer_id $($detail.raw)" }
 if ([double]$detail.json.inventory.quantity_available -ne 40) { throw "qty" }
 
 Write-Host "=== Producer exact match → own offer ==="

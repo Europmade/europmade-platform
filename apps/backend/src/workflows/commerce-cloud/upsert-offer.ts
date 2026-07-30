@@ -12,6 +12,8 @@ import { COMMERCE_CLOUD_MODULE } from "../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../modules/commerce-cloud/service"
 import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
 import type ProductCloudModuleService from "../../modules/product-cloud/service"
+import { executeRecomputeBuyBox } from "./recompute-buy-box"
+import type { BuyBoxComputationResult } from "../../modules/commerce-cloud/buy-box-engine"
 
 export type UpsertOfferInput = {
   seller_id: string
@@ -21,6 +23,15 @@ export type UpsertOfferInput = {
   base_price: number
   shipping_cost: number
   vat_rate: number
+}
+
+export type UpsertOfferWorkflowResult = {
+  offer_id: string
+  inventory_id: string
+  price_id: string
+  created: boolean
+  region_code: string
+  buy_box: BuyBoxComputationResult
 }
 
 export const upsertOfferStep = createStep(
@@ -75,12 +86,22 @@ export const upsertOfferStep = createStep(
       region_code: region,
     })
 
-    // ADR-0014: Buy Box-herberekening volgt in S3-04-02.
     logger.info(
-      `[audit] offer ${result.created ? "created" : "updated"} offer=${result.offer_id} seller=${input.seller_id} identifier=${input.identifier_id} region=${region} buy_box=deferred`
+      `[audit] offer ${result.created ? "created" : "updated"} offer=${result.offer_id} seller=${input.seller_id} identifier=${input.identifier_id} region=${region}`
     )
 
-    return new StepResponse(result)
+    const buy_box = await executeRecomputeBuyBox(container, {
+      identifier_id: input.identifier_id,
+      region_code: region,
+    })
+
+    const payload: UpsertOfferWorkflowResult = {
+      ...result,
+      region_code: region,
+      buy_box,
+    }
+
+    return new StepResponse(payload)
   }
 )
 

@@ -1,0 +1,20 @@
+---
+description: Feature Epic afronden vóór ADR/security-batch; geen featuretickets overslaan
+alwaysApply: true
+---
+
+# Feature-lijn vóór ADR-batch
+
+## Volgorde
+
+1. **Voltooi altijd eerst de huidige Feature Epic** (bijv. EPIC-04 Commerce Cloud / Buy Box) voordat je teruggaat naar losse ADR-, Security- of Architectuurtickets (EPIC-00 e.d.).
+2. **ADR-tickets zonder harde afhankelijkheid** van het actieve featurewerk worden verzameld en later als **aparte batch** uitgevoerd.
+3. **Sla geen featuretickets binnen de huidige Epic over** — binnen EPIC-04 dus S3-04-02 → S3-04-03 → … in backlogvolgorde van die epic (tenzij een ticket expliciet via ADR is uitgesteld en die ADR nog geldt).
+
+## Harde afhankelijkheden blijven gelden
+
+Als een featureticket **expliciet** afhankelijk is van een open ADR (bijv. S3-05-02 → S3-00-01 PSP), mag die ADR wél vóór of in die featurestap worden afgerond. Dat is geen “terug naar ADR-batch”, maar het deblokkeren van de featurelijn.
+
+## Batchregel
+
+De algemene sprint-batch-werkwijze (3–5 tickets, eindrapport, E2E) blijft van kracht; deze regel bepaalt alleen **welke** tickets in die batch mogen zitten.

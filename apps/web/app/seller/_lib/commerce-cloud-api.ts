@@ -87,6 +87,15 @@ export type UpsertOfferResult = {
   inventory_id: string
   price_id: string
   created: boolean
+  buy_box?: {
+    winning_offer_id: string | null
+    ranked: Array<{
+      offer_id: string
+      rank: number
+      is_winner: boolean
+      score: number
+    }>
+  }
 }
 
 export type OfferDetailResponse = {
@@ -105,7 +114,11 @@ export type OfferDetailResponse = {
   }
   buy_box: {
     status: string
-    message: string
+    message?: string
+    winning_offer_id?: string | null
+    is_winner?: boolean
+    rank?: number | null
+    ranked_count?: number
   }
 }
 

@@ -9,10 +9,11 @@ import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../../product-cloud/resolve-seller"
 import { buildProductCloudPreview } from "../../../product-cloud/product-preview"
+import { loadBuyBoxForIdentifier } from "../../buy-box-helpers"
 
 type RouteParams = { id: string }
 
-/** Eigen Offer-detail + Product Cloud-preview. */
+/** Eigen Offer-detail + Product Cloud-preview + Buy Box-positie. */
 export async function GET(
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
@@ -52,10 +53,18 @@ export async function GET(
     productCloud,
     variant.product_id,
     {
+      identifier_id: identifier.id,
       identifier_type: identifier.identifier_type,
       identifier_value: identifier.identifier_value,
     }
   )
+
+  const buy_box = await loadBuyBoxForIdentifier(
+    req.scope,
+    offer.identifier_id,
+    offer.region_code
+  )
+  const own = buy_box.ranked.find((r) => r.offer_id === offer.id)
 
   res.json({
     offer,
@@ -67,9 +76,13 @@ export async function GET(
         : null,
     product_preview,
     buy_box: {
-      status: "deferred",
-      message:
-        "Buy Box-positie volgt na S3-04-02/04 (ADR-0014). Aanbod is opgeslagen.",
+      status: "computed",
+      winning_offer_id: buy_box.winning_offer_id,
+      is_winner: own?.is_winner ?? false,
+      rank: own?.rank ?? null,
+      ranked_count: buy_box.ranked.length,
+      weights: buy_box.weights,
+      computed_at: buy_box.computed_at,
     },
   })
 }

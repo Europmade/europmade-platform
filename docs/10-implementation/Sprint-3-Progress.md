@@ -10,7 +10,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 
 | Ticket | Epic | Status | Toegewezen aan | Laatste update | Opmerking |
 |---|---|---|---|---|---|
-| S3-00-01 | EPIC-00 | Niet gestart | — | — | — |
+| S3-00-01 | EPIC-00 | **Gereed** | — | 2026-07-30 | ADR-0018: Stripe + Connect, Medusa payment webhooks, fail-closed signature verification |
 | S3-00-02 | EPIC-00 | Niet gestart | — | — | — |
 | S3-00-03 | EPIC-00 | Niet gestart | — | — | — |
 | S3-00-04 | EPIC-00 | Niet gestart | — | — | — |
@@ -36,8 +36,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-03-06 | EPIC-03 | Niet gestart | — | — | — |
 | S3-03-07 | EPIC-03 | Niet gestart | — | — | — |
 | S3-03-08 | EPIC-03 | Niet gestart | — | — | — |
-| S3-04-01 | EPIC-04 | Niet gestart | — | — | — |
-| S3-04-02 | EPIC-04 | Niet gestart | — | — | — |
+| S3-04-01 | EPIC-04 | **Gereed** | — | 2026-07-30 | Offer / Inventory / Price (ADR-0014/0015) |
+| S3-04-02 | EPIC-04 | **Gereed** | — | 2026-07-30 | Buy Box-engine server-side (ADR-0004/0005/0019); `buy_box_computation` + BuyBoxRecomputed |
 | S3-04-03 | EPIC-04 | Niet gestart | — | — | — |
 | S3-04-04 | EPIC-04 | Niet gestart | — | — | — |
 | S3-04-05 | EPIC-04 | Niet gestart | — | — | — |

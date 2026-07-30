@@ -1,0 +1,37 @@
+---
+description: Werkwijze voor sprint-tickets — batchgewijs implementeren, zelf testen, pas rapporteren als de hele keten werkt
+alwaysApply: true
+---
+
+# Sprint-werkwijze: batchgewijs implementeren en zelf testen
+
+Afspraak met de gebruiker: niet meer ticket-voor-ticket met tussentijdse rapportage — dat kost te veel contextwisselingen.
+
+## Batchgewijs werken
+
+- Implementeer 3–5 samenhangende tickets uit `docs/10-implementation/Sprint-*-Tickets.md` tegelijk, tenzij de gebruiker expliciet één ticket vraagt.
+- Test en fix bugs zelf tijdens het bouwen van de batch — vraag geen tussentijdse input en rapporteer niet na elk afzonderlijk ticket.
+- Rapporteer pas wanneer de **volledige keten** van de batch end-to-end werkt.
+- De gebruiker test zelf pas één keer, aan het einde van de batch.
+
+## Verplichte controle vóór elke oplevering
+
+Vóór je een implementatierapport oplevert, controleer altijd op de draaiende dev-servers (registreer een echte testgebruiker met unieke testdata, geen gefingeerde output):
+
+1. Registreren (nieuwe gebruiker) werkt zonder fouten.
+2. Inloggen (bestaande gebruiker) werkt zonder fouten.
+3. De relevante flow(s) van de batch werken end-to-end (bijv. Partner Onboarding, Partnerbeheer).
+4. Alle betrokken API-calls geven de verwachte status/response — geen onverwachte 4xx/5xx.
+5. De database bevat na de test de verwachte, correcte data (steekproef via een GET/query).
+6. Geen enkele 500 (Internal Server Error) ergens in de keten.
+
+Vind je tijdens deze controle een bug: los hem zelf structureel op (geen workaround) en herhaal de volledige controle — pas dan rapporteren.
+
+## Feature Epic vóór ADR-batch
+
+Zie `.cursor/rules/feature-epic-priority.mdc`: huidige Feature Epic eerst afronden; ADR’s zonder harde afhankelijkheid later als aparte batch; binnen de Epic geen featuretickets overslaan.
+
+## Wat blijft hetzelfde
+
+- Nog steeds strikt houden aan `docs/` (Blueprint, specs, ADR's) — zie de algemene projectinstructies (`.cursor/rules/europmade.mdc`).
+- Nog steeds geen nieuwe architectuur/scope buiten wat de tickets vragen, tenzij structureel nodig om een bug op te lossen (dan expliciet melden in het eindrapport).

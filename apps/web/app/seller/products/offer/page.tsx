@@ -244,9 +244,10 @@ function SellerProductOfferInner() {
               <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
                 Buy Box-positie
               </h3>
-              <Notice variant="warning">
-                Buy Box-positie en wegingsfactoren volgen in S3-04-02/04
-                (ADR-0014). Je aanbod wordt wel opgeslagen.
+              <Notice>
+                {existing && existing !== "loading"
+                  ? "Buy Box wordt server-side herberekend bij opslaan (S3-04-02 / ADR-0005). Positie-UI volgt in S3-04-04."
+                  : "Na opslaan herberekent de server de Buy Box (ADR-0005). Volledige positie-UI volgt in S3-04-04."}
               </Notice>
               {existing && existing !== "loading" ? (
                 <p className="mt-3 text-[11px] text-wf-600">

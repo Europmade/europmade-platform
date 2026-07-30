@@ -194,6 +194,11 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/commerce-cloud/buy-box",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/admin/partners",
       methods: ["GET"],
       middlewares: [adminAuth],

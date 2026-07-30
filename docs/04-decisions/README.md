@@ -25,3 +25,5 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0015](./0015-commerce-cloud-soft-refs.md) | Commerce Cloud soft refs naar Seller en Identifier | Geaccepteerd | Commerce Cloud, Medusa-architectuur |
 | [0016](./0016-retailer-created-form-soft-brand-and-upload-ref.md) | Retailer Created-formulier: vrije merktekst en media-referentie | Geaccepteerd | Seller Dashboard, Product Cloud |
 | [0017](./0017-match-ui-commerce-stubs-lifted.md) | Match-UI Commerce-stubs opgeheven door S3-03-06 / Offer-CRUD | Geaccepteerd | Seller Dashboard, Commerce Cloud |
+| [0018](./0018-psp-webhook-integration-security.md) | Integratiebeveiliging / Event Security (PSP-webhooks) — Blueprint ADR-01 | Geaccepteerd | Security, Payment, Integraties |
+| [0019](./0019-buy-box-engine-defaults-and-missing-factors.md) | Buy Box-engine: defaultweging en ontbrekende factoren (S3-04-02) | Geaccepteerd | Buy Box, Commerce Cloud |
