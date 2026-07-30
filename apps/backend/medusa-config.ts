@@ -17,5 +17,14 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/partner",
     },
+    {
+      resolve: "./src/modules/product-cloud",
+    },
+    {
+      resolve: "./src/modules/moderation",
+    },
+    {
+      resolve: "./src/modules/verification",
+    },
   ],
 })

@@ -13,6 +13,10 @@ import {
   AdminRejectPartnerOnboarding,
   AdminRequestPartnerOnboardingInfo,
 } from "./admin/partners/validators"
+import {
+  AdminEanMatchBody,
+  AdminSeedProductWithEanBody,
+} from "./admin/product-cloud/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
@@ -20,9 +24,9 @@ const documentUpload = multer({
 })
 
 /**
- * S3-02-02 — Partner Onboarding-statusverloop.
- * S3-02-04 — Partnerbeheer (admin, uitsluitend lezend, Goedgekeurd).
- * S3-02-05 — Partnerbeheer UI (reviewer-overzicht/-detail; geen Blokkeren, ADR-0006).
+ * S3-02-02 — Partner Onboarding.
+ * S3-02-04/05 — Partnerbeheer.
+ * S3-03-03 — EAN-matching (dunne admin-testroutes; volledige CRUD = S3-03-04).
  */
 export default defineMiddlewares({
   routes: [
@@ -108,6 +112,22 @@ export default defineMiddlewares({
       matcher: "/admin/partner-onboarding/:id",
       methods: ["GET"],
       middlewares: [authenticate("user", ["session", "bearer"])],
+    },
+    {
+      matcher: "/admin/product-cloud/seed",
+      methods: ["POST"],
+      middlewares: [
+        authenticate("user", ["session", "bearer"]),
+        validateAndTransformBody(AdminSeedProductWithEanBody),
+      ],
+    },
+    {
+      matcher: "/admin/product-cloud/ean-match",
+      methods: ["POST"],
+      middlewares: [
+        authenticate("user", ["session", "bearer"]),
+        validateAndTransformBody(AdminEanMatchBody),
+      ],
     },
   ],
 })
