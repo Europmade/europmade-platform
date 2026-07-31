@@ -33,6 +33,8 @@ export type VatBreakdownLine = {
 
 export type VatBreakdown = {
   currency: string
+  /** OSS-bestemmingsland (ISO-2), soft in vat_breakdown JSON. */
+  delivery_country: string
   lines: VatBreakdownLine[]
   totals: {
     amount_excl: number
@@ -53,7 +55,8 @@ function addDays(from: Date, days: number): Date {
 
 /** Prijzen zijn incl. BTW (checkout/totals-patroon). */
 export function buildVatBreakdownFromIncl(
-  items: Array<{ amount_incl: number; vat_rate: number }>
+  items: Array<{ amount_incl: number; vat_rate: number }>,
+  deliveryCountry = "NL"
 ): VatBreakdown {
   const byRate = new Map<number, number>()
   for (const item of items) {
@@ -82,9 +85,29 @@ export function buildVatBreakdownFromIncl(
 
   return {
     currency: "EUR",
+    delivery_country: deliveryCountry,
     lines,
     totals: { amount_excl, vat_amount, total_incl },
   }
+}
+
+function inferDeliveryCountry(shippingAddress: string): string {
+  const upper = shippingAddress.toUpperCase()
+  if (/\bBE\b|BELGI/.test(upper)) return "BE"
+  if (/\bDE\b|DUITSLAND|GERMANY/.test(upper)) return "DE"
+  if (/\bFR\b|FRANKRIJK|FRANCE/.test(upper)) return "FR"
+  if (/\bES\b|SPANJE|SPAIN/.test(upper)) return "ES"
+  if (/\bIT\b|ITALI/.test(upper)) return "IT"
+  return "NL"
+}
+
+const COUNTRY_LABELS: Record<string, string> = {
+  NL: "Nederland",
+  BE: "België",
+  DE: "Duitsland",
+  FR: "Frankrijk",
+  ES: "Spanje",
+  IT: "Italië",
 }
 
 async function orderGoodsSubtotal(
@@ -95,6 +118,8 @@ async function orderGoodsSubtotal(
   vatItems: Array<{ amount_incl: number; vat_rate: number }>
   sellerId: string
   createdAt: Date
+  orderNumber: string
+  deliveryCountry: string
 }> {
   const order = await orders.retrieveEmOrder(orderId)
   const lines = await orders.listOrderLines({ order_id: orderId })
@@ -114,6 +139,8 @@ async function orderGoodsSubtotal(
     vatItems,
     sellerId: order.seller_id,
     createdAt: new Date(order.created_at),
+    orderNumber: order.order_number,
+    deliveryCountry: inferDeliveryCountry(order.shipping_address),
   }
 }
 
@@ -140,7 +167,7 @@ export async function executeFinanceOnOrderSplit(
     }
   }
 
-  const { subtotal, vatItems, sellerId, createdAt } =
+  const { subtotal, vatItems, sellerId, createdAt, deliveryCountry } =
     await orderGoodsSubtotal(orders, orderId)
 
   const platformAmount = roundMoney(subtotal * PLATFORM_COMMISSION_RATE)
@@ -165,7 +192,7 @@ export async function executeFinanceOnOrderSplit(
     },
   })
 
-  const vat_breakdown = buildVatBreakdownFromIncl(vatItems)
+  const vat_breakdown = buildVatBreakdownFromIncl(vatItems, deliveryCountry)
   const issuedAt = new Date()
 
   const customerInvoice = await finance.createInvoices({
@@ -191,9 +218,10 @@ export async function executeFinanceOnOrderSplit(
     },
   })
 
-  const commissionVat = buildVatBreakdownFromIncl([
-    { amount_incl: platformAmount, vat_rate: 0.21 },
-  ])
+  const commissionVat = buildVatBreakdownFromIncl(
+    [{ amount_incl: platformAmount, vat_rate: 0.21 }],
+    deliveryCountry
+  )
   const sellerCommissionInvoice = await finance.createInvoices({
     invoice_type: "Seller-commissiefactuur",
     order_id: orderId,
@@ -327,6 +355,7 @@ export async function executeFinanceRefundForOrder(
     const originalBreakdown = original.vat_breakdown as VatBreakdown
     const negative: VatBreakdown = {
       currency: originalBreakdown.currency ?? "EUR",
+      delivery_country: originalBreakdown.delivery_country ?? "NL",
       lines: (originalBreakdown.lines ?? []).map((line) => ({
         rate: line.rate,
         base_incl: roundMoney(-Math.abs(line.base_incl)),
@@ -491,26 +520,107 @@ export async function executeSellerFinanceOverview(
     { take: 200, order: { created_at: "DESC" } }
   )
 
-  return {
-    seller_id: seller.id,
-    commissions: sellerCommissions.map((c) => ({
+  const orderById = new Map(sellerOrders.map((o) => [o.id, o]))
+  const subtotalByOrder = new Map<string, number>()
+  for (const order of sellerOrders) {
+    const lines = await orders.listOrderLines({ order_id: order.id })
+    const subtotal = roundMoney(
+      lines.reduce(
+        (sum, line) =>
+          sum + Number(line.unit_price_snapshot) * Number(line.quantity),
+        0
+      )
+    )
+    subtotalByOrder.set(order.id, subtotal)
+  }
+
+  const commissionRows = sellerCommissions.map((c) => {
+    const orderId = c.order_id ?? ""
+    const order = orderById.get(orderId)
+    const order_subtotal = subtotalByOrder.get(orderId) ?? 0
+    const amount = Number(c.amount)
+    return {
       id: c.id,
       order_id: c.order_id,
-      amount: Number(c.amount),
+      order_number: order?.order_number ?? orderId,
+      order_subtotal,
+      amount,
+      netto: roundMoney(order_subtotal - amount),
       percentage: c.percentage,
       status: c.status,
       created_at: c.created_at,
-    })),
+    }
+  })
+
+  const vatBuckets = new Map<
+    string,
+    { country_code: string; rate: number; amount_excl: number; vat_amount: number }
+  >()
+  for (const inv of invoices) {
+    if (inv.invoice_type !== "Klant-factuur") continue
+    if (inv.credit_of_invoice_id) continue
+    const breakdown = inv.vat_breakdown as VatBreakdown
+    const country = breakdown.delivery_country ?? "NL"
+    for (const line of breakdown.lines ?? []) {
+      const key = `${country}:${line.rate}`
+      const prev = vatBuckets.get(key) ?? {
+        country_code: country,
+        rate: line.rate,
+        amount_excl: 0,
+        vat_amount: 0,
+      }
+      prev.amount_excl = roundMoney(prev.amount_excl + Number(line.amount_excl))
+      prev.vat_amount = roundMoney(prev.vat_amount + Number(line.vat_amount))
+      vatBuckets.set(key, prev)
+    }
+  }
+
+  const activeCommissions = commissionRows.filter((c) => c.status === "Toegekend")
+  const commission_held = roundMoney(
+    activeCommissions.reduce((sum, c) => sum + c.amount, 0)
+  )
+  const gross = roundMoney(
+    activeCommissions.reduce((sum, c) => sum + c.order_subtotal, 0)
+  )
+  const net_revenue = roundMoney(gross - commission_held)
+
+  const planned = payouts
+    .filter((p) => p.status === "Gepland")
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(a.eligible_at).getTime() - new Date(b.eligible_at).getTime()
+    )
+  const next = planned[0] ?? null
+  const next_payout_amount = next
+    ? roundMoney(
+        planned.reduce((sum, p) => sum + Number(p.amount), 0)
+      )
+    : 0
+
+  return {
+    seller_id: seller.id,
+    summary: {
+      net_revenue,
+      commission_held,
+      next_payout_amount,
+      next_payout_eligible_at: next ? next.eligible_at : null,
+    },
+    commissions: commissionRows,
     invoices: invoices.map((inv) => ({
       id: inv.id,
       invoice_type: inv.invoice_type,
       order_id: inv.order_id,
+      order_number: inv.order_id
+        ? (orderById.get(inv.order_id)?.order_number ?? inv.order_id)
+        : null,
       total_amount: Number(inv.total_amount),
       amount_excl_vat: Number(inv.amount_excl_vat),
       vat_breakdown: inv.vat_breakdown,
       issued_at: inv.issued_at,
       credit_of_invoice_id: inv.credit_of_invoice_id,
       period: inv.period,
+      pdf_url: inv.pdf_url,
     })),
     payouts: payouts.map((p) => ({
       id: p.id,
@@ -521,7 +631,17 @@ export async function executeSellerFinanceOverview(
       eligible_at: p.eligible_at,
       processed_at: p.processed_at,
       order_id: p.order_id,
+      order_number: p.order_id
+        ? (orderById.get(p.order_id)?.order_number ?? p.order_id)
+        : null,
       stripe_transfer_id: p.stripe_transfer_id,
+    })),
+    vat_by_country: [...vatBuckets.values()].map((row) => ({
+      country_code: row.country_code,
+      country_label: COUNTRY_LABELS[row.country_code] ?? row.country_code,
+      amount_excl: row.amount_excl,
+      vat_rate: row.rate,
+      vat_amount: row.vat_amount,
     })),
   }
 }

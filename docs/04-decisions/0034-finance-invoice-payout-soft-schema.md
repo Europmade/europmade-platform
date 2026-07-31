@@ -15,7 +15,8 @@
 3. **G.8 extra:** `eligible_at` (datetime) — uitbetaling pas na **14 dagen** retourtermijn (EU MVP).
 4. **Cadans MVP:** payouts worden per order als `Gepland` aangemaakt; Beheerder/`process` zet naar `Voltooid` zodra `eligible_at` verstreken is. Geldtransfer naar Stripe Connect blijft stub (ADR-0018); ledger + hold zijn verplicht.
 5. **Platformcommissie:** vast **10%** over som van `order_line.unit_price_snapshot` (base+shipping per eenheid × quantity — zelfde Buy Box-parity-snapshot als Affiliate ADR-0030).
+6. **`vat_breakdown.delivery_country`:** soft JSON-veld (ISO-2) voor OSS-aggregatie op Seller BTW-overzicht (finance-05); afgeleid uit order-verzendadres.
 
 ## Consequenties
 
-- S3-08-05 UI leest deze tabellen; geen Medusa Invoice-module.
+- S3-08-05 UI leest `GET /store/finance/seller` (summary, commissions, invoices, payouts, vat_by_country); geen Medusa Invoice-module.
