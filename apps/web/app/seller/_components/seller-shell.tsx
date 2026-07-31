@@ -7,8 +7,8 @@ import { cn } from "@europmade/utils"
 const NAV: Array<{ label: string; href: string | null }> = [
   { label: "Dashboard", href: "/seller" },
   { label: "Producten", href: "/seller/products" },
-  { label: "Orders", href: null },
-  { label: "Retouren", href: null },
+  { label: "Orders", href: "/seller/orders" },
+  { label: "Retouren", href: "/seller/returns" },
   { label: "Berichten", href: null },
   { label: "Financiën", href: null },
   { label: "Rapportages", href: null },

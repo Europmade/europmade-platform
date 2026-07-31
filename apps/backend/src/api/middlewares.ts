@@ -310,6 +310,11 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/order-service/seller/orders",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/order-service/seller/returns",
       methods: ["GET"],
       middlewares: [customerAuth],

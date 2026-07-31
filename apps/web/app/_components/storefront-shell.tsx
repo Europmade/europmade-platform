@@ -23,7 +23,7 @@ export function StorefrontShell({
           <Link href="/cart" className="hover:underline">
             Winkelwagen{cartCount != null ? ` (${cartCount})` : ""}
           </Link>
-          <Link href="/login" className="hover:underline">
+          <Link href="/account" className="hover:underline">
             Account
           </Link>
         </nav>

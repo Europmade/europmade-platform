@@ -140,27 +140,49 @@ export function placeOrder(input: {
   })
 }
 
+export type OrderLineView = {
+  id: string
+  offer_id: string
+  quantity: number
+  unit_price_snapshot: string | number
+  vat_rate_snapshot: number
+}
+
+export type ReturnView = {
+  id: string
+  order_line_id: string
+  reason: string
+  status: string
+  refund_status: string | null
+  refund_amount: string | number | null
+  refund_reference: string | null
+  seller_decision_reason: string | null
+  force_reason: string | null
+  cooling_off_ends_at: string
+  created_at: string
+}
+
+export type BuyerOrderListItem = {
+  order: {
+    id: string
+    order_number: string
+    seller_id: string
+    payment_status: string
+    shipping_address: string
+    billing_address: string
+    created_at: string
+  }
+  lines: OrderLineView[]
+  returns: ReturnView[]
+  seller_name: string
+  order_total: number
+  display_status: string
+}
+
 export function listOrders() {
-  return request<{
-    orders: Array<{
-      order: {
-        id: string
-        order_number: string
-        seller_id: string
-        payment_status: string
-        shipping_address: string
-        billing_address: string
-      }
-      lines: Array<{
-        id: string
-        offer_id: string
-        quantity: number
-        unit_price_snapshot: string | number
-        vat_rate_snapshot: number
-      }>
-    }>
-    count: number
-  }>("/store/order-service/orders")
+  return request<{ orders: BuyerOrderListItem[]; count: number }>(
+    "/store/order-service/orders"
+  )
 }
 
 export function getOrder(id: string) {
@@ -173,14 +195,88 @@ export function getOrder(id: string) {
       shipping_address: string
       billing_address: string
       order_set_id: string
+      created_at: string
     }
-    lines: Array<{
-      id: string
-      offer_id: string
-      quantity: number
-      unit_price_snapshot: string | number
-      vat_rate_snapshot: number
-    }>
+    lines: OrderLineView[]
     order_set: { id: string; payment_reference: string } | null
   }>(`/store/order-service/orders/${id}`)
+}
+
+export function listReturns() {
+  return request<{
+    returns: Array<
+      ReturnView & {
+        order_id: string
+        order_number: string
+        seller_id: string
+        offer_id: string
+      }
+    >
+  }>("/store/order-service/returns")
+}
+
+export function getReturn(id: string) {
+  return request<{
+    return: ReturnView
+    order_id: string
+    order_number: string
+    seller_id: string
+    order_line: OrderLineView
+  }>(`/store/order-service/returns/${id}`)
+}
+
+export function requestReturn(order_line_id: string, reason: string) {
+  return request<{ return: ReturnView }>("/store/order-service/returns", {
+    method: "POST",
+    body: JSON.stringify({ order_line_id, reason }),
+  })
+}
+
+export function escalateReturn(id: string) {
+  return request<{ return: ReturnView }>(
+    `/store/order-service/returns/${id}/escalate`,
+    { method: "POST", body: "{}" }
+  )
+}
+
+export function listSellerOrders() {
+  return request<{
+    orders: Array<{
+      order: BuyerOrderListItem["order"] & { customer_id: string }
+      lines: OrderLineView[]
+      returns: ReturnView[]
+    }>
+    count: number
+  }>("/store/order-service/seller/orders")
+}
+
+export function listSellerReturns() {
+  return request<{
+    returns: Array<
+      ReturnView & {
+        order_id: string
+        order_number: string
+        customer_id: string
+        offer_id: string
+      }
+    >
+  }>("/store/order-service/seller/returns")
+}
+
+export function sellerReturnAction(
+  id: string,
+  action: "confirm" | "receive" | "approve" | "reject",
+  decision_reason?: string
+) {
+  const path =
+    action === "reject"
+      ? `/store/order-service/seller/returns/${id}/reject`
+      : `/store/order-service/seller/returns/${id}/${action}`
+  return request<{ return: ReturnView }>(path, {
+    method: "POST",
+    body:
+      action === "reject"
+        ? JSON.stringify({ decision_reason: decision_reason ?? "" })
+        : "{}",
+  })
 }

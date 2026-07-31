@@ -45,8 +45,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-05-02 | EPIC-05 | **Gereed** | — | 2026-07-30 | Checkout place/revalidate + split + exception resolve; §2.3 events |
 | S3-05-03 | EPIC-05 | **Gereed** | — | 2026-07-30 | Winkelwagen/Checkout/Bevestiging UI + Offer-cart (ADR-0022); BTW §13 |
 | S3-05-04 | EPIC-05 | **Gereed** | — | 2026-07-31 | Return lifecycle + Refund API (ADR-0023); simulated refund tot Stripe |
-| S3-05-05 | EPIC-05 | Niet gestart | — | — | — |
-| S3-05-06 | EPIC-05 | Niet gestart | — | — | — |
+| S3-05-05 | EPIC-05 | **Gereed** | — | 2026-07-31 | Buyer orders/detail/retour-UI op `/account` (ADR-0024) |
+| S3-05-06 | EPIC-05 | **Gereed** | — | 2026-07-31 | Seller orders + retourbeoordeling UI; seller orders API |
 | S3-05-07 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-08 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-09 | EPIC-05 | Niet gestart | — | — | — |
@@ -78,8 +78,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-12-01 | EPIC-12 | Niet gestart | — | — | — |
 | S3-12-02 | EPIC-12 | Niet gestart | — | — | — |
 | S3-12-03 | EPIC-12 | Niet gestart | — | — | — |
-| S3-13-01 | EPIC-13 | Niet gestart | — | — | — |
-| S3-13-02 | EPIC-13 | Niet gestart | — | — | — |
+| S3-13-01 | EPIC-13 | **Gereed** | — | 2026-07-31 | Buyer-shell `/account` (ADR-0024); P0-nav + home KPI’s |
+| S3-13-02 | EPIC-13 | **Gereed** | — | 2026-07-31 | Seller home + Orders/Retouren-nav (verrijkt ADR-0011) |
 
 ## Samenvatting
 
