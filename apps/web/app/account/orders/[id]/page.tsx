@@ -98,6 +98,15 @@ export default function BuyerOrderDetailPage() {
             uitgewerkt.
           </p>
 
+          <div className="mt-5">
+            <Link
+              href={`/account/messages/${order.order.id}`}
+              className="text-xs font-semibold text-wf-900 underline"
+            >
+              Berichten over deze bestelling →
+            </Link>
+          </div>
+
           <h2 className="mt-6 text-sm font-bold text-wf-900">Orderregels</h2>
           <ul className="mt-3 divide-y divide-wf-200 rounded-md border border-wf-300">
             {order.lines.map((line: OrderLineView) => {

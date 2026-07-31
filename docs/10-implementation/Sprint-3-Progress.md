@@ -47,8 +47,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-05-04 | EPIC-05 | **Gereed** | — | 2026-07-31 | Return lifecycle + Refund API (ADR-0023); simulated refund tot Stripe |
 | S3-05-05 | EPIC-05 | **Gereed** | — | 2026-07-31 | Buyer orders/detail/retour-UI op `/account` (ADR-0024) |
 | S3-05-06 | EPIC-05 | **Gereed** | — | 2026-07-31 | Seller orders + retourbeoordeling UI; seller orders API |
-| S3-05-07 | EPIC-05 | Niet gestart | — | — | — |
-| S3-05-08 | EPIC-05 | Niet gestart | — | — | — |
+| S3-05-07 | EPIC-05 | **Gereed** | — | 2026-07-31 | Order-berichten API+UI (ADR-0025); admin meelezen bij escalatie |
+| S3-05-08 | EPIC-05 | **Gereed** | — | 2026-07-31 | OMC read-only overzicht/detail + exception resolve in apps/admin |
 | S3-05-09 | EPIC-05 | Niet gestart | — | — | — |
 | S3-06-01 | EPIC-06 | Niet gestart | — | — | — |
 | S3-06-02 | EPIC-06 | Niet gestart | — | — | — |
@@ -70,7 +70,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-10-01 | EPIC-10 | Niet gestart | — | — | — |
 | S3-10-02 | EPIC-10 | Niet gestart | — | — | — |
 | S3-10-03 | EPIC-10 | Niet gestart | — | — | — |
-| S3-11-01 | EPIC-11 | Niet gestart | — | — | — |
+| S3-11-01 | EPIC-11 | **Gereed** | — | 2026-07-31 | Admin Shell modulecontract (`apps/admin`); OMC geregistreerd |
 | S3-11-02 | EPIC-11 | Niet gestart | — | — | — |
 | S3-11-03 | EPIC-11 | Niet gestart | — | — | — |
 | S3-11-04 | EPIC-11 | Niet gestart | — | — | — |

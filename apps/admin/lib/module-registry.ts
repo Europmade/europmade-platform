@@ -19,6 +19,13 @@ export const ADMIN_MODULES: AdminModuleContract[] = [
     permissie: "Beheerder",
     navigatiepositie: 10,
   },
+  {
+    naam: "Order Management Center",
+    route: "/orders",
+    icoon: "orders",
+    permissie: "Beheerder",
+    navigatiepositie: 20,
+  },
 ];
 
 export function modulesSorted() {

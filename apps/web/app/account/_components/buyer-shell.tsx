@@ -8,7 +8,7 @@ const NAV: Array<{ label: string; href: string | null }> = [
   { label: "Dashboard", href: "/account" },
   { label: "Mijn bestellingen", href: "/account/orders" },
   { label: "Retouren", href: "/account/returns" },
-  { label: "Berichten", href: null },
+  { label: "Berichten", href: "/account/messages" },
   { label: "Reviews", href: null },
   { label: "Account", href: null },
 ]

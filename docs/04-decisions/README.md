@@ -32,3 +32,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0022](./0022-offer-centric-cart.md) | Offer-centrische winkelwagen (custom cart) voor S3-05-03 | Geaccepteerd | Order-service, Winkelwagen |
 | [0023](./0023-return-refund-lifecycle.md) | Return-statuslifecycle en gesimuleerde Refund (S3-05-04) | Geaccepteerd | Order-service, Retouren & Refunds |
 | [0024](./0024-buyer-account-shell-path.md) | Buyer Dashboard-shell onder `/account` (S3-13-01) | Geaccepteerd | Buyer Dashboard, UX |
+| [0025](./0025-messaging-in-order-service.md) | Order-berichten in `orderService` (S3-05-07) | Geaccepteerd | Order-service, Messaging |

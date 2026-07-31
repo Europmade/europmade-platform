@@ -280,3 +280,54 @@ export function sellerReturnAction(
         : "{}",
   })
 }
+
+export type MessageView = {
+  id: string
+  order_id: string
+  sender_customer_id: string
+  body: string
+  created_at: string
+}
+
+export type MessageThreadSummary = {
+  order_id: string
+  order_number: string
+  seller_id: string
+  customer_id: string
+  message_count: number
+  last_message_at: string | null
+  last_body_preview: string | null
+}
+
+export function listMessageThreads() {
+  return request<{ threads: MessageThreadSummary[]; count: number }>(
+    "/store/order-service/messages"
+  )
+}
+
+export function listSellerMessageThreads() {
+  return request<{ threads: MessageThreadSummary[]; count: number }>(
+    "/store/order-service/seller/messages"
+  )
+}
+
+export function listOrderMessages(orderId: string) {
+  return request<{
+    order_id: string
+    order_number: string
+    customer_id: string
+    seller_id: string
+    viewer_customer_id: string
+    messages: MessageView[]
+  }>(`/store/order-service/orders/${orderId}/messages`)
+}
+
+export function sendOrderMessage(orderId: string, body: string) {
+  return request<{ message: MessageView }>(
+    `/store/order-service/orders/${orderId}/messages`,
+    {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    }
+  )
+}

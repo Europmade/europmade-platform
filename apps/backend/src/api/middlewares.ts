@@ -40,6 +40,7 @@ import {
   StoreRequestReturnBody,
   StoreSellerRejectReturnBody,
   AdminForceRefundBody,
+  StoreSendMessageBody,
 } from "./store/order-service/validators"
 
 const documentUpload = multer({
@@ -272,6 +273,44 @@ export default defineMiddlewares({
       matcher: "/store/order-service/orders/:id",
       methods: ["GET"],
       middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/orders/:id/messages",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/orders/:id/messages",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreSendMessageBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/messages",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/messages",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/admin/order-service/orders",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/order-service/orders/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/order-service/orders/:id/messages",
+      methods: ["GET"],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/admin/order-service/exceptions",

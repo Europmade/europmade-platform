@@ -23,3 +23,12 @@ export {
   type EscalateReturnInput,
   type ForceRefundInput,
 } from "./returns"
+
+export {
+  sendMessageWorkflow,
+  executeSendMessage,
+  executeListMessages,
+  resolveSellerForCustomer,
+  type SendMessageInput,
+  type OrderParticipant,
+} from "./messages"
