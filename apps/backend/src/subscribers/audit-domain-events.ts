@@ -44,5 +44,7 @@ export const config: SubscriberConfig = {
     "ConversionRecorded",
     "ConversionReversed",
     "CommissionCalculated",
+    "ModerationCaseOpened",
+    "ModerationCaseResolved",
   ],
 }

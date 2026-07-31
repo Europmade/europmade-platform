@@ -26,6 +26,13 @@ export const ADMIN_MODULES: AdminModuleContract[] = [
     permissie: "Beheerder",
     navigatiepositie: 20,
   },
+  {
+    naam: "Moderatiewachtrij",
+    route: "/moderation",
+    icoon: "moderation",
+    permissie: "Beheerder",
+    navigatiepositie: 30,
+  },
 ];
 
 export function modulesSorted() {

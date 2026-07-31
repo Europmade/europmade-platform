@@ -155,6 +155,19 @@ export function mapDomainEventToAudit(
         action_type: eventName,
         reason: asString(data.order_id) ?? asString(data.tracking_param),
       }
+    case "ModerationCaseOpened":
+    case "ModerationCaseResolved":
+      return {
+        actor_customer_id: null,
+        entity_type: "moderation_case",
+        entity_id: asString(data.case_id) ?? "",
+        action_type: eventName,
+        reason:
+          asString(data.decision) ??
+          asString(data.signal_code) ??
+          asString(data.status) ??
+          asString(data.case_type),
+      }
     default:
       return {
         actor_customer_id:

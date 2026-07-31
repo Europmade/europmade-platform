@@ -39,3 +39,5 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0029](./0029-cookie-consent-mechanism-adr-53.md) | Cookie-consent-mechanisme (Blueprint ADR-53) | Geaccepteerd | Affiliate, Privacy |
 | [0030](./0030-affiliate-commission-attribution-adr-54.md) | Affiliate-commissie & attributieperiode (Blueprint ADR-54) | Geaccepteerd | Affiliate, Finance |
 | [0031](./0031-affiliate-module-soft-schema.md) | Affiliate-module tabelprefixen & schema-uitbreidingen | Geaccepteerd | Affiliate, Finance |
+| [0032](./0032-click-fraud-detection-adr-55.md) | Click-fraude-detectie (Blueprint ADR-55) | Geaccepteerd | Affiliate, Moderation |
+| [0033](./0033-coupon-abuse-prevention-adr-56.md) | Coupon-misbruikpreventie (Blueprint ADR-56) | Geaccepteerd | Affiliate, Moderation |

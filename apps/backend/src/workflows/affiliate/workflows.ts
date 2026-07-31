@@ -19,8 +19,7 @@ import { ORDER_MODULE } from "../../modules/order-service"
 import type OrderServiceModuleService from "../../modules/order-service/service"
 import { FINANCE_MODULE } from "../../modules/finance"
 import type FinanceModuleService from "../../modules/finance/service"
-import { MODERATION_MODULE } from "../../modules/moderation"
-import type ModerationModuleService from "../../modules/moderation/service"
+import { executeOpenFraudSignal } from "../moderation/workflows"
 
 export type RegisterAffiliateInput = {
   customer_id: string
@@ -199,6 +198,64 @@ export async function executeTrackClick(
     )
   }
 
+  const visitorConsents = await aff.listConsentRecords(
+    { visitor_hash },
+    { take: 200 }
+  )
+  const consentIds = new Set(visitorConsents.map((c) => c.id))
+
+  const linkClicks = await aff.listClicks(
+    { affiliate_link_id: link.id },
+    { take: 500, order: { created_at: "DESC" } }
+  )
+  const hourAgo = Date.now() - 60 * 60 * 1000
+  const linkVelocity = linkClicks.filter(
+    (c) =>
+      consentIds.has(c.consent_record_id) &&
+      new Date(c.created_at).getTime() >= hourAgo
+  ).length
+  if (linkVelocity >= 20) {
+    await executeOpenFraudSignal(container, {
+      signal_code: "click_velocity_link",
+      affiliate_id: affiliate.id,
+      source_entity_type: "affiliate_link",
+      source_entity_id: link.id,
+    })
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Click geweigerd: verdachte click-snelheid (ADR-0032)."
+    )
+  }
+
+  const affiliateLinks = await aff.listAffiliateLinks(
+    { affiliate_id: affiliate.id },
+    { take: 500 }
+  )
+  const affiliateLinkIds = new Set(affiliateLinks.map((l) => l.id))
+  const dayAgo = Date.now() - 24 * 60 * 60 * 1000
+  const recentAffiliateClicks = await aff.listClicks(
+    {},
+    { take: 2000, order: { created_at: "DESC" } }
+  )
+  const affiliateVelocity = recentAffiliateClicks.filter(
+    (c) =>
+      affiliateLinkIds.has(c.affiliate_link_id) &&
+      consentIds.has(c.consent_record_id) &&
+      new Date(c.created_at).getTime() >= dayAgo
+  ).length
+  if (affiliateVelocity >= 50) {
+    await executeOpenFraudSignal(container, {
+      signal_code: "click_velocity_affiliate",
+      affiliate_id: affiliate.id,
+      source_entity_type: "affiliate",
+      source_entity_id: affiliate.id,
+    })
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Click geweigerd: verdachte affiliate-click-snelheid (ADR-0032)."
+    )
+  }
+
   const expires = new Date()
   expires.setDate(expires.getDate() + settings.attribution_days)
 
@@ -334,20 +391,51 @@ export async function executeAttributeConversion(
 
   const affiliate = await aff.retrieveAffiliate(affiliate_id)
   if (affiliate.customer_id === input.customer_id) {
-    const moderation = container.resolve(
-      MODERATION_MODULE
-    ) as ModerationModuleService
-    await moderation.createModerationCases({
-      product_id: null,
-      seller_id: null,
-      case_type: "Fraude-signaal",
-      status: "Gesignaleerd",
-      ai_metadata_id: null,
+    await executeOpenFraudSignal(container, {
+      signal_code: coupon_id ? "coupon_self_use" : "self_attribution",
+      affiliate_id,
+      subject_customer_id: input.customer_id,
+      source_entity_type: "em_order",
+      source_entity_id: input.order_id,
     })
     logger.warn(
       `[affiliate] self-attribution blocked affiliate=${affiliate_id} customer=${input.customer_id}`
     )
     return { conversion_id: null, commission_id: null }
+  }
+
+  if (coupon_id) {
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000
+    const prior = await aff.listConversions(
+      { affiliate_id, coupon_id },
+      { take: 100, order: { created_at: "DESC" } }
+    )
+    // Orders van deze buyer: filter via order.customer_id
+    const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
+    let reuseCount = 0
+    for (const conv of prior) {
+      if (new Date(conv.created_at).getTime() < dayAgo) continue
+      if (conv.reversed_at) continue
+      try {
+        const order = await orders.retrieveEmOrder(conv.order_id)
+        if (order.customer_id === input.customer_id) reuseCount += 1
+      } catch {
+        // skip missing
+      }
+    }
+    if (reuseCount >= 3) {
+      await executeOpenFraudSignal(container, {
+        signal_code: "coupon_reuse",
+        affiliate_id,
+        subject_customer_id: input.customer_id,
+        source_entity_type: "aff_coupon",
+        source_entity_id: coupon_id,
+      })
+      logger.warn(
+        `[affiliate] coupon_reuse blocked coupon=${coupon_id} customer=${input.customer_id}`
+      )
+      return { conversion_id: null, commission_id: null }
+    }
   }
 
   const conversion = await aff.createConversions({

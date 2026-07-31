@@ -34,7 +34,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-03-04 | EPIC-03 | **Gereed** | — | 2026-07-30 | Product-CRUD API, Retailer Created, claims, wijzigingsvoorstellen (ADR-0009/0010); E2E groen |
 | S3-03-05 | EPIC-03 | Niet gestart | — | — | — |
 | S3-03-06 | EPIC-03 | Niet gestart | — | — | — |
-| S3-03-07 | EPIC-03 | Niet gestart | — | — | — |
+| S3-03-07 | EPIC-03 | **Gereed** | — | 2026-07-31 | Moderation Center queue API (7 wachtrijen) + decide Geen actie/Escaleren |
 | S3-03-08 | EPIC-03 | Niet gestart | — | — | — |
 | S3-04-01 | EPIC-04 | **Gereed** | — | 2026-07-30 | Offer / Inventory / Price (ADR-0014/0015) |
 | S3-04-02 | EPIC-04 | **Gereed** | — | 2026-07-30 | Buy Box-engine server-side (ADR-0004/0005/0019); `buy_box_computation` + BuyBoxRecomputed |
@@ -59,7 +59,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-07-03 | EPIC-07 | **Gereed** | — | 2026-07-31 | Conversion + commission bij OrderSplit; reverse bij refund |
 | S3-07-04 | EPIC-07 | **Gereed** | — | 2026-07-31 | `/affiliate/register` affiliate-01; handmatige beoordeling |
 | S3-07-05 | EPIC-07 | **Gereed** | — | 2026-07-31 | Dashboard/stats/commissions/links UI + read API's |
-| S3-07-06 | EPIC-07 | Niet gestart | — | — | — |
+| S3-07-06 | EPIC-07 | **Gereed** | — | 2026-07-31 | Click/coupon fraude-detectie ADR-0032/0033 → Fraude-signaal wachtrij |
 | S3-08-01 | EPIC-08 | In uitvoering | — | 2026-07-31 | Alleen `commission` (G.6) voor S3-07-03; invoice/payout open |
 | S3-08-02 | EPIC-08 | Niet gestart | — | — | — |
 | S3-08-03 | EPIC-08 | Niet gestart | — | — | — |
@@ -72,7 +72,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-10-03 | EPIC-10 | Niet gestart | — | — | — |
 | S3-11-01 | EPIC-11 | **Gereed** | — | 2026-07-31 | Admin Shell modulecontract (`apps/admin`); OMC geregistreerd |
 | S3-11-02 | EPIC-11 | Niet gestart | — | — | — |
-| S3-11-03 | EPIC-11 | Niet gestart | — | — | — |
+| S3-11-03 | EPIC-11 | **Gereed** | — | 2026-07-31 | `/moderation` overzicht + detail (moderatie-01/02) |
 | S3-11-04 | EPIC-11 | Niet gestart | — | — | — |
 | S3-11-05 | EPIC-11 | Niet gestart | — | — | — |
 | S3-12-01 | EPIC-12 | Niet gestart | — | — | — |

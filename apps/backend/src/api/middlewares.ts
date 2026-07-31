@@ -51,6 +51,7 @@ import {
   StoreAffiliateCouponBody,
   AdminDecideAffiliateBody,
 } from "./store/affiliate/validators"
+import { AdminDecideModerationCaseBody } from "./admin/moderation/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
@@ -616,6 +617,29 @@ export default defineMiddlewares({
       middlewares: [
         adminAuth,
         validateAndTransformBody(AdminDecideAffiliateBody),
+      ],
+    },
+    {
+      matcher: "/admin/moderation/queues",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/moderation/queues/:queue",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/moderation/queues/:queue/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/moderation/cases/:id/decide",
+      methods: ["POST"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminDecideModerationCaseBody),
       ],
     },
   ],
