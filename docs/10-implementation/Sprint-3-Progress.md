@@ -21,8 +21,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-01-02 | EPIC-01 | Niet gestart | — | — | — |
 | S3-01-03 | EPIC-01 | Niet gestart | — | — | — |
 | S3-01-04 | EPIC-01 | Niet gestart | — | — | — |
-| S3-01-05 | EPIC-01 | Niet gestart | — | — | — |
-| S3-01-06 | EPIC-01 | Niet gestart | — | — | — |
+| S3-01-05 | EPIC-01 | **Gereed** | — | 2026-07-31 | Auth UI login/register/forgot + MFA-stap (bestaand; geverifieerd voor S3-07-04) |
+| S3-01-06 | EPIC-01 | **Gereed** | — | 2026-07-31 | Cookie-banner + voorkeuren → ConsentRecord; trackingcookies pas na toestemming |
 | S3-02-01 | EPIC-02 | Niet gestart | — | — | — |
 | S3-02-02 | EPIC-02 | Niet gestart | — | — | — |
 | S3-02-03 | EPIC-02 | Niet gestart | — | — | — |
@@ -57,8 +57,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-07-01 | EPIC-07 | **Gereed** | — | 2026-07-31 | Affiliate-module G.1–G.5/G.10 (ADR-0031) |
 | S3-07-02 | EPIC-07 | **Gereed** | — | 2026-07-31 | Registratie, links, consent/click, coupons API |
 | S3-07-03 | EPIC-07 | **Gereed** | — | 2026-07-31 | Conversion + commission bij OrderSplit; reverse bij refund |
-| S3-07-04 | EPIC-07 | Niet gestart | — | — | — |
-| S3-07-05 | EPIC-07 | Niet gestart | — | — | — |
+| S3-07-04 | EPIC-07 | **Gereed** | — | 2026-07-31 | `/affiliate/register` affiliate-01; handmatige beoordeling |
+| S3-07-05 | EPIC-07 | **Gereed** | — | 2026-07-31 | Dashboard/stats/commissions/links UI + read API's |
 | S3-07-06 | EPIC-07 | Niet gestart | — | — | — |
 | S3-08-01 | EPIC-08 | In uitvoering | — | 2026-07-31 | Alleen `commission` (G.6) voor S3-07-03; invoice/payout open |
 | S3-08-02 | EPIC-08 | Niet gestart | — | — | — |

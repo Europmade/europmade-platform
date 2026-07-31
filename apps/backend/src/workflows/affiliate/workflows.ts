@@ -459,3 +459,187 @@ export const registerAffiliateWorkflow = createWorkflow(
     return new WorkflowResponse(registerStep(input))
   }
 )
+
+function daysAgo(days: number): Date {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return d
+}
+
+function formatEuro(amount: number): string {
+  return new Intl.NumberFormat("nl-NL", {
+    style: "currency",
+    currency: "EUR",
+  }).format(amount)
+}
+
+/**
+ * S3-07-05 — KPI's + per-link statistieken voor goedgekeurde affiliate.
+ */
+export async function executeAffiliateDashboard(
+  container: MedusaContainer,
+  customerId: string,
+  periodDays = 30
+) {
+  const aff = container.resolve(AFFILIATE_MODULE) as AffiliateModuleService
+  const finance = container.resolve(FINANCE_MODULE) as FinanceModuleService
+  const affiliate = await aff.requireApprovedAffiliate(customerId)
+  const since = daysAgo(periodDays)
+
+  const links = await aff.listAffiliateLinks(
+    { affiliate_id: affiliate.id },
+    { order: { created_at: "DESC" }, take: 500 }
+  )
+  const linkIds = new Set(links.map((l) => l.id))
+
+  const allClicks = await aff.listClicks(
+    {},
+    { take: 10_000, order: { created_at: "DESC" } }
+  )
+  const clicks = allClicks.filter(
+    (c) =>
+      linkIds.has(c.affiliate_link_id) &&
+      new Date(c.created_at).getTime() >= since.getTime()
+  )
+
+  const conversions = await aff.listConversions(
+    { affiliate_id: affiliate.id },
+    { take: 10_000, order: { created_at: "DESC" } }
+  )
+  const periodConversions = conversions.filter(
+    (c) =>
+      !c.reversed_at &&
+      new Date(c.created_at).getTime() >= since.getTime()
+  )
+
+  const conversionIds = periodConversions.map((c) => c.id)
+  let commissionTotal = 0
+  if (conversionIds.length > 0) {
+    const commissions = await finance.listCommissions(
+      {
+        recipient_type: "Affiliate",
+        status: "Toegekend",
+      },
+      { take: 10_000 }
+    )
+    const idSet = new Set(conversionIds)
+    for (const row of commissions) {
+      if (row.conversion_id && idSet.has(row.conversion_id)) {
+        commissionTotal += Number(row.amount)
+      }
+    }
+  }
+
+  const clicksByLink = new Map<string, number>()
+  for (const c of clicks) {
+    clicksByLink.set(
+      c.affiliate_link_id,
+      (clicksByLink.get(c.affiliate_link_id) ?? 0) + 1
+    )
+  }
+
+  const convByLink = new Map<string, number>()
+  for (const conv of periodConversions) {
+    if (!conv.click_id) continue
+    try {
+      const click = await aff.retrieveClick(conv.click_id)
+      convByLink.set(
+        click.affiliate_link_id,
+        (convByLink.get(click.affiliate_link_id) ?? 0) + 1
+      )
+    } catch {
+      // click soft-deleted / missing — skip row detail
+    }
+  }
+
+  const linkStats = links.map((link) => {
+    const clickCount = clicksByLink.get(link.id) ?? 0
+    const convCount = convByLink.get(link.id) ?? 0
+    const ratio = clickCount > 0 ? (convCount / clickCount) * 100 : 0
+    return {
+      link_id: link.id,
+      target_url: link.target_url,
+      tracking_param: link.tracking_param,
+      display_url: `${link.target_url}${link.target_url.includes("?") ? "&" : "?"}ref=${link.tracking_param}`,
+      clicks: clickCount,
+      conversions: convCount,
+      conversion_rate: Math.round(ratio * 10) / 10,
+      created_at: link.created_at,
+    }
+  })
+
+  return {
+    affiliate: {
+      id: affiliate.id,
+      onboarding_status: affiliate.onboarding_status,
+      channel_url: affiliate.channel_url,
+      approved_at: affiliate.approved_at,
+    },
+    period_days: periodDays,
+    kpis: {
+      clicks: clicks.length,
+      conversions: periodConversions.length,
+      commission_amount: roundMoney(commissionTotal),
+      commission_formatted: formatEuro(roundMoney(commissionTotal)),
+    },
+    link_stats: linkStats,
+  }
+}
+
+export async function executeAffiliateCommissions(
+  container: MedusaContainer,
+  customerId: string
+) {
+  const aff = container.resolve(AFFILIATE_MODULE) as AffiliateModuleService
+  const finance = container.resolve(FINANCE_MODULE) as FinanceModuleService
+  const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
+  const affiliate = await aff.requireApprovedAffiliate(customerId)
+
+  const conversions = await aff.listConversions(
+    { affiliate_id: affiliate.id },
+    { take: 500, order: { created_at: "DESC" } }
+  )
+  const byId = new Map(conversions.map((c) => [c.id, c]))
+  const conversionIds = new Set(conversions.map((c) => c.id))
+
+  const commissions = await finance.listCommissions(
+    { recipient_type: "Affiliate" },
+    { take: 500, order: { created_at: "DESC" } }
+  )
+
+  const rows = []
+  for (const c of commissions) {
+    if (!c.conversion_id || !conversionIds.has(c.conversion_id)) continue
+    const conv = byId.get(c.conversion_id)
+    if (!conv) continue
+    let order_number = c.order_id ?? conv.order_id
+    try {
+      const order = await orders.retrieveEmOrder(conv.order_id)
+      order_number = order.order_number ?? order_number
+    } catch {
+      // keep id fallback
+    }
+    const attribution_type = conv.click_id
+      ? "Link"
+      : conv.coupon_id
+        ? "Coupon"
+        : "Onbekend"
+    const ui_status =
+      c.status === "Teruggedraaid"
+        ? "Teruggedraaid (retour)"
+        : "Bevestigd"
+    rows.push({
+      id: c.id,
+      created_at: c.created_at,
+      order_id: conv.order_id,
+      order_number,
+      attribution_type,
+      amount: Number(c.amount),
+      amount_formatted: formatEuro(Number(c.amount)),
+      status: c.status,
+      ui_status,
+    })
+  }
+
+  return { commissions: rows }
+}

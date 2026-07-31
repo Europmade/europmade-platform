@@ -129,6 +129,8 @@ export function placeOrder(input: {
   shipping_address: string
   billing_address: string
   lines: Array<{ offer_id: string; quantity: number }>
+  affiliate_click_id?: string | null
+  affiliate_coupon_code?: string | null
 }) {
   return request<PlaceOrderResult>("/store/order-service/checkout/place", {
     method: "POST",

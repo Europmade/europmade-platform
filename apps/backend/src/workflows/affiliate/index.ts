@@ -7,5 +7,7 @@ export {
   executeCreateCoupon,
   executeAttributeConversion,
   executeReverseConversionForOrder,
+  executeAffiliateDashboard,
+  executeAffiliateCommissions,
   registerAffiliateWorkflow,
 } from "./workflows"

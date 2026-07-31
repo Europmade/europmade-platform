@@ -19,6 +19,7 @@ import {
   placeOrder,
   type CartView,
 } from "../_lib/order-service-api"
+import { CLICK_COOKIE, readCookie } from "../_lib/cookie-consent"
 
 const STEPS = ["Verzending", "Betaling", "Controle"]
 
@@ -78,6 +79,7 @@ export default function CheckoutPage() {
           offer_id: l.offer_id,
           quantity: l.quantity,
         })),
+        affiliate_click_id: readCookie(CLICK_COOKIE),
       })
       router.push(
         `/order/confirmation?payment_reference=${encodeURIComponent(result.payment_reference)}&order_set_id=${encodeURIComponent(result.order_set_id)}`

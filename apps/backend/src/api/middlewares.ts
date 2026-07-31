@@ -586,6 +586,21 @@ export default defineMiddlewares({
       ],
     },
     {
+      matcher: "/store/affiliate/dashboard",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/affiliate/stats",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/affiliate/commissions",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/admin/affiliates",
       methods: ["GET"],
       middlewares: [adminAuth],
