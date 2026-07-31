@@ -41,3 +41,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0031](./0031-affiliate-module-soft-schema.md) | Affiliate-module tabelprefixen & schema-uitbreidingen | Geaccepteerd | Affiliate, Finance |
 | [0032](./0032-click-fraud-detection-adr-55.md) | Click-fraude-detectie (Blueprint ADR-55) | Geaccepteerd | Affiliate, Moderation |
 | [0033](./0033-coupon-abuse-prevention-adr-56.md) | Coupon-misbruikpreventie (Blueprint ADR-56) | Geaccepteerd | Affiliate, Moderation |
+| [0034](./0034-finance-invoice-payout-soft-schema.md) | Finance invoice/payout soft-schema & MVP-cadans | Geaccepteerd | Finance |

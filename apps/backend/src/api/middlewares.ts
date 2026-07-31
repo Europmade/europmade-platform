@@ -642,5 +642,25 @@ export default defineMiddlewares({
         validateAndTransformBody(AdminDecideModerationCaseBody),
       ],
     },
+    {
+      matcher: "/store/finance/seller",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/finance/affiliate/payouts",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/admin/finance/payouts",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/payouts/:id/process",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
   ],
 })

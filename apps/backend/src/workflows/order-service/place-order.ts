@@ -18,6 +18,7 @@ import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
 import type ProductCloudModuleService from "../../modules/product-cloud/service"
 import { executeRecomputeBuyBox } from "../commerce-cloud/recompute-buy-box"
 import { executeAttributeConversion } from "../affiliate/workflows"
+import { executeFinanceOnOrderSplit } from "../finance/workflows"
 
 export type CheckoutLineInput = {
   offer_id: string
@@ -301,6 +302,13 @@ export async function executePlaceOrder(
       order_number: order.order_number,
       line_ids: order.line_ids,
     })
+    try {
+      await executeFinanceOnOrderSplit(container, order.order_id)
+    } catch (err) {
+      logger.warn(
+        `[finance] OrderSplit finance failed order=${order.order_id}: ${String(err)}`
+      )
+    }
   }
 
   if (placed.orders[0] && (input.affiliate_click_id || input.affiliate_coupon_code)) {

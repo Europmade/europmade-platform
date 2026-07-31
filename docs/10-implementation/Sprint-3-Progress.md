@@ -60,11 +60,11 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-07-04 | EPIC-07 | **Gereed** | — | 2026-07-31 | `/affiliate/register` affiliate-01; handmatige beoordeling |
 | S3-07-05 | EPIC-07 | **Gereed** | — | 2026-07-31 | Dashboard/stats/commissions/links UI + read API's |
 | S3-07-06 | EPIC-07 | **Gereed** | — | 2026-07-31 | Click/coupon fraude-detectie ADR-0032/0033 → Fraude-signaal wachtrij |
-| S3-08-01 | EPIC-08 | In uitvoering | — | 2026-07-31 | Alleen `commission` (G.6) voor S3-07-03; invoice/payout open |
-| S3-08-02 | EPIC-08 | Niet gestart | — | — | — |
-| S3-08-03 | EPIC-08 | Niet gestart | — | — | — |
-| S3-08-04 | EPIC-08 | Niet gestart | — | — | — |
-| S3-08-05 | EPIC-08 | Niet gestart | — | — | — |
+| S3-08-01 | EPIC-08 | **Gereed** | — | 2026-07-31 | G.6–G.8 `commission`/`invoice`/`payout` (+ ADR-0034 soft fields) |
+| S3-08-02 | EPIC-08 | **Gereed** | — | 2026-07-31 | Platform 10% op OrderSplit; Affiliate 5% ongewijzigd |
+| S3-08-03 | EPIC-08 | **Gereed** | — | 2026-07-31 | Klant- + Seller-commissiefactuur, InvoiceIssued, creditnota |
+| S3-08-04 | EPIC-08 | **Gereed** | — | 2026-07-31 | Payout ledger + 14d hold; process stub Connect; PayoutProcessed |
+| S3-08-05 | EPIC-08 | Niet gestart | — | — | UI afhankelijk van 03+04 + S3-13-02 |
 | S3-09-01 | EPIC-09 | Niet gestart | — | — | — |
 | S3-09-02 | EPIC-09 | Niet gestart | — | — | — |
 | S3-10-01 | EPIC-10 | **Gereed** | — | 2026-07-31 | audit_log append-only module + Event Bus consumer (ADR-0026) |

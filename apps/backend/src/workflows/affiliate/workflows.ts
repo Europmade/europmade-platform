@@ -20,6 +20,7 @@ import type OrderServiceModuleService from "../../modules/order-service/service"
 import { FINANCE_MODULE } from "../../modules/finance"
 import type FinanceModuleService from "../../modules/finance/service"
 import { executeOpenFraudSignal } from "../moderation/workflows"
+import { executeScheduleAffiliatePayout } from "../finance/workflows"
 
 export type RegisterAffiliateInput = {
   customer_id: string
@@ -483,6 +484,12 @@ export async function executeAttributeConversion(
       amount,
       percentage: settings.percentage,
     },
+  })
+
+  await executeScheduleAffiliatePayout(container, {
+    order_id: input.order_id,
+    affiliate_id,
+    amount,
   })
 
   return { conversion_id: conversion.id, commission_id: commission.id }

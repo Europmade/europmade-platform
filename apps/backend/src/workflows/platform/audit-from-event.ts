@@ -144,7 +144,9 @@ export function mapDomainEventToAudit(
             ? "affiliate"
             : asString(data.conversion_id) != null
               ? "aff_conversion"
-              : "affiliate",
+              : asString(data.commission_id) != null
+                ? "commission"
+                : "affiliate",
         entity_id:
           asString(data.affiliate_id) ??
           asString(data.conversion_id) ??
@@ -154,6 +156,28 @@ export function mapDomainEventToAudit(
           "",
         action_type: eventName,
         reason: asString(data.order_id) ?? asString(data.tracking_param),
+      }
+    case "InvoiceIssued":
+      return {
+        actor_customer_id: asString(data.customer_id),
+        entity_type: "invoice",
+        entity_id: asString(data.invoice_id) ?? "",
+        action_type: eventName,
+        reason:
+          asString(data.invoice_type) ??
+          asString(data.order_id) ??
+          (data.is_credit_note === true ? "creditnota" : null),
+      }
+    case "PayoutProcessed":
+      return {
+        actor_customer_id: null,
+        entity_type: "payout",
+        entity_id: asString(data.payout_id) ?? "",
+        action_type: eventName,
+        reason:
+          asString(data.recipient_type) ??
+          asString(data.stripe_transfer_id) ??
+          asString(data.order_id),
       }
     case "ModerationCaseOpened":
     case "ModerationCaseResolved":
