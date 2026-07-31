@@ -38,5 +38,8 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/notification-feed",
     },
+    {
+      resolve: "./src/modules/review",
+    },
   ],
 })

@@ -153,6 +153,12 @@ export default function BuyerOrderDetailPage() {
                         Retour aanmelden
                       </Link>
                     ) : null}
+                    <Link
+                      href={`/account/reviews/new?order_line_id=${line.id}&type=Productreview`}
+                      className="rounded-md border border-wf-400 px-3 py-1.5 font-semibold text-wf-900 hover:bg-wf-100"
+                    >
+                      Review
+                    </Link>
                   </div>
                 </li>
               )

@@ -9,7 +9,7 @@ const NAV: Array<{ label: string; href: string | null }> = [
   { label: "Mijn bestellingen", href: "/account/orders" },
   { label: "Retouren", href: "/account/returns" },
   { label: "Berichten", href: "/account/messages" },
-  { label: "Reviews", href: null },
+  { label: "Reviews", href: "/account/reviews" },
   { label: "Account", href: null },
 ]
 

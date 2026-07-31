@@ -34,3 +34,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0024](./0024-buyer-account-shell-path.md) | Buyer Dashboard-shell onder `/account` (S3-13-01) | Geaccepteerd | Buyer Dashboard, UX |
 | [0025](./0025-messaging-in-order-service.md) | Order-berichten in `orderService` (S3-05-07) | Geaccepteerd | Order-service, Messaging |
 | [0026](./0026-audit-and-notification-feed.md) | Audit-module en in-app notificatiefeed (S3-10-01/02, S3-05-09) | Geaccepteerd | Audit, Notification, Order-service |
+| [0027](./0027-review-service-module.md) | Review-service als eigen custom module (S3-06-01…03) | Geaccepteerd | Review-service, Buy Box |

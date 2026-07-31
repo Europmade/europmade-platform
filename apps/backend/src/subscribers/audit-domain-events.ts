@@ -36,5 +36,7 @@ export const config: SubscriberConfig = {
     "NotificationDispatched",
     "SellerOnboarded",
     "BuyBoxRecomputed",
+    "ReviewSubmitted",
+    "ReviewAggregateChanged",
   ],
 }

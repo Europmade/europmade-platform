@@ -360,6 +360,7 @@ class CommerceCloudModuleService extends MedusaService({
     identifier_id: string,
     region_code: string,
     sellerTenureById: Record<string, number | null>,
+    sellerReviewScoreById: Record<string, number | null> = {},
     @MedusaContext() sharedContext: Context = {}
   ): Promise<BuyBoxOfferInput[]> {
     const offers = await this.listOffers(
@@ -387,6 +388,7 @@ class CommerceCloudModuleService extends MedusaService({
         base_price: Number(price.base_price),
         shipping_cost: Number(price.shipping_cost),
         seller_tenure_at_ms: sellerTenureById[offer.seller_id] ?? null,
+        seller_review_score: sellerReviewScoreById[offer.seller_id] ?? null,
       })
     }
     return inputs

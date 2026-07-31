@@ -15,6 +15,8 @@ import type CommerceCloudModuleService from "../../modules/commerce-cloud/servic
 import type { BuyBoxComputationResult } from "../../modules/commerce-cloud/buy-box-engine"
 import { PARTNER_MODULE } from "../../modules/partner"
 import type PartnerModuleService from "../../modules/partner/service"
+import { REVIEW_MODULE } from "../../modules/review"
+import type ReviewModuleService from "../../modules/review/service"
 
 export type RecomputeBuyBoxInput = {
   identifier_id: string
@@ -64,10 +66,22 @@ export async function executeRecomputeBuyBox(
     }
   }
 
+  let sellerReviewScoreById: Record<string, number | null> = {}
+  try {
+    const reviewService = container.resolve(
+      REVIEW_MODULE
+    ) as ReviewModuleService
+    sellerReviewScoreById =
+      await reviewService.getSellerReviewScores01(sellerIds)
+  } catch {
+    sellerReviewScoreById = {}
+  }
+
   const offerInputs = await commerce.buildBuyBoxOfferInputs(
     input.identifier_id,
     region,
-    sellerTenureById
+    sellerTenureById,
+    sellerReviewScoreById
   )
   const weights = await commerce.getActiveBuyBoxWeights()
   const result = await commerce.rankOffers(

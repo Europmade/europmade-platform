@@ -50,9 +50,9 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-05-07 | EPIC-05 | **Gereed** | — | 2026-07-31 | Order-berichten API+UI (ADR-0025); admin meelezen bij escalatie |
 | S3-05-08 | EPIC-05 | **Gereed** | — | 2026-07-31 | OMC read-only overzicht/detail + exception resolve in apps/admin |
 | S3-05-09 | EPIC-05 | **Gereed** | — | 2026-07-31 | Order/Message/Return → feed + Medusa Notification; ADR-0026 |
-| S3-06-01 | EPIC-06 | Niet gestart | — | — | — |
-| S3-06-02 | EPIC-06 | Niet gestart | — | — | — |
-| S3-06-03 | EPIC-06 | Niet gestart | — | — | — |
+| S3-06-01 | EPIC-06 | **Gereed** | — | 2026-07-31 | review-module Deel E.1 (ADR-0027) |
+| S3-06-02 | EPIC-06 | **Gereed** | — | 2026-07-31 | Review API + Buy Box seller_review via ReviewAggregateChanged |
+| S3-06-03 | EPIC-06 | **Gereed** | — | 2026-07-31 | `/account/reviews` + dunne `/products/[id]` weergave |
 | S3-07-00 | EPIC-07 | Niet gestart | — | — | — |
 | S3-07-01 | EPIC-07 | Niet gestart | — | — | — |
 | S3-07-02 | EPIC-07 | Niet gestart | — | — | — |

@@ -111,6 +111,26 @@ export function mapDomainEventToAudit(
         action_type: eventName,
         reason: asString(data.winning_offer_id),
       }
+    case "ReviewSubmitted":
+      return {
+        actor_customer_id: asString(data.customer_id),
+        entity_type: "review",
+        entity_id: asString(data.review_id) ?? "",
+        action_type: eventName,
+        reason: asString(data.review_type),
+      }
+    case "ReviewAggregateChanged":
+      return {
+        actor_customer_id: null,
+        entity_type: "seller",
+        entity_id: asString(data.seller_id) ?? "",
+        action_type: eventName,
+        reason:
+          asString(data.average_score) ??
+          (typeof data.average_score === "number"
+            ? String(data.average_score)
+            : null),
+      }
     default:
       return {
         actor_customer_id:

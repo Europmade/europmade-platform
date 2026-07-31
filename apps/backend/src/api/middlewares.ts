@@ -42,6 +42,7 @@ import {
   AdminForceRefundBody,
   StoreSendMessageBody,
 } from "./store/order-service/validators"
+import { StoreSubmitReviewBody } from "./store/reviews/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
@@ -498,6 +499,34 @@ export default defineMiddlewares({
       matcher: "/admin/audit-log",
       methods: ["GET"],
       middlewares: [adminAuth],
+    },
+    {
+      matcher: "/store/reviews",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/reviews",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreSubmitReviewBody),
+      ],
+    },
+    {
+      matcher: "/store/reviews/eligible",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/reviews/mine",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/catalog/products/:id",
+      methods: ["GET"],
+      middlewares: [],
     },
   ],
 })
