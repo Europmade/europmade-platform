@@ -42,3 +42,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0032](./0032-click-fraud-detection-adr-55.md) | Click-fraude-detectie (Blueprint ADR-55) | Geaccepteerd | Affiliate, Moderation |
 | [0033](./0033-coupon-abuse-prevention-adr-56.md) | Coupon-misbruikpreventie (Blueprint ADR-56) | Geaccepteerd | Affiliate, Moderation |
 | [0034](./0034-finance-invoice-payout-soft-schema.md) | Finance invoice/payout soft-schema & MVP-cadans | Geaccepteerd | Finance |
+| [0035](./0035-ai-support-mvp-deterministic-advisor.md) | AI-ondersteuning MVP: deterministische advisor | Geaccepteerd | AI-ondersteuning |

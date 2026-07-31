@@ -179,6 +179,18 @@ export function mapDomainEventToAudit(
           asString(data.stripe_transfer_id) ??
           asString(data.order_id),
       }
+    case "AIRecommendationGenerated":
+      return {
+        actor_customer_id: null,
+        entity_type: "ai_metadata",
+        entity_id: asString(data.ai_metadata_id) ?? "",
+        action_type: eventName,
+        reason:
+          asString(data.recommendation_type) ??
+          (typeof data.confidence_score === "number"
+            ? String(data.confidence_score)
+            : asString(data.subject_id)),
+      }
     case "ModerationCaseOpened":
     case "ModerationCaseResolved":
       return {

@@ -46,6 +46,7 @@ export const config: SubscriberConfig = {
     "CommissionCalculated",
     "InvoiceIssued",
     "PayoutProcessed",
+    "AIRecommendationGenerated",
     "ModerationCaseOpened",
     "ModerationCaseResolved",
   ],

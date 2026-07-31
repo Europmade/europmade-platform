@@ -82,6 +82,15 @@ export function listQueue(queue: QueueKey) {
   )
 }
 
+export type AiMetadataDetail = {
+  id: string
+  recommendation_type: string
+  confidence_score: number
+  confidence_percent: number
+  explanation: string | null
+  label: string
+}
+
 export function getQueueItem(queue: QueueKey, id: string) {
   return request<{
     item: QueueItem
@@ -95,6 +104,7 @@ export function getQueueItem(queue: QueueKey, id: string) {
       decision_reason: string | null
       status: string
       ai_note: string
+      ai_metadata: AiMetadataDetail | null
     }
     actions: string[]
   }>(`/admin/moderation/queues/${queue}/${id}`)

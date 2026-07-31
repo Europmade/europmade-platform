@@ -8,6 +8,10 @@ import { MODERATION_MODULE } from "../../modules/moderation"
 import type ModerationModuleService from "../../modules/moderation/service"
 import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
 import type ProductCloudModuleService from "../../modules/product-cloud/service"
+import {
+  executeGenerateAiRecommendation,
+  executeGetAiMetadataForSubject,
+} from "../ai-support/workflows"
 
 export type QueueKey =
   | "claims"
@@ -275,6 +279,19 @@ export async function executeGetQueueItem(
     ) as ModerationModuleService
     try {
       const row = await moderation.retrieveModerationCase(id)
+      let ai_metadata = await executeGetAiMetadataForSubject(
+        container,
+        "moderation_case",
+        id
+      )
+      if (!ai_metadata) {
+        const generated = await executeGenerateAiRecommendation(container, {
+          subject_type: "moderation_case",
+          subject_id: id,
+        })
+        ai_metadata = generated.ai_metadata
+      }
+      const pct = Math.round(ai_metadata.confidence_score * 100)
       return {
         item,
         detail: {
@@ -286,13 +303,17 @@ export async function executeGetQueueItem(
           source_entity_id: row.source_entity_id,
           decision_reason: row.decision_reason,
           status: row.status,
-          ai_note:
-            "AI ondersteunt met context waar beschikbaar; AI beslist nooit.",
+          ai_note: `AI-advies: ${ai_metadata.explanation ?? "Geen toelichting."}`,
+          ai_metadata: {
+            id: ai_metadata.id,
+            recommendation_type: ai_metadata.recommendation_type,
+            confidence_score: ai_metadata.confidence_score,
+            confidence_percent: pct,
+            explanation: ai_metadata.explanation,
+            label: "Aanbeveling — AI ondersteunt, mens beslist",
+          },
         },
-        actions:
-          row.case_type === "Fraude-signaal"
-            ? (["geen_actie", "escaleren"] as const)
-            : (["geen_actie", "escaleren"] as const),
+        actions: ["geen_actie", "escaleren"] as const,
       }
     } catch {
       // change proposal in hoog-risico
@@ -312,6 +333,7 @@ export async function executeGetQueueItem(
       status: item.status,
       ai_note:
         "AI ondersteunt met context waar beschikbaar; AI beslist nooit.",
+      ai_metadata: null,
     },
     actions: ["open_underlying"] as const,
   }

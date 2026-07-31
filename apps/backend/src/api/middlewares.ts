@@ -52,6 +52,7 @@ import {
   AdminDecideAffiliateBody,
 } from "./store/affiliate/validators"
 import { AdminDecideModerationCaseBody } from "./admin/moderation/validators"
+import { AdminGenerateAiRecommendationBody } from "./admin/ai-support/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
@@ -661,6 +662,14 @@ export default defineMiddlewares({
       matcher: "/admin/finance/payouts/:id/process",
       methods: ["POST"],
       middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/ai-support/recommendations",
+      methods: ["POST"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminGenerateAiRecommendationBody),
+      ],
     },
   ],
 })

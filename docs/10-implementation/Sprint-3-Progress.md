@@ -65,8 +65,8 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-08-03 | EPIC-08 | **Gereed** | — | 2026-07-31 | Klant- + Seller-commissiefactuur, InvoiceIssued, creditnota |
 | S3-08-04 | EPIC-08 | **Gereed** | — | 2026-07-31 | Payout ledger + 14d hold; process stub Connect; PayoutProcessed |
 | S3-08-05 | EPIC-08 | **Gereed** | — | 2026-07-31 | `/seller/finance*` finance-01…05; overview-API verrijkt |
-| S3-09-01 | EPIC-09 | Niet gestart | — | — | — |
-| S3-09-02 | EPIC-09 | Niet gestart | — | — | — |
+| S3-09-01 | EPIC-09 | **Gereed** | — | 2026-07-31 | `ai_metadata` + generate API; ADR-0035 deterministische MVP-advisor |
+| S3-09-02 | EPIC-09 | **Gereed** | — | 2026-07-31 | AI-box moderatie-02 gekoppeld; dep S3-11-02 niet blokkerend (S3-11-03 aanwezig) |
 | S3-10-01 | EPIC-10 | **Gereed** | — | 2026-07-31 | audit_log append-only module + Event Bus consumer (ADR-0026) |
 | S3-10-02 | EPIC-10 | **Gereed** | — | 2026-07-31 | in_app_notification feed + NotificationDispatched (ADR-0026) |
 | S3-10-03 | EPIC-10 | Niet gestart | — | — | — |

@@ -47,5 +47,8 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/finance",
     },
+    {
+      resolve: "./src/modules/ai-support",
+    },
   ],
 })

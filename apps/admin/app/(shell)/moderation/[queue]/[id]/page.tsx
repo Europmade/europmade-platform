@@ -35,6 +35,12 @@ export default function ModerationDetailPage() {
     source_entity_type: string | null
     source_entity_id: string | null
     ai_note: string
+    ai_metadata: {
+      recommendation_type: string
+      confidence_percent: number
+      explanation: string | null
+      label: string
+    } | null
     actions: string[]
   } | null>(null)
 
@@ -53,6 +59,14 @@ export default function ModerationDetailPage() {
           source_entity_type: res.detail.source_entity_type,
           source_entity_id: res.detail.source_entity_id,
           ai_note: res.detail.ai_note,
+          ai_metadata: res.detail.ai_metadata
+            ? {
+                recommendation_type: res.detail.ai_metadata.recommendation_type,
+                confidence_percent: res.detail.ai_metadata.confidence_percent,
+                explanation: res.detail.ai_metadata.explanation,
+                label: res.detail.ai_metadata.label,
+              }
+            : null,
           actions: res.actions,
         })
         setLoading(false)
@@ -135,8 +149,25 @@ export default function ModerationDetailPage() {
               <Badge variant="outline">{QUEUE_LABELS[queue]}</Badge>
             </div>
           </div>
-          <div className="space-y-3 rounded-md border border-dashed border-wf-500 bg-wf-100 p-4 text-xs">
-            <p className="font-semibold text-wf-800">{detail.ai_note}</p>
+          <div className="space-y-2 rounded-md border border-dashed border-wf-500 bg-wf-100 p-4 text-xs">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+              AI-ondersteuning
+            </p>
+            {detail.ai_metadata ? (
+              <>
+                <div className="ai-line text-[11.5px] leading-relaxed text-wf-700">
+                  <span className="font-bold text-wf-800">⚠ </span>
+                  AI-advies ({detail.ai_metadata.recommendation_type}):{" "}
+                  {detail.ai_metadata.explanation ?? detail.ai_note}
+                </div>
+                <div className="text-[11.5px] leading-relaxed text-wf-700">
+                  Betrouwbaarheid: {detail.ai_metadata.confidence_percent}% —{" "}
+                  {detail.ai_metadata.label}.
+                </div>
+              </>
+            ) : (
+              <p className="font-semibold text-wf-800">{detail.ai_note}</p>
+            )}
             <Row
               label="Affiliate"
               value={detail.affiliate_id || "—"}
