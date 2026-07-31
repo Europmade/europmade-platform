@@ -44,7 +44,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-05-01 | EPIC-05 | **Gereed** | — | 2026-07-30 | Deel D + G.9 in orderService-module (ADR-0021) |
 | S3-05-02 | EPIC-05 | **Gereed** | — | 2026-07-30 | Checkout place/revalidate + split + exception resolve; §2.3 events |
 | S3-05-03 | EPIC-05 | **Gereed** | — | 2026-07-30 | Winkelwagen/Checkout/Bevestiging UI + Offer-cart (ADR-0022); BTW §13 |
-| S3-05-04 | EPIC-05 | Niet gestart | — | — | — |
+| S3-05-04 | EPIC-05 | **Gereed** | — | 2026-07-31 | Return lifecycle + Refund API (ADR-0023); simulated refund tot Stripe |
 | S3-05-05 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-06 | EPIC-05 | Niet gestart | — | — | — |
 | S3-05-07 | EPIC-05 | Niet gestart | — | — | — |

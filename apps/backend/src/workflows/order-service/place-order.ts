@@ -16,6 +16,7 @@ import { COMMERCE_CLOUD_MODULE } from "../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../modules/commerce-cloud/service"
 import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
 import type ProductCloudModuleService from "../../modules/product-cloud/service"
+import { executeRecomputeBuyBox } from "../commerce-cloud/recompute-buy-box"
 
 export type CheckoutLineInput = {
   offer_id: string
@@ -300,9 +301,6 @@ export async function executePlaceOrder(
   const identifiers = [...new Set(validated.map((v) => v.identifier_id))]
   const regions = [...new Set(validated.map((v) => v.region_code))]
   try {
-    const { executeRecomputeBuyBox } = await import(
-      "../commerce-cloud/recompute-buy-box"
-    )
     for (const identifier_id of identifiers) {
       for (const region_code of regions) {
         await executeRecomputeBuyBox(container, {

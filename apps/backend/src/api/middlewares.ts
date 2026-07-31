@@ -37,6 +37,9 @@ import {
   AdminResolveExceptionBody,
   StoreCartLineBody,
   StoreCartLinePatchBody,
+  StoreRequestReturnBody,
+  StoreSellerRejectReturnBody,
+  AdminForceRefundBody,
 } from "./store/order-service/validators"
 
 const documentUpload = multer({
@@ -281,6 +284,70 @@ export default defineMiddlewares({
       middlewares: [
         adminAuth,
         validateAndTransformBody(AdminResolveExceptionBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/returns",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/returns",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreRequestReturnBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/returns/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/returns/:id/escalate",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/returns",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/returns/:id/confirm",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/returns/:id/receive",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/returns/:id/approve",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/returns/:id/reject",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreSellerRejectReturnBody),
+      ],
+    },
+    {
+      matcher: "/admin/order-service/returns",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/order-service/returns/:id/force-refund",
+      methods: ["POST"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminForceRefundBody),
       ],
     },
     {

@@ -1226,7 +1226,7 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
-          "nullable": true,
+          "nullable": false,
           "unique": false,
           "length": null,
           "precision": null,
@@ -1242,6 +1242,29 @@
           "unsigned": false,
           "autoincrement": false,
           "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "Aangevraagd",
+            "Bevestigd",
+            "Ontvangen",
+            "Verwerkt",
+            "Afgewezen",
+            "Geëscaleerd"
+          ],
+          "mappedType": "enum"
+        },
+        "seller_decision_reason": {
+          "name": "seller_decision_reason",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
           "nullable": true,
           "unique": false,
           "length": null,
@@ -1251,6 +1274,138 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "text"
+        },
+        "force_reason": {
+          "name": "force_reason",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "force_admin_user_id": {
+          "name": "force_admin_user_id",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "cooling_off_ends_at": {
+          "name": "cooling_off_ends_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "refund_amount": {
+          "name": "refund_amount",
+          "type": "numeric",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "decimal"
+        },
+        "raw_refund_amount": {
+          "name": "raw_refund_amount",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "refund_status": {
+          "name": "refund_status",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "Pending",
+            "Uitgevoerd",
+            "Geforceerd"
+          ],
+          "mappedType": "enum"
+        },
+        "refund_reference": {
+          "name": "refund_reference",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "text"
+        },
+        "refund_executed_at": {
+          "name": "refund_executed_at",
+          "type": "timestamptz",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         },
         "created_at": {
           "name": "created_at",
@@ -1314,6 +1469,24 @@
           "expression": "CREATE INDEX IF NOT EXISTS \"IDX_em_return_order_line_id\" ON \"em_return\" (\"order_line_id\") WHERE deleted_at IS NULL"
         },
         {
+          "keyName": "IDX_em_return_status",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_em_return_status\" ON \"em_return\" (\"status\") WHERE deleted_at IS NULL"
+        },
+        {
+          "keyName": "IDX_em_return_refund_status",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE INDEX IF NOT EXISTS \"IDX_em_return_refund_status\" ON \"em_return\" (\"refund_status\") WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "IDX_em_return_deleted_at",
           "columnNames": [],
           "composite": false,
@@ -1333,7 +1506,12 @@
           "unique": true
         }
       ],
-      "checks": [],
+      "checks": [
+        {
+          "name": "em_return_status_check",
+          "expression": "\"status\" in ('Aangevraagd', 'Bevestigd', 'Ontvangen', 'Verwerkt', 'Afgewezen', 'Geëscaleerd')"
+        }
+      ],
       "foreignKeys": {
         "em_return_order_line_id_foreign": {
           "constraintName": "em_return_order_line_id_foreign",

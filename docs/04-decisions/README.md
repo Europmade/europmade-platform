@@ -30,3 +30,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0020](./0020-buy-box-cache-persistence.md) | Buy Box-cache-persistentie (Blueprint ADR-31) | Geaccepteerd | Buy Box, Commerce Cloud, Caching |
 | [0021](./0021-order-service-custom-deel-d.md) | Order-service Deel D als custom module naast Medusa Payment | Geaccepteerd | Order-service, Medusa-architectuur |
 | [0022](./0022-offer-centric-cart.md) | Offer-centrische winkelwagen (custom cart) voor S3-05-03 | Geaccepteerd | Order-service, Winkelwagen |
+| [0023](./0023-return-refund-lifecycle.md) | Return-statuslifecycle en gesimuleerde Refund (S3-05-04) | Geaccepteerd | Order-service, Retouren & Refunds |

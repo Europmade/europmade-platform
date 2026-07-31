@@ -48,3 +48,21 @@ export const AdminResolveExceptionBody = z.object({
 export type AdminResolveExceptionBodyInput = z.infer<
   typeof AdminResolveExceptionBody
 >
+
+export const StoreRequestReturnBody = z.object({
+  order_line_id: z.string().trim().min(1),
+  reason: z.string().trim().min(3).max(2000),
+})
+export type StoreRequestReturnBodyInput = z.infer<typeof StoreRequestReturnBody>
+
+export const StoreSellerRejectReturnBody = z.object({
+  decision_reason: z.string().trim().min(3).max(2000),
+})
+export type StoreSellerRejectReturnBodyInput = z.infer<
+  typeof StoreSellerRejectReturnBody
+>
+
+export const AdminForceRefundBody = z.object({
+  force_reason: z.string().trim().min(3).max(2000),
+})
+export type AdminForceRefundBodyInput = z.infer<typeof AdminForceRefundBody>
