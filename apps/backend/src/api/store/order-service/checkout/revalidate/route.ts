@@ -3,6 +3,7 @@ import type {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import { revalidateCheckoutLines } from "../../../../../workflows/order-service"
+import { computeCheckoutTotals } from "../../totals"
 import type { StoreCheckoutRevalidateBodyInput } from "../../validators"
 
 /** Server-side Offer prijs/voorraad-revalidatie vóór checkout. */
@@ -12,6 +13,7 @@ export async function POST(
 ) {
   const lines = await revalidateCheckoutLines(req.scope, req.validatedBody.lines)
   const sellers = new Set(lines.map((l) => l.seller_id))
+  const delivery_country = "NL"
   res.json({
     lines,
     seller_count: sellers.size,
@@ -19,5 +21,6 @@ export async function POST(
       sellers.size >= 2
         ? `Je bestelling wordt opgesplitst in ${sellers.size} deelbestellingen — één per verkoper.`
         : null,
+    totals: computeCheckoutTotals(lines, delivery_country),
   })
 }

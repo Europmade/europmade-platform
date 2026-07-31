@@ -4,6 +4,8 @@ import OrderLine from "./order-line"
 import Shipment from "./shipment"
 import EmReturn from "./em-return"
 import OrderMessage from "./message"
+import Cart from "./cart"
+import CartLine from "./cart-line"
 
 export {
   OrderSet,
@@ -12,4 +14,6 @@ export {
   Shipment,
   EmReturn,
   OrderMessage,
+  Cart,
+  CartLine,
 }

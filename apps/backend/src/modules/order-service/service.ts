@@ -13,6 +13,8 @@ import {
   Shipment,
   EmReturn,
   OrderMessage,
+  Cart,
+  CartLine,
 } from "./models"
 
 export type PlaceOrderLineInput = {
@@ -45,7 +47,7 @@ export type PlaceOrderGraphResult = {
 }
 
 /**
- * Order-service — Blueprint Deel D + G.9 (ADR-0021).
+ * Order-service — Blueprint Deel D + G.9 (ADR-0021) + cart (ADR-0022).
  */
 class OrderServiceModuleService extends MedusaService({
   OrderSet,
@@ -54,6 +56,8 @@ class OrderServiceModuleService extends MedusaService({
   Shipment,
   EmReturn,
   OrderMessage,
+  Cart,
+  CartLine,
 }) {
   @InjectManager()
   async findOrderSetByPaymentReference(
@@ -247,6 +251,115 @@ class OrderServiceModuleService extends MedusaService({
       sharedContext
     )
     return { id: orderId, exception_status: "Afgehandeld" }
+  }
+
+  @InjectManager()
+  async resolveOrCreateCart(input: {
+    customer_id?: string | null
+    guest_token?: string | null
+  }, @MedusaContext() sharedContext: Context = {}): Promise<{ id: string }> {
+    return await this.resolveOrCreateCart_(input, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async resolveOrCreateCart_(
+    input: { customer_id?: string | null; guest_token?: string | null },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{ id: string }> {
+    if (input.customer_id) {
+      const existing = await this.listCarts(
+        { customer_id: input.customer_id },
+        {},
+        sharedContext
+      )
+      if (existing.length > 0) return { id: existing[0].id }
+      const created = await this.createCarts(
+        { customer_id: input.customer_id, guest_token: null },
+        sharedContext
+      )
+      return { id: created.id }
+    }
+    if (input.guest_token) {
+      const existing = await this.listCarts(
+        { guest_token: input.guest_token },
+        {},
+        sharedContext
+      )
+      if (existing.length > 0) return { id: existing[0].id }
+      const created = await this.createCarts(
+        { customer_id: null, guest_token: input.guest_token },
+        sharedContext
+      )
+      return { id: created.id }
+    }
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "customer_id of guest_token is verplicht."
+    )
+  }
+
+  @InjectManager()
+  async upsertCartLine(input: {
+    cart_id: string
+    offer_id: string
+    quantity: number
+  }, @MedusaContext() sharedContext: Context = {}): Promise<{ id: string; quantity: number }> {
+    return await this.upsertCartLine_(input, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async upsertCartLine_(
+    input: { cart_id: string; offer_id: string; quantity: number },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{ id: string; quantity: number }> {
+    if (!Number.isInteger(input.quantity) || input.quantity < 1) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "quantity moet ≥ 1 zijn."
+      )
+    }
+    const existing = await this.listCartLines(
+      { cart_id: input.cart_id, offer_id: input.offer_id },
+      {},
+      sharedContext
+    )
+    if (existing.length > 0) {
+      await this.updateCartLines(
+        { id: existing[0].id, quantity: input.quantity },
+        sharedContext
+      )
+      return { id: existing[0].id, quantity: input.quantity }
+    }
+    const created = await this.createCartLines(
+      {
+        cart_id: input.cart_id,
+        offer_id: input.offer_id,
+        quantity: input.quantity,
+      },
+      sharedContext
+    )
+    return { id: created.id, quantity: input.quantity }
+  }
+
+  @InjectManager()
+  async clearCartLines(
+    cartId: string,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<void> {
+    return await this.clearCartLines_(cartId, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async clearCartLines_(
+    cartId: string,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<void> {
+    const lines = await this.listCartLines({ cart_id: cartId }, {}, sharedContext)
+    if (lines.length === 0) return
+    await this.softDeleteCartLines(
+      lines.map((l) => l.id),
+      sharedContext
+    )
   }
 }
 

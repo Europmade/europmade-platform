@@ -319,6 +319,16 @@ export async function executePlaceOrder(
     `[audit] OrderPlaced set=${placed.order_set_id} payment=${payment_reference} orders=${placed.orders.length}`
   )
 
+  try {
+    const cart = await orders.resolveOrCreateCart({
+      customer_id: input.customer_id,
+      guest_token: null,
+    })
+    await orders.clearCartLines(cart.id)
+  } catch (err) {
+    logger.warn(`[order] clear cart after place: ${String(err)}`)
+  }
+
   return {
     order_set_id: placed.order_set_id,
     payment_reference: placed.payment_reference,

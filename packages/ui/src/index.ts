@@ -12,3 +12,7 @@ export {
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { ReviewBlock, type ReviewBlockProps } from "./components/review-block";
 export { FileUpload, type FileUploadProps } from "./components/file-upload";
+export {
+  QuantityStepper,
+  type QuantityStepperProps,
+} from "./components/quantity-stepper";

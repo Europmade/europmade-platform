@@ -19,6 +19,7 @@ export const StoreCheckoutPlaceBody = z.object({
   payment_mode: z.enum(["simulated"]).default("simulated"),
   shipping_address: z.string().trim().min(3),
   billing_address: z.string().trim().min(3),
+  delivery_country: z.string().trim().min(2).max(2).optional().default("NL"),
   lines: z
     .array(
       z.object({
@@ -29,6 +30,17 @@ export const StoreCheckoutPlaceBody = z.object({
     .min(1),
 })
 export type StoreCheckoutPlaceBodyInput = z.infer<typeof StoreCheckoutPlaceBody>
+
+export const StoreCartLineBody = z.object({
+  offer_id: z.string().trim().min(1),
+  quantity: z.number().int().positive(),
+})
+export type StoreCartLineBodyInput = z.infer<typeof StoreCartLineBody>
+
+export const StoreCartLinePatchBody = z.object({
+  quantity: z.number().int().positive(),
+})
+export type StoreCartLinePatchBodyInput = z.infer<typeof StoreCartLinePatchBody>
 
 export const AdminResolveExceptionBody = z.object({
   reason: z.string().trim().min(3),

@@ -35,6 +35,8 @@ import {
   StoreCheckoutRevalidateBody,
   StoreCheckoutPlaceBody,
   AdminResolveExceptionBody,
+  StoreCartLineBody,
+  StoreCartLinePatchBody,
 } from "./store/order-service/validators"
 
 const documentUpload = multer({
@@ -223,6 +225,32 @@ export default defineMiddlewares({
         customerAuth,
         validateAndTransformBody(StoreCheckoutRevalidateBody),
       ],
+    },
+    {
+      matcher: "/store/order-service/cart",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/cart",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreCartLineBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/cart/lines/:id",
+      methods: ["PATCH"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreCartLinePatchBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/cart/lines/:id",
+      methods: ["DELETE"],
+      middlewares: [customerAuth],
     },
     {
       matcher: "/store/order-service/checkout/place",
