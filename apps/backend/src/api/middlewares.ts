@@ -484,5 +484,20 @@ export default defineMiddlewares({
         validateAndTransformBody(AdminDecideChangeProposalBody),
       ],
     },
+    {
+      matcher: "/store/notifications",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/notifications/:id/read",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/admin/audit-log",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
   ],
 })

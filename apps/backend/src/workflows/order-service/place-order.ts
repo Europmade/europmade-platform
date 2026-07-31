@@ -271,6 +271,7 @@ export async function executePlaceOrder(
     )
     await emitOrderEvent(container, "OrderSplitFailed", {
       order_set_id: placed.order_set_id,
+      customer_id: input.customer_id,
       payment_reference,
       order_ids: placed.orders.map((o) => o.order_id),
       reason: String(err),
@@ -291,6 +292,7 @@ export async function executePlaceOrder(
     await emitOrderEvent(container, "OrderSplit", {
       order_id: order.order_id,
       order_set_id: placed.order_set_id,
+      customer_id: input.customer_id,
       seller_id: order.seller_id,
       order_number: order.order_number,
       line_ids: order.line_ids,

@@ -33,3 +33,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0023](./0023-return-refund-lifecycle.md) | Return-statuslifecycle en gesimuleerde Refund (S3-05-04) | Geaccepteerd | Order-service, Retouren & Refunds |
 | [0024](./0024-buyer-account-shell-path.md) | Buyer Dashboard-shell onder `/account` (S3-13-01) | Geaccepteerd | Buyer Dashboard, UX |
 | [0025](./0025-messaging-in-order-service.md) | Order-berichten in `orderService` (S3-05-07) | Geaccepteerd | Order-service, Messaging |
+| [0026](./0026-audit-and-notification-feed.md) | Audit-module en in-app notificatiefeed (S3-10-01/02, S3-05-09) | Geaccepteerd | Audit, Notification, Order-service |

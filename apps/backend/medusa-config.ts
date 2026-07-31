@@ -32,5 +32,11 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/order-service",
     },
+    {
+      resolve: "./src/modules/audit",
+    },
+    {
+      resolve: "./src/modules/notification-feed",
+    },
   ],
 })
