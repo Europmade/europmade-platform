@@ -11,7 +11,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | Ticket | Epic | Status | Toegewezen aan | Laatste update | Opmerking |
 |---|---|---|---|---|---|
 | S3-00-01 | EPIC-00 | **Gereed** | — | 2026-07-30 | ADR-0018: Stripe + Connect, Medusa payment webhooks, fail-closed signature verification |
-| S3-00-02 | EPIC-00 | Niet gestart | — | — | — |
+| S3-00-02 | EPIC-00 | **Gereed** | — | 2026-07-31 | ADR-0028 (Blueprint ADR-02 Privacy & AVG) |
 | S3-00-03 | EPIC-00 | Niet gestart | — | — | — |
 | S3-00-04 | EPIC-00 | Niet gestart | — | — | — |
 | S3-00-05 | EPIC-00 | **Gereed** | — | Sprint 3, dag 1 | Workspace-analyse uitgevoerd; 1 kleine configuratiecorrectie doorgevoerd (overbodig `workspaces`-veld verwijderd uit root package.json); lockfile-generatie geblokkeerd door ontbrekende netwerktoegang in de uitvoeringsomgeving, zie rapport |
@@ -53,14 +53,14 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-06-01 | EPIC-06 | **Gereed** | — | 2026-07-31 | review-module Deel E.1 (ADR-0027) |
 | S3-06-02 | EPIC-06 | **Gereed** | — | 2026-07-31 | Review API + Buy Box seller_review via ReviewAggregateChanged |
 | S3-06-03 | EPIC-06 | **Gereed** | — | 2026-07-31 | `/account/reviews` + dunne `/products/[id]` weergave |
-| S3-07-00 | EPIC-07 | Niet gestart | — | — | — |
-| S3-07-01 | EPIC-07 | Niet gestart | — | — | — |
-| S3-07-02 | EPIC-07 | Niet gestart | — | — | — |
-| S3-07-03 | EPIC-07 | Niet gestart | — | — | — |
+| S3-07-00 | EPIC-07 | **Gereed** | — | 2026-07-31 | ADR-0029/0030 (Blueprint ADR-53/54) |
+| S3-07-01 | EPIC-07 | **Gereed** | — | 2026-07-31 | Affiliate-module G.1–G.5/G.10 (ADR-0031) |
+| S3-07-02 | EPIC-07 | **Gereed** | — | 2026-07-31 | Registratie, links, consent/click, coupons API |
+| S3-07-03 | EPIC-07 | **Gereed** | — | 2026-07-31 | Conversion + commission bij OrderSplit; reverse bij refund |
 | S3-07-04 | EPIC-07 | Niet gestart | — | — | — |
 | S3-07-05 | EPIC-07 | Niet gestart | — | — | — |
 | S3-07-06 | EPIC-07 | Niet gestart | — | — | — |
-| S3-08-01 | EPIC-08 | Niet gestart | — | — | — |
+| S3-08-01 | EPIC-08 | In uitvoering | — | 2026-07-31 | Alleen `commission` (G.6) voor S3-07-03; invoice/payout open |
 | S3-08-02 | EPIC-08 | Niet gestart | — | — | — |
 | S3-08-03 | EPIC-08 | Niet gestart | — | — | — |
 | S3-08-04 | EPIC-08 | Niet gestart | — | — | — |

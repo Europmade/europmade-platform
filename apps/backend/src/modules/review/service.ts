@@ -58,7 +58,7 @@ class ReviewModuleService extends MedusaService({
     return { average: total / rows.length, count: rows.length }
   }
 
-  assertScore(score: number): void {
+  async assertScore(score: number): Promise<void> {
     if (!Number.isInteger(score) || score < 1 || score > 5) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,

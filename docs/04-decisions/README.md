@@ -35,3 +35,7 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0025](./0025-messaging-in-order-service.md) | Order-berichten in `orderService` (S3-05-07) | Geaccepteerd | Order-service, Messaging |
 | [0026](./0026-audit-and-notification-feed.md) | Audit-module en in-app notificatiefeed (S3-10-01/02, S3-05-09) | Geaccepteerd | Audit, Notification, Order-service |
 | [0027](./0027-review-service-module.md) | Review-service als eigen custom module (S3-06-01…03) | Geaccepteerd | Review-service, Buy Box |
+| [0028](./0028-privacy-avg-adr-02.md) | Privacy & AVG (Blueprint ADR-02) | Geaccepteerd | Privacy, GDPR |
+| [0029](./0029-cookie-consent-mechanism-adr-53.md) | Cookie-consent-mechanisme (Blueprint ADR-53) | Geaccepteerd | Affiliate, Privacy |
+| [0030](./0030-affiliate-commission-attribution-adr-54.md) | Affiliate-commissie & attributieperiode (Blueprint ADR-54) | Geaccepteerd | Affiliate, Finance |
+| [0031](./0031-affiliate-module-soft-schema.md) | Affiliate-module tabelprefixen & schema-uitbreidingen | Geaccepteerd | Affiliate, Finance |

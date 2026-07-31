@@ -49,7 +49,7 @@ export async function executeSubmitReview(
   const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
   const eventBus = container.resolve(Modules.EVENT_BUS)
 
-  reviews.assertScore(input.score)
+  await reviews.assertScore(input.score)
   const text =
     typeof input.text === "string" && input.text.trim()
       ? input.text.trim().slice(0, 5000)

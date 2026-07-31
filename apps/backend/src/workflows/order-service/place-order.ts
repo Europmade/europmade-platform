@@ -17,6 +17,7 @@ import type CommerceCloudModuleService from "../../modules/commerce-cloud/servic
 import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
 import type ProductCloudModuleService from "../../modules/product-cloud/service"
 import { executeRecomputeBuyBox } from "../commerce-cloud/recompute-buy-box"
+import { executeAttributeConversion } from "../affiliate/workflows"
 
 export type CheckoutLineInput = {
   offer_id: string
@@ -30,6 +31,9 @@ export type PlaceOrderInput = {
   shipping_address: string
   billing_address: string
   lines: CheckoutLineInput[]
+  /** Affiliate-attributie (S3-07-03) — exact één route. */
+  affiliate_click_id?: string | null
+  affiliate_coupon_code?: string | null
 }
 
 export type PlaceOrderResult = {
@@ -297,6 +301,19 @@ export async function executePlaceOrder(
       order_number: order.order_number,
       line_ids: order.line_ids,
     })
+  }
+
+  if (placed.orders[0] && (input.affiliate_click_id || input.affiliate_coupon_code)) {
+    try {
+      await executeAttributeConversion(container, {
+        order_id: placed.orders[0].order_id,
+        customer_id: input.customer_id,
+        click_id: input.affiliate_click_id ?? null,
+        coupon_code: input.affiliate_coupon_code ?? null,
+      })
+    } catch (err) {
+      logger.warn(`[affiliate] attribution after place: ${String(err)}`)
+    }
   }
 
   // Buy Box herberekenen per geraakte identifier

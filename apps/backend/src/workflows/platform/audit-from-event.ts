@@ -131,6 +131,30 @@ export function mapDomainEventToAudit(
             ? String(data.average_score)
             : null),
       }
+    case "AffiliateOnboarded":
+    case "AffiliateLinkCreated":
+    case "ClickTracked":
+    case "ConversionRecorded":
+    case "ConversionReversed":
+    case "CommissionCalculated":
+      return {
+        actor_customer_id: asString(data.customer_id),
+        entity_type:
+          asString(data.affiliate_id) != null
+            ? "affiliate"
+            : asString(data.conversion_id) != null
+              ? "aff_conversion"
+              : "affiliate",
+        entity_id:
+          asString(data.affiliate_id) ??
+          asString(data.conversion_id) ??
+          asString(data.click_id) ??
+          asString(data.commission_id) ??
+          asString(data.affiliate_link_id) ??
+          "",
+        action_type: eventName,
+        reason: asString(data.order_id) ?? asString(data.tracking_param),
+      }
     default:
       return {
         actor_customer_id:

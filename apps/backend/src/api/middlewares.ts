@@ -43,6 +43,14 @@ import {
   StoreSendMessageBody,
 } from "./store/order-service/validators"
 import { StoreSubmitReviewBody } from "./store/reviews/validators"
+import {
+  StoreRegisterAffiliateBody,
+  StoreAffiliateConsentBody,
+  StoreAffiliateClickBody,
+  StoreAffiliateLinkBody,
+  StoreAffiliateCouponBody,
+  AdminDecideAffiliateBody,
+} from "./store/affiliate/validators"
 
 const documentUpload = multer({
   storage: multer.memoryStorage(),
@@ -527,6 +535,73 @@ export default defineMiddlewares({
       matcher: "/store/catalog/products/:id",
       methods: ["GET"],
       middlewares: [],
+    },
+    {
+      matcher: "/store/affiliate",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/affiliate",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreRegisterAffiliateBody),
+      ],
+    },
+    {
+      matcher: "/store/affiliate/consent",
+      methods: ["POST"],
+      middlewares: [validateAndTransformBody(StoreAffiliateConsentBody)],
+    },
+    {
+      matcher: "/store/affiliate/clicks",
+      methods: ["POST"],
+      middlewares: [validateAndTransformBody(StoreAffiliateClickBody)],
+    },
+    {
+      matcher: "/store/affiliate/links",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/affiliate/links",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreAffiliateLinkBody),
+      ],
+    },
+    {
+      matcher: "/store/affiliate/coupons",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/affiliate/coupons",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreAffiliateCouponBody),
+      ],
+    },
+    {
+      matcher: "/admin/affiliates",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/affiliates/:id/approve",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/affiliates/:id/reject",
+      methods: ["POST"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminDecideAffiliateBody),
+      ],
     },
   ],
 })

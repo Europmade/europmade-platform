@@ -38,5 +38,11 @@ export const config: SubscriberConfig = {
     "BuyBoxRecomputed",
     "ReviewSubmitted",
     "ReviewAggregateChanged",
+    "AffiliateOnboarded",
+    "AffiliateLinkCreated",
+    "ClickTracked",
+    "ConversionRecorded",
+    "ConversionReversed",
+    "CommissionCalculated",
   ],
 }

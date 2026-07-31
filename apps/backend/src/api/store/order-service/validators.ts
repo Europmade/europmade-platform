@@ -28,6 +28,8 @@ export const StoreCheckoutPlaceBody = z.object({
       })
     )
     .min(1),
+  affiliate_click_id: z.string().trim().min(1).optional().nullable(),
+  affiliate_coupon_code: z.string().trim().min(1).optional().nullable(),
 })
 export type StoreCheckoutPlaceBodyInput = z.infer<typeof StoreCheckoutPlaceBody>
 
