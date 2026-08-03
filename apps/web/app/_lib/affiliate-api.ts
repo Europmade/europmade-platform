@@ -21,17 +21,24 @@ async function request<T>(
   init: RequestInit = {},
   auth = true
 ): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
-    ...init,
-    credentials: auth ? "include" : "omit",
-    headers: {
-      "Content-Type": "application/json",
-      ...(PUBLISHABLE_KEY
-        ? { "x-publishable-api-key": PUBLISHABLE_KEY }
-        : {}),
-      ...init.headers,
-    },
-  })
+  let response: Response
+  try {
+    response = await fetch(`${BACKEND_URL}${path}`, {
+      ...init,
+      credentials: auth ? "include" : "omit",
+      headers: {
+        "Content-Type": "application/json",
+        ...(PUBLISHABLE_KEY
+          ? { "x-publishable-api-key": PUBLISHABLE_KEY }
+          : {}),
+        ...init.headers,
+      },
+    })
+  } catch {
+    throw new AffiliateApiError(
+      "Geen verbinding met de server. Probeer het later opnieuw."
+    )
+  }
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
     const message =

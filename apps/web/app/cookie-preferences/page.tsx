@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
-import { Button, Notice } from "@europmade/ui"
+import { Button } from "@europmade/ui"
 import { recordConsent } from "../_lib/affiliate-api"
 import {
   clearAffiliateTrackingCookies,
@@ -21,7 +21,6 @@ export default function CookiePreferencesPage() {
   const router = useRouter()
   const [affiliateTracking, setAffiliateTracking] = useState(true)
   const [analytics, setAnalytics] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -34,30 +33,28 @@ export default function CookiePreferencesPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
-    setError(null)
     setSaving(true)
-    try {
-      const visitorKey = getOrCreateVisitorKey()
-      await recordConsent(visitorKey, affiliateTracking)
-      const prefs: CookiePreferences = {
-        necessary: true,
-        affiliate_tracking: affiliateTracking,
-        analytics,
-        decided_at: new Date().toISOString(),
-      }
-      savePreferences(prefs)
-      if (affiliateTracking) {
-        persistVisitorCookie(visitorKey)
-      } else {
-        clearAffiliateTrackingCookies()
-      }
-      router.push("/")
-      router.refresh()
-    } catch {
-      setError("Voorkeuren opslaan mislukt. Probeer het opnieuw.")
-    } finally {
-      setSaving(false)
+    const visitorKey = getOrCreateVisitorKey()
+    const prefs: CookiePreferences = {
+      necessary: true,
+      affiliate_tracking: affiliateTracking,
+      analytics,
+      decided_at: new Date().toISOString(),
     }
+    savePreferences(prefs)
+    if (affiliateTracking) {
+      persistVisitorCookie(visitorKey)
+    } else {
+      clearAffiliateTrackingCookies()
+    }
+    try {
+      await recordConsent(visitorKey, affiliateTracking)
+    } catch {
+      // Lokale voorkeuren zijn leidend; server-sync is best-effort.
+    }
+    setSaving(false)
+    router.push("/")
+    router.refresh()
   }
 
   return (
@@ -67,12 +64,6 @@ export default function CookiePreferencesPage() {
         <p className="mt-1.5 text-xs text-wf-600">
           Beheer per categorie welke cookies zijn toegestaan.
         </p>
-
-        {error ? (
-          <Notice variant="warning" className="mt-4">
-            {error}
-          </Notice>
-        ) : null}
 
         <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 space-y-4">
           <ToggleRow

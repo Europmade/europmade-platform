@@ -31,13 +31,13 @@ export function CookieConsentBanner() {
 
   async function applyDecision(affiliateTracking: boolean) {
     const visitorKey = getOrCreateVisitorKey()
-    await recordConsent(visitorKey, affiliateTracking)
     const prefs: CookiePreferences = {
       necessary: true,
       affiliate_tracking: affiliateTracking,
       analytics: false,
       decided_at: new Date().toISOString(),
     }
+    // Lokale beslissing is leidend (banner moet altijd kunnen sluiten).
     savePreferences(prefs)
     if (affiliateTracking) {
       persistVisitorCookie(visitorKey)
@@ -45,6 +45,12 @@ export function CookieConsentBanner() {
       clearAffiliateTrackingCookies()
     }
     setVisible(false)
+    // ConsentRecord op de backend is best-effort (ADR-0029 / affiliate).
+    try {
+      await recordConsent(visitorKey, affiliateTracking)
+    } catch {
+      // Netwerk/backend-fout mag de UI niet blokkeren.
+    }
   }
 
   if (!visible) return null
