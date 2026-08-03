@@ -35,9 +35,11 @@ curl.exe -s --max-time 30 "$web/zoeken?q=robotmaaier" -o "$env:TEMP\em-zoek-reg.
 $zoek = Get-Content -Raw "$env:TEMP\em-zoek-reg.html"
 if ($zoek -notmatch "Zoekresultaten voor") { throw "search title missing" }
 if ($zoek -notmatch "noindex") { throw "search must be noindex" }
-if ($zoek -notmatch "Binnenkort beschikbaar") { throw "search empty/pending state missing" }
+if ($zoek -notmatch "Robotmaaier X200") { throw "search product cards missing" }
+if ($zoek -notmatch "Bekijk product") { throw "search CTA missing" }
+if ($zoek -notmatch 'href="/product/robotmaaier-x200"') { throw "search product link missing" }
 if ($zoek -notmatch "Paginering") { throw "search pagination chrome missing" }
-Write-Host "OK /zoeken (noindex + pending + pagination)"
+Write-Host "OK /zoeken (noindex + product cards + pagination)"
 
 curl.exe -s --max-time 30 "$web/categorie" -o "$env:TEMP\em-cat-index-reg.html"
 $catIndex = Get-Content -Raw "$env:TEMP\em-cat-index-reg.html"
@@ -61,10 +63,28 @@ $cat = Get-Content -Raw "$env:TEMP\em-cat-reg.html"
 if ($cat -notmatch ">Tuin<") { throw "category page title missing" }
 if ($cat -notmatch 'aria-label="Breadcrumb"') { throw "category breadcrumb missing" }
 if ($cat -notmatch "Advertentie") { throw "category ad slot missing" }
-if ($cat -notmatch "Binnenkort beschikbaar") { throw "category pending state missing" }
+if ($cat -notmatch "Robotmaaier X200") { throw "category product grid missing" }
+if ($cat -notmatch "Verified") { throw "category Verified badge missing" }
+if ($cat -notmatch "Bekijk product") { throw "category CTA missing" }
 if ($cat -notmatch "Paginering") { throw "category pagination chrome missing" }
 if ($cat -match "noindex") { throw "category page must be indexable" }
-Write-Host "OK /categorie/tuin (indexable + breadcrumb + ad + pending + pagination)"
+Write-Host "OK /categorie/tuin (indexable + breadcrumb + ad + product cards)"
+
+curl.exe -s --max-time 30 "$web/categorie/keuken" -o "$env:TEMP\em-keuken-reg.html"
+$keuken = Get-Content -Raw "$env:TEMP\em-keuken-reg.html"
+if ($keuken -notmatch "Keramische pan-set") { throw "keuken products missing" }
+Write-Host "OK /categorie/keuken has products"
+
+curl.exe -s --max-time 30 "$web/product/robotmaaier-x200" -o "$env:TEMP\em-pdp-reg.html"
+$pdp = Get-Content -Raw "$env:TEMP\em-pdp-reg.html"
+if ($pdp -notmatch "Buy Box|Automatisch geselecteerde aanbieding") { throw "PDP Buy Box missing" }
+if ($pdp -notmatch "Past goed bij") { throw "PDP Past goed bij missing" }
+if ($pdp -notmatch "Alle aanbieders") { throw "PDP offers missing" }
+if ($pdp -notmatch "Veelgestelde vragen") { throw "PDP FAQ missing" }
+if ($pdp -notmatch "Gerelateerde producten") { throw "PDP related missing" }
+if ($pdp -notmatch "In winkelwagen") { throw "PDP CTA missing" }
+if ($pdp -match "volgen binnenkort|Komt later|Nog niet beschikbaar") { throw "PDP contains placeholder copy" }
+Write-Host "OK /product/robotmaaier-x200 (full PDP wireframe sections)"
 
 $unknown = curl.exe -s -o NUL -w "%{http_code}" --max-time 20 "$web/categorie/onbekend"
 if ($unknown -ne "404") { throw "unknown category expected 404, got $unknown" }

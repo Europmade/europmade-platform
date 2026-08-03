@@ -5,6 +5,7 @@ import {
   findMarketplaceCategory,
   MARKETPLACE_CATEGORIES,
 } from "../../_lib/marketplace-categories"
+import { productsForCategory } from "../../_lib/listing-products"
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>
@@ -36,21 +37,24 @@ export async function generateMetadata({
 }
 
 /**
- * Categoriepagina — scherm #3/#4 (marketplace-listing template).
+ * Categoriepagina — scherm #3/#4 (marketplace-listing template + CMP-017 seed).
  */
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params
   const category = findMarketplaceCategory(slug)
   if (!category) notFound()
 
+  const products = productsForCategory(category.slug)
+
   return (
     <MarketplaceListing
       mode="category"
       title={category.label}
-      meta="0 producten — catalogus volgt binnenkort"
+      meta={`${products.length} producten`}
       breadcrumbLabel={category.label}
-      emptyVariant="catalog-pending"
+      emptyVariant="category"
       showCategoryAdSlot
+      products={products}
     />
   )
 }

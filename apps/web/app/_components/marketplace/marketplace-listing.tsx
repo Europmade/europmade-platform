@@ -1,24 +1,24 @@
 import Link from "next/link"
 import { AdSlot } from "../homepage/ad-slot"
-import { ListingEmptyState, type EmptyStateVariant } from "./listing-empty-state"
-import { ListingFilters } from "./listing-filters"
-import { ListingPagination } from "./listing-pagination"
+import { ListingResults } from "./listing-results"
 import { PublicStorefrontChrome } from "./public-storefront-chrome"
+import type { ListingProduct } from "../../_lib/listing-products"
+import type { EmptyStateVariant } from "./listing-empty-state"
 
 export type MarketplaceListingProps = {
   mode: "search" | "category"
   title: string
   meta: string
-  /** Alleen categorie: breadcrumb-label. */
   breadcrumbLabel?: string
   emptyVariant: EmptyStateVariant
   searchQuery?: string
   showCategoryAdSlot?: boolean
+  products: ListingProduct[]
 }
 
 /**
  * Marketplace Listing Template — sprint-1a/04-marketplace-listing-*.html
- * + marketplace-listing/spec.md. Productgrid wacht op Catalog/Search-API.
+ * + marketplace-listing/spec.md. Productgrid via redactionele seed (CMP-017).
  */
 export function MarketplaceListing({
   mode,
@@ -28,6 +28,7 @@ export function MarketplaceListing({
   emptyVariant,
   searchQuery,
   showCategoryAdSlot = false,
+  products,
 }: MarketplaceListingProps) {
   return (
     <PublicStorefrontChrome searchQuery={searchQuery}>
@@ -70,53 +71,12 @@ export function MarketplaceListing({
         </div>
       ) : null}
 
-      {/* Mobiel: filters/sorteer-knoppen (wireframe toolbar-row) */}
-      <div className="flex gap-2 px-4 py-3 tablet:hidden">
-        <button
-          type="button"
-          disabled
-          className="flex-1 rounded-md border border-wf-700 py-2 text-center text-[11.5px] font-semibold text-wf-400"
-          title="Binnenkort beschikbaar"
-        >
-          Filters
-        </button>
-        <button
-          type="button"
-          disabled
-          className="flex-1 rounded-md border border-wf-400 py-2 text-center text-[11.5px] text-wf-400"
-          title="Binnenkort beschikbaar"
-        >
-          Sorteren ▾
-        </button>
-      </div>
-
-      <div className="grid gap-5 px-4 pb-10 pt-2 tablet:grid-cols-[220px_1fr] tablet:gap-7 tablet:px-8 tablet:pb-10 tablet:pt-5">
-        <div className="hidden tablet:block">
-          <ListingFilters />
-        </div>
-
-        <div className="min-w-0">
-          <div className="mb-4 hidden items-center justify-between tablet:flex">
-            <p className="text-xs text-wf-600">0 producten</p>
-            <select
-              className="h-[34px] rounded-wf border border-wf-400 bg-white px-2.5 text-xs text-wf-400"
-              disabled
-              aria-label="Sorteren"
-              defaultValue="popularity"
-            >
-              <option value="popularity">Sorteren: Populariteit</option>
-            </select>
-          </div>
-
-          <ListingEmptyState
-            variant={emptyVariant}
-            query={searchQuery}
-            categoryLabel={breadcrumbLabel}
-          />
-
-          <ListingPagination disabled />
-        </div>
-      </div>
+      <ListingResults
+        products={products}
+        emptyVariant={emptyVariant}
+        searchQuery={searchQuery}
+        categoryLabel={breadcrumbLabel}
+      />
     </PublicStorefrontChrome>
   )
 }

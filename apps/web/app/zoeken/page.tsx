@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { MarketplaceListing } from "../_components/marketplace/marketplace-listing"
+import { productsForSearch } from "../_lib/listing-products"
 
 type SearchPageProps = {
   searchParams: Promise<{ q?: string | string[] }>
@@ -22,29 +23,32 @@ export async function generateMetadata({
     description:
       "Zoek naar Europese producten, merken en categorieën op EuropMade.",
     robots: { index: false, follow: true },
-    alternates: { canonical: q ? `/zoeken?q=${encodeURIComponent(q)}` : "/zoeken" },
+    alternates: {
+      canonical: q ? `/zoeken?q=${encodeURIComponent(q)}` : "/zoeken",
+    },
   }
 }
 
 /**
- * Zoekresultaten — scherm #2 (marketplace-listing template).
- * Productlisting wacht op Search/Catalog-API.
+ * Zoekresultaten — scherm #2 (marketplace-listing template + CMP-017 seed).
  */
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const q = readQuery((await searchParams).q)
+  const products = productsForSearch(q)
   const title = q ? `Zoekresultaten voor “${q}”` : "Zoekresultaten"
   const meta = q
-    ? `Zoekopdracht “${q}” — catalogus volgt binnenkort`
-    : "Voer een zoekterm in via de zoekbalk — catalogus volgt binnenkort"
+    ? `${products.length} producten voor “${q}”`
+    : `${products.length} producten — verfijnen via filters of zoekterm`
 
   return (
     <MarketplaceListing
       mode="search"
       title={title}
       meta={meta}
-      emptyVariant="catalog-pending"
+      emptyVariant="search"
       searchQuery={q || undefined}
       showCategoryAdSlot={false}
+      products={products}
     />
   )
 }
