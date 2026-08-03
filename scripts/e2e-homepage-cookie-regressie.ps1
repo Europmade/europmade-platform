@@ -1,4 +1,4 @@
-# Cookie banner + homepage regressie
+# Cookie banner + homepage + listing regressie
 # Run: powershell -File scripts/e2e-homepage-cookie-regressie.ps1
 $ErrorActionPreference = "Stop"
 $web = "http://localhost:3000"
@@ -17,7 +17,7 @@ $html = Get-Content -Raw "$env:TEMP\em-home-reg.html"
 foreach ($needle in @(
   "Europese producten, rechtstreeks van de makers",
   "Uitgelicht deze week",
-  "Binnenkort beschikbaar",
+  "Populaire categorieën",
   "Advertentieruimte positie 1",
   "Waarom EuropMade",
   "Blijf op de hoogte"
@@ -25,10 +25,50 @@ foreach ($needle in @(
   if ($html -notmatch [regex]::Escape($needle)) { throw "missing: $needle" }
   Write-Host "OK $needle"
 }
-if ($html -match 'href="/categorie/tuin"') {
-  throw "category tiles must not be live links until Catalog exists"
+if ($html -notmatch 'href="/categorie/tuin"') {
+  throw "category tiles must link to /categorie/{slug}"
 }
-Write-Host "OK categories not live-linked"
+Write-Host "OK category tiles live-linked"
+
+Write-Host "=== Listing pages ==="
+curl.exe -s --max-time 30 "$web/zoeken?q=robotmaaier" -o "$env:TEMP\em-zoek-reg.html"
+$zoek = Get-Content -Raw "$env:TEMP\em-zoek-reg.html"
+if ($zoek -notmatch "Zoekresultaten voor") { throw "search title missing" }
+if ($zoek -notmatch "noindex") { throw "search must be noindex" }
+if ($zoek -notmatch "Binnenkort beschikbaar") { throw "search empty/pending state missing" }
+if ($zoek -notmatch "Paginering") { throw "search pagination chrome missing" }
+Write-Host "OK /zoeken (noindex + pending + pagination)"
+
+curl.exe -s --max-time 30 "$web/categorie" -o "$env:TEMP\em-cat-index-reg.html"
+$catIndex = Get-Content -Raw "$env:TEMP\em-cat-index-reg.html"
+if ($catIndex -notmatch "Categorieën") { throw "category index title missing" }
+if ($catIndex -notmatch "Populaire categorieën") { throw "category index popular section missing" }
+if ($catIndex -notmatch "Alle categorieën") { throw "category index all section missing" }
+if ($catIndex -notmatch 'href="/categorie/keuken"') { throw "category index missing Keuken" }
+if ($catIndex -notmatch "Advertentie") { throw "category index ad slot missing" }
+if ($catIndex -notmatch "NL · €") { throw "header locale/currency missing" }
+if ($catIndex -notmatch "Hoofdnavigatie") { throw "header nav missing" }
+Write-Host "OK /categorie (sections + Keuken + header)"
+
+foreach ($slug in @("tuin","keuken","elektronica","mode","wonen","sport","voeding","huishouden")) {
+  $code = curl.exe -s -o NUL -w "%{http_code}" --max-time 20 "$web/categorie/$slug"
+  if ($code -ne "200") { throw "/categorie/$slug expected 200, got $code" }
+}
+Write-Host "OK category slugs open (incl. Keuken)"
+
+curl.exe -s --max-time 30 "$web/categorie/tuin" -o "$env:TEMP\em-cat-reg.html"
+$cat = Get-Content -Raw "$env:TEMP\em-cat-reg.html"
+if ($cat -notmatch ">Tuin<") { throw "category page title missing" }
+if ($cat -notmatch 'aria-label="Breadcrumb"') { throw "category breadcrumb missing" }
+if ($cat -notmatch "Advertentie") { throw "category ad slot missing" }
+if ($cat -notmatch "Binnenkort beschikbaar") { throw "category pending state missing" }
+if ($cat -notmatch "Paginering") { throw "category pagination chrome missing" }
+if ($cat -match "noindex") { throw "category page must be indexable" }
+Write-Host "OK /categorie/tuin (indexable + breadcrumb + ad + pending + pagination)"
+
+$unknown = curl.exe -s -o NUL -w "%{http_code}" --max-time 20 "$web/categorie/onbekend"
+if ($unknown -ne "404") { throw "unknown category expected 404, got $unknown" }
+Write-Host "OK unknown category 404"
 
 Write-Host "=== Consent API (backend) ==="
 if ($bh -eq "200") {

@@ -4,10 +4,12 @@
  * geen publieke list-API beschikbaar in de huidige backend.
  */
 
-export type HomepageCategory = {
-  slug: string
-  label: string
-}
+import {
+  POPULAR_MARKETPLACE_CATEGORIES,
+  type MarketplaceCategory,
+} from "./marketplace-categories"
+
+export type HomepageCategory = MarketplaceCategory
 
 export type HomepageProduct = {
   title: string
@@ -30,14 +32,9 @@ export const HOMEPAGE_NAV_LINKS = [
   { label: "Over EuropMade", href: "/over" },
 ] as const
 
-export const HOMEPAGE_CATEGORIES: HomepageCategory[] = [
-  { slug: "tuin", label: "Tuin" },
-  { slug: "elektronica", label: "Elektronica" },
-  { slug: "mode", label: "Mode" },
-  { slug: "wonen", label: "Wonen" },
-  { slug: "sport", label: "Sport" },
-  { slug: "voeding", label: "Voeding" },
-]
+/** Homepage sectie 4 — populaire subset van de 30 hoofdcategorieën. */
+export const HOMEPAGE_CATEGORIES: HomepageCategory[] =
+  POPULAR_MARKETPLACE_CATEGORIES
 
 /** Wireframe-desktop voorbeelden — redactioneel tot Catalog/Search live is. */
 export const HOMEPAGE_FEATURED_PRODUCTS: HomepageProduct[] = [

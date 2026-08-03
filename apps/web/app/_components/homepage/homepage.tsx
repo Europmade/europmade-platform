@@ -4,11 +4,11 @@ import {
   HOMEPAGE_CATEGORIES,
   HOMEPAGE_FEATURED_PRODUCTS,
   HOMEPAGE_FOOTER_LINKS,
-  HOMEPAGE_NAV_LINKS,
   HOMEPAGE_RETAILERS,
   HOMEPAGE_STORY_LINKS,
   HOMEPAGE_TRUST_ITEMS,
 } from "../../_lib/homepage-content"
+import { PublicHeader } from "../marketplace/public-header"
 import { AdSlot } from "./ad-slot"
 import { NewsletterForm } from "./newsletter-form"
 import { SearchForm } from "./search-form"
@@ -21,67 +21,7 @@ export function Homepage() {
     <div className="min-h-screen bg-wf-100 text-wf-800">
       <div className="mx-auto max-w-[1160px] border border-wf-400 bg-white">
         {/* 1 — Header (CMP-001) */}
-        <header className="flex items-center gap-3 border-b border-wf-300 px-4 py-3.5 tablet:gap-5 tablet:px-8">
-          <Link href="/" className="shrink-0" aria-label="EuropMade home">
-            <div
-              className="h-[26px] w-[110px] rounded-sm bg-wf-300 tablet:w-[130px]"
-              role="img"
-              aria-label="EuropMade logo"
-            />
-          </Link>
-          <div className="hidden min-w-0 flex-1 tablet:block">
-            <SearchForm
-              variant="header"
-              placeholder="Zoek naar producten, merken, categorieën…"
-            />
-          </div>
-          <div className="ml-auto flex items-center gap-3 text-xs text-wf-600 tablet:gap-4">
-            <span aria-label="Taal en valuta">NL · €</span>
-            <Link
-              href="/account"
-              className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-wf-200"
-              aria-label="Account"
-              title="Account"
-            />
-            <Link
-              href="/cart"
-              className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-wf-200"
-              aria-label="Winkelwagen"
-              title="Winkelwagen"
-            />
-          </div>
-        </header>
-        <nav
-          className="hidden gap-[22px] border-b border-wf-200 px-8 pb-3 text-[13px] text-wf-700 tablet:flex"
-          aria-label="Hoofdnavigatie"
-        >
-          {HOMEPAGE_NAV_LINKS.map((item) => {
-            const catalogPending =
-              item.href === "/categorie" || item.href.startsWith("/categorie/")
-            if (catalogPending) {
-              return (
-                <span
-                  key={item.href}
-                  className="cursor-not-allowed text-wf-400"
-                  title="Binnenkort beschikbaar"
-                  aria-disabled="true"
-                >
-                  {item.label}
-                  {item.label === "Categorieën" ? " ▾" : ""}
-                </span>
-              )
-            }
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="hover:text-wf-900 hover:underline"
-              >
-                {item.label}
-              </Link>
-            )
-          })}
-        </nav>
+        <PublicHeader />
 
         {/* 2 — Hero */}
         <section className="bg-wf-100 px-4 py-10 text-center tablet:px-8 tablet:py-14">
@@ -146,7 +86,7 @@ export function Homepage() {
           ))}
         </section>
 
-        {/* 4 — Categorieën (CMP-032) — Catalog/Search nog niet live */}
+        {/* 4 — Categorieën (CMP-032) */}
         <section className="px-4 py-8 tablet:px-8 tablet:py-10">
           <h2 className="mb-5 text-lg font-bold text-wf-900 tablet:text-xl">
             Populaire categorieën
@@ -157,10 +97,9 @@ export function Homepage() {
                 key={cat.slug}
                 className="min-w-[110px] flex-none tablet:min-w-0"
               >
-                <div
-                  className="cursor-not-allowed rounded-lg border border-wf-300 bg-wf-100 px-2.5 py-4 text-center opacity-80"
-                  aria-disabled="true"
-                  title="Binnenkort beschikbaar"
+                <Link
+                  href={`/categorie/${cat.slug}`}
+                  className="block rounded-lg border border-wf-300 px-2.5 py-4 text-center hover:border-wf-500"
                 >
                   <span
                     className="mx-auto mb-2.5 block h-11 w-11 rounded-full bg-wf-200"
@@ -169,10 +108,7 @@ export function Homepage() {
                   <span className="block text-xs font-semibold text-wf-800">
                     {cat.label}
                   </span>
-                  <span className="mt-1.5 block text-[10px] font-medium text-wf-500">
-                    Binnenkort beschikbaar
-                  </span>
-                </div>
+                </Link>
               </li>
             ))}
           </ul>

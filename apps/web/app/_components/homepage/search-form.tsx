@@ -1,21 +1,28 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { FormEvent, useState } from "react"
+import { FormEvent, useId, useState } from "react"
 
 type SearchFormProps = {
   /** Hero-zoekbalk (vergroot) vs. header-zoekbalk. */
   variant: "header" | "hero"
   placeholder: string
+  /** Optionele voorinvulling (bijv. huidige `/zoeken?q=`). */
+  initialQuery?: string
 }
 
 /**
  * Zoekformulier — navigeert naar `/zoeken` (Search/Catalog-fase).
  * Geen eigen zoeklogica; alleen UI + query-string.
  */
-export function SearchForm({ variant, placeholder }: SearchFormProps) {
+export function SearchForm({
+  variant,
+  placeholder,
+  initialQuery = "",
+}: SearchFormProps) {
   const router = useRouter()
-  const [q, setQ] = useState("")
+  const inputId = useId()
+  const [q, setQ] = useState(initialQuery)
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -38,11 +45,11 @@ export function SearchForm({ variant, placeholder }: SearchFormProps) {
       className={shell}
       aria-label="Producten zoeken"
     >
-      <label htmlFor={`homepage-search-${variant}`} className="sr-only">
+      <label htmlFor={inputId} className="sr-only">
         Zoeken
       </label>
       <input
-        id={`homepage-search-${variant}`}
+        id={inputId}
         type="search"
         name="q"
         value={q}
