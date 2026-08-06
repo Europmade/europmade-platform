@@ -1,23 +1,19 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ProductDetailPage } from "../../_components/product/product-detail"
-import { LISTING_PRODUCTS } from "../../_lib/listing-products"
-import { getPdpDetail } from "../../_lib/pdp-seed"
+import { resolvePdpDetail } from "../../_lib/storefront-catalog"
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>
-}
-
-export async function generateStaticParams() {
-  return LISTING_PRODUCTS.map((p) => ({ slug: p.slug }))
 }
 
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params
-  const detail = getPdpDetail(slug)
-  if (!detail) return { title: "Product niet gevonden — EuropMade" }
+  const resolved = await resolvePdpDetail(slug)
+  if (!resolved) return { title: "Product niet gevonden — EuropMade" }
+  const { detail } = resolved
   return {
     title: `${detail.fullTitle} — EuropMade`,
     description: detail.intro,
@@ -33,11 +29,11 @@ export async function generateMetadata({
 }
 
 /**
- * Product Detail Page — sprint-1a/01-productpagina-buybox-*.html
+ * Product Detail Page — Product Cloud / Buy Box wanneer beschikbaar, anders seed.
  */
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params
-  const detail = getPdpDetail(slug)
-  if (!detail) notFound()
-  return <ProductDetailPage detail={detail} />
+  const resolved = await resolvePdpDetail(slug)
+  if (!resolved) notFound()
+  return <ProductDetailPage detail={resolved.detail} />
 }

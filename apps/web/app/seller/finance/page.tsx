@@ -1,43 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Notice } from "@europmade/ui"
 import { SellerGate } from "../_components/seller-gate"
+import { KpiCard } from "../_components/kpi-card"
+import { DashboardSection } from "../_components/dashboard-section"
 import { formatEuro } from "../../_components/storefront-shell"
 import {
-  FinanceApiError,
-  formatFinanceDate,
-  getSellerFinanceOverview,
-  type SellerFinanceOverview,
-} from "../../_lib/finance-api"
+  DEMO_FINANCE,
+  DEMO_PAYOUTS,
+  DEMO_REVENUE_HISTORY,
+} from "../_lib/demo-data"
 
 /**
- * finance-01 — Finance Dashboard (S3-08-05).
+ * Financiën — KPI's bovenaan met demo-data + omzethistorie.
  */
 export default function SellerFinanceDashboardPage() {
-  const [data, setData] = useState<SellerFinanceOverview | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    getSellerFinanceOverview()
-      .then((res) => {
-        if (!cancelled) setData(res)
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return
-        setError(
-          err instanceof FinanceApiError
-            ? err.message
-            : "Financiën laden mislukt."
-        )
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   return (
     <SellerGate
       breadcrumb={[
@@ -48,93 +25,147 @@ export default function SellerFinanceDashboardPage() {
     >
       <h1 className="text-[19px] font-bold text-wf-900">Financiën</h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Overzicht van commissies, uitbetalingen en facturen.
+        Saldo, uitbetalingen, commissies en marketingkosten.
       </p>
 
-      {error ? (
-        <Notice variant="warning" className="mt-4">
-          {error}
-        </Notice>
-      ) : null}
+      <DashboardSection title="Overzicht" wrapChildren={false}>
+        <div className="mt-2 grid grid-cols-1 gap-4 tablet:grid-cols-2 desktop:grid-cols-4">
+          <KpiCard
+            emphasis="primary"
+            value={formatEuro(DEMO_FINANCE.available_balance)}
+            label="Beschikbaar saldo"
+            source="api"
+          />
+          <KpiCard
+            value={formatEuro(DEMO_FINANCE.next_payout_amount)}
+            label="Volgende uitbetaling"
+            source="api"
+            note={`Op ${DEMO_FINANCE.next_payout_date}`}
+            href="/seller/finance/uitbetalingen"
+            linkLabel="Uitbetalingen"
+          />
+          <KpiCard
+            value={formatEuro(DEMO_FINANCE.open_commissions)}
+            label="Open commissies"
+            source="api"
+            href="/seller/finance/commissie"
+            linkLabel="Commissie"
+          />
+          <KpiCard
+            value={formatEuro(DEMO_FINANCE.marketing_costs)}
+            label="Marketingkosten"
+            source="api"
+            href="/seller/marketing/billing"
+            linkLabel="Marketing facturen"
+          />
+        </div>
+      </DashboardSection>
 
-      {!data && !error ? (
-        <p className="mt-6 text-xs text-wf-600">Laden…</p>
-      ) : null}
+      <DashboardSection title="Omzethistorie" wrapChildren={false}>
+        <div className="mt-2 overflow-hidden rounded-lg border border-wf-300 bg-white">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr>
+                {["Maand", "Omzet"].map((h) => (
+                  <th
+                    key={h}
+                    className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[...DEMO_REVENUE_HISTORY].reverse().map((row) => (
+                <tr
+                  key={row.month}
+                  className="border-b border-wf-200 last:border-b-0"
+                >
+                  <td className="px-4 py-2.5 text-wf-800">{row.month}</td>
+                  <td className="px-4 py-2.5 text-wf-800">
+                    {formatEuro(row.revenue)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DashboardSection>
 
-      {data ? (
-        <>
-          <div className="mt-5 grid gap-4 tablet:grid-cols-3">
-            <div className="rounded-lg border border-wf-300 bg-white px-5 py-4">
-              <div className="text-[26px] font-bold leading-none text-wf-900">
-                {formatEuro(data.summary.net_revenue)}
-              </div>
-              <div className="mt-1.5 text-[11.5px] text-wf-600">
-                Netto-omzet deze periode
-              </div>
-            </div>
-            <div className="rounded-lg border border-wf-300 bg-white px-5 py-4">
-              <div className="text-[26px] font-bold leading-none text-wf-900">
-                {formatEuro(data.summary.commission_held)}
-              </div>
-              <div className="mt-1.5 text-[11.5px] text-wf-600">
-                Ingehouden commissie (10%)
-              </div>
-            </div>
-            <div className="rounded-lg border border-wf-300 bg-white px-5 py-4">
-              <div className="text-[26px] font-bold leading-none text-wf-900">
-                {formatEuro(data.summary.next_payout_amount)}
-              </div>
-              <div className="mt-1.5 text-[11.5px] text-wf-600">
-                Eerstvolgende uitbetaling
-              </div>
-              {data.summary.next_payout_eligible_at ? (
-                <p className="mt-1 text-[10.5px] text-wf-600">
-                  Vanaf {formatFinanceDate(data.summary.next_payout_eligible_at)}
-                </p>
-              ) : null}
+      <DashboardSection title="Open uitbetalingen" wrapChildren={false}>
+        <div className="mt-2 overflow-hidden rounded-lg border border-wf-300 bg-white">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr>
+                {["Status", "Bedrag", "Datum"].map((h) => (
+                  <th
+                    key={h}
+                    className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DEMO_PAYOUTS.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-wf-200 last:border-b-0"
+                >
+                  <td className="px-4 py-2.5 text-wf-800">{p.status}</td>
+                  <td className="px-4 py-2.5 text-wf-800">
+                    {formatEuro(p.amount)}
+                  </td>
+                  <td className="px-4 py-2.5 text-wf-800">{p.eligible_at}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </DashboardSection>
+
+      <section className="mb-8">
+        <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
+          Snelkoppelingen
+        </h2>
+        <div className="overflow-hidden rounded-lg border border-wf-300 bg-white">
+          {[
+            {
+              label: "Commissie-overzicht",
+              href: "/seller/finance/commissie",
+            },
+            {
+              label: "Facturen downloaden",
+              href: "/seller/finance/facturen",
+            },
+            {
+              label: "Uitbetalingen",
+              href: "/seller/finance/uitbetalingen",
+            },
+            {
+              label: "BTW-overzicht (OSS)",
+              href: "/seller/finance/btw",
+            },
+          ].map((item, index, arr) => (
+            <div
+              key={item.href}
+              className={`flex items-center justify-between px-4 py-3 text-xs text-wf-700 ${
+                index < arr.length - 1 ? "border-b border-wf-200" : ""
+              }`}
+            >
+              <span>{item.label}</span>
               <Link
-                href="/seller/finance/uitbetalingen"
-                className="mt-2 inline-block text-[11px] text-wf-700 underline"
-              >
-                ↳ Bekijk uitbetalingen
-              </Link>
-            </div>
-          </div>
-
-          <h2 className="mt-6 text-xs font-semibold uppercase tracking-wide text-wf-500">
-            Snelkoppelingen
-          </h2>
-          <div className="mt-2.5 overflow-hidden rounded-lg border border-wf-300 bg-white">
-            <div className="flex items-center justify-between border-b border-wf-200 px-4 py-3 text-xs text-wf-700">
-              <span>Commissie-overzicht bekijken</span>
-              <Link
-                href="/seller/finance/commissie"
+                href={item.href}
                 className="text-[11px] text-wf-800 underline"
               >
                 Bekijken →
               </Link>
             </div>
-            <div className="flex items-center justify-between border-b border-wf-200 px-4 py-3 text-xs text-wf-700">
-              <span>Facturen downloaden</span>
-              <Link
-                href="/seller/finance/facturen"
-                className="text-[11px] text-wf-800 underline"
-              >
-                Bekijken →
-              </Link>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3 text-xs text-wf-700">
-              <span>BTW-overzicht (OSS) bekijken</span>
-              <Link
-                href="/seller/finance/btw"
-                className="text-[11px] text-wf-800 underline"
-              >
-                Bekijken →
-              </Link>
-            </div>
-          </div>
-        </>
-      ) : null}
+          ))}
+        </div>
+      </section>
     </SellerGate>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
 import {
@@ -11,11 +11,15 @@ import {
   refreshToken,
   registerAuthIdentity,
 } from "../_lib/medusa-auth";
+import { claimPendingGuestOrder, mergeGuestCart } from "../../_lib/order-service-api";
 
 // Eén registratieflow — geen rolkeuze, geen aparte velden voor "ik ben een
 // retailer/producent" (authenticatie/spec.md §1.3, wireframe-fix screen 2).
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect")?.trim() || "";
+  const claimPaymentReference = searchParams.get("payment_reference")?.trim() || "";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,6 +47,13 @@ export default function RegisterPage() {
       const { token: sessionToken } = await refreshToken(token);
       // Account is direct aangemaakt en direct bruikbaar (spec §1.3) — meteen inloggen.
       await createSession(sessionToken);
+      // ADR-0022: guest cart behouden na registratie (zelfde merge als login).
+      await mergeGuestCart();
+      await claimPendingGuestOrder(claimPaymentReference || null);
+      if (redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+        router.push(redirectTo);
+        return;
+      }
       // Development-only: uitsluitend wanneer NODE_ENV=development (automatisch
       // gezet door `next dev`, nooit door `next build`/`next start`) direct door
       // naar Partner Onboarding, zonder de verificatiemail-stap — symmetrisch met
@@ -75,7 +86,10 @@ export default function RegisterPage() {
         {existingAccount && (
           <Notice variant="warning" className="mb-4">
             Dit e-mailadres is al geregistreerd.{" "}
-            <Link href="/login" className="underline decoration-dotted">
+            <Link
+              href={`/login${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
+              className="underline decoration-dotted"
+            >
               Inloggen
             </Link>
           </Notice>
@@ -137,7 +151,10 @@ export default function RegisterPage() {
       </div>
       <p className="text-center text-xs text-wf-600">
         Al een account?{" "}
-        <Link href="/login" className="text-wf-800 underline decoration-dotted">
+        <Link
+          href={`/login${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
+          className="text-wf-800 underline decoration-dotted"
+        >
           Inloggen
         </Link>
       </p>

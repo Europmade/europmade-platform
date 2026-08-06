@@ -1,112 +1,68 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Notice } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
+import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
-import {
-  FinanceApiError,
-  getSellerFinanceOverview,
-  type SellerFinanceVatRow,
-} from "../../../_lib/finance-api"
 
-/**
- * finance-05 — BTW-overzicht OSS (S3-08-05).
- */
+const DEMO_VAT = [
+  { country: "NL", rate: 21, base: 18420.5, vat: 3868.31 },
+  { country: "DE", rate: 19, base: 4120.0, vat: 782.8 },
+  { country: "BE", rate: 21, base: 2980.75, vat: 625.96 },
+  { country: "FR", rate: 20, base: 1560.0, vat: 312.0 },
+]
+
 export default function SellerFinanceBtwPage() {
-  const [rows, setRows] = useState<SellerFinanceVatRow[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    getSellerFinanceOverview()
-      .then((res) => {
-        if (!cancelled) setRows(res.vat_by_country)
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return
-        setError(
-          err instanceof FinanceApiError
-            ? err.message
-            : "BTW-overzicht laden mislukt."
-        )
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   return (
     <SellerGate
       breadcrumb={[
         { label: "Seller Dashboard", href: "/seller" },
         { label: "Financiën", href: "/seller/finance" },
-        { label: "BTW-overzicht" },
+        { label: "BTW (OSS)" },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">
-        BTW-overzicht (OSS)
-      </h1>
+      <h1 className="text-[19px] font-bold text-wf-900">BTW-overzicht (OSS)</h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        BTW-uitsplitsing per bestemmingsland, conform het One-Stop-Shop-model.
+        Omzet en BTW per EU-land voor One-Stop-Shop rapportage.
       </p>
 
-      {error ? (
-        <Notice variant="warning" className="mt-4">
-          {error}
-        </Notice>
-      ) : null}
-
-      {!rows && !error ? (
-        <p className="mt-6 text-xs text-wf-600">Laden…</p>
-      ) : null}
-
-      {rows ? (
-        <>
-          <Notice className="mt-4">
-            Aggregatie van bevroren OSS-uitsplitsingen op klant-facturen
-            (checkout-totalen). Geen client-side herberekening.
-          </Notice>
-
-          {rows.length === 0 ? (
-            <p className="mt-6 text-xs text-wf-600">
-              Nog geen BTW-gegevens beschikbaar.
-            </p>
-          ) : (
-            <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-left text-xs">
-                <thead>
-                  <tr className="border-b border-wf-400 text-[10px] uppercase tracking-wide text-wf-500">
-                    <th className="px-3 py-2 font-semibold">Land</th>
-                    <th className="px-3 py-2 font-semibold">Omzet excl. BTW</th>
-                    <th className="px-3 py-2 font-semibold">BTW-tarief</th>
-                    <th className="px-3 py-2 font-semibold">BTW-bedrag</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr
-                      key={`${row.country_code}-${row.vat_rate}`}
-                      className="border-b border-wf-200 text-wf-800"
-                    >
-                      <td className="px-3 py-2.5">{row.country_label}</td>
-                      <td className="px-3 py-2.5">
-                        {formatEuro(row.amount_excl)}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {Math.round(row.vat_rate * 100)}%
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {formatEuro(row.vat_amount)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      ) : null}
+      {DEMO_VAT.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState
+            title="Geen BTW-gegevens"
+            description="OSS-regels verschijnen hier zodra er grensoverschrijdende verkopen zijn."
+          />
+        </div>
+      ) : (
+        <div className="mt-5 overflow-x-auto rounded-lg border border-wf-300 bg-white">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr>
+                {["Land", "Tarief", "Grondslag", "BTW"].map((h) => (
+                  <th
+                    key={h}
+                    className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DEMO_VAT.map((row) => (
+                <tr
+                  key={row.country}
+                  className="border-b border-wf-200 last:border-b-0"
+                >
+                  <td className="px-4 py-2.5">{row.country}</td>
+                  <td className="px-4 py-2.5">{row.rate}%</td>
+                  <td className="px-4 py-2.5">{formatEuro(row.base)}</td>
+                  <td className="px-4 py-2.5">{formatEuro(row.vat)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </SellerGate>
   )
 }

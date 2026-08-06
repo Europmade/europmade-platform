@@ -10,32 +10,43 @@ dist/
 build/
 .medusa/
 
-# Environment variables
+# Environment variables / secrets — never commit
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
+!**/.env.example
+*.pem
+*.key
+secrets/
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.log
 
 # Editor/OS
 .DS_Store
-*.pem
 .vscode/
 !.vscode/extensions.json
 .idea/
 
-# Testing/coverage
+# Testing/coverage / local artifacts
 coverage/
+playwright-report/
+test-results/
+__screenshots__/
+*.har
 
 # Medusa backend (apps/backend)
 uploads/
 medusa-db.sql
 .cache/
+
+# File-module / Partner Onboarding uploads (private docs, never commit)
+# Local path used by Medusa local file provider for access: "private"
+apps/backend/static/
 
 # Turborepo
 .turbo/

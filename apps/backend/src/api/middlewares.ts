@@ -37,6 +37,8 @@ import {
   AdminResolveExceptionBody,
   StoreCartLineBody,
   StoreCartLinePatchBody,
+  StoreCartMergeBody,
+  StoreClaimGuestOrderBody,
   StoreRequestReturnBody,
   StoreSellerRejectReturnBody,
   AdminForceRefundBody,
@@ -60,6 +62,9 @@ const documentUpload = multer({
 })
 
 const customerAuth = authenticate("customer", ["session", "bearer"])
+const customerAuthOptional = authenticate("customer", ["session", "bearer"], {
+  allowUnauthenticated: true,
+})
 const adminAuth = authenticate("user", ["session", "bearer"])
 
 /**
@@ -231,48 +236,74 @@ export default defineMiddlewares({
     {
       matcher: "/store/commerce-cloud/buy-box",
       methods: ["GET"],
-      middlewares: [customerAuth],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/catalog/products",
+      methods: ["GET"],
+      middlewares: [],
     },
     {
       matcher: "/store/order-service/checkout/revalidate",
       methods: ["POST"],
       middlewares: [
-        customerAuth,
+        customerAuthOptional,
         validateAndTransformBody(StoreCheckoutRevalidateBody),
       ],
     },
     {
       matcher: "/store/order-service/cart",
       methods: ["GET"],
-      middlewares: [customerAuth],
+      middlewares: [customerAuthOptional],
     },
     {
       matcher: "/store/order-service/cart",
       methods: ["POST"],
       middlewares: [
-        customerAuth,
+        customerAuthOptional,
         validateAndTransformBody(StoreCartLineBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/cart/merge",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreCartMergeBody),
       ],
     },
     {
       matcher: "/store/order-service/cart/lines/:id",
       methods: ["PATCH"],
       middlewares: [
-        customerAuth,
+        customerAuthOptional,
         validateAndTransformBody(StoreCartLinePatchBody),
       ],
     },
     {
       matcher: "/store/order-service/cart/lines/:id",
       methods: ["DELETE"],
-      middlewares: [customerAuth],
+      middlewares: [customerAuthOptional],
     },
     {
       matcher: "/store/order-service/checkout/place",
       methods: ["POST"],
       middlewares: [
-        customerAuth,
+        customerAuthOptional,
         validateAndTransformBody(StoreCheckoutPlaceBody),
+      ],
+    },
+    {
+      matcher: "/store/order-service/orders/confirmation/:payment_reference",
+      methods: ["GET"],
+      middlewares: [customerAuthOptional],
+    },
+    {
+      matcher: "/store/order-service/orders/claim",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreClaimGuestOrderBody),
       ],
     },
     {

@@ -361,6 +361,168 @@ class OrderServiceModuleService extends MedusaService({
       sharedContext
     )
   }
+
+  /**
+   * ADR-0022 / winkelwagen §5A — guest → customer merge (som qty per offer).
+   * Voorraadclipping gebeurt in de HTTP-laag via revalidateCheckoutLines.
+   */
+  @InjectManager()
+  async mergeGuestCartIntoCustomer(
+    input: { customer_id: string; guest_token: string },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{
+    customer_cart_id: string
+    merged_lines: Array<{ offer_id: string; quantity: number }>
+  }> {
+    return await this.mergeGuestCartIntoCustomer_(input, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async mergeGuestCartIntoCustomer_(
+    input: { customer_id: string; guest_token: string },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{
+    customer_cart_id: string
+    merged_lines: Array<{ offer_id: string; quantity: number }>
+  }> {
+    const guestCarts = await this.listCarts(
+      { guest_token: input.guest_token },
+      {},
+      sharedContext
+    )
+    const customerCart = await this.resolveOrCreateCart_(
+      { customer_id: input.customer_id, guest_token: null },
+      sharedContext
+    )
+
+    if (guestCarts.length === 0) {
+      const lines = await this.listCartLines(
+        { cart_id: customerCart.id },
+        {},
+        sharedContext
+      )
+      return {
+        customer_cart_id: customerCart.id,
+        merged_lines: lines.map((l) => ({
+          offer_id: l.offer_id,
+          quantity: Number(l.quantity),
+        })),
+      }
+    }
+
+    const guestCart = guestCarts[0]
+    if (guestCart.id === customerCart.id) {
+      return {
+        customer_cart_id: customerCart.id,
+        merged_lines: (
+          await this.listCartLines(
+            { cart_id: customerCart.id },
+            {},
+            sharedContext
+          )
+        ).map((l) => ({
+          offer_id: l.offer_id,
+          quantity: Number(l.quantity),
+        })),
+      }
+    }
+
+    const guestLines = await this.listCartLines(
+      { cart_id: guestCart.id },
+      {},
+      sharedContext
+    )
+    const customerLines = await this.listCartLines(
+      { cart_id: customerCart.id },
+      {},
+      sharedContext
+    )
+    const qtyByOffer = new Map<string, number>()
+    for (const l of customerLines) {
+      qtyByOffer.set(l.offer_id, Number(l.quantity))
+    }
+    for (const l of guestLines) {
+      const prev = qtyByOffer.get(l.offer_id) ?? 0
+      qtyByOffer.set(l.offer_id, prev + Number(l.quantity))
+    }
+
+    const merged_lines: Array<{ offer_id: string; quantity: number }> = []
+    for (const [offer_id, quantity] of qtyByOffer) {
+      merged_lines.push({ offer_id, quantity })
+      await this.upsertCartLine_(
+        { cart_id: customerCart.id, offer_id, quantity },
+        sharedContext
+      )
+    }
+
+    await this.clearCartLines_(guestCart.id, sharedContext)
+    await this.softDeleteCarts([guestCart.id], sharedContext)
+
+    return { customer_cart_id: customerCart.id, merged_lines }
+  }
+
+  @InjectManager()
+  async claimGuestOrderSet(
+    input: {
+      payment_reference: string
+      guest_customer_id: string
+      customer_id: string
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{ claimed: boolean; order_set_id: string | null }> {
+    return await this.claimGuestOrderSet_(input, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async claimGuestOrderSet_(
+    input: {
+      payment_reference: string
+      guest_customer_id: string
+      customer_id: string
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{ claimed: boolean; order_set_id: string | null }> {
+    const orderSets = await this.listOrderSets(
+      {
+        payment_reference: input.payment_reference,
+        customer_id: input.guest_customer_id,
+      },
+      {},
+      sharedContext
+    )
+    if (orderSets.length === 0) {
+      return { claimed: false, order_set_id: null }
+    }
+
+    const orderSet = orderSets[0]
+    await this.updateOrderSets(
+      {
+        id: orderSet.id,
+        customer_id: input.customer_id,
+      },
+      sharedContext
+    )
+
+    const orders = await this.listEmOrders(
+      {
+        order_set_id: orderSet.id,
+        customer_id: input.guest_customer_id,
+      },
+      {},
+      sharedContext
+    )
+    for (const order of orders) {
+      await this.updateEmOrders(
+        {
+          id: order.id,
+          customer_id: input.customer_id,
+        },
+        sharedContext
+      )
+    }
+
+    return { claimed: true, order_set_id: orderSet.id }
+  }
 }
 
 export default OrderServiceModuleService

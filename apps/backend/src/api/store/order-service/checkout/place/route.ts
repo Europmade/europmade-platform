@@ -1,8 +1,14 @@
 import type {
-  AuthenticatedMedusaRequest,
+  MedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
+import { MedusaError } from "@medusajs/framework/utils"
 import { placeOrderWorkflow } from "../../../../../workflows/order-service"
+import { resolveCartIdentity } from "../../cart-identity"
+import {
+  guestCheckoutCustomerId,
+  parseGuestCheckoutToken,
+} from "../../guest-checkout"
 import type { StoreCheckoutPlaceBodyInput } from "../../validators"
 
 /**
@@ -10,15 +16,28 @@ import type { StoreCheckoutPlaceBodyInput } from "../../validators"
  * Server-side ordersplitsing per seller + Offer-snapshots.
  */
 export async function POST(
-  req: AuthenticatedMedusaRequest<StoreCheckoutPlaceBodyInput>,
+  req: MedusaRequest<StoreCheckoutPlaceBodyInput>,
   res: MedusaResponse
 ) {
-  const customerId = req.auth_context.actor_id
+  const customerId = req.auth_context?.actor_id ?? null
   const body = req.validatedBody
+  const cartIdentity = resolveCartIdentity(req)
+  const headerGuestCheckout = req.headers["x-guest-checkout-token"]
+  const guestCheckoutToken =
+    parseGuestCheckoutToken(body.guest_checkout_token) ??
+    parseGuestCheckoutToken(headerGuestCheckout)
+
+  if (!customerId && !guestCheckoutToken) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "guest_checkout_token is verplicht voor gast-checkout."
+    )
+  }
 
   const { result } = await placeOrderWorkflow(req.scope).run({
     input: {
-      customer_id: customerId,
+      customer_id: customerId ?? guestCheckoutCustomerId(guestCheckoutToken!),
+      guest_token: customerId ? null : cartIdentity.guest_token,
       payment_reference: body.payment_reference,
       payment_mode: body.payment_mode,
       shipping_address: body.shipping_address,

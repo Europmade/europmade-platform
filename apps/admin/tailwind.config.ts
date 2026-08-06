@@ -5,6 +5,8 @@ const config: Config = {
   presets: [europmadePreset as Config],
   content: [
     "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
     "../../packages/ui/src/**/*.{ts,tsx}",
   ],
 };

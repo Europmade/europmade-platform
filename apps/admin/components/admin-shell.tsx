@@ -1,8 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { modulesSorted } from "../lib/module-registry";
+import {
+  findActiveNav,
+  moreNavSorted,
+  primaryNavSorted,
+} from "../lib/module-registry";
 import { endSession } from "../lib/medusa-admin-auth";
 
 interface AdminShellProps {
@@ -10,13 +15,19 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
+function navActive(pathname: string, route: string | null) {
+  if (!route) return false;
+  return pathname === route || pathname.startsWith(`${route}/`);
+}
+
 export function AdminShell({ breadcrumb, children }: AdminShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const modules = modulesSorted();
-  const active = modules.find(
-    (m) => pathname === m.route || pathname.startsWith(`${m.route}/`),
-  );
+  const primary = primaryNavSorted();
+  const more = moreNavSorted();
+  const active = findActiveNav(pathname);
+  const moreOpenByDefault = more.some((m) => navActive(pathname, m.route));
+  const [moreOpen, setMoreOpen] = useState(moreOpenByDefault);
 
   async function handleLogout() {
     try {
@@ -55,12 +66,12 @@ export function AdminShell({ breadcrumb, children }: AdminShellProps) {
       <div className="flex min-h-[calc(100vh-53px)] flex-col tablet:flex-row">
         <aside className="w-full shrink-0 border-b border-wf-300 bg-wf-100 p-3.5 tablet:w-[220px] tablet:border-b-0 tablet:border-r tablet:p-5">
           <nav className="flex gap-1 overflow-x-auto tablet:flex-col">
-            {modules.map((mod) => {
-              const isActive =
-                pathname === mod.route || pathname.startsWith(`${mod.route}/`);
+            {primary.map((mod) => {
+              if (!mod.route) return null;
+              const isActive = navActive(pathname, mod.route);
               return (
                 <Link
-                  key={mod.route}
+                  key={mod.id}
                   href={mod.route}
                   className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2.5 text-xs ${
                     isActive
@@ -78,6 +89,58 @@ export function AdminShell({ breadcrumb, children }: AdminShellProps) {
                 </Link>
               );
             })}
+
+            <div className="my-2 hidden h-px bg-wf-300 tablet:block" />
+
+            <button
+              type="button"
+              onClick={() => setMoreOpen((o) => !o)}
+              className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2.5 text-left text-xs ${
+                moreOpenByDefault || moreOpen
+                  ? "font-semibold text-wf-900"
+                  : "text-wf-700 hover:bg-wf-200"
+              }`}
+              aria-expanded={moreOpen}
+            >
+              <span
+                className="h-4 w-4 shrink-0 rounded-sm bg-wf-400"
+                aria-hidden
+              />
+              Meer
+              <span className="ml-auto text-[10px] text-wf-500">
+                {moreOpen ? "▾" : "▸"}
+              </span>
+            </button>
+
+            {moreOpen
+              ? more.map((mod) => {
+                  const isActive = navActive(pathname, mod.route);
+                  if (!mod.available || !mod.route) {
+                    return (
+                      <span
+                        key={mod.id}
+                        className="flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 pl-8 text-xs text-wf-400"
+                        title="Komt later"
+                      >
+                        {mod.naam}
+                      </span>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={mod.id}
+                      href={mod.route}
+                      className={`flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 pl-8 text-xs ${
+                        isActive
+                          ? "bg-wf-900 font-semibold text-white"
+                          : "text-wf-700 hover:bg-wf-200"
+                      }`}
+                    >
+                      {mod.naam}
+                    </Link>
+                  );
+                })
+              : null}
           </nav>
         </aside>
 

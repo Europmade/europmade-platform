@@ -3,17 +3,10 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@europmade/utils"
-
-const NAV: Array<{ label: string; href: string | null }> = [
-  { label: "Dashboard", href: "/seller" },
-  { label: "Producten", href: "/seller/products" },
-  { label: "Orders", href: "/seller/orders" },
-  { label: "Retouren", href: "/seller/returns" },
-  { label: "Berichten", href: "/seller/messages" },
-  { label: "Financiën", href: "/seller/finance" },
-  { label: "Rapportages", href: null },
-  { label: "Instellingen", href: null },
-]
+import {
+  findActiveSellerNav,
+  primaryNavSorted,
+} from "../_lib/module-registry"
 
 export type SellerShellProps = {
   roleLabel: string
@@ -21,8 +14,14 @@ export type SellerShellProps = {
   children: React.ReactNode
 }
 
+function navActive(pathname: string, route: string | null) {
+  if (!route) return false
+  if (route === "/seller") return pathname === "/seller"
+  return pathname === route || pathname.startsWith(`${route}/`)
+}
+
 /**
- * Minimale Seller-shell (ADR-0011) — chrome conform Sprint 3 P0 wireframe.
+ * Seller Dashboard-shell — chrome conform Sprint 3 P0 + MVP-navigatie.
  */
 export function SellerShell({
   roleLabel,
@@ -30,6 +29,8 @@ export function SellerShell({
   children,
 }: SellerShellProps) {
   const pathname = usePathname()
+  const primary = primaryNavSorted()
+  const active = findActiveSellerNav(pathname)
 
   return (
     <div className="min-h-screen bg-wf-100">
@@ -40,41 +41,37 @@ export function SellerShell({
             Seller Dashboard
           </p>
           <nav className="flex flex-col gap-0.5" aria-label="Seller navigatie">
-            {NAV.map((item) => {
-              const active =
-                item.href !== null &&
-                (pathname === item.href ||
-                  (item.href !== "/seller" &&
-                    pathname.startsWith(item.href)))
+            {primary.map((item) => {
+              const isActive = navActive(pathname, item.route)
               const className = cn(
                 "flex items-center gap-2 rounded-md px-3 py-2 text-xs text-wf-700",
-                active && "bg-wf-900 font-semibold text-white"
+                isActive && "bg-wf-900 font-semibold text-white"
               )
               const icon = (
                 <span
                   className={cn(
                     "inline-block h-4 w-4 shrink-0 rounded-sm bg-wf-400",
-                    active && "bg-white"
+                    isActive && "bg-white"
                   )}
                   aria-hidden
                 />
               )
-              if (!item.href) {
+              if (!item.route || !item.available) {
                 return (
                   <span
-                    key={item.label}
+                    key={item.id}
                     className={cn(className, "cursor-not-allowed opacity-50")}
                     title="Nog niet beschikbaar"
                   >
                     {icon}
-                    <span>{item.label}</span>
+                    <span>{item.naam}</span>
                   </span>
                 )
               }
               return (
-                <Link key={item.label} href={item.href} className={className}>
+                <Link key={item.id} href={item.route} className={className}>
                   {icon}
-                  <span>{item.label}</span>
+                  <span>{item.naam}</span>
                 </Link>
               )
             })}
@@ -89,7 +86,7 @@ export function SellerShell({
                 aria-hidden
               />
               <div className="border-l border-wf-300 pl-3.5 text-xs font-bold text-wf-700">
-                {roleLabel}
+                {active?.naam ?? roleLabel}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -99,10 +96,7 @@ export function SellerShell({
               >
                 🔔
               </span>
-              <span
-                className="h-7 w-7 rounded-full bg-wf-300"
-                aria-hidden
-              />
+              <span className="h-7 w-7 rounded-full bg-wf-300" aria-hidden />
             </div>
           </header>
 
@@ -135,19 +129,21 @@ export function SellerShell({
 
           <div className="border-b border-wf-300 px-4 py-2 tablet:hidden">
             <div className="flex gap-2 overflow-x-auto text-xs">
-              {NAV.filter((n) => n.href).map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href!}
-                  className={cn(
-                    "whitespace-nowrap rounded-md border border-wf-400 px-3 py-1.5 text-wf-700",
-                    pathname.startsWith(item.href!) &&
-                      "border-wf-900 bg-wf-900 text-white"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {primary
+                .filter((n) => n.route && n.available)
+                .map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.route!}
+                    className={cn(
+                      "whitespace-nowrap rounded-md border border-wf-400 px-3 py-1.5 text-wf-700",
+                      navActive(pathname, item.route) &&
+                        "border-wf-900 bg-wf-900 text-white"
+                    )}
+                  >
+                    {item.naam}
+                  </Link>
+                ))}
             </div>
           </div>
 

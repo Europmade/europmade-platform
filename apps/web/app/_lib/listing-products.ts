@@ -473,6 +473,20 @@ export function findListingProduct(slug: string): ListingProduct | null {
   return LISTING_PRODUCTS.find((p) => p.slug === slug) ?? null
 }
 
+/** Homepage “Uitgelicht” — zelfde seed-bron als listing/PDP, geen tweede productlijst. */
+const FEATURED_LISTING_SLUGS = [
+  "robotmaaier-x200",
+  "tuinslang-20m",
+  "keramische-pan-set",
+  "wollen-deken",
+] as const
+
+export function featuredListingProducts(): ListingProduct[] {
+  return FEATURED_LISTING_SLUGS.map((slug) => findListingProduct(slug)).filter(
+    (p): p is ListingProduct => p != null
+  )
+}
+
 export function discountPercent(product: ListingProduct): number | null {
   if (!product.originalPriceCents || product.originalPriceCents <= product.priceCents) {
     return null

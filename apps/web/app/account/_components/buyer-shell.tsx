@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@europmade/utils"
+import { BrandLogo } from "../../_components/marketplace/brand-logo"
 
 const NAV: Array<{ label: string; href: string | null }> = [
   { label: "Dashboard", href: "/account" },
@@ -10,7 +11,7 @@ const NAV: Array<{ label: string; href: string | null }> = [
   { label: "Retouren", href: "/account/returns" },
   { label: "Berichten", href: "/account/messages" },
   { label: "Reviews", href: "/account/reviews" },
-  { label: "Account", href: null },
+  { label: "Instellingen", href: "/account/settings" },
 ]
 
 export type BuyerShellProps = {
@@ -28,7 +29,7 @@ export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
     <div className="min-h-screen bg-wf-100">
       <div className="mx-auto flex min-h-screen max-w-[1080px] border border-wf-400 bg-white mobile:max-w-none">
         <aside className="hidden w-[220px] shrink-0 border-r border-wf-300 bg-wf-100 p-3.5 tablet:block">
-          <div className="mb-5 h-5 w-[110px] rounded-sm bg-wf-300" aria-hidden />
+          <BrandLogo size="md" />
           <p className="px-3 pb-1 text-[9.5px] font-semibold uppercase tracking-wide text-wf-500">
             Mijn EuropMade
           </p>
@@ -77,10 +78,7 @@ export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-center justify-between border-b border-wf-300 px-4 py-3 tablet:px-6">
             <div className="flex items-center gap-3.5">
-              <div
-                className="h-[22px] w-[120px] rounded-sm bg-wf-300"
-                aria-hidden
-              />
+              <BrandLogo href="/account" />
               <div className="border-l border-wf-300 pl-3.5 text-xs font-bold text-wf-700">
                 Buyer
               </div>

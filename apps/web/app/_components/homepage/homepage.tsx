@@ -2,12 +2,13 @@ import Link from "next/link"
 import { Badge } from "@europmade/ui"
 import {
   HOMEPAGE_CATEGORIES,
-  HOMEPAGE_FEATURED_PRODUCTS,
   HOMEPAGE_FOOTER_LINKS,
   HOMEPAGE_RETAILERS,
   HOMEPAGE_STORY_LINKS,
   HOMEPAGE_TRUST_ITEMS,
 } from "../../_lib/homepage-content"
+import { resolveFeaturedProducts } from "../../_lib/storefront-catalog"
+import { ProductCard } from "../marketplace/product-card"
 import { PublicHeader } from "../marketplace/public-header"
 import { AdSlot } from "./ad-slot"
 import { NewsletterForm } from "./newsletter-form"
@@ -15,8 +16,11 @@ import { SearchForm } from "./search-form"
 
 /**
  * Homepage — 1-op-1 sectiestructuur uit sprint-1a/03-homepage-*.html + homepage/spec.md.
+ * Uitgelichte producten: CMP-017 via gedeelde ProductCard + listing-seed.
  */
-export function Homepage() {
+export async function Homepage() {
+  const featuredProducts = await resolveFeaturedProducts()
+
   return (
     <div className="min-h-screen bg-wf-100 text-wf-800">
       <div className="mx-auto max-w-[1160px] border border-wf-400 bg-white">
@@ -125,31 +129,13 @@ export function Homepage() {
               Bestverkocht en hoogst beoordeeld — nooit gesponsord
             </span>
           </p>
-          <ul className="flex gap-4 overflow-x-auto pb-1 tablet:grid tablet:grid-cols-3 tablet:gap-3.5 tablet:overflow-visible desktop:grid-cols-4 desktop:gap-5">
-            {HOMEPAGE_FEATURED_PRODUCTS.map((product) => (
+          <ul className="flex gap-4 overflow-x-auto pb-1 tablet:grid tablet:grid-cols-3 tablet:items-stretch tablet:gap-3.5 tablet:overflow-visible desktop:grid-cols-4 desktop:gap-5">
+            {featuredProducts.map((product) => (
               <li
-                key={product.title}
-                className="w-[200px] flex-none rounded-lg border border-wf-300 p-3.5 tablet:w-auto"
+                key={product.slug}
+                className="w-[200px] flex-none tablet:w-auto tablet:min-h-[420px]"
               >
-                {/* Geen product-URL tot Catalog/Search product-IDs levert */}
-                <div
-                  className="mb-2.5 h-[140px] rounded-md bg-wf-100"
-                  aria-hidden
-                />
-                <div className="mb-2 flex flex-wrap gap-1">
-                  {product.verified ? (
-                    <Badge variant="solid">Verified™</Badge>
-                  ) : null}
-                </div>
-                <p className="mb-1 text-[13px] font-semibold text-wf-800">
-                  {product.title}
-                </p>
-                <p className="text-[15px] font-bold text-wf-900">
-                  {product.priceLabel}
-                </p>
-                <p className="mt-1 text-[11px] text-wf-600">
-                  {product.ratingLabel}
-                </p>
+                <ProductCard product={product} layout="grid" />
               </li>
             ))}
           </ul>
@@ -160,7 +146,7 @@ export function Homepage() {
           <AdSlot position={1} />
         </div>
 
-        {/* 7 — Retailers (CMP-015) */}
+        {/* 7 — Retailers (CMP-015) — geen gedeelde RetailerCard in marketplace-module */}
         <section className="px-4 py-8 tablet:px-8 tablet:py-10">
           <h2 className="mb-1 text-lg font-bold text-wf-900 tablet:text-xl">
             <span className="tablet:hidden">Europese makers</span>
@@ -177,25 +163,29 @@ export function Homepage() {
           </p>
           <ul className="flex flex-col gap-3 tablet:grid tablet:grid-cols-2 tablet:gap-3.5 desktop:grid-cols-3 desktop:gap-5">
             {HOMEPAGE_RETAILERS.map((retailer) => (
-              <li
-                key={retailer.name}
-                className="rounded-lg border border-wf-300 p-[18px]"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span
-                    className="h-10 w-10 shrink-0 rounded-full bg-wf-300"
-                    aria-hidden
-                  />
-                  <div>
-                    <p className="text-sm font-bold text-wf-900">
-                      {retailer.name}
-                    </p>
-                    <p className="text-[11.5px] text-wf-600">{retailer.meta}</p>
+              <li key={retailer.slug}>
+                <Link
+                  href={`/partner/${retailer.slug}`}
+                  className="block rounded-lg border border-wf-300 p-[18px] hover:border-wf-500"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="h-10 w-10 shrink-0 rounded-full bg-wf-300"
+                      aria-hidden
+                    />
+                    <div>
+                      <p className="text-sm font-bold text-wf-900">
+                        {retailer.name}
+                      </p>
+                      <p className="text-[11.5px] text-wf-600">
+                        {retailer.meta}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <p className="mt-2.5 text-xs text-wf-700">
-                  {retailer.description}
-                </p>
+                  <p className="mt-2.5 text-xs text-wf-700">
+                    {retailer.description}
+                  </p>
+                </Link>
               </li>
             ))}
           </ul>

@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
     try {
       const { token } = await loginUser(email.trim(), password);
       await createSession(token);
-      router.replace("/partners");
+      router.replace("/dashboard");
       router.refresh();
     } catch (err) {
       setError(
@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
         />
         <h1 className="mb-1 text-lg font-bold text-wf-900">Beheerder-login</h1>
         <p className="mb-5 text-xs text-wf-600">
-          Log in om Partnerbeheer te openen.
+          Log in om het Admin Dashboard te openen.
         </p>
         {error && (
           <Notice variant="warning" className="mb-4">

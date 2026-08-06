@@ -27,6 +27,7 @@ export type PdpReview = {
   stars: number
   excerpt: string
   verified: boolean
+  retailer?: string
 }
 
 export type PdpDetail = {
@@ -59,25 +60,9 @@ export type PdpDetail = {
   galleryCount: number
 }
 
-function baseOffers(product: ListingProduct): PdpOffer[] {
-  const base = product.priceCents
-  const sellers = [
-    { retailer: product.seller, rating: Math.min(5, product.rating + 0.2) },
-    { retailer: "Retailer Y", rating: 4.3 },
-    { retailer: "Retailer Z", rating: 4.1 },
-  ]
-  const count = Math.max(1, Math.min(3, product.offerCount))
-  return sellers.slice(0, count).map((s, i) => ({
-    id: `${product.slug}-offer-${i}`,
-    retailer: s.retailer,
-    rating: Math.round(s.rating * 10) / 10,
-    priceCents: i === 0 ? Math.round(base * 1.04) : i === 1 ? Math.round(base * 1.07) : base,
-    delivery: i === 0 ? "Morgen in huis" : i === 1 ? "2–3 werkdagen" : "5 werkdagen",
-    shipping: i === 1 ? "€ 4,95" : "Gratis",
-    returns: i === 1 ? "14 dagen" : "30 dagen",
-    stock: i === 2 ? "Lage voorraad" : "Op voorraad",
-    selected: i === 0,
-  }))
+function baseOffers(_product: ListingProduct): PdpOffer[] {
+  // Geen placeholder Offer-ID's — Buy Box/cart alleen met echte Commerce Cloud offr_* (ADR-0022).
+  return []
 }
 
 function buildDefaultDetail(product: ListingProduct): PdpDetail {
@@ -150,7 +135,7 @@ function buildDefaultDetail(product: ListingProduct): PdpDetail {
     selectedSizeId: "s-0",
     offers: baseOffers(product),
     buyBoxNotice:
-      "Geselecteerd op basis van prijs, levertijd, beoordeling, voorraad en betrouwbaarheid — nooit op basis van advertenties of commissies.",
+      "Beste totale aanbieding op prijs, levertijd, score en voorraad.",
     productReviews: [
       {
         stars: 5,
@@ -168,11 +153,19 @@ function buildDefaultDetail(product: ListingProduct): PdpDetail {
         stars: 5,
         excerpt: "Snel geleverd, goed verpakt.",
         verified: true,
+        retailer: "TuinPro NL",
       },
       {
         stars: 4,
         excerpt: "Reageerde snel op mijn vraag.",
         verified: true,
+        retailer: "TuinPro NL",
+      },
+      {
+        stars: 4,
+        excerpt: "Netjes verpakt, iets langere levertijd.",
+        verified: true,
+        retailer: "GartenHaus DE",
       },
     ],
     sellerReviewCount: 1204,
@@ -250,41 +243,7 @@ function robotmaaierDetail(product: ListingProduct): PdpDetail {
       { id: "s-1200", label: "1200 m²" },
     ],
     selectedSizeId: "s-800",
-    offers: [
-      {
-        id: "rx",
-        retailer: "Retailer X",
-        rating: 4.6,
-        priceCents: 24900,
-        delivery: "Morgen in huis",
-        shipping: "Gratis",
-        returns: "30 dagen",
-        stock: "Op voorraad",
-        selected: true,
-      },
-      {
-        id: "ry",
-        retailer: "Retailer Y",
-        rating: 4.3,
-        priceCents: 25500,
-        delivery: "2–3 werkdagen",
-        shipping: "€ 4,95",
-        returns: "14 dagen",
-        stock: "Op voorraad",
-        selected: false,
-      },
-      {
-        id: "rz",
-        retailer: "Retailer Z",
-        rating: 4.1,
-        priceCents: 23900,
-        delivery: "5 werkdagen",
-        shipping: "Gratis",
-        returns: "30 dagen",
-        stock: "Lage voorraad",
-        selected: false,
-      },
-    ],
+    offers: [],
     productReviews: [
       {
         stars: 5,
@@ -302,11 +261,25 @@ function robotmaaierDetail(product: ListingProduct): PdpDetail {
         stars: 5,
         excerpt: "Snel geleverd, goed verpakt.",
         verified: true,
+        retailer: "Retailer X",
       },
       {
         stars: 4,
         excerpt: "Reageerde snel op mijn vraag.",
         verified: true,
+        retailer: "Retailer X",
+      },
+      {
+        stars: 4,
+        excerpt: "Prima service, iets duurder.",
+        verified: true,
+        retailer: "Retailer Y",
+      },
+      {
+        stars: 3,
+        excerpt: "Levering duurde langer dan beloofd.",
+        verified: true,
+        retailer: "Retailer Z",
       },
     ],
     faqs: [
@@ -340,6 +313,7 @@ export function getPdpDetail(slug: string): PdpDetail | null {
 }
 
 export function lowestOfferPriceLabel(detail: PdpDetail): string {
+  if (detail.offers.length === 0) return "Geen aanbieding"
   const min = Math.min(...detail.offers.map((o) => o.priceCents))
   return formatEuroFromCents(min)
 }

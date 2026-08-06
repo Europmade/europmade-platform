@@ -1,55 +1,44 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { Badge, Notice } from "@europmade/ui"
-import { cn } from "@europmade/utils"
+import { useState } from "react"
+import { Badge, Button, FileUpload, Notice } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
+import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
-import {
-  FinanceApiError,
-  formatFinanceDate,
-  getSellerFinanceOverview,
-  type SellerFinanceInvoice,
-} from "../../../_lib/finance-api"
-
-type TabKey = "commissie" | "klant"
+import { DEMO_ORDERS } from "../../_lib/demo-data"
+import { useDemoSellerInvoices } from "../../_lib/demo-store"
 
 /**
- * finance-04 — Facturen (S3-08-05).
+ * Facturen — verkoper uploadt/koppelt eigen klantfacturen (EuropMade genereert ze niet).
  */
 export default function SellerFinanceFacturenPage() {
-  const [invoices, setInvoices] = useState<SellerFinanceInvoice[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [tab, setTab] = useState<TabKey>("commissie")
+  const [invoices, setInvoices] = useDemoSellerInvoices()
+  const [orderNumber, setOrderNumber] = useState(
+    DEMO_ORDERS[0]?.order_number ?? ""
+  )
+  const [file, setFile] = useState<File | null>(null)
+  const [note, setNote] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
-    getSellerFinanceOverview()
-      .then((res) => {
-        if (!cancelled) setInvoices(res.invoices)
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return
-        setError(
-          err instanceof FinanceApiError
-            ? err.message
-            : "Facturen laden mislukt."
-        )
-      })
-    return () => {
-      cancelled = true
+  function uploadInvoice() {
+    if (!file || !orderNumber) {
+      setNote("Kies een order en upload een factuurbestand.")
+      return
     }
-  }, [])
-
-  const filtered = useMemo(() => {
-    if (!invoices) return []
-    if (tab === "commissie") {
-      return invoices.filter(
-        (inv) => inv.invoice_type === "Seller-commissiefactuur"
-      )
-    }
-    return invoices.filter((inv) => inv.invoice_type === "Klant-factuur")
-  }, [invoices, tab])
+    const order = DEMO_ORDERS.find((o) => o.order_number === orderNumber)
+    setInvoices((prev) => [
+      {
+        id: `sinv_${Date.now()}`,
+        order_number: orderNumber,
+        file_name: file.name,
+        uploaded_at: new Date().toISOString(),
+        amount: order?.total ?? 0,
+        status: "Gekoppeld",
+      },
+      ...prev,
+    ])
+    setFile(null)
+    setNote("Factuur gekoppeld aan order. EuropMade genereert geen klantfacturen.")
+  }
 
   return (
     <SellerGate
@@ -61,110 +50,97 @@ export default function SellerFinanceFacturenPage() {
     >
       <h1 className="text-[19px] font-bold text-wf-900">Facturen</h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Commissiefacturen en klant-facturen/kwitanties per order.
+        Jij bent juridisch de verkoper. Upload of koppel jouw eigen
+        klantfacturen — EuropMade genereert deze niet.
       </p>
 
-      {error ? (
-        <Notice variant="warning" className="mt-4">
-          {error}
+      {note ? (
+        <Notice variant="info" className="mt-4">
+          {note}
         </Notice>
       ) : null}
 
-      {!invoices && !error ? (
-        <p className="mt-6 text-xs text-wf-600">Laden…</p>
-      ) : null}
-
-      {invoices ? (
-        <>
-          <div className="mt-5 flex gap-0 border-b border-wf-300">
-            <button
-              type="button"
-              onClick={() => setTab("commissie")}
-              className={cn(
-                "px-4 py-3 text-[12.5px] font-semibold text-wf-500",
-                tab === "commissie" &&
-                  "border-b-2 border-wf-900 text-wf-900"
-              )}
+      <section className="mt-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
+        <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
+          Factuur uploaden / koppelen
+        </h2>
+        <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+              Order
+            </label>
+            <select
+              className="h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs"
+              value={orderNumber}
+              onChange={(e) => setOrderNumber(e.target.value)}
             >
-              Commissiefacturen
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("klant")}
-              className={cn(
-                "px-4 py-3 text-[12.5px] font-semibold text-wf-500",
-                tab === "klant" && "border-b-2 border-wf-900 text-wf-900"
-              )}
-            >
-              Klant-facturen
-            </button>
+              {DEMO_ORDERS.map((o) => (
+                <option key={o.id} value={o.order_number}>
+                  {o.order_number} — {o.customer_name}
+                </option>
+              ))}
+            </select>
           </div>
+          <FileUpload
+            label="Factuurbestand"
+            requirementLabel="PDF, max. 10 MB"
+            accept="application/pdf,.pdf"
+            value={file}
+            onChange={setFile}
+          />
+        </div>
+        <div className="mt-4">
+          <Button type="button" onClick={uploadInvoice}>
+            Koppelen
+          </Button>
+        </div>
+      </section>
 
-          {filtered.length === 0 ? (
-            <p className="mt-6 text-xs text-wf-600">
-              Geen facturen in dit tabblad.
-            </p>
-          ) : (
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-left text-xs">
-                <thead>
-                  <tr className="border-b border-wf-400 text-[10px] uppercase tracking-wide text-wf-500">
-                    <th className="px-3 py-2 font-semibold">Factuurnummer</th>
-                    <th className="px-3 py-2 font-semibold">Periode</th>
-                    <th className="px-3 py-2 font-semibold">Bedrag</th>
-                    <th className="px-3 py-2 font-semibold" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((inv) => (
-                    <tr
-                      key={inv.id}
-                      className="border-b border-wf-200 text-wf-800"
+      {invoices.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState
+            title="Geen facturen"
+            description="Upload jouw eigen klantfacturen en koppel ze aan orders."
+          />
+        </div>
+      ) : (
+        <div className="mt-5 overflow-x-auto rounded-lg border border-wf-300 bg-white">
+          <table className="w-full border-collapse text-xs">
+            <thead>
+              <tr>
+                {["Order", "Bestand", "Bedrag", "Geüpload", "Status"].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
                     >
-                      <td className="px-3 py-2.5 font-medium">
-                        <span className="font-mono text-[11px]">{inv.id}</span>
-                        {inv.credit_of_invoice_id ? (
-                          <Badge variant="outline" className="ml-2">
-                            Creditnota
-                          </Badge>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {inv.period ??
-                          (inv.order_number
-                            ? `Order #${inv.order_number}`
-                            : formatFinanceDate(inv.issued_at))}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        {formatEuro(inv.total_amount)}
-                      </td>
-                      <td className="px-3 py-2.5 text-right">
-                        {inv.pdf_url ? (
-                          <a
-                            href={inv.pdf_url}
-                            className="text-[11px] font-semibold underline"
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            Downloaden
-                          </a>
-                        ) : (
-                          <span
-                            className="cursor-not-allowed text-[11px] text-wf-500"
-                            title="PDF nog niet beschikbaar"
-                          >
-                            Downloaden
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      ) : null}
+                      {h}
+                    </th>
+                  )
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map((inv) => (
+                <tr
+                  key={inv.id}
+                  className="border-b border-wf-200 last:border-b-0"
+                >
+                  <td className="px-4 py-2.5">{inv.order_number}</td>
+                  <td className="px-4 py-2.5">{inv.file_name}</td>
+                  <td className="px-4 py-2.5">{formatEuro(inv.amount)}</td>
+                  <td className="px-4 py-2.5">
+                    {new Date(inv.uploaded_at).toLocaleDateString("nl-NL")}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <Badge variant="outline">{inv.status}</Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </SellerGate>
   )
 }

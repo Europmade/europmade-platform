@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, CodeInput, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
 import { createSession, login, verifyMfaChallenge } from "../_lib/medusa-auth";
+import { claimPendingGuestOrder, mergeGuestCart } from "../../_lib/order-service-api";
+import { getOnboarding } from "../../partner-onboarding/_lib/partner-onboarding-api";
 
 type Step =
   | { name: "credentials" }
@@ -27,6 +29,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = sanitizeRedirectTarget(searchParams.get("redirect"));
+  const claimPaymentReference = searchParams.get("payment_reference");
   const [step, setStep] = useState<Step>({ name: "credentials" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +41,23 @@ function LoginPageContent() {
 
   async function finishLogin(token: string) {
     await createSession(token);
-    router.push(redirectTo);
+    // ADR-0022: guest cart → customer cart behouden na login.
+    await mergeGuestCart();
+    await claimPendingGuestOrder(claimPaymentReference);
+    // Rollen bepalen welk dashboard opent: goedgekeurde seller → Seller Dashboard
+    // wanneer geen expliciete redirect is opgegeven.
+    let destination = redirectTo;
+    if (redirectTo === "/") {
+      try {
+        const { onboarding } = await getOnboarding();
+        if (onboarding?.onboarding_status === "Goedgekeurd") {
+          destination = "/seller";
+        }
+      } catch {
+        // Geen seller-sessie / onboarding onbekend → storefront home.
+      }
+    }
+    router.push(destination);
     router.refresh();
   }
 
@@ -201,7 +220,10 @@ function LoginPageContent() {
       </div>
       <p className="text-center text-xs text-wf-600">
         Nog geen account?{" "}
-        <Link href="/register" className="text-wf-800 underline decoration-dotted">
+        <Link
+          href={`/register${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
+          className="text-wf-800 underline decoration-dotted"
+        >
           Registreren
         </Link>
       </p>

@@ -77,7 +77,7 @@ export default function CategoriesIndexPage() {
       </section>
 
       <div className="py-2">
-        <AdSlot position={1} compact />
+        <AdSlot position={1} compact location="category" />
       </div>
 
       <section className="px-4 py-6 tablet:px-8 tablet:py-8">

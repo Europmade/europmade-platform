@@ -1,6 +1,17 @@
 /**
- * Store Order-service client — cart / checkout (S3-05-03).
+ * Store Order-service client — cart / checkout (S3-05-03, ADR-0022).
  */
+
+import {
+  clearGuestCartToken,
+  getGuestCartToken,
+  rememberGuestTokenFromResponse,
+} from "./guest-cart-token"
+import {
+  clearPendingGuestOrder,
+  getGuestCheckoutToken,
+  readPendingGuestOrder,
+} from "./guest-checkout-token"
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
@@ -17,6 +28,7 @@ export class OrderServiceApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const guest = getGuestCartToken()
   const response = await fetch(`${BACKEND_URL}${path}`, {
     ...init,
     credentials: "include",
@@ -25,10 +37,19 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...(PUBLISHABLE_KEY
         ? { "x-publishable-api-key": PUBLISHABLE_KEY }
         : {}),
+      ...(guest ? { "x-guest-cart-token": guest } : {}),
       ...init.headers,
     },
   })
   const body: unknown = await response.json().catch(() => undefined)
+  if (body && typeof body === "object" && "guest_token" in body) {
+    rememberGuestTokenFromResponse(
+      body as { guest_token?: string | null },
+      response
+    )
+  } else {
+    rememberGuestTokenFromResponse({}, response)
+  }
   if (!response.ok) {
     const message =
       body &&
@@ -67,10 +88,12 @@ export type CartLineView = {
 
 export type CartView = {
   cart_id: string
+  guest_token?: string | null
   lines: CartLineView[]
   seller_count: number
   split_notice: string | null
   totals: CartTotals
+  merged?: boolean
 }
 
 export type PlaceOrderResult = {
@@ -90,6 +113,14 @@ export function getCart() {
 }
 
 export function upsertCartLine(offer_id: string, quantity: number) {
+  if (!offer_id.startsWith("offr_")) {
+    return Promise.reject(
+      new OrderServiceApiError(
+        "Dit product heeft geen actieve Commerce Cloud-aanbieding.",
+        400
+      )
+    )
+  }
   return request<CartView>("/store/order-service/cart", {
     method: "POST",
     body: JSON.stringify({ offer_id, quantity }),
@@ -108,6 +139,27 @@ export function deleteCartLine(lineId: string) {
     `/store/order-service/cart/lines/${lineId}`,
     { method: "DELETE" }
   )
+}
+
+/** Guest → customer merge na login (winkelwagen §5A / ADR-0022). */
+export async function mergeGuestCart() {
+  const guest_token = getGuestCartToken()
+  if (!guest_token) {
+    return null
+  }
+  try {
+    const result = await request<CartView>("/store/order-service/cart/merge", {
+      method: "POST",
+      body: JSON.stringify({ guest_token }),
+    })
+    clearGuestCartToken()
+    return result
+  } catch (err) {
+    if (err instanceof OrderServiceApiError && err.status === 401) {
+      throw err
+    }
+    return null
+  }
 }
 
 export function revalidateCheckout(
@@ -131,15 +183,74 @@ export function placeOrder(input: {
   lines: Array<{ offer_id: string; quantity: number }>
   affiliate_click_id?: string | null
   affiliate_coupon_code?: string | null
+  guest_checkout?: boolean
 }) {
+  const { guest_checkout, ...payload } = input
+  const guest_checkout_token = guest_checkout
+    ? getGuestCheckoutToken()
+    : undefined
   return request<PlaceOrderResult>("/store/order-service/checkout/place", {
     method: "POST",
     body: JSON.stringify({
-      ...input,
+      ...payload,
       payment_mode: "simulated",
       delivery_country: "NL",
+      guest_checkout_token,
     }),
   })
+}
+
+export type ConfirmationOrderView = {
+  order: {
+    id: string
+    order_number: string
+    seller_id: string
+    payment_status: string
+    shipping_address: string
+    billing_address: string
+  }
+  lines: OrderLineView[]
+}
+
+export function getOrderConfirmation(payment_reference: string) {
+  const guestCheckoutToken = getGuestCheckoutToken()
+  return request<{
+    order_set_id: string
+    payment_reference: string
+    orders: ConfirmationOrderView[]
+    guest: boolean
+  }>(`/store/order-service/orders/confirmation/${encodeURIComponent(payment_reference)}`, {
+    headers: { "x-guest-checkout-token": guestCheckoutToken },
+  })
+}
+
+export function claimGuestOrder(payment_reference: string) {
+  const guest_checkout_token = getGuestCheckoutToken()
+  return request<{ claimed: boolean; order_set_id: string | null }>(
+    "/store/order-service/orders/claim",
+    {
+      method: "POST",
+      headers: { "x-guest-checkout-token": guest_checkout_token },
+      body: JSON.stringify({ payment_reference, guest_checkout_token }),
+    }
+  )
+}
+
+export async function claimPendingGuestOrder(paymentReference?: string | null) {
+  const candidate = paymentReference?.trim() || readPendingGuestOrder()
+  if (!candidate) return null
+  try {
+    const result = await claimGuestOrder(candidate)
+    if (result.claimed) {
+      clearPendingGuestOrder()
+    }
+    return result
+  } catch (err) {
+    if (err instanceof OrderServiceApiError && err.status === 401) {
+      throw err
+    }
+    return null
+  }
 }
 
 export type OrderLineView = {

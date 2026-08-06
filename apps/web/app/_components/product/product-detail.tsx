@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge, Button, Notice } from "@europmade/ui"
 import {
   formatEuroFromCents,
@@ -9,8 +9,30 @@ import {
   type PdpDetail,
   type PdpOffer,
 } from "../../_lib/pdp-seed"
-import { findListingProduct, starsForRating } from "../../_lib/listing-products"
+import {
+  discountPercent,
+  findListingProduct,
+  starsForRating,
+  type ListingProduct,
+} from "../../_lib/listing-products"
+import { slugifyForBrand } from "../../_lib/brand-slug"
+import {
+  OrderServiceApiError,
+} from "../../_lib/order-service-api"
+import { useCart } from "../cart/cart-provider"
 import { PublicStorefrontChrome } from "../marketplace/public-storefront-chrome"
+import { rememberRecentlyViewed } from "../../_lib/recently-viewed"
+import {
+  recommendFrequentlyBoughtTogether,
+  recommendOthersAlsoViewed,
+  recommendRecentlyViewed,
+  recommendSimilar,
+} from "../../_lib/product-recommendations"
+import { fetchStorefrontListings } from "../../_lib/client-catalog"
+import { ProductGallery } from "./product-gallery"
+import { TrustStrip } from "./trust-strip"
+import { ProductCarousel } from "./product-carousel"
+import { partnerHref } from "../../_lib/partner-profiles"
 
 type TabId =
   | "description"
@@ -25,20 +47,27 @@ type TabId =
  * sprint-1a/01-productpagina-buybox-{desktop,tablet,mobile}.html
  */
 export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
-  const [activeThumb, setActiveThumb] = useState(0)
+  const { addLine } = useCart()
   const [colorId, setColorId] = useState(detail.selectedColorId)
   const [sizeId, setSizeId] = useState(detail.selectedSizeId)
   const [offers, setOffers] = useState<PdpOffer[]>(detail.offers)
   const [offersOpen, setOffersOpen] = useState(true)
   const [tab, setTab] = useState<TabId>("description")
   const [descExpanded, setDescExpanded] = useState(false)
+  const [cartNote, setCartNote] = useState<string | null>(null)
+  const [cartBusy, setCartBusy] = useState(false)
+  const [wishlistNote, setWishlistNote] = useState<string | null>(null)
+  const [recentProducts, setRecentProducts] = useState<ListingProduct[]>([])
+  const [catalogPool, setCatalogPool] = useState<ListingProduct[]>([])
+  const [railsReady, setRailsReady] = useState(false)
 
   const selected = useMemo(
-    () => offers.find((o) => o.selected) ?? offers[0],
+    () => offers.find((o) => o.selected) ?? offers[0] ?? null,
     [offers]
   )
 
   function selectOffer(id: string) {
+    if (!id.startsWith("offr_")) return
     setOffers((prev) => prev.map((o) => ({ ...o, selected: o.id === id })))
   }
 
@@ -53,13 +82,132 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
     },
     {
       id: "seller-reviews",
-      label: `Verkopersreviews (${selected.retailer} — ${detail.sellerReviewCount.toLocaleString("nl-NL")})`,
+      label: selected
+        ? `Verkopersreviews (${selected.retailer})`
+        : "Verkopersreviews",
     },
   ]
 
-  const related = detail.relatedSlugs
-    .map((slug) => findListingProduct(slug))
-    .filter(Boolean)
+  const sellerReviewsForOffer = detail.sellerReviews.filter(
+    (r) =>
+      !selected || !r.retailer || r.retailer === selected.retailer
+  )
+  const brandSlug = slugifyForBrand(detail.listing.brand)
+
+  useEffect(() => {
+    rememberRecentlyViewed(detail.listing)
+    setRecentProducts(recommendRecentlyViewed(detail.slug, 20))
+    let cancelled = false
+    void (async () => {
+      const listings = await fetchStorefrontListings(40)
+      if (cancelled) return
+      setCatalogPool(listings)
+      setRailsReady(true)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [detail.listing, detail.slug])
+
+  const pct = discountPercent(detail.listing)
+
+  const relatedFromDetail = useMemo(
+    () =>
+      detail.relatedSlugs
+        .map((slug) => catalogPool.find((p) => p.slug === slug) ?? findListingProduct(slug))
+        .filter((p): p is ListingProduct => p != null),
+    [catalogPool, detail.relatedSlugs]
+  )
+
+  const similar = useMemo(() => {
+    if (!railsReady) return []
+    const fromAlgo = recommendSimilar(detail.listing, 12, [], catalogPool)
+    if (fromAlgo.length) return fromAlgo
+    return relatedFromDetail.slice(0, 12)
+  }, [catalogPool, detail.listing, railsReady, relatedFromDetail])
+
+  const frequentlyTogether = useMemo(() => {
+    if (!railsReady) return []
+    const fromSeed = recommendFrequentlyBoughtTogether(
+      detail.listing,
+      10,
+      [],
+      catalogPool
+    )
+    const fromPairs = detail.pairsWellWith
+      .map(
+        (item) =>
+          catalogPool.find((p) => p.slug === item.slug) ??
+          findListingProduct(item.slug)
+      )
+      .filter((p): p is ListingProduct => p != null)
+    const seen = new Set<string>()
+    const merged: ListingProduct[] = []
+    for (const p of [...fromPairs, ...fromSeed]) {
+      if (seen.has(p.slug) || p.slug === detail.slug) continue
+      seen.add(p.slug)
+      merged.push(p)
+      if (merged.length >= 12) break
+    }
+    return merged
+  }, [
+    catalogPool,
+    detail.listing,
+    detail.pairsWellWith,
+    detail.slug,
+    railsReady,
+  ])
+
+  const othersViewed = useMemo(() => {
+    if (!railsReady) return []
+    return recommendOthersAlsoViewed(
+      detail.listing,
+      12,
+      similar.map((p) => p.slug),
+      catalogPool
+    )
+  }, [catalogPool, detail.listing, railsReady, similar])
+
+  async function addToCart() {
+    if (!selected || !selected.id.startsWith("offr_")) {
+      setCartNote(
+        "Er is geen actieve Commerce Cloud-aanbieding voor dit product."
+      )
+      return
+    }
+    setCartBusy(true)
+    setCartNote(null)
+    try {
+      const color =
+        detail.colorVariants.find((c) => c.id === colorId)?.color ?? undefined
+      const size =
+        detail.sizeVariants.find((s) => s.id === sizeId)?.label ?? undefined
+      await addLine(selected.id, 1, {
+        offer_id: selected.id,
+        product_id: detail.slug,
+        slug: detail.slug,
+        title: detail.fullTitle || detail.listing.title,
+        seller_id: "",
+        seller_name: selected.retailer,
+        verified: detail.listing.verified || detail.euOwnershipPercent >= 50,
+        delivery: selected.delivery || "2–4 werkdagen",
+        stock: selected.stock || "Op voorraad",
+        returns: selected.returns || "30 dagen retour",
+        color,
+        size,
+        variant: [color, size].filter(Boolean).join(" / ") || undefined,
+      })
+      setCartNote(null)
+    } catch (err) {
+      setCartNote(
+        err instanceof OrderServiceApiError
+          ? err.message
+          : "Toevoegen mislukt. De aanbieding is mogelijk nog niet in Commerce Cloud beschikbaar."
+      )
+    } finally {
+      setCartBusy(false)
+    }
+  }
 
   return (
     <PublicStorefrontChrome>
@@ -95,146 +243,181 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
       </nav>
 
       {/* Hero grid: gallery | info | buybox */}
-      <div className="grid gap-6 px-4 py-6 tablet:grid-cols-2 tablet:gap-7 tablet:px-8 tablet:pb-8 desktop:grid-cols-[1fr_1fr_380px] desktop:gap-8 desktop:pb-10">
-        <div className="flex flex-col gap-2.5">
-          <div
-            className="flex h-[280px] items-center justify-center rounded-md border border-wf-300 bg-wf-100 text-xs text-wf-500 tablet:h-[320px] desktop:h-[380px]"
-            role="img"
-            aria-label={`Hoofdafbeelding ${detail.fullTitle}`}
+      <div className="grid items-start gap-4 px-4 pt-4 pb-3 tablet:grid-cols-2 tablet:gap-4 tablet:px-8 tablet:pt-5 tablet:pb-3 desktop:grid-cols-[1fr_1fr_300px] desktop:gap-5">
+        <div className="min-w-0 self-start">
+          <ProductGallery
+            title={detail.fullTitle}
+            seed={detail.slug}
+            count={detail.galleryCount}
           />
-          <div className="hidden gap-2 tablet:flex">
-            {Array.from({ length: detail.galleryCount }).map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setActiveThumb(i)}
-                className={`h-14 w-14 rounded border bg-wf-200 ${
-                  activeThumb === i ? "border-wf-900" : "border-wf-300"
-                }`}
-                aria-label={`Miniatuur ${i + 1}`}
-                aria-pressed={activeThumb === i}
-              />
-            ))}
-          </div>
-          <div className="flex justify-center gap-1.5 tablet:hidden" aria-hidden>
-            {Array.from({ length: detail.galleryCount }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 w-1.5 rounded-full ${
-                  i === activeThumb ? "bg-wf-800" : "bg-wf-300"
-                }`}
-              />
-            ))}
-          </div>
         </div>
 
-        <div className="min-w-0">
-          <h1 className="m-0 text-[20px] font-bold leading-tight text-wf-900 tablet:text-[22px]">
-            {detail.fullTitle}
-          </h1>
-          <p className="mt-1.5 text-xs text-wf-600">
-            <span aria-hidden>{starsForRating(detail.listing.rating)} </span>
-            {detail.listing.rating.toFixed(1).replace(".", ",")} —{" "}
-            <strong className="text-wf-800">
-              {detail.reviewCount} productreviews
-            </strong>
-            <span className="hidden tablet:inline">
-              {" "}
-              (beoordeling van het product, los van de aanbieder)
-            </span>
-          </p>
-          <a
-            href="#aanbieders"
-            className="mt-3.5 inline-block rounded bg-wf-100 px-2.5 py-1.5 text-[13px] font-semibold text-wf-800"
-          >
-            Vanaf {lowestOfferPriceLabel(detail)} · {offers.length} aanbieders
-            vergelijken ↓
-          </a>
+        <div className="min-w-0 self-start">
+          <div className="flex items-start gap-2">
+            <h1 className="m-0 min-w-0 flex-1 text-[22px] font-bold leading-tight tracking-tight text-wf-900 tablet:text-[24px]">
+              {detail.fullTitle}
+            </h1>
+            <button
+              type="button"
+              className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-wf-600 transition hover:bg-wf-100 hover:text-wf-900"
+              aria-label="Toevoegen aan favorieten"
+              title="Favorieten volgen later"
+              onClick={() =>
+                setWishlistNote(
+                  "Favorieten volgen later — wishlist staat buiten de huidige MVP-scope."
+                )
+              }
+            >
+              ♡
+            </button>
+          </div>
+          {wishlistNote ? (
+            <p className="mt-1 text-[11px] text-wf-600">{wishlistNote}</p>
+          ) : null}
 
-          <div className="mt-3.5 flex flex-wrap gap-2">
-            {detail.listing.verified ? (
-              <span className="inline-flex items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 py-1 text-[11px] font-bold text-white">
-                ✓ Verified™
-              </span>
-            ) : null}
-            <Badge variant="link">
-              Gemaakt in {detail.listing.countryLabel}
-            </Badge>
-            <Badge variant="link">Producent: {detail.manufacturer} ›</Badge>
-            <Badge variant="outline">
-              EU-eigendom: {detail.euOwnershipPercent}%{" "}
-              <span
-                className="ml-1 inline-flex h-[15px] w-[15px] items-center justify-center rounded-full border border-wf-500 text-[9.5px] text-wf-600"
-                title="EU-eigendom geeft aan in welke mate de producent in Europese handen is — dit zegt niets over waar het product gemaakt is (zie 'Gemaakt in')."
-              >
-                ⓘ
-              </span>
-            </Badge>
-            <Badge variant="outline">Merk: {detail.listing.brand}</Badge>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <span className="text-base tracking-wide text-wf-900" aria-hidden>
+              {starsForRating(detail.listing.rating)}
+            </span>
+            <span className="text-sm font-bold text-wf-900">
+              {detail.listing.rating.toFixed(1).replace(".", ",")}
+            </span>
+            <button
+              type="button"
+              className="text-sm font-semibold text-wf-700 underline underline-offset-2"
+              onClick={() => {
+                setTab("product-reviews")
+                document
+                  .getElementById("product-tabs")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }}
+            >
+              {detail.reviewCount} reviews
+            </button>
           </div>
 
-          {detail.colorVariants.length > 0 ? (
-            <div className="mt-4">
-              <p className="mb-1.5 text-[11px] font-semibold text-wf-600">Kleur</p>
-              <div className="flex flex-wrap gap-2">
-                {detail.colorVariants.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    disabled={v.disabled}
-                    onClick={() => setColorId(v.id)}
-                    className={`flex h-[34px] min-w-[38px] items-center justify-center rounded-[5px] border-[1.5px] px-2.5 disabled:border-wf-200 disabled:opacity-50 ${
-                      colorId === v.id
-                        ? "border-2 border-wf-900"
-                        : "border-wf-400"
-                    }`}
-                    aria-pressed={colorId === v.id}
-                    aria-label={`Kleur ${v.id}`}
-                  >
-                    <span
-                      className="h-[26px] w-[26px] rounded-full border-[1.5px] border-wf-400"
-                      style={{ background: v.color }}
-                    />
-                  </button>
-                ))}
-              </div>
+          <div className="mt-2 flex flex-wrap items-baseline gap-2">
+            <p className="text-[26px] font-bold leading-none text-wf-900">
+              {selected
+                ? formatEuroFromCents(selected.priceCents)
+                : lowestOfferPriceLabel(detail)}
+            </p>
+            {detail.listing.originalPriceCents && pct != null ? (
+              <>
+                <span className="text-sm text-wf-500 line-through">
+                  {formatEuroFromCents(detail.listing.originalPriceCents)}
+                </span>
+                <span className="rounded bg-wf-900 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                  −{pct}%
+                </span>
+              </>
+            ) : null}
+          </div>
+          <a
+            href="#aanbieders"
+            className="mt-1.5 inline-block text-[13px] font-semibold text-wf-700 underline-offset-2 hover:underline"
+          >
+            Laagste prijs {lowestOfferPriceLabel(detail)} · {offers.length}{" "}
+            aanbieders vergelijken ↓
+          </a>
+
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <Link
+              href="/verified"
+              className="inline-flex h-7 items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 text-[11px] font-bold leading-none text-white"
+            >
+              ✓ EU Verified™
+            </Link>
+            <span className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800">
+              Gemaakt in {detail.listing.countryLabel}
+            </span>
+            <Link
+              href={`/merk/${brandSlug}`}
+              className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
+            >
+              Producent: {detail.manufacturer} ›
+            </Link>
+          </div>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Badge variant="outline">
+              EU-eigendom: {detail.euOwnershipPercent}%
+            </Badge>
+            <Link href={`/merk/${brandSlug}`}>
+              <Badge variant="outline">Merk: {detail.listing.brand}</Badge>
+            </Link>
+          </div>
+
+          {detail.colorVariants.length > 0 || detail.sizeVariants.length > 0 ? (
+            <div
+              className={`mt-2 grid gap-2 ${
+                detail.colorVariants.length > 0 && detail.sizeVariants.length > 0
+                  ? "grid-cols-1 tablet:grid-cols-2"
+                  : "grid-cols-1"
+              }`}
+            >
+              {detail.colorVariants.length > 0 ? (
+                <div className="min-w-0 rounded-lg border border-wf-200 px-2.5 py-2">
+                  <p className="mb-1.5 text-[11px] font-semibold text-wf-800">Kleur</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {detail.colorVariants.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        disabled={v.disabled}
+                        onClick={() => setColorId(v.id)}
+                        className={`flex h-8 min-w-[34px] items-center justify-center rounded-md border px-2 disabled:border-wf-200 disabled:opacity-50 ${
+                          colorId === v.id
+                            ? "border-2 border-wf-900"
+                            : "border-wf-400"
+                        }`}
+                        aria-pressed={colorId === v.id}
+                        aria-label={`Kleur ${v.id}`}
+                      >
+                        <span
+                          className="h-5 w-5 rounded-full border border-wf-400"
+                          style={{ background: v.color }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {detail.sizeVariants.length > 0 ? (
+                <div className="min-w-0 rounded-lg border border-wf-200 px-2.5 py-2">
+                  <p className="mb-1.5 text-[11px] font-semibold text-wf-800">
+                    Werkgebied
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {detail.sizeVariants.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => setSizeId(v.id)}
+                        className={`flex h-8 min-w-[34px] items-center justify-center rounded-md px-2.5 text-xs ${
+                          sizeId === v.id
+                            ? "border-2 border-wf-900 font-bold text-wf-900"
+                            : "border border-wf-400 text-wf-700"
+                        }`}
+                        aria-pressed={sizeId === v.id}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
-          {detail.sizeVariants.length > 0 ? (
-            <div className="mt-4">
-              <p className="mb-1.5 text-[11px] font-semibold text-wf-600">
-                Werkgebied
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {detail.sizeVariants.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setSizeId(v.id)}
-                    className={`flex h-[34px] min-w-[38px] items-center justify-center rounded-[5px] px-2.5 text-xs ${
-                      sizeId === v.id
-                        ? "border-2 border-wf-900 font-bold text-wf-900"
-                        : "border-[1.5px] border-wf-400 text-wf-700"
-                    }`}
-                    aria-pressed={sizeId === v.id}
-                  >
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <p className="mt-4 text-[13.5px] leading-relaxed text-wf-700">
+          <p className="mt-2 text-[13px] leading-snug text-wf-700">
             {detail.intro}
           </p>
 
-          <div className="mt-4 border-t border-wf-200 pt-4">
-            <p className="mb-2 text-[11px] uppercase tracking-wide text-wf-500">
+          <div className="mt-2 border-t border-wf-200 pt-2">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
               Kenmerken
             </p>
-            <ul className="space-y-1.5">
+            <ul className="space-y-0.5">
               {detail.highlights.map((h) => (
                 <li
                   key={h}
@@ -254,6 +437,9 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
             selected={selected}
             offerCount={offers.length}
             notice={detail.buyBoxNotice}
+            cartBusy={cartBusy}
+            cartNote={cartNote}
+            onAddToCart={() => void addToCart()}
             onToggleOffers={() => {
               setOffersOpen(true)
               document
@@ -264,34 +450,14 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
         </div>
       </div>
 
-      {/* Past goed bij */}
-      <section className="px-4 pt-5 tablet:px-8">
-        <h2 className="mb-3 text-sm font-bold text-wf-800">Past goed bij</h2>
-        <ul className="grid grid-cols-1 gap-3.5 tablet:grid-cols-2 desktop:grid-cols-4">
-          {detail.pairsWellWith.map((item) => (
-            <li key={item.slug + item.title}>
-              <Link
-                href={`/product/${item.slug}`}
-                className="flex items-center gap-2.5 rounded-lg border border-wf-300 p-2.5 hover:border-wf-500"
-              >
-                <span className="h-[52px] w-[52px] shrink-0 rounded-[5px] bg-wf-100" />
-                <span>
-                  <span className="block text-[11.5px] font-semibold text-wf-800">
-                    {item.title}
-                  </span>
-                  <span className="mt-0.5 block text-[12.5px] font-bold text-wf-900">
-                    {formatEuroFromCents(item.priceCents)}
-                  </span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {/* Trustbalk over volledige contentbreedte */}
+      <section className="border-y border-wf-200 bg-wf-50/60 px-4 py-3 tablet:px-8">
+        <TrustStrip />
       </section>
 
-      {/* Alle aanbieders */}
-      <section id="aanbieders" className="px-4 py-5 tablet:px-8 tablet:pb-10">
-        <h2 className="mb-3.5 border-b border-wf-200 pb-2.5 text-[17px] font-bold text-wf-900">
+      {/* Alle aanbieders — direct onder trustbalk */}
+      <section id="aanbieders" className="px-4 pt-4 pb-5 tablet:px-8 tablet:pt-4 tablet:pb-6">
+        <h2 className="mb-2.5 border-b border-wf-200 pb-2 text-[17px] font-bold text-wf-900">
           Alle aanbieders ({offers.length})
         </h2>
 
@@ -328,7 +494,12 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                   <td className="border-b border-wf-200 px-3 py-3 align-middle">
                     <span className="inline-flex items-center gap-2">
                       <span className="inline-block h-[18px] w-[18px] rounded-full bg-wf-300" />
-                      {o.retailer}
+                      <Link
+                        href={partnerHref(o.retailer)}
+                        className="font-semibold underline-offset-2 hover:underline"
+                      >
+                        {o.retailer}
+                      </Link>
                       {o.selected ? (
                         <Badge variant="solid" className="ml-1 text-[10px]">
                           Geselecteerd
@@ -416,7 +587,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
       </section>
 
       {/* Tabs */}
-      <section className="px-4 pb-8 tablet:px-8 tablet:pb-10">
+      <section id="product-tabs" className="px-4 pb-8 tablet:px-8 tablet:pb-10">
         <div
           className="mb-5 flex gap-0 overflow-x-auto border-b border-wf-300 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
@@ -520,12 +691,12 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-3">
               <h3 className="m-0 text-sm font-bold">Productreviews</h3>
-              <button
-                type="button"
+              <Link
+                href="/account/reviews/new"
                 className="rounded border border-wf-700 bg-white px-3.5 py-1.5 text-xs font-semibold text-wf-800"
               >
                 + Review toevoegen
-              </button>
+              </Link>
             </div>
             <p className="mb-3 text-xs text-wf-600">
               {starsForRating(detail.listing.rating)}{" "}
@@ -538,7 +709,13 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                   key={i}
                   className="border-t border-wf-200 py-2.5 text-xs text-wf-700"
                 >
-                  {starsForRating(r.stars)} &ldquo;{r.excerpt}&rdquo;{" "}
+                  <button
+                    type="button"
+                    className="text-left hover:underline"
+                    onClick={() => setTab("product-reviews")}
+                  >
+                    {starsForRating(r.stars)} &ldquo;{r.excerpt}&rdquo;
+                  </button>{" "}
                   {r.verified ? (
                     <span className="ml-1.5 inline-block rounded-lg border border-wf-400 bg-wf-100 px-1.5 py-0.5 text-[10px] font-semibold text-wf-700">
                       ✓ Geverifieerde aankoop
@@ -554,38 +731,80 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-3">
               <h3 className="m-0 text-sm font-bold">
-                Verkopersreviews — {selected.retailer}
+                Verkopersreviews
+                {selected ? ` — ${selected.retailer}` : ""}
               </h3>
-              <button
-                type="button"
+              <Link
+                href="/account/reviews/new"
                 className="rounded border border-wf-700 bg-white px-3.5 py-1.5 text-xs font-semibold text-wf-800"
               >
                 + Review toevoegen
-              </button>
+              </Link>
             </div>
             <p className="mb-3 text-xs text-wf-600">
-              {starsForRating(detail.sellerReviewAvg)}{" "}
-              {detail.sellerReviewAvg.toFixed(1).replace(".", ",")} gemiddeld —{" "}
-              {detail.sellerReviewCount.toLocaleString("nl-NL")} reviews, over
-              levering/service van deze aanbieder
+              {selected
+                ? `Reviews voor ${selected.retailer} — wisselen automatisch bij aanbiederskeuze`
+                : "Nog geen aanbieder geselecteerd."}
             </p>
             <ul>
-              {detail.sellerReviews.map((r, i) => (
-                <li
-                  key={i}
-                  className="border-t border-wf-200 py-2.5 text-xs text-wf-700"
-                >
-                  {starsForRating(r.stars)} &ldquo;{r.excerpt}&rdquo;{" "}
-                  {r.verified ? (
-                    <span className="ml-1.5 inline-block rounded-lg border border-wf-400 bg-wf-100 px-1.5 py-0.5 text-[10px] font-semibold text-wf-700">
-                      ✓ Geverifieerde aankoop
-                    </span>
-                  ) : null}
+              {sellerReviewsForOffer.length === 0 ? (
+                <li className="border-t border-wf-200 py-2.5 text-xs text-wf-600">
+                  Nog geen verkopersreviews voor deze aanbieder.
                 </li>
-              ))}
+              ) : (
+                sellerReviewsForOffer.map((r, i) => (
+                  <li
+                    key={i}
+                    className="border-t border-wf-200 py-2.5 text-xs text-wf-700"
+                  >
+                    {starsForRating(r.stars)} &ldquo;{r.excerpt}&rdquo;{" "}
+                    {r.verified ? (
+                      <span className="ml-1.5 inline-block rounded-lg border border-wf-400 bg-wf-100 px-1.5 py-0.5 text-[10px] font-semibold text-wf-700">
+                        ✓ Geverifieerde aankoop
+                      </span>
+                    ) : null}
+                  </li>
+                ))
+              )}
             </ul>
           </div>
         ) : null}
+      </section>
+
+      {/* Commerciële carrousels — direct onder productomschrijving */}
+      <section className="px-4 pb-2 tablet:px-8">
+        <ProductCarousel
+          title="Vergelijkbare producten"
+          subtitle="Vergelijk vergelijkbare Europese producten."
+          products={similar}
+          loading={!railsReady}
+          showAddToCart
+          lazy={false}
+        />
+        <ProductCarousel
+          title="Vaak samen gekocht"
+          subtitle="Klanten combineren deze producten regelmatig."
+          products={frequentlyTogether}
+          loading={!railsReady}
+          showAddToCart
+          lazy={false}
+        />
+        <ProductCarousel
+          title="Anderen bekeken ook"
+          subtitle="Populaire alternatieven die bezoekers bekeken."
+          products={othersViewed}
+          loading={!railsReady}
+          showAddToCart
+          lazy={false}
+        />
+        <ProductCarousel
+          title="Laatst bekeken"
+          products={recentProducts}
+          loading={!railsReady}
+          hideWhenEmpty
+          showAddToCart
+          lazy={false}
+        />
       </section>
 
       {/* FAQ */}
@@ -603,70 +822,101 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
         </div>
       </section>
 
-      {/* Gerelateerde producten */}
-      <section className="px-4 pb-10 tablet:px-8">
-        <h2 className="mb-3.5 border-b border-wf-200 pb-2.5 text-[17px] font-bold text-wf-900">
-          Gerelateerde producten
-        </h2>
-        <ul className="flex gap-4 overflow-x-auto pb-1 tablet:grid tablet:grid-cols-3 tablet:overflow-visible desktop:grid-cols-5 desktop:gap-4">
-          {related.map((p) =>
-            p ? (
-              <li
-                key={p.slug}
-                className="w-[160px] flex-none tablet:w-auto"
-              >
-                <Link
-                  href={`/product/${p.slug}`}
-                  className="block rounded-md border border-wf-300 p-3 hover:border-wf-500"
-                >
-                  <span className="mb-2 block aspect-square rounded bg-wf-100" />
-                  <span className="line-clamp-2 block text-[12.5px] font-semibold text-wf-800">
-                    {p.title}
-                  </span>
-                  <span className="mt-1 block text-[13px] font-bold text-wf-900">
-                    {formatEuroFromCents(p.priceCents)}
-                  </span>
-                </Link>
-              </li>
-            ) : null
-          )}
-        </ul>
-      </section>
-
       {/* Sticky bottom bar — mobiel (CMP-028) */}
       <div className="sticky bottom-0 z-30 flex items-center gap-2.5 border-t border-wf-400 bg-white px-3.5 py-2.5 shadow-[0_-2px_6px_rgba(0,0,0,0.06)] tablet:hidden">
         <div className="shrink-0">
-          <p className="text-base font-bold text-wf-900">
-            {formatEuroFromCents(selected.priceCents)}
-          </p>
-          <p className="text-[9.5px] text-wf-600">
-            {selected.retailer} · {selected.delivery.toLowerCase()}
-          </p>
+          {selected ? (
+            <>
+              <p className="text-base font-bold text-wf-900">
+                {formatEuroFromCents(selected.priceCents)}
+              </p>
+              <p className="text-[9.5px] text-wf-600">
+                {selected.retailer} · {selected.delivery.toLowerCase()}
+              </p>
+            </>
+          ) : (
+            <p className="text-[11px] text-wf-600">Geen aanbieding</p>
+          )}
         </div>
-        <Link href="/cart" className="min-w-0 flex-1">
-          <Button type="button" variant="primary" className="w-full py-2.5 text-[12.5px]">
-            In winkelwagen
-          </Button>
-        </Link>
+        <Button
+          type="button"
+          variant="primary"
+          className="min-w-0 flex-1 py-2.5 text-[12.5px]"
+          disabled={cartBusy || !selected}
+          onClick={() => void addToCart()}
+        >
+          {cartBusy ? "Bezig…" : "In winkelwagen"}
+        </Button>
       </div>
     </PublicStorefrontChrome>
   )
+}
+
+function shortDeliveryLabel(value: string) {
+  const v = value.trim()
+  if (!v || /levertijd via aanbieder/i.test(v)) return "2–4 werkdagen"
+  return v
+}
+
+function shortStockLabel(value: string) {
+  const v = value.trim()
+  if (!v) return "Op voorraad"
+  if (/beperkt|lage|nog \d+/i.test(v)) return v.length > 22 ? "Beperkte voorraad" : v
+  if (/niet op voorraad/i.test(v)) return "Niet op voorraad"
+  return "Op voorraad"
+}
+
+function shortReturnsLabel(value: string) {
+  const v = value.trim().toLowerCase()
+  if (!v || /retourbeleid|via aanbieder/.test(v)) return "30 dagen retour"
+  if (/30/.test(v)) return "30 dagen retour"
+  if (/retour/.test(v) && v.length <= 22) return value.trim()
+  return "30 dagen retour"
 }
 
 function BuyBox({
   selected,
   offerCount,
   notice,
+  cartBusy,
+  cartNote,
+  onAddToCart,
   onToggleOffers,
 }: {
-  selected: PdpOffer
+  selected: PdpOffer | null
   offerCount: number
   notice: string
+  cartBusy: boolean
+  cartNote: string | null
+  onAddToCart: () => void
   onToggleOffers: () => void
 }) {
+  if (!selected) {
+    return (
+      <aside
+        className="rounded-lg border-2 border-wf-400 bg-white px-[22px] py-5"
+        aria-label="Buy Box"
+      >
+        <p className="text-sm font-semibold text-wf-900">
+          Geen actieve aanbieding
+        </p>
+        <p className="mt-2 text-[13px] leading-relaxed text-wf-700">
+          Dit product heeft momenteel geen Commerce Cloud-aanbieding. Je kunt
+          het nog niet in de winkelwagen zetten.
+        </p>
+        <Notice variant="info" className="mt-3 text-[11px]">
+          ⓘ {notice}{" "}
+          <Link href="/buy-box" className="text-wf-800 underline">
+            Meer uitleg
+          </Link>
+        </Notice>
+      </aside>
+    )
+  }
+
   return (
     <aside
-      className="rounded-lg border-2 border-wf-800 bg-white px-[22px] py-5"
+      className="rounded-xl border-2 border-wf-800 bg-white px-4 py-3.5 shadow-sm"
       aria-label="Buy Box"
     >
       <div className="flex items-center justify-between">
@@ -682,56 +932,67 @@ function BuyBox({
       </div>
       <div className="mt-2.5 flex items-center gap-1.5 text-xs text-wf-700">
         <span className="inline-block h-[18px] w-[18px] rounded-full bg-wf-300" />
-        {selected.retailer}
+        <Link
+          href={partnerHref(selected.retailer)}
+          className="font-semibold text-wf-800 underline-offset-2 hover:underline"
+        >
+          {selected.retailer}
+        </Link>
         <span className="text-wf-500">
           ★ {selected.rating.toFixed(1).replace(".", ",")}
         </span>
       </div>
-      <p className="mt-1.5 text-[30px] font-bold leading-none text-wf-900">
+      <p className="mt-1.5 text-[28px] font-bold leading-none text-wf-900">
         {formatEuroFromCents(selected.priceCents)}
       </p>
-      <div className="my-3.5 flex flex-wrap gap-1.5">
-        <Badge variant="solid">{selected.delivery}</Badge>
-        <Badge variant="outline">
+      <div className="my-2 grid grid-cols-2 gap-1.5">
+        <Badge variant="solid" className="justify-center truncate px-2 py-1 text-[10.5px]">
+          {shortDeliveryLabel(selected.delivery)}
+        </Badge>
+        <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
           {selected.shipping === "Gratis"
             ? "Gratis verzending"
             : `Verzending ${selected.shipping}`}
         </Badge>
-        <Badge variant="outline">{selected.stock}</Badge>
-        <Badge variant="outline">{selected.returns} retour</Badge>
+        <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
+          {shortStockLabel(selected.stock)}
+        </Badge>
+        <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
+          {shortReturnsLabel(selected.returns)}
+        </Badge>
       </div>
-      <Link href="/cart">
-        <Button
-          type="button"
-          variant="primary"
-          className="w-full py-3.5 text-sm"
-        >
-          In winkelwagen
-        </Button>
-      </Link>
-      <Notice variant="info" className="mt-3 text-[11px]">
+      <Button
+        type="button"
+        variant="primary"
+        className="w-full py-3 text-sm"
+        disabled={cartBusy}
+        onClick={onAddToCart}
+      >
+        {cartBusy ? "Bezig…" : "In winkelwagen"}
+      </Button>
+      {cartNote ? (
+        <Notice variant="info" className="mt-2 text-[11px]">
+          {cartNote}{" "}
+          {cartNote.includes("Toegevoegd") ? (
+            <Link href="/cart" className="underline">
+              Naar winkelwagen
+            </Link>
+          ) : null}
+        </Notice>
+      ) : null}
+      <Notice variant="info" className="mt-2.5 text-[11px]">
         ⓘ {notice}{" "}
-        <Link href="/verified" className="text-wf-800 underline">
+        <Link href="/buy-box" className="text-wf-800 underline">
           Meer uitleg
         </Link>
       </Notice>
       <button
         type="button"
-        className="mt-3.5 w-full border-t border-dashed border-wf-300 pt-3 text-center text-xs text-wf-700"
+        className="mt-3 w-full border-t border-dashed border-wf-300 pt-2.5 text-center text-xs text-wf-700"
         onClick={onToggleOffers}
       >
         Alle {offerCount} aanbieders bekijken ▾
       </button>
-      <div className="mt-4 flex flex-wrap gap-3.5 border-t border-wf-200 pt-3.5 text-[11px] text-wf-600">
-        {["Veilig betalen", "30 dagen retour", "Verkocht via EuropMade"].map(
-          (t) => (
-            <div key={t} className="flex items-center gap-1">
-              <span className="h-1.5 w-1.5 rounded-full bg-wf-600" />
-              {t}
-            </div>
-          )
-        )}
-      </div>
     </aside>
   )
 }

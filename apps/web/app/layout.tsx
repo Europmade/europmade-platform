@@ -3,6 +3,7 @@ import { Suspense } from "react"
 import "./globals.css"
 import { CookieConsentBanner } from "./_components/cookie-consent-banner"
 import { AffiliateClickCapture } from "./_components/affiliate-click-capture"
+import { CartProviderRoot } from "./_components/cart/cart-provider-root"
 
 export const metadata: Metadata = {
   title: "EuropMade — Kwaliteitsproducten uit Europa",
@@ -18,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="nl">
       <body className="font-sans">
-        {children}
+        <CartProviderRoot>{children}</CartProviderRoot>
         <CookieConsentBanner />
         <Suspense fallback={null}>
           <AffiliateClickCapture />

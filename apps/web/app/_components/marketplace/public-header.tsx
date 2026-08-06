@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { useId, useState } from "react"
-import {
-  HOMEPAGE_NAV_LINKS,
-} from "../../_lib/homepage-content"
+import { HOMEPAGE_NAV_LINKS } from "../../_lib/homepage-content"
 import { MARKETPLACE_CATEGORIES } from "../../_lib/marketplace-categories"
 import { SearchForm } from "../homepage/search-form"
+import { AccountMenu } from "./account-menu"
+import { BrandLogo } from "./brand-logo"
+import { CartLink } from "./cart-link"
+import { LocaleCurrencySwitcher } from "./locale-currency-switcher"
 
 type PublicHeaderProps = {
   searchQuery?: string
@@ -16,7 +18,6 @@ type PublicHeaderProps = {
 
 /**
  * CMP-001 Header (Publiek) — homepage-desktop wireframe + ux-architecture §4.1.
- * Inclusief categorie-navigatierij en mega-menu (30 hoofdcategorieën).
  */
 export function PublicHeader({
   searchQuery = "",
@@ -33,13 +34,7 @@ export function PublicHeader({
         role="banner"
         className="flex items-center gap-3 border-b border-wf-300 px-4 py-3.5 tablet:gap-5 tablet:px-8"
       >
-        <Link href="/" className="shrink-0" aria-label="EuropMade home">
-          <div
-            className="h-4 w-[70px] rounded-sm bg-wf-300 tablet:h-6 tablet:w-[120px]"
-            role="img"
-            aria-label="EuropMade logo"
-          />
-        </Link>
+        <BrandLogo />
 
         <div
           className={`min-w-0 flex-1 ${alwaysShowSearch ? "" : "hidden tablet:block"}`}
@@ -52,21 +47,9 @@ export function PublicHeader({
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2.5 text-xs text-wf-600 tablet:gap-4">
-          <span className="hidden tablet:inline" aria-label="Taal en valuta">
-            NL · €
-          </span>
-          <Link
-            href="/account"
-            className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-wf-200"
-            aria-label="Account"
-            title="Account"
-          />
-          <Link
-            href="/cart"
-            className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full bg-wf-200"
-            aria-label="Winkelwagen"
-            title="Winkelwagen"
-          />
+          <LocaleCurrencySwitcher />
+          <AccountMenu />
+          <CartLink />
           <button
             type="button"
             className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-wf-400 text-[10px] font-bold text-wf-700 tablet:hidden"

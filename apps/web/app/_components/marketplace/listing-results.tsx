@@ -132,7 +132,13 @@ export function ListingResults({
     <aside
       className="rounded-lg border border-wf-300 p-4"
       aria-label="Filters"
+      data-filter-architecture="manual"
+      data-ai-filters-ready="true"
     >
+      {/* AI-filters: zelfde aside + Checkbox-contract; later AI-suggesties als extra FILTER_GROUPS-bron. */}
+      <p className="mb-3 hidden text-[10px] text-wf-500" data-ai-filters-slot>
+        AI-filters beschikbaar wanneer de zoek-/catalogusservice dit levert.
+      </p>
       {FILTER_GROUPS.map((group) => (
         <fieldset
           key={group.legend}
@@ -244,9 +250,9 @@ export function ListingResults({
                   </li>
                 ))}
               </ul>
-              <ul className="hidden grid-cols-3 items-stretch gap-3.5 tablet:grid desktop:grid-cols-5 desktop:gap-4">
+              <ul className="hidden grid-cols-3 items-stretch gap-3 tablet:grid desktop:grid-cols-4 desktop:gap-3.5">
                 {pageItems.map((product) => (
-                  <li key={product.slug} className="h-full min-h-[420px]">
+                  <li key={product.slug} className="h-full min-h-[400px]">
                     <ProductCard product={product} layout="grid" />
                   </li>
                 ))}

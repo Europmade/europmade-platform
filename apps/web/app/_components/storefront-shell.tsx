@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import type { ReactNode } from "react"
+import { useCart } from "./cart/cart-provider"
 
 /** Minimale storefront-chrome voor Winkelwagen/Checkout/Bevestiging (S3-05-03). */
 export function StorefrontShell({
@@ -9,6 +12,8 @@ export function StorefrontShell({
   children: ReactNode
   cartCount?: number
 }) {
+  const { itemCount, loading } = useCart()
+  const resolvedCount = cartCount ?? (loading ? undefined : itemCount)
   return (
     <div className="min-h-screen bg-white text-wf-900">
       <header className="flex items-center justify-between gap-4 border-b border-wf-200 px-4 py-3 tablet:px-8">
@@ -21,7 +26,7 @@ export function StorefrontShell({
         </Link>
         <nav className="flex items-center gap-4 text-sm font-semibold text-wf-800">
           <Link href="/cart" className="hover:underline">
-            Winkelwagen{cartCount != null ? ` (${cartCount})` : ""}
+            Winkelwagen{resolvedCount != null ? ` (${resolvedCount})` : ""}
           </Link>
           <Link href="/account" className="hover:underline">
             Account

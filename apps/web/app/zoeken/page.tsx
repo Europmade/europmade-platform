@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { MarketplaceListing } from "../_components/marketplace/marketplace-listing"
-import { productsForSearch } from "../_lib/listing-products"
+import { resolveListingProducts } from "../_lib/storefront-catalog"
 
 type SearchPageProps = {
   searchParams: Promise<{ q?: string | string[] }>
@@ -34,7 +34,7 @@ export async function generateMetadata({
  */
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const q = readQuery((await searchParams).q)
-  const products = productsForSearch(q)
+  const { products } = await resolveListingProducts({ query: q })
   const title = q ? `Zoekresultaten voor “${q}”` : "Zoekresultaten"
   const meta = q
     ? `${products.length} producten voor “${q}”`

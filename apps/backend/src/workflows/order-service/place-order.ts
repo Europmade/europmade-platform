@@ -27,6 +27,7 @@ export type CheckoutLineInput = {
 
 export type PlaceOrderInput = {
   customer_id: string
+  guest_token?: string | null
   payment_reference: string
   payment_mode: "simulated" | "stripe"
   shipping_address: string
@@ -345,10 +346,11 @@ export async function executePlaceOrder(
   )
 
   try {
-    const cart = await orders.resolveOrCreateCart({
-      customer_id: input.customer_id,
-      guest_token: null,
-    })
+    const cart = await orders.resolveOrCreateCart(
+      input.guest_token
+        ? { customer_id: null, guest_token: input.guest_token }
+        : { customer_id: input.customer_id, guest_token: null }
+    )
     await orders.clearCartLines(cart.id)
   } catch (err) {
     logger.warn(`[order] clear cart after place: ${String(err)}`)

@@ -18,7 +18,7 @@ export type MarketplaceListingProps = {
 
 /**
  * Marketplace Listing Template — sprint-1a/04-marketplace-listing-*.html
- * + marketplace-listing/spec.md. Productgrid via redactionele seed (CMP-017).
+ * + marketplace-listing/spec.md. Productgrid via catalog API of seed-fallback.
  */
 export function MarketplaceListing({
   mode,
@@ -67,7 +67,7 @@ export function MarketplaceListing({
 
       {showCategoryAdSlot ? (
         <div className="py-4">
-          <AdSlot position={1} compact />
+          <AdSlot position={1} compact location="category" />
         </div>
       ) : null}
 

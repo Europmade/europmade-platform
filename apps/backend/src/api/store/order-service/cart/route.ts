@@ -1,22 +1,25 @@
-import type {
-  AuthenticatedMedusaRequest,
-  MedusaResponse,
-} from "@medusajs/framework/http"
+import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ORDER_MODULE } from "../../../../modules/order-service"
 import type OrderServiceModuleService from "../../../../modules/order-service/service"
 import { revalidateCheckoutLines } from "../../../../workflows/order-service"
 import { computeCheckoutTotals } from "../totals"
 import type { StoreCartLineBodyInput } from "../validators"
+import {
+  assertOfferIdIsCommerceCloud,
+  requireCartIdentity,
+} from "../cart-helpers"
 
 async function cartPayload(
-  req: AuthenticatedMedusaRequest,
-  cartId: string
+  req: MedusaRequest,
+  cartId: string,
+  guest_token: string | null
 ) {
   const orders = req.scope.resolve(ORDER_MODULE) as OrderServiceModuleService
   const lines = await orders.listCartLines({ cart_id: cartId })
   if (lines.length === 0) {
     return {
       cart_id: cartId,
+      guest_token,
       lines: [],
       seller_count: 0,
       split_notice: null as string | null,
@@ -46,6 +49,7 @@ async function cartPayload(
   const sellers = new Set(enriched.map((e) => e.seller_id))
   return {
     cart_id: cartId,
+    guest_token,
     lines: enriched,
     seller_count: sellers.size,
     split_notice:
@@ -56,37 +60,46 @@ async function cartPayload(
   }
 }
 
-/** Winkelwagen (ingelogde klant) — ADR-0022. */
-export async function GET(
-  req: AuthenticatedMedusaRequest,
-  res: MedusaResponse
-) {
+/** Winkelwagen — customer of guest (ADR-0022). */
+export async function GET(req: MedusaRequest, res: MedusaResponse) {
+  const identity = requireCartIdentity(req, res)
   const orders = req.scope.resolve(ORDER_MODULE) as OrderServiceModuleService
   const cart = await orders.resolveOrCreateCart({
-    customer_id: req.auth_context.actor_id,
-    guest_token: null,
+    customer_id: identity.customer_id,
+    guest_token: identity.guest_token,
   })
-  res.json(await cartPayload(req, cart.id))
+  res.json(
+    await cartPayload(
+      req,
+      cart.id,
+      identity.customer_id ? null : identity.guest_token
+    )
+  )
 }
 
 /** Offer-regel toevoegen of qty zetten. */
-export async function POST(
-  req: AuthenticatedMedusaRequest<StoreCartLineBodyInput>,
-  res: MedusaResponse
-) {
-  const body = req.validatedBody
+export async function POST(req: MedusaRequest, res: MedusaResponse) {
+  const body = req.validatedBody as StoreCartLineBodyInput
+  assertOfferIdIsCommerceCloud(body.offer_id)
+  const identity = requireCartIdentity(req, res)
   const orders = req.scope.resolve(ORDER_MODULE) as OrderServiceModuleService
   await revalidateCheckoutLines(req.scope, [
     { offer_id: body.offer_id, quantity: body.quantity },
   ])
   const cart = await orders.resolveOrCreateCart({
-    customer_id: req.auth_context.actor_id,
-    guest_token: null,
+    customer_id: identity.customer_id,
+    guest_token: identity.guest_token,
   })
   await orders.upsertCartLine({
     cart_id: cart.id,
     offer_id: body.offer_id,
     quantity: body.quantity,
   })
-  res.json(await cartPayload(req, cart.id))
+  res.json(
+    await cartPayload(
+      req,
+      cart.id,
+      identity.customer_id ? null : identity.guest_token
+    )
+  )
 }

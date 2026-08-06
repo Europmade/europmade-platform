@@ -5,7 +5,7 @@ import {
   findMarketplaceCategory,
   MARKETPLACE_CATEGORIES,
 } from "../../_lib/marketplace-categories"
-import { productsForCategory } from "../../_lib/listing-products"
+import { resolveListingProducts } from "../../_lib/storefront-catalog"
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>
@@ -44,7 +44,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const category = findMarketplaceCategory(slug)
   if (!category) notFound()
 
-  const products = productsForCategory(category.slug)
+  const { products } = await resolveListingProducts({
+    categorySlug: category.slug,
+  })
 
   return (
     <MarketplaceListing

@@ -27,13 +27,15 @@ export default function ShellLayout({
     };
   }, [router]);
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-wf-600">
-        Laden…
-      </div>
-    );
-  }
-
-  return <AdminShell>{children}</AdminShell>;
+  // Always mount AdminShell + children so the App Router page slot stays alive.
+  return (
+    <>
+      <AdminShell>{children}</AdminShell>
+      {!ready ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-wf-100/80 text-sm text-wf-600">
+          Laden…
+        </div>
+      ) : null}
+    </>
+  );
 }

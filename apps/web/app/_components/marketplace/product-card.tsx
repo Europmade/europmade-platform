@@ -103,7 +103,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   }
 
   return (
-    <article className="flex h-full min-h-[420px] flex-col rounded-lg border border-wf-300 p-3">
+    <article className="flex h-full min-h-[400px] flex-col rounded-lg border border-wf-300 p-3">
       <Link
         href={href}
         className="mb-2 block w-full shrink-0"
@@ -116,7 +116,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         />
       </Link>
 
-      <div className="mb-1.5 flex h-[22px] shrink-0 items-start gap-1 overflow-hidden">
+      <div className="mb-1 flex h-[22px] shrink-0 items-start gap-1 overflow-hidden">
         {product.verified ? (
           <Badge variant="solid" className="px-1.5 py-0.5 text-[9.5px]">
             Verified™
@@ -135,7 +135,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       </div>
 
       <Link href={href} className="hover:underline">
-        <h3 className="line-clamp-2 min-h-[2.6em] text-[12.5px] font-semibold leading-snug text-wf-800">
+        <h3 className="line-clamp-2 min-h-[2.4em] text-[12.5px] font-semibold leading-snug text-wf-800">
           {product.title}
         </h3>
       </Link>
@@ -144,18 +144,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         {product.brand}
       </p>
 
-      <div className="mt-1.5 flex h-[20px] flex-wrap gap-1 overflow-hidden">
-        {product.features.slice(0, 2).map((f) => (
-          <span
-            key={f}
-            className="rounded-md bg-wf-100 px-1.5 py-0.5 text-[9px] text-wf-600"
-          >
-            {f}
-          </span>
-        ))}
-      </div>
-
-      <div className="mt-auto pt-2">
+      <div className="mt-auto pt-1">
         <div className="flex min-h-[22px] flex-wrap items-baseline gap-1.5">
           {product.originalPriceCents && pct != null ? (
             <span className="text-[11px] text-wf-500 line-through">

@@ -5,28 +5,31 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Badge, Button, Notice } from "@europmade/ui"
 import { StorefrontShell, VatRow, formatEuro } from "../../_components/storefront-shell"
 import {
-  listOrders,
+  getOrderConfirmation,
   OrderServiceApiError,
 } from "../../_lib/order-service-api"
+import { clearPendingGuestOrder } from "../../_lib/guest-checkout-token"
 
 function ConfirmationInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const paymentRef = searchParams.get("payment_reference")?.trim() ?? ""
+  const guest = searchParams.get("guest") === "1"
   const [error, setError] = useState<string | null>(null)
   const [orders, setOrders] = useState<
-    Awaited<ReturnType<typeof listOrders>>["orders"] | "loading"
+    Awaited<ReturnType<typeof getOrderConfirmation>>["orders"] | "loading"
   >("loading")
 
   useEffect(() => {
-    listOrders()
+    if (!paymentRef) {
+      setOrders([])
+      setError("Ontbrekende betaalreferentie.")
+      return
+    }
+    getOrderConfirmation(paymentRef)
       .then((res) => {
-        const filtered = paymentRef
-          ? res.orders.filter((row) =>
-              row.order.order_number.startsWith(paymentRef)
-            )
-          : res.orders
-        setOrders(filtered.length > 0 ? filtered : res.orders)
+        setOrders(res.orders)
+        if (guest) clearPendingGuestOrder()
       })
       .catch((err: unknown) => {
         setOrders([])
@@ -36,7 +39,7 @@ function ConfirmationInner() {
             : "Bevestiging laden mislukt."
         )
       })
-  }, [paymentRef])
+  }, [guest, paymentRef])
 
   const totals = (() => {
     if (orders === "loading" || orders.length === 0) {
@@ -147,6 +150,17 @@ function ConfirmationInner() {
           </aside>
 
           <div className="flex flex-wrap justify-center gap-3 pt-2">
+            {guest ? (
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() =>
+                  router.push(`/register?claim_order=1&payment_reference=${encodeURIComponent(paymentRef)}`)
+                }
+              >
+                Account aanmaken voor deze bestelling
+              </Button>
+            ) : null}
             <Button type="button" onClick={() => router.push("/cart")}>
               Bestelling bekijken
             </Button>

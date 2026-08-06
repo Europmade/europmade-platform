@@ -11,17 +11,12 @@ import {
 
 export type HomepageCategory = MarketplaceCategory
 
-export type HomepageProduct = {
-  title: string
-  priceLabel: string
-  ratingLabel: string
-  verified: boolean
-}
-
 export type HomepageRetailer = {
   name: string
   meta: string
   description: string
+  /** Publieke merk-/retailerpagina (`/merk/[slug]`). */
+  slug: string
 }
 
 export const HOMEPAGE_NAV_LINKS = [
@@ -36,49 +31,26 @@ export const HOMEPAGE_NAV_LINKS = [
 export const HOMEPAGE_CATEGORIES: HomepageCategory[] =
   POPULAR_MARKETPLACE_CATEGORIES
 
-/** Wireframe-desktop voorbeelden — redactioneel tot Catalog/Search live is. */
-export const HOMEPAGE_FEATURED_PRODUCTS: HomepageProduct[] = [
-  {
-    title: "Robotmaaier X200",
-    priceLabel: "Vanaf € 239,00",
-    ratingLabel: "★ 4,4 · Gemaakt in Nederland",
-    verified: true,
-  },
-  {
-    title: "Tuinslang 20m",
-    priceLabel: "Vanaf € 59,95",
-    ratingLabel: "★ 4,2 · Gemaakt in Duitsland",
-    verified: true,
-  },
-  {
-    title: "Keramische pan-set",
-    priceLabel: "Vanaf € 89,00",
-    ratingLabel: "★ 4,7 · Gemaakt in Italië",
-    verified: true,
-  },
-  {
-    title: "Wollen deken",
-    priceLabel: "Vanaf € 45,00",
-    ratingLabel: "★ 4,6 · Gemaakt in België",
-    verified: true,
-  },
-]
+/** Uitgelichte producten: zie `featuredListingProducts()` in listing-products.ts. */
 
 export const HOMEPAGE_RETAILERS: HomepageRetailer[] = [
   {
-    name: "Merknaam BV",
+    name: "VerdeTech",
     meta: "★ 4,6 · Nederland",
     description: "Producent van tuingereedschap, actief sinds 2015.",
+    slug: "verdetech",
   },
   {
     name: "Atelier Rossi",
     meta: "★ 4,8 · Italië",
     description: "Keramiek en keukenwaar, familiebedrijf sinds 1962.",
+    slug: "atelier-rossi",
   },
   {
     name: "Wolfabriek B.",
     meta: "★ 4,5 · België",
     description: "Wollen producten, ambachtelijk vervaardigd.",
+    slug: "wolfabriek-b",
   },
 ]
 

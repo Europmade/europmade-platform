@@ -30,14 +30,26 @@ export const StoreCheckoutPlaceBody = z.object({
     .min(1),
   affiliate_click_id: z.string().trim().min(1).optional().nullable(),
   affiliate_coupon_code: z.string().trim().min(1).optional().nullable(),
+  guest_checkout_token: z.string().trim().min(8).optional().nullable(),
 })
 export type StoreCheckoutPlaceBodyInput = z.infer<typeof StoreCheckoutPlaceBody>
+
+export const StoreClaimGuestOrderBody = z.object({
+  payment_reference: z.string().trim().min(8).max(128),
+  guest_checkout_token: z.string().trim().min(8).optional().nullable(),
+})
+export type StoreClaimGuestOrderBodyInput = z.infer<typeof StoreClaimGuestOrderBody>
 
 export const StoreCartLineBody = z.object({
   offer_id: z.string().trim().min(1),
   quantity: z.number().int().positive(),
 })
 export type StoreCartLineBodyInput = z.infer<typeof StoreCartLineBody>
+
+export const StoreCartMergeBody = z.object({
+  guest_token: z.string().trim().min(8).optional().nullable(),
+})
+export type StoreCartMergeBodyInput = z.infer<typeof StoreCartMergeBody>
 
 export const StoreCartLinePatchBody = z.object({
   quantity: z.number().int().positive(),

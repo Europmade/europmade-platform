@@ -1,11 +1,16 @@
-import type { ReactNode } from "react";
-
 /**
  * Focused Flow Template (CMP-001, minimale variant): uitsluitend logo,
  * gecentreerd, geen zoekbalk/navigatie — vastgesteld bij de Authenticatie-flow
  * (docs/07-design-system/components.md, CMP-001).
+ *
+ * children-type bewust breed gehouden i.v.m. Next.js layout typecheck +
+ * React 19 @types dual-package conflict in monorepo.
  */
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <div className="min-h-screen bg-wf-100">
       <header

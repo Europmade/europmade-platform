@@ -1,9 +1,5 @@
-import type {
-  AuthenticatedMedusaRequest,
-  MedusaResponse,
-} from "@medusajs/framework/http"
+import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
-import { resolveApprovedSeller } from "../../product-cloud/resolve-seller"
 import {
   loadBuyBoxForIdentifier,
   loadCachedWinner,
@@ -11,14 +7,10 @@ import {
 
 /**
  * Server-side Buy Box-resultaat (ADR-0005 / ADR-0020).
+ * Publieke guest-read (Blueprint API-model — Offer/Buy Box lezen).
  * Default: read-through recompute. `prefer_cache=true`: C.4 winner-only.
  */
-export async function GET(
-  req: AuthenticatedMedusaRequest,
-  res: MedusaResponse
-) {
-  await resolveApprovedSeller(req.scope, req.auth_context.actor_id)
-
+export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const identifierId =
     typeof req.query.identifier_id === "string"
       ? req.query.identifier_id.trim()

@@ -94,9 +94,25 @@ export function listProductReviews(productId: string) {
   )
 }
 
+/** Publieke verkopersreviews voor een seller_id. */
+export function listSellerReviews(sellerId: string) {
+  return request<{ reviews: ReviewView[]; aggregate?: { average_score: number; count: number } }>(
+    `/store/reviews?seller_id=${encodeURIComponent(sellerId)}`
+  )
+}
+
 export function getPublicProduct(productId: string) {
   return request<{
-    product: { id: string; title: string; lifecycle_status: string }
+    product: {
+      id: string
+      title: string
+      description?: string
+      lifecycle_status: string
+      brand_name?: string | null
+      category_names?: string[]
+    }
     reviews: ReviewView[]
+    offers?: unknown[]
+    buy_box?: unknown
   }>(`/store/catalog/products/${encodeURIComponent(productId)}`)
 }
