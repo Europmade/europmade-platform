@@ -35,7 +35,7 @@ export function SearchForm({
 
   const shell =
     variant === "hero"
-      ? "mx-auto mb-[18px] flex h-[50px] w-full max-w-[600px] items-center rounded-lg border-2 border-wf-800 bg-white px-[18px]"
+      ? "mx-auto flex h-[52px] w-full max-w-[720px] items-center rounded-xl border border-wf-300 bg-white px-4 shadow-sm transition focus-within:border-wf-800 focus-within:shadow-md"
       : "flex h-10 flex-1 items-center rounded-md border-[1.5px] border-wf-700 px-3.5"
 
   return (

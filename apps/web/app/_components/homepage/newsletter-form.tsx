@@ -44,14 +44,14 @@ export function NewsletterForm() {
             setMessage(null)
           }}
           placeholder="naam@voorbeeld.nl"
-          className="h-[42px] flex-1 rounded-wf border-0 px-3 text-[13px] text-wf-900 placeholder:text-wf-500 focus:outline-none focus:ring-2 focus:ring-white"
+          className="h-[42px] flex-1 rounded-xl border border-wf-300 bg-white px-3 text-[13px] text-wf-900 placeholder:text-wf-500 focus:outline-none focus:ring-2 focus:ring-wf-900/20"
           autoComplete="email"
           required
         />
         <Button
           type="submit"
           variant="primary"
-          className="h-[42px] shrink-0 bg-wf-800 px-5 hover:bg-wf-700"
+          className="h-[42px] shrink-0 px-5"
         >
           Aanmelden
         </Button>

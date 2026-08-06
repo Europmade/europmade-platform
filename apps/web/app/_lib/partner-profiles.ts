@@ -64,21 +64,14 @@ function fromHomepage(): PartnerProfile[] {
     name: r.name,
     description: r.description,
     verified: true,
-    productionCountry: r.meta.includes("Italië")
-      ? "Italië"
-      : r.meta.includes("België")
-        ? "België"
-        : "Nederland",
-    hqCountry: r.meta.includes("Italië")
-      ? "Italië"
-      : r.meta.includes("België")
-        ? "België"
-        : "Nederland",
+    productionCountry: r.country,
+    hqCountry: r.country,
     foundedYear: 2010,
-    rating: 4.5,
+    rating: r.rating,
     reviewCount: 500,
     avgDelivery: "2-4 werkdagen",
     returnsPolicy: "30 dagen retour",
+    productCountHint: r.productCount,
   }))
 }
 

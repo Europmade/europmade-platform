@@ -18,7 +18,6 @@ import {
 } from "../../_lib/listing-products"
 import { hashHue } from "../../_lib/cart-line-meta"
 import { isFavorite, toggleFavorite } from "../../_lib/favorites"
-import { estimateReviewCount } from "../../_lib/product-recommendations"
 
 export type ProductCarouselVariant = "default" | "compact"
 
@@ -42,11 +41,21 @@ export type ProductCarouselProps = {
   lazy?: boolean
 }
 
-function ProductThumb({ slug, title }: { slug: string; title: string }) {
+function ProductThumb({
+  slug,
+  title,
+  dense,
+}: {
+  slug: string
+  title: string
+  dense?: boolean
+}) {
   const hue = hashHue(slug || title)
   return (
     <div
-      className="aspect-square w-full overflow-hidden rounded-lg bg-wf-100"
+      className={`w-full overflow-hidden rounded-lg bg-wf-100 ${
+        dense ? "aspect-[5/4]" : "aspect-square"
+      }`}
       style={{
         background: `linear-gradient(145deg, hsl(${hue} 28% 88%), hsl(${(hue + 40) % 360} 22% 78%))`,
       }}
@@ -98,16 +107,12 @@ function cardShellClass(compact?: boolean): string {
 function SkeletonCard({ compact }: { compact?: boolean }) {
   return (
     <div
-      className={`${cardShellClass(compact)} animate-pulse rounded-xl border border-wf-200 bg-white ${
-        compact ? "p-2" : "p-2.5"
-      }`}
+      className={`${cardShellClass(compact)} animate-pulse rounded-xl border border-wf-200 bg-white p-1.5`}
       aria-hidden
     >
-      <div className="aspect-square w-full rounded-lg bg-wf-100" />
-      <div className="mt-2.5 h-3.5 w-[88%] rounded bg-wf-100" />
-      <div className="mt-1.5 h-3 w-[55%] rounded bg-wf-100" />
-      <div className="mt-3 h-4 w-[40%] rounded bg-wf-100" />
-      <div className="mt-2 h-3 w-[70%] rounded bg-wf-100" />
+      <div className="aspect-[5/4] w-full rounded-lg bg-wf-100" />
+      <div className="mt-1.5 h-3 w-[90%] rounded bg-wf-100" />
+      <div className="mt-1.5 h-3 w-full rounded bg-wf-100" />
     </div>
   )
 }
@@ -135,7 +140,7 @@ function FavoriteButton({ slug, title }: { slug: string; title: string }) {
           ? `${title} uit favorieten verwijderen`
           : `${title} aan favorieten toevoegen`
       }
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-base text-wf-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-wf-900"
+      className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-sm text-wf-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-wf-900"
     >
       <span aria-hidden>{active ? "♥" : "♡"}</span>
     </button>
@@ -145,20 +150,26 @@ function FavoriteButton({ slug, title }: { slug: string; title: string }) {
 export function ProductCarouselCard({
   product,
   variant = "default",
+  layout = "carousel",
   showAddToCart = false,
   onAddToCart,
   onNavigate,
 }: {
   product: ListingProduct
   variant?: ProductCarouselVariant
+  /** carousel = flex-basis voor rails; grid = volle celbreedte. */
+  layout?: "carousel" | "grid"
   showAddToCart?: boolean
   onAddToCart?: (product: ListingProduct) => void
   onNavigate?: () => void
 }) {
   const compact = variant === "compact"
   const href = `/product/${product.slug}`
-  const reviews = estimateReviewCount(product)
   const fromPrice = product.offerCount > 1
+  const shellClass =
+    layout === "grid"
+      ? "relative h-full w-full"
+      : `${cardShellClass(compact)} group/card relative`
 
   function handleAdd(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault()
@@ -172,19 +183,21 @@ export function ProductCarouselCard({
   }
 
   return (
-    <article className={`${cardShellClass(compact)} group/card relative`}>
-      <div
-        className={`relative flex h-full flex-col overflow-hidden rounded-xl border border-wf-200 bg-white shadow-sm transition duration-200 group-hover/card:-translate-y-0.5 group-hover/card:border-wf-300 group-hover/card:shadow-md ${
-          compact ? "p-2" : "p-2.5"
-        }`}
-      >
+    <article className={`${shellClass} group/card`}>
+      <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-wf-200 bg-white p-1.5 shadow-sm transition duration-200 group-hover/card:-translate-y-0.5 group-hover/card:border-wf-300 group-hover/card:shadow-md">
         <div className="relative">
-          <ProductThumb slug={product.slug} title={product.title} />
+          <ProductThumb slug={product.slug} title={product.title} dense />
+          <span
+            className="pointer-events-none absolute left-1.5 top-1.5 z-[1] rounded bg-white/90 px-1 py-0.5 text-[10px] leading-none tracking-tighter text-wf-800 shadow-sm backdrop-blur-sm"
+            aria-label={`Beoordeling ${product.rating.toFixed(1).replace(".", ",")}`}
+          >
+            {starsForRating(product.rating)}
+          </span>
           {product.verified ? (
-            <span className="pointer-events-none absolute left-1.5 top-1.5">
+            <span className="pointer-events-none absolute bottom-1.5 left-1.5 z-[1]">
               <Badge
                 variant="solid"
-                className="px-1.5 py-0.5 text-[9px] shadow-sm"
+                className="px-1 py-0.5 text-[8.5px] shadow-sm"
               >
                 EU Verified™
               </Badge>
@@ -192,30 +205,18 @@ export function ProductCarouselCard({
           ) : null}
         </div>
 
-        <h3
-          className={`mt-2 line-clamp-2 font-semibold leading-snug text-wf-900 ${
-            compact ? "min-h-[2.4em] text-[12px]" : "min-h-[2.5em] text-[13px]"
-          }`}
-        >
+        <h3 className="mt-1.5 line-clamp-2 min-h-[2.2em] text-[12.5px] font-semibold leading-snug text-wf-900">
           {product.title}
         </h3>
-        <p
-          className={`mt-0.5 truncate text-wf-600 ${
-            compact ? "text-[10px]" : "text-[11px]"
-          }`}
-        >
-          {product.brand}
-        </p>
 
-        <div className="mt-auto pt-2">
-          <p
-            className={`font-bold text-wf-900 ${
-              compact ? "text-[14px]" : "text-[15px]"
-            }`}
-          >
+        <div className="mt-auto flex items-baseline justify-between gap-2 pt-1">
+          <p className="min-w-0 truncate text-[11px] text-wf-600">
+            {product.brand}
+          </p>
+          <p className="shrink-0 text-[12.5px] font-bold text-wf-900">
             {fromPrice ? (
               <>
-                <span className="mr-1 text-[11px] font-semibold text-wf-600">
+                <span className="mr-0.5 text-[10px] font-semibold text-wf-600">
                   vanaf
                 </span>
                 {formatEuroFromCents(product.priceCents)}
@@ -223,19 +224,6 @@ export function ProductCarouselCard({
             ) : (
               formatEuroFromCents(product.priceCents)
             )}
-          </p>
-          <p
-            className={`mt-1 flex items-center gap-1 text-wf-600 ${
-              compact ? "text-[10px]" : "text-[11px]"
-            }`}
-          >
-            <span className="tracking-tighter text-wf-800" aria-hidden>
-              {starsForRating(product.rating)}
-            </span>
-            <span className="font-semibold text-wf-800">
-              {product.rating.toFixed(1).replace(".", ",")}
-            </span>
-            <span className="truncate">({reviews})</span>
           </p>
         </div>
 
@@ -247,16 +235,16 @@ export function ProductCarouselCard({
           aria-label={`${product.title} bekijken`}
         />
 
-        <div className="absolute right-3 top-3 z-[2]">
+        <div className="absolute right-2 top-2 z-[2]">
           <FavoriteButton slug={product.slug} title={product.title} />
         </div>
 
         {showAddToCart && !compact ? (
-          <div className="absolute inset-x-2.5 bottom-2.5 z-[2] hidden translate-y-1 opacity-0 transition duration-200 group-hover/card:translate-y-0 group-hover/card:opacity-100 desktop:block">
+          <div className="absolute inset-x-2 bottom-2 z-[2] hidden translate-y-1 opacity-0 transition duration-200 group-hover/card:translate-y-0 group-hover/card:opacity-100 desktop:block">
             <Button
               type="button"
               variant="primary"
-              className="h-9 w-full text-xs shadow-md"
+              className="h-8 w-full text-[11px] shadow-md"
               onClick={handleAdd}
             >
               In winkelwagen
@@ -403,10 +391,10 @@ export function ProductCarousel({
   return (
     <section
       ref={rootRef}
-      className={`${compact ? "mt-5" : "mt-10"} ${className}`}
+      className={`${compact ? "mt-3" : "mt-6"} ${className}`}
       aria-busy={showSkeletons || undefined}
     >
-      <div className="mb-2.5">
+      <div className="mb-2">
         <h2
           className={`font-bold text-wf-900 ${compact ? "text-sm" : "text-lg"}`}
         >
