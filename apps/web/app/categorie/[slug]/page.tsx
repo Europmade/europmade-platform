@@ -1,10 +1,18 @@
 import type { Metadata } from "next"
+import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
-import { MarketplaceListing } from "../../_components/marketplace/marketplace-listing"
+import { CategoryPageView } from "../../_components/category/category-page-view"
+import { resolveCategoryPage } from "../../_lib/cms/resolve-category"
+import { resolveStorefrontLocaleFromCookie } from "../../_lib/cms/resolve-homepage"
+import { LOCALE_COOKIE } from "../../_lib/i18n/locales"
 import {
   findMarketplaceCategory,
   MARKETPLACE_CATEGORIES,
 } from "../../_lib/marketplace-categories"
+import {
+  LISTING_PRODUCTS,
+  productsForCategory,
+} from "../../_lib/listing-products"
 import { resolveListingProducts } from "../../_lib/storefront-catalog"
 
 type CategoryPageProps = {
@@ -19,44 +27,64 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params
-  const category = findMarketplaceCategory(slug)
-  if (!category) {
-    return { title: "Categorie niet gevonden — EuropMade" }
+  const cookieStore = await cookies()
+  const locale = resolveStorefrontLocaleFromCookie(
+    cookieStore.get(LOCALE_COOKIE)?.value
+  )
+  const { products } = await resolveListingProducts({ categorySlug: slug })
+  const pool =
+    products.length > 0 ? products : productsForCategory(slug).length
+      ? productsForCategory(slug)
+      : LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
+  const page = resolveCategoryPage(slug, pool, locale)
+  if (!page) {
+    return { title: "Category — EuropMade" }
   }
   return {
-    title: `${category.label} — EuropMade`,
-    description: `Ontdek producten in de categorie ${category.label} op EuropMade — geproduceerd in Europa.`,
-    alternates: { canonical: `/categorie/${category.slug}` },
+    title: page.seoTitle,
+    description: page.seoDescription,
+    alternates: { canonical: page.canonicalPath },
     openGraph: {
-      title: `${category.label} — EuropMade`,
-      description: `Categorie ${category.label} op de Europese marketplace EuropMade.`,
-      locale: "nl_NL",
-      type: "website",
+      title: page.openGraph.title,
+      description: page.openGraph.description,
+      locale: locale === "nl" ? "nl_NL" : locale,
+      type: page.openGraph.type,
+    },
+    twitter: {
+      card: page.twitterCard.card,
+      title: page.twitterCard.title,
+      description: page.twitterCard.description,
     },
   }
 }
 
 /**
- * Categoriepagina — scherm #3/#4 (marketplace-listing template + CMP-017 seed).
+ * Premium category page — CMS/AI-ready listing (scherm #3/#4).
  */
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params
-  const category = findMarketplaceCategory(slug)
-  if (!category) notFound()
+  if (!findMarketplaceCategory(slug)) notFound()
 
-  const { products } = await resolveListingProducts({
-    categorySlug: category.slug,
+  const cookieStore = await cookies()
+  const locale = resolveStorefrontLocaleFromCookie(
+    cookieStore.get(LOCALE_COOKIE)?.value
+  )
+
+  const { products: apiProducts } = await resolveListingProducts({
+    categorySlug: slug,
   })
 
-  return (
-    <MarketplaceListing
-      mode="category"
-      title={category.label}
-      meta={`${products.length} producten`}
-      breadcrumbLabel={category.label}
-      emptyVariant="category"
-      showCategoryAdSlot
-      products={products}
-    />
-  )
+  // Seed fallback for empty catalog (demo / offline) — seller images replace later.
+  const seed = productsForCategory(slug)
+  const products =
+    apiProducts.length > 0
+      ? apiProducts
+      : seed.length > 0
+        ? seed
+        : LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
+
+  const page = resolveCategoryPage(slug, products, locale)
+  if (!page) notFound()
+
+  return <CategoryPageView page={page} products={products} />
 }

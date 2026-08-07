@@ -31,6 +31,10 @@ export type StorefrontAdCreative = {
   background?: string
   /** Optional manufacturer logo URL. */
   logoSrc?: string | null
+  /** Optional production country label (category banners). */
+  productionCountryLabel?: string | null
+  /** Optional Verified™ badge on banner (CMS). */
+  showVerifiedBadge?: boolean
   activeFrom?: string | null
   activeTo?: string | null
 }

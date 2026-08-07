@@ -47,6 +47,17 @@ export const CATEGORY_PRODUCT_KIND: Record<string, ProductMockKind> = {
   voeding: "food",
   keuken: "cookware",
   outdoor: "garden",
+  verlichting: "lamp",
+  huishouden: "vacuum",
+  kantoor: "laptop",
+  "plant-bloem": "garden",
+  "klus-gereedschap": "garden",
+  "tassen-accessoires": "backpack",
+  "juwelen-horloges": "watch",
+  slaapkamer: "chair",
+  schoenen: "sports",
+  duurzaam: "coffee",
+  cadeaus: "accessory",
 }
 
 /** Campaign slug → studio product photo. */

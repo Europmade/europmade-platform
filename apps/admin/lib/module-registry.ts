@@ -109,13 +109,13 @@ export const ADMIN_MORE_NAV: AdminNavItem[] = [
   },
   {
     id: "ai",
-    naam: "AI",
-    route: null,
+    naam: "AI Content",
+    route: "/ai/content",
     icoon: "ai",
     permissie: "Beheerder",
     navigatiepositie: 60,
     primary: false,
-    available: false,
+    available: true,
   },
   {
     id: "settings",

@@ -24,23 +24,30 @@ type AdSlotProps = {
   adLabel?: string
   /** Explicit mock kind when CMS image is empty. */
   productKind?: ProductMockKind
+  /** Remove outer horizontal margin (e.g. category hero column). */
+  flush?: boolean
 }
 
 const BANNER_H = "min-h-[200px] h-[220px]"
+const BANNER_H_COMPACT = "min-h-[150px] h-[160px]"
 
 /**
- * CMP-033 Advertisement Banner — premium ad position (~220px).
+ * CMP-033 Advertisement Banner — premium ad position (~220px; compact ~160px).
  */
 export function AdSlot({
   position,
+  compact = false,
   location = "homepage",
   creative,
   locale = DEFAULT_STOREFRONT_LOCALE,
   adLabel,
   productKind,
+  flush = false,
 }: AdSlotProps) {
   const ad = creative ?? resolveStorefrontAd({ position, location })
   const label = adLabel ?? t("advertisement", locale)
+  const edge = flush ? "mx-0" : "mx-4 tablet:mx-8"
+  const heightClass = compact ? BANNER_H_COMPACT : BANNER_H
 
   if (ad) {
     const href = resolveBannerHref(ad)
@@ -59,6 +66,10 @@ export function AdSlot({
     const bg =
       ad.background ??
       `linear-gradient(135deg, hsl(${hue} 16% 97%) 0%, hsl(${(hue + 18) % 360} 14% 91%) 55%, hsl(${(hue + 36) % 360} 12% 88%) 100%)`
+    const showCategoryMeta =
+      location === "category" ||
+      Boolean(ad.productionCountryLabel) ||
+      ad.showVerifiedBadge === true
 
     const inner = (
       <div className="relative flex h-full w-full overflow-hidden">
@@ -85,46 +96,92 @@ export function AdSlot({
         />
 
         {/* LEFT */}
-        <div className="relative z-[1] flex h-full w-[56%] max-w-[620px] flex-col justify-center px-5 py-4 tablet:w-[52%] tablet:px-8">
-          <span className="mb-2 inline-flex w-fit rounded border border-wf-300/90 bg-white/95 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-wf-600">
+        <div
+          className={`relative z-[1] flex h-full w-[54%] max-w-[620px] flex-col justify-center px-4 py-3 tablet:w-[50%] tablet:px-7 ${
+            compact ? "py-2.5" : "py-4 tablet:px-8"
+          }`}
+        >
+          <span className="mb-1.5 inline-flex w-fit rounded border border-wf-300/90 bg-white/95 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-wf-600">
             {label}
           </span>
-          <p className="text-[18px] font-bold leading-[1.15] tracking-tight text-wf-900 tablet:text-[22px]">
+          <p
+            className={`font-bold leading-[1.15] tracking-tight text-wf-900 ${
+              compact
+                ? "text-[15px] tablet:text-[17px]"
+                : "text-[18px] tablet:text-[22px]"
+            }`}
+          >
             {ad.headline}
           </p>
-          <p className="mt-1.5 line-clamp-2 max-w-md text-[12.5px] leading-snug text-wf-600 tablet:text-[13.5px]">
+          <p
+            className={`mt-1 line-clamp-2 max-w-md leading-snug text-wf-600 ${
+              compact ? "text-[11.5px]" : "text-[12.5px] tablet:text-[13.5px]"
+            }`}
+          >
             {ad.description}
           </p>
-          <span className="mt-3.5 inline-flex h-9 w-fit items-center justify-center rounded-xl bg-wf-900 px-4 text-[12.5px] font-semibold text-white shadow-sm">
+          <span
+            className={`mt-2.5 inline-flex w-fit items-center justify-center rounded-xl bg-wf-900 px-3.5 text-[12px] font-semibold text-white shadow-sm ${
+              compact ? "h-8" : "mt-3.5 h-9 px-4 text-[12.5px]"
+            }`}
+          >
             {ad.ctaLabel}
           </span>
         </div>
 
-        {/* RIGHT */}
-        <div className="relative z-[1] flex h-full flex-1 items-center justify-center pr-3 tablet:pr-7">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={logoSrc}
-            alt=""
-            className="absolute right-4 top-3.5 h-7 w-auto object-contain drop-shadow-sm tablet:right-7"
-            loading="lazy"
-            decoding="async"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={productSrc}
-            alt={ad.imageAlt}
-            className="max-h-[90%] max-w-[82%] object-contain drop-shadow-[0_18px_32px_rgba(15,23,42,0.14)]"
-            loading="lazy"
-            decoding="async"
-          />
+        {/* RIGHT — product + partner meta (CMS) */}
+        <div className="relative z-[1] flex h-full flex-1 items-center gap-2 pr-2.5 tablet:gap-3 tablet:pr-5">
+          <div className="flex h-full flex-1 items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={productSrc}
+              alt={ad.imageAlt}
+              className={`object-contain drop-shadow-[0_14px_28px_rgba(15,23,42,0.14)] ${
+                compact ? "max-h-[88%] max-w-[78%]" : "max-h-[90%] max-w-[82%]"
+              }`}
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+
+          {showCategoryMeta ? (
+            <div className="flex w-[72px] shrink-0 flex-col items-center justify-center gap-1.5 tablet:w-[84px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoSrc}
+                alt=""
+                className="h-6 w-auto max-w-full object-contain drop-shadow-sm tablet:h-7"
+                loading="lazy"
+                decoding="async"
+              />
+              {ad.productionCountryLabel ? (
+                <p className="text-center text-[9.5px] font-semibold leading-tight text-wf-700 tablet:text-[10px]">
+                  {ad.productionCountryLabel}
+                </p>
+              ) : null}
+              {ad.showVerifiedBadge !== false ? (
+                <span className="rounded border border-wf-300/90 bg-white/95 px-1 py-0.5 text-[8.5px] font-bold tracking-wide text-wf-800">
+                  {t("verifiedBadge", locale)}
+                </span>
+              ) : null}
+            </div>
+          ) : (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={logoSrc}
+              alt=""
+              className="absolute right-4 top-3.5 h-7 w-auto object-contain drop-shadow-sm tablet:right-7"
+              loading="lazy"
+              decoding="async"
+            />
+          )}
         </div>
       </div>
     )
 
     return (
       <aside
-        className={`relative mx-4 overflow-hidden rounded-2xl border border-wf-200 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)] tablet:mx-8 ${BANNER_H}`}
+        className={`relative overflow-hidden rounded-2xl border border-wf-200 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)] ${edge} ${heightClass}`}
         aria-label={`${label}: ${ad.title}`}
         data-ad-position={position}
         data-ad-id={ad.id}
@@ -150,7 +207,7 @@ export function AdSlot({
 
   return (
     <aside
-      className={`relative mx-4 flex items-center overflow-hidden rounded-2xl border border-dashed border-wf-400 bg-wf-100 tablet:mx-8 ${BANNER_H}`}
+      className={`relative flex items-center overflow-hidden rounded-2xl border border-dashed border-wf-400 bg-wf-100 ${edge} ${heightClass}`}
       aria-label={`${label} ${t("position", locale)} ${position}`}
       data-ad-position={position}
     >

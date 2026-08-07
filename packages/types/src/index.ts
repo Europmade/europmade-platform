@@ -15,3 +15,17 @@ export type SupportedCountry = "NL" | "BE" | "DE" | "FR" | "ES" | "IT";
 export type Result<TData, TError = string> =
   | { success: true; data: TData }
   | { success: false; error: TError };
+
+/**
+ * AI Content Engine entity surface (ADR-0036) — Sprint 4-ready shared contract.
+ * Full payloads live in apps/web until Medusa CMS module owns persistence.
+ */
+export type AiContentEntityType =
+  | "category"
+  | "brand"
+  | "producer"
+  | "collection"
+  | "campaign"
+  | "landing"
+  | "search"
+  | "seller";

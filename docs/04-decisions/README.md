@@ -43,3 +43,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0033](./0033-coupon-abuse-prevention-adr-56.md) | Coupon-misbruikpreventie (Blueprint ADR-56) | Geaccepteerd | Affiliate, Moderation |
 | [0034](./0034-finance-invoice-payout-soft-schema.md) | Finance invoice/payout soft-schema & MVP-cadans | Geaccepteerd | Finance |
 | [0035](./0035-ai-support-mvp-deterministic-advisor.md) | AI-ondersteuning MVP: deterministische advisor | Geaccepteerd | AI-ondersteuning |
+| [0036](./0036-ai-content-engine-offline-first.md) | AI Content Engine: offline-first, provider-agnostic | Geaccepteerd | CMS, SEO, AI Content |
