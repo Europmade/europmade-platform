@@ -778,7 +778,6 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           subtitle="Vergelijk vergelijkbare Europese producten."
           products={similar}
           loading={!railsReady}
-          showAddToCart
           lazy={false}
         />
         <ProductCarousel
@@ -786,7 +785,6 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           subtitle="Klanten combineren deze producten regelmatig."
           products={frequentlyTogether}
           loading={!railsReady}
-          showAddToCart
           lazy={false}
         />
         <ProductCarousel
@@ -794,7 +792,6 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           subtitle="Populaire alternatieven die bezoekers bekeken."
           products={othersViewed}
           loading={!railsReady}
-          showAddToCart
           lazy={false}
         />
         <ProductCarousel
@@ -802,7 +799,6 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           products={recentProducts}
           loading={!railsReady}
           hideWhenEmpty
-          showAddToCart
           lazy={false}
         />
       </section>

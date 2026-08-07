@@ -17,27 +17,43 @@ export class CatalogApiError extends Error {
 }
 
 async function request<T>(path: string): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(PUBLISHABLE_KEY
-        ? { "x-publishable-api-key": PUBLISHABLE_KEY }
-        : {}),
-    },
-    next: { revalidate: 30 },
-  })
-  const body: unknown = await response.json().catch(() => undefined)
-  if (!response.ok) {
-    const message =
-      body &&
-      typeof body === "object" &&
-      "message" in body &&
-      typeof body.message === "string"
-        ? body.message
-        : "Catalogus laden mislukt."
-    throw new CatalogApiError(message, response.status)
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 4_000)
+  try {
+    const response = await fetch(`${BACKEND_URL}${path}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(PUBLISHABLE_KEY
+          ? { "x-publishable-api-key": PUBLISHABLE_KEY }
+          : {}),
+      },
+      next: { revalidate: 30 },
+      signal: controller.signal,
+    })
+    const body: unknown = await response.json().catch(() => undefined)
+    if (!response.ok) {
+      const message =
+        body &&
+        typeof body === "object" &&
+        "message" in body &&
+        typeof body.message === "string"
+          ? body.message
+          : "Catalogus laden mislukt."
+      throw new CatalogApiError(message, response.status)
+    }
+    return body as T
+  } catch (err) {
+    if (err instanceof CatalogApiError) throw err
+    if (
+      err instanceof Error &&
+      (err.name === "AbortError" || err.name === "TimeoutError")
+    ) {
+      throw new CatalogApiError("Catalogus timeout.", 408)
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
   }
-  return body as T
 }
 
 export type CatalogListProduct = {

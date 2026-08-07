@@ -10,14 +10,16 @@ import {
   type MouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react"
-import { Badge, Button } from "@europmade/ui"
+import { Badge } from "@europmade/ui"
 import {
+  discountPercent,
   formatEuroFromCents,
   starsForRating,
   type ListingProduct,
 } from "../../_lib/listing-products"
 import { hashHue } from "../../_lib/cart-line-meta"
 import { isFavorite, toggleFavorite } from "../../_lib/favorites"
+import { productMockupSrc } from "../../_lib/product-mockup"
 
 export type ProductCarouselVariant = "default" | "compact"
 
@@ -30,7 +32,7 @@ export type ProductCarouselProps = {
   loading?: boolean
   /** Compact cards for drawer / dense UI. */
   variant?: ProductCarouselVariant
-  /** Optional “In winkelwagen” on hover (desktop). */
+  /** Optional “In winkelwagen” on hover — deprecated, niet meer getoond. */
   showAddToCart?: boolean
   onAddToCart?: (product: ListingProduct) => void
   onNavigate?: () => void
@@ -41,27 +43,49 @@ export type ProductCarouselProps = {
   lazy?: boolean
 }
 
+/**
+ * Productstudio-achtergrond voor transparante PNG/WebP-hoofdfoto's.
+ * Neutrale studio zodat fotorealistische placeholders én seller-uploads uitkomen.
+ */
+function productStudioBackground(_hue: number): string {
+  return "linear-gradient(165deg, #f7f8fa 0%, #f2f3f5 48%, #eceef1 100%)"
+}
+
 function ProductThumb({
   slug,
   title,
-  dense,
+  imageSrc,
 }: {
   slug: string
   title: string
-  dense?: boolean
+  /** Transparante PNG/WebP (standaard EuropMade). */
+  imageSrc?: string | null
 }) {
   const hue = hashHue(slug || title)
   return (
     <div
-      className={`w-full overflow-hidden rounded-lg bg-wf-100 ${
-        dense ? "aspect-[5/4]" : "aspect-square"
-      }`}
-      style={{
-        background: `linear-gradient(145deg, hsl(${hue} 28% 88%), hsl(${(hue + 40) % 360} 22% 78%))`,
-      }}
+      className="relative aspect-square w-full overflow-hidden rounded-lg"
+      style={{ background: productStudioBackground(hue) }}
       role="img"
       aria-label={`Productafbeelding ${title}`}
-    />
+    >
+      {/* Subtiele studio-vloer */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[28%] opacity-50"
+        style={{
+          background: "linear-gradient(to top, #e8eaee, transparent)",
+        }}
+        aria-hidden
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={imageSrc || productMockupSrc(slug || title)}
+        alt=""
+        className="relative z-[1] h-full w-full object-contain p-2.5 drop-shadow-[0_10px_20px_rgba(15,23,42,0.1)]"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
   )
 }
 
@@ -110,9 +134,10 @@ function SkeletonCard({ compact }: { compact?: boolean }) {
       className={`${cardShellClass(compact)} animate-pulse rounded-xl border border-wf-200 bg-white p-1.5`}
       aria-hidden
     >
-      <div className="aspect-[5/4] w-full rounded-lg bg-wf-100" />
+      <div className="aspect-square w-full overflow-hidden rounded-lg bg-wf-100" />
       <div className="mt-1.5 h-3 w-[90%] rounded bg-wf-100" />
       <div className="mt-1.5 h-3 w-full rounded bg-wf-100" />
+      <div className="mt-2 ml-auto h-4 w-[45%] rounded bg-wf-100" />
     </div>
   )
 }
@@ -151,44 +176,36 @@ export function ProductCarouselCard({
   product,
   variant = "default",
   layout = "carousel",
-  showAddToCart = false,
-  onAddToCart,
   onNavigate,
 }: {
   product: ListingProduct
   variant?: ProductCarouselVariant
-  /** carousel = flex-basis voor rails; grid = volle celbreedte. */
   layout?: "carousel" | "grid"
+  /** @deprecated Niet meer gebruikt — hover ATC verwijderd. */
   showAddToCart?: boolean
   onAddToCart?: (product: ListingProduct) => void
   onNavigate?: () => void
 }) {
   const compact = variant === "compact"
   const href = `/product/${product.slug}`
-  const fromPrice = product.offerCount > 1
+  const pct = discountPercent(product)
+  const hasPromo =
+    pct != null &&
+    product.originalPriceCents != null &&
+    product.originalPriceCents > product.priceCents
+  const showFrom = product.offerCount > 1
   const shellClass =
     layout === "grid"
       ? "relative h-full w-full"
       : `${cardShellClass(compact)} group/card relative`
 
-  function handleAdd(e: MouseEvent<HTMLButtonElement>) {
-    e.preventDefault()
-    e.stopPropagation()
-    if (onAddToCart) {
-      onAddToCart(product)
-      return
-    }
-    onNavigate?.()
-    window.location.assign(href)
-  }
-
   return (
     <article className={`${shellClass} group/card`}>
       <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-wf-200 bg-white p-1.5 shadow-sm transition duration-200 group-hover/card:-translate-y-0.5 group-hover/card:border-wf-300 group-hover/card:shadow-md">
         <div className="relative">
-          <ProductThumb slug={product.slug} title={product.title} dense />
+          <ProductThumb slug={product.slug} title={product.title} />
           <span
-            className="pointer-events-none absolute left-1.5 top-1.5 z-[1] rounded bg-white/90 px-1 py-0.5 text-[10px] leading-none tracking-tighter text-wf-800 shadow-sm backdrop-blur-sm"
+            className="pointer-events-none absolute left-1.5 top-1.5 z-[1] rounded bg-white/90 px-1 py-0.5 text-[9.5px] leading-none tracking-tighter text-wf-800 shadow-sm backdrop-blur-sm"
             aria-label={`Beoordeling ${product.rating.toFixed(1).replace(".", ",")}`}
           >
             {starsForRating(product.rating)}
@@ -203,31 +220,42 @@ export function ProductCarouselCard({
               </Badge>
             </span>
           ) : null}
+          {hasPromo ? (
+            <span className="pointer-events-none absolute bottom-1.5 right-1.5 z-[1] rounded bg-wf-900 px-1 py-0.5 text-[9px] font-bold text-white shadow-sm">
+              −{pct}%
+            </span>
+          ) : null}
         </div>
 
         <h3 className="mt-1.5 line-clamp-2 min-h-[2.2em] text-[12.5px] font-semibold leading-snug text-wf-900">
           {product.title}
         </h3>
 
-        <div className="mt-auto flex items-baseline justify-between gap-2 pt-1">
+        <div className="mt-auto flex items-end justify-between gap-1.5 pt-1">
           <p className="min-w-0 truncate text-[11px] text-wf-600">
             {product.brand}
           </p>
-          <p className="shrink-0 text-[12.5px] font-bold text-wf-900">
-            {fromPrice ? (
-              <>
-                <span className="mr-0.5 text-[10px] font-semibold text-wf-600">
+          <div className="flex shrink-0 flex-col items-end leading-none">
+            {hasPromo ? (
+              <span className="mb-0.5 text-[10px] text-wf-500 line-through">
+                {formatEuroFromCents(product.originalPriceCents!)}
+              </span>
+            ) : null}
+            <p
+              className={`font-bold tracking-tight text-wf-900 ${
+                hasPromo ? "text-[17px]" : "text-[16px]"
+              }`}
+            >
+              {showFrom ? (
+                <span className="mr-0.5 align-baseline text-[10px] font-semibold text-wf-600">
                   vanaf
                 </span>
-                {formatEuroFromCents(product.priceCents)}
-              </>
-            ) : (
-              formatEuroFromCents(product.priceCents)
-            )}
-          </p>
+              ) : null}
+              {formatEuroFromCents(product.priceCents)}
+            </p>
+          </div>
         </div>
 
-        {/* Full-card hit target under interactive controls */}
         <Link
           href={href}
           onClick={onNavigate}
@@ -238,19 +266,6 @@ export function ProductCarouselCard({
         <div className="absolute right-2 top-2 z-[2]">
           <FavoriteButton slug={product.slug} title={product.title} />
         </div>
-
-        {showAddToCart && !compact ? (
-          <div className="absolute inset-x-2 bottom-2 z-[2] hidden translate-y-1 opacity-0 transition duration-200 group-hover/card:translate-y-0 group-hover/card:opacity-100 desktop:block">
-            <Button
-              type="button"
-              variant="primary"
-              className="h-8 w-full text-[11px] shadow-md"
-              onClick={handleAdd}
-            >
-              In winkelwagen
-            </Button>
-          </div>
-        ) : null}
       </div>
     </article>
   )
@@ -467,7 +482,7 @@ export function ProductCarousel({
   )
 }
 
-/** Gradient-thumb voor cartregels e.d. (gedeeld met drawer). */
+/** Studio-thumb voor cartregels e.d. — transparante PNG-stijl mockup. */
 export function ProductThumbBlock({
   seed,
   title,
@@ -480,12 +495,19 @@ export function ProductThumbBlock({
   const hue = hashHue(seed)
   return (
     <div
-      className={`shrink-0 overflow-hidden rounded-lg ${className}`}
-      style={{
-        background: `linear-gradient(145deg, hsl(${hue} 28% 88%), hsl(${(hue + 40) % 360} 22% 78%))`,
-      }}
+      className={`relative shrink-0 overflow-hidden rounded-lg ${className}`}
+      style={{ background: productStudioBackground(hue) }}
       role="img"
       aria-label={`Productafbeelding ${title}`}
-    />
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={productMockupSrc(seed || title)}
+        alt=""
+        className="h-full w-full object-contain p-1.5 drop-shadow-[0_8px_16px_rgba(15,23,42,0.1)]"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
   )
 }

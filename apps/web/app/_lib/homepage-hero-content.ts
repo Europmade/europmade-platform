@@ -1,9 +1,7 @@
 /**
  * Homepage hero content — CMS-klaar (frontend-only tot admin/CMS beschikbaar is).
- * Later: vervang DEFAULT_HOMEPAGE_HERO door API/CMS-response met dezelfde shape.
+ * Prefer `resolveHomepageCms(locale).hero` on the homepage.
  */
-
-import { HOMEPAGE_HERO_TRUST } from "./homepage-content"
 
 export type HomepageHeroCta = {
   label: string
@@ -11,7 +9,6 @@ export type HomepageHeroCta = {
 }
 
 export type HomepageHeroImage = {
-  /** Optionele URL; zonder src toont de UI een premium placeholder. */
   src?: string
   alt: string
   captionTitle?: string
@@ -25,13 +22,14 @@ export type HomepageHeroContent = {
   secondaryCta: HomepageHeroCta
   image: HomepageHeroImage
   trustItems: readonly string[]
+  backgroundGradient?: string
 }
 
-/** Redactionele default — 1:1 vervangbaar door CMS-payload. */
+/** Temporary NL fallback if CMS resolve is unavailable. */
 export const DEFAULT_HOMEPAGE_HERO: HomepageHeroContent = {
-  headline: "Ontdek Europese producten, rechtstreeks van de makers",
+  headline: "De grootste marketplace voor Europese producten.",
   subtitle:
-    "Koop rechtstreeks bij Europese producenten en officiële merken. Transparant, duurzaam en zonder tussenhandel.",
+    "Koop rechtstreeks bij Europese producenten én officiële retailers. Vergelijk prijzen, ontdek Verified™ merken en houd waarde, innovatie en werkgelegenheid binnen Europa.",
   primaryCta: {
     label: "Bekijk producten",
     href: "/categorie",
@@ -41,9 +39,16 @@ export const DEFAULT_HOMEPAGE_HERO: HomepageHeroContent = {
     href: "/partner-onboarding",
   },
   image: {
-    alt: "Europese makers en producten",
-    captionTitle: "Made in Europe · Verified™ herkomst",
-    captionBody: "Rechtstreeks van producenten op EuropMade",
+    alt: "Europese producten, verpakking en Verified™ marketplace",
+    captionTitle: "Verified™ · Made in Europe",
+    captionBody: "Producenten én officiële retailers",
   },
-  trustItems: HOMEPAGE_HERO_TRUST,
+  trustItems: [
+    "Geproduceerd in Europa",
+    "Geverifieerde productinformatie",
+    "Vergelijk meerdere aanbieders",
+    "Veilig betalen",
+  ],
+  backgroundGradient:
+    "linear-gradient(165deg, #ffffff 0%, #f7f8fa 42%, #f2f3f5 100%)",
 }

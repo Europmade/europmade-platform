@@ -1,33 +1,40 @@
-import { HOMEPAGE_WHY_ITEMS } from "../../_lib/homepage-content"
+type WhyItem = { id?: string; title: string; body: string }
 
-/**
- * Waarom EuropMade — 4 compacte premium cards.
- */
-export function HomepageWhySection() {
+export function HomepageWhySection({
+  title,
+  subtitle,
+  items,
+}: {
+  title: string
+  subtitle: string
+  items: readonly WhyItem[]
+}) {
+  if (!title || items.length === 0) return null
+
   return (
-    <section className="px-4 py-6 tablet:px-8 tablet:py-7">
+    <section className="px-4 py-3.5 tablet:px-8 tablet:py-4">
       <h2 className="mb-0.5 text-base font-bold text-wf-900 tablet:text-lg">
-        Waarom kiezen voor EuropMade?
+        {title}
       </h2>
-      <p className="mb-3.5 max-w-xl text-[12.5px] text-wf-600">
-        Een rustige marketplace met focus op herkomst, makers en eerlijke keuze.
-      </p>
-      <ul className="grid grid-cols-1 gap-2.5 tablet:grid-cols-2 desktop:grid-cols-4 desktop:gap-3">
-        {HOMEPAGE_WHY_ITEMS.map((item) => (
+      {subtitle ? (
+        <p className="mb-2 max-w-xl text-[12px] text-wf-600">{subtitle}</p>
+      ) : null}
+      <ul className="grid grid-cols-1 gap-2 tablet:grid-cols-2 desktop:grid-cols-4 desktop:gap-2.5">
+        {items.map((item) => (
           <li
-            key={item.title}
-            className="rounded-xl border border-wf-200 bg-white p-3 shadow-sm"
+            key={item.id ?? item.title}
+            className="rounded-xl border border-wf-200 bg-white p-2.5 shadow-sm"
           >
             <span
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-wf-900 text-xs font-bold text-white"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-wf-900 text-[11px] font-bold text-white"
               aria-hidden
             >
               ✓
             </span>
-            <h3 className="mt-2 text-[13px] font-bold text-wf-900">
+            <h3 className="mt-1.5 text-[12.5px] font-bold text-wf-900">
               {item.title}
             </h3>
-            <p className="mt-1 text-[12px] leading-relaxed text-wf-600">
+            <p className="mt-0.5 text-[11.5px] leading-snug text-wf-600">
               {item.body}
             </p>
           </li>

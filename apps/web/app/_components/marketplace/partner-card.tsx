@@ -7,21 +7,22 @@ import {
 import { HOMEPAGE_RETAILERS } from "../../_lib/homepage-content"
 import { starsForRating } from "../../_lib/listing-products"
 
-/**
- * CMP-015 Partner / producentkaart — ~20% compacter, premium uitstraling.
- */
 export function PartnerCard({
   slug,
   name,
   country,
   rating,
   productCount,
+  viewLabel = "Bekijk producent",
+  productsSuffix = "producten",
 }: {
   slug: string
   name: string
   country: string
   rating: number
   productCount: number
+  viewLabel?: string
+  productsSuffix?: string
 }) {
   const profile = findPartnerProfile(slug)
   const resolvedCountry = country || profile?.productionCountry || "Europa"
@@ -31,22 +32,24 @@ export function PartnerCard({
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-wf-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-wf-300 hover:shadow-md">
       <div
-        className="relative h-20 w-full tablet:h-24"
+        className="relative h-16 w-full tablet:h-[4.75rem]"
         style={partnerCoverStyle(slug)}
         role="img"
         aria-label={`Cover ${name}`}
       >
         <div
-          className="absolute -bottom-4 left-3 h-11 w-11 rounded-lg border-2 border-white shadow-md"
+          className="absolute -bottom-3 left-2.5 h-9 w-9 rounded-lg border-2 border-white shadow-md"
           style={partnerLogoStyle(slug)}
           role="img"
           aria-label={`Logo ${name}`}
         />
       </div>
-      <div className="flex flex-1 flex-col px-3 pb-3 pt-6">
-        <h3 className="text-[13.5px] font-bold text-wf-900">{name}</h3>
-        <p className="mt-0.5 text-[11px] text-wf-600">{resolvedCountry}</p>
-        <p className="mt-1.5 text-[11px] text-wf-700">
+          <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-[18px]">
+        <h3 className="text-[13px] font-bold leading-tight text-wf-900">
+          {name}
+        </h3>
+        <p className="mt-0.5 text-[10.5px] text-wf-600">{resolvedCountry}</p>
+        <p className="mt-1 text-[10.5px] text-wf-700">
           <span className="tracking-tighter text-wf-800" aria-hidden>
             {starsForRating(resolvedRating)}
           </span>{" "}
@@ -55,24 +58,48 @@ export function PartnerCard({
           </span>
           <span className="text-wf-500">
             {" "}
-            · {count} product{count === 1 ? "" : "en"}
+            · {count} {productsSuffix}
           </span>
         </p>
         <Link
           href={`/partner/${slug}`}
-          className="mt-2.5 inline-flex h-8 items-center justify-center rounded-lg border border-wf-300 bg-white px-2.5 text-[12px] font-semibold text-wf-800 transition group-hover:border-wf-900 group-hover:bg-wf-900 group-hover:text-white"
+          className="mt-2 inline-flex h-7 items-center justify-center rounded-lg border border-wf-300 bg-white px-2 text-[11.5px] font-semibold text-wf-800 transition group-hover:border-wf-900 group-hover:bg-wf-900 group-hover:text-white"
         >
-          Bekijk producent
+          {viewLabel}
         </Link>
       </div>
     </article>
   )
 }
 
-export function HomepageProducerGrid() {
+export function HomepageProducerGrid({
+  partners,
+  viewLabel,
+  productsSuffix,
+}: {
+  partners?: Array<{
+    slug: string
+    name: string
+    country: string
+    rating: number
+    productCount: number
+  }>
+  viewLabel?: string
+  productsSuffix?: string
+}) {
+  const list = partners?.length
+    ? partners
+    : HOMEPAGE_RETAILERS.map((r) => ({
+        slug: r.slug,
+        name: r.name,
+        country: r.country,
+        rating: r.rating,
+        productCount: r.productCount,
+      }))
+
   return (
-    <ul className="grid grid-cols-1 gap-3 tablet:grid-cols-2 desktop:grid-cols-3 desktop:gap-4">
-      {HOMEPAGE_RETAILERS.map((r) => (
+    <ul className="grid grid-cols-1 gap-2.5 tablet:grid-cols-2 desktop:grid-cols-3 desktop:gap-3">
+      {list.map((r) => (
         <li key={r.slug}>
           <PartnerCard
             slug={r.slug}
@@ -80,6 +107,8 @@ export function HomepageProducerGrid() {
             country={r.country}
             rating={r.rating}
             productCount={r.productCount}
+            viewLabel={viewLabel}
+            productsSuffix={productsSuffix}
           />
         </li>
       ))}

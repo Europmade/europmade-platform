@@ -1,6 +1,7 @@
 /**
  * Storefront advertenties — CMP-033.
  * Banners kunnen linken naar product, categorie, partner, collectie of externe URL.
+ * Extra copy-velden zijn frontend/CMS-klaar (geen backend).
  */
 
 export type AdPosition = 1 | 2
@@ -17,73 +18,79 @@ export type StorefrontAdCreative = {
   position: AdPosition
   location: "homepage" | "category" | "search" | "product"
   title: string
-  /** Resolved navigation target. */
+  /** Grote kop op de banner. */
+  headline: string
+  description: string
+  ctaLabel: string
   href: string
   linkType: BannerLinkType
   imageSrc: string
   imageAlt: string
   status: "Actief" | "Gepland" | "Afgerond"
+  /** CSS background for campaign panel (CMS). */
+  background?: string
+  /** Optional manufacturer logo URL. */
+  logoSrc?: string | null
+  activeFrom?: string | null
+  activeTo?: string | null
 }
 
-function svgBanner(text: string, dark = true) {
-  const bg = dark
-    ? `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1a1a1a"/><stop offset="1" stop-color="#4a4a4a"/></linearGradient></defs><rect width="1160" height="120" fill="url(#g)"/>`
-    : `<rect width="1160" height="90" fill="#f0f0f0"/><rect x="1" y="1" width="1158" height="88" fill="none" stroke="#999" stroke-dasharray="6 4"/>`
-  const fill = dark ? "#fff" : "#333"
-  return (
-    "data:image/svg+xml," +
-    encodeURIComponent(
-      `<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="${dark ? 120 : 90}" viewBox="0 0 1160 ${dark ? 120 : 90}">${bg}<text x="48" y="${dark ? 70 : 52}" fill="${fill}" font-family="system-ui,sans-serif" font-size="${dark ? 28 : 20}" font-weight="700">${text}</text></svg>`
-    )
-  )
-}
-
-/**
- * Gepubliceerde creatives — gekoppeld aan actieve bannerlocaties.
- * Wanneer advertentieplatform-API live is: vervang door API-response met dezelfde shape.
- */
 const PUBLISHED_ADS: StorefrontAdCreative[] = [
   {
     id: "ban_01",
     position: 1,
     location: "homepage",
     title: "Zomer Hero — Europese makers",
+    headline: "Europese tuin, rechtstreeks van de makers",
+    description:
+      "Vergelijk Verified™ aanbieders en kies de beste totale deal — nooit gesponsord.",
+    ctaLabel: "Ontdek tuin",
     href: "/categorie/tuin",
     linkType: "category",
-    imageSrc: svgBanner("Europese tuin — ontdek Verified™ makers"),
+    imageSrc: "",
     imageAlt: "Advertentie: Europese tuinproducten",
     status: "Actief",
+    background:
+      "linear-gradient(135deg, #f4f7f2 0%, #e6efe4 45%, #d8e8d6 100%)",
   },
   {
     id: "ban_02",
     position: 2,
     location: "homepage",
     title: "Partner spotlight VerdeTech",
+    headline: "Partner spotlight: VerdeTech",
+    description:
+      "EU Verified assortiment van een Nederlandse producent — ontdek hun collectie.",
+    ctaLabel: "Bekijk partner",
     href: "/partner/verdetech",
     linkType: "partner",
-    imageSrc: svgBanner("Partner: VerdeTech — EU Verified assortiment", false),
+    imageSrc: "",
     imageAlt: "Advertentie: Partner VerdeTech",
     status: "Actief",
+    background:
+      "linear-gradient(135deg, #f3f6fb 0%, #e4ebf6 45%, #d4e0f0 100%)",
   },
   {
     id: "ban_cat_01",
     position: 1,
     location: "category",
     title: "Collectie robotmaaiers",
+    headline: "Collectie robotmaaiers",
+    description: "Vergelijk Europese merken op prijs, levertijd en reviews.",
+    ctaLabel: "Bekijk collectie",
     href: "/zoeken?q=robotmaaier&collectie=robotmaaiers",
     linkType: "collection",
-    imageSrc:
-      "data:image/svg+xml," +
-      encodeURIComponent(
-        `<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="100" viewBox="0 0 1160 100"><rect width="1160" height="100" fill="#222"/><text x="40" y="58" fill="#fff" font-family="system-ui,sans-serif" font-size="22" font-weight="700">Collectie robotmaaiers — vergelijken op EuropMade</text></svg>`
-      ),
+    imageSrc: "",
     imageAlt: "Advertentie: Collectie robotmaaiers",
     status: "Actief",
+    background:
+      "linear-gradient(135deg, #f5f6f8 0%, #e8ebf0 45%, #dce2ea 100%)",
   },
 ]
 
-/** Resolve banner destination — supports product/category/partner/collection/external. */
-export function resolveBannerHref(ad: Pick<StorefrontAdCreative, "href" | "linkType">): string {
+export function resolveBannerHref(
+  ad: Pick<StorefrontAdCreative, "href" | "linkType">
+): string {
   return ad.href
 }
 

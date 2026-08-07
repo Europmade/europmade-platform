@@ -45,6 +45,8 @@ function eurosToCents(euros: number): number {
 }
 
 async function isCheckoutReadyOffer(offerId: string): Promise<boolean> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 2_500)
   try {
     const response = await fetch(
       `${BACKEND_URL}/store/order-service/checkout/revalidate`,
@@ -60,11 +62,14 @@ async function isCheckoutReadyOffer(offerId: string): Promise<boolean> {
           lines: [{ offer_id: offerId, quantity: 1 }],
         }),
         next: { revalidate: 10 },
+        signal: controller.signal,
       }
     )
     return response.ok
   } catch {
     return false
+  } finally {
+    clearTimeout(timer)
   }
 }
 
@@ -159,7 +164,8 @@ async function toStorefrontProducts(
 }
 
 /**
- * Listing: alleen producten met geldige Commerce Cloud-offers.
+ * Listing: producten met geldige Commerce Cloud-offers (weergave).
+ * Checkout-revalidate blijft op PDP/cart — niet op homepage-lijsten.
  */
 export async function resolveListingProducts(opts?: {
   categorySlug?: string
@@ -174,7 +180,7 @@ export async function resolveListingProducts(opts?: {
       q: opts?.query,
     })
     return {
-      products: await toStorefrontProducts(res.products),
+      products: res.products.filter(hasValidCommerceOffer).map(mapListItem),
       source: "api",
     }
   } catch (err) {

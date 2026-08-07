@@ -1,107 +1,190 @@
+import { cookies } from "next/headers"
 import {
-  HOMEPAGE_CATEGORIES,
-} from "../../_lib/homepage-content"
+  resolveHomepageCms,
+  resolveStorefrontLocaleFromCookie,
+} from "../../_lib/cms/resolve-homepage"
+import { LOCALE_COOKIE } from "../../_lib/i18n/locales"
+import { t } from "../../_lib/i18n/messages"
+import { LISTING_PRODUCTS } from "../../_lib/listing-products"
 import {
-  resolveFeaturedProducts,
   resolveListingProducts,
 } from "../../_lib/storefront-catalog"
 import { PublicHeader } from "../marketplace/public-header"
 import { SiteFooter } from "../marketplace/site-footer"
 import { HomepageProducerGrid } from "../marketplace/partner-card"
 import { AdSlot } from "./ad-slot"
+import { HomepageCampaignSlider } from "./homepage-campaign-slider"
 import { HomepageCarousel } from "./homepage-carousel"
 import { HomepageCategoryGrid } from "./homepage-category-grid"
 import { HomepageHero } from "./homepage-hero"
-import { HomepageProductGrid } from "./homepage-product-grid"
 import { HomepageWhySection } from "./homepage-why"
 import { NewsletterForm } from "./newsletter-form"
-import { DEFAULT_HOMEPAGE_HERO } from "../../_lib/homepage-hero-content"
 
-/**
- * Homepage V2 — gecomprimeerde premium marketplace-layout.
- */
+/** Consistente verticale ritmiek (lichte homepage). */
+const SECTION = "px-4 py-3.5 tablet:px-8 tablet:py-4"
+const AD_WRAP = "py-1 tablet:py-1.5"
+
 export async function Homepage() {
-  const [{ products }, featuredProducts] = await Promise.all([
-    resolveListingProducts(),
-    resolveFeaturedProducts(8),
-  ])
+  const cookieStore = await cookies()
+  const locale = resolveStorefrontLocaleFromCookie(
+    cookieStore.get(LOCALE_COOKIE)?.value
+  )
+  const cms = resolveHomepageCms(locale)
 
-  const newest = products.slice(0, 12)
-  const bestSold = [...products]
+  const { products } = await resolveListingProducts()
+  const featuredFromApi =
+    products.length > 0
+      ? [...products]
+          .sort((a, b) => b.offerCount - a.offerCount || b.rating - a.rating)
+          .slice(0, 12)
+      : []
+
+  // Frontend seed-fallback wanneer catalogus tijdelijk leeg is (geen backend-wijziging).
+  const pool = products.length > 0 ? products : LISTING_PRODUCTS
+  const featuredProducts =
+    featuredFromApi.length > 0
+      ? featuredFromApi
+      : [...pool]
+          .sort((a, b) => b.offerCount - a.offerCount || b.rating - a.rating)
+          .slice(0, 12)
+  const newest = pool.slice(0, 12)
+  const bestSold = [...pool]
     .sort((a, b) => b.offerCount - a.offerCount || b.rating - a.rating)
     .slice(0, 12)
+
+  const banner1 =
+    cms.banners.find((b) => b.position === 1 && b.location === "homepage") ??
+    null
+  const banner2 =
+    cms.banners.find((b) => b.position === 2 && b.location === "homepage") ??
+    null
+
+  const sec = cms.sections
 
   return (
     <div className="min-h-screen bg-wf-100 text-wf-800">
       <div className="mx-auto max-w-[1160px] border border-wf-200 bg-white shadow-sm">
         <PublicHeader />
 
-        <HomepageHero content={DEFAULT_HOMEPAGE_HERO} />
+        <HomepageHero content={cms.hero} />
 
-        <section className="px-4 py-6 tablet:px-8 tablet:py-7">
-          <h2 className="mb-3 text-base font-bold text-wf-900 tablet:text-lg">
-            Populaire categorieën
-          </h2>
-          <HomepageCategoryGrid categories={HOMEPAGE_CATEGORIES} />
-        </section>
-
-        <section className="px-4 py-6 tablet:px-8 tablet:py-7">
-          <h2 className="mb-0.5 text-base font-bold text-wf-900 tablet:text-lg">
-            Uitgelicht deze week
-          </h2>
-          <p className="mb-3 text-[12.5px] text-wf-600">
-            Best beoordeeld en meest gekozen — nooit gesponsord.
-          </p>
-          <HomepageProductGrid products={featuredProducts} />
-        </section>
-
-        <div className="py-1.5 tablet:py-2">
-          <AdSlot position={1} compact />
-        </div>
-
-        <section className="px-4 py-6 tablet:px-8 tablet:py-7">
-          <h2 className="mb-0.5 text-base font-bold text-wf-900 tablet:text-lg">
-            Populaire Europese producenten
-          </h2>
-          <p className="mb-3 text-[12.5px] text-wf-600">
-            Ontdek makers en merken met geverifieerde herkomst.
-          </p>
-          <HomepageProducerGrid />
-        </section>
-
-        <HomepageWhySection />
-
-        <section className="px-4 py-4 tablet:px-8 tablet:py-5">
-          <HomepageCarousel
-            title="Nieuw binnen"
-            subtitle="Recent toegevoegd aan de EuropMade marketplace."
-            products={newest}
-          />
-        </section>
-
-        <section className="px-4 py-4 tablet:px-8 tablet:py-5">
-          <HomepageCarousel
-            title="Best verkocht"
-            subtitle="Populair bij klanten op basis van aanbieders en beoordelingen."
-            products={bestSold}
-          />
-        </section>
-
-        <div className="py-1.5 tablet:py-2">
-          <AdSlot position={2} compact />
-        </div>
-
-        <section className="border-t border-wf-100 px-4 py-6 tablet:px-8">
-          <div className="mx-auto max-w-lg text-center">
-            <h2 className="mb-1.5 text-base font-bold text-wf-900 tablet:text-lg">
-              Blijf op de hoogte
+        {sec.categories ? (
+          <section className={SECTION}>
+            <h2 className="mb-2 text-base font-bold text-wf-900 tablet:text-lg">
+              {sec.categories.title}
             </h2>
-            <p className="mb-3 text-[12.5px] text-wf-600">
-              Nieuwe Europese merken en producten, direct in je inbox.
-            </p>
-            <NewsletterForm />
-          </div>
-        </section>
+            <HomepageCategoryGrid
+              categories={cms.categories}
+              productsSuffix={t("productsSuffix", locale)}
+            />
+          </section>
+        ) : null}
+
+        {sec.campaigns ? (
+          <section className={SECTION}>
+            <HomepageCampaignSlider
+              campaigns={cms.campaigns}
+              title={sec.campaigns.title}
+              prevLabel={t("prevCampaigns", locale)}
+              nextLabel={t("nextCampaigns", locale)}
+            />
+          </section>
+        ) : null}
+
+        {sec.featured ? (
+          <section className={SECTION}>
+            <HomepageCarousel
+              title={sec.featured.title}
+              subtitle={sec.featured.subtitle}
+              products={featuredProducts}
+            />
+          </section>
+        ) : null}
+
+        <div className={AD_WRAP}>
+          <AdSlot
+            position={1}
+            creative={banner1}
+            locale={locale}
+            adLabel={t("advertisement", locale)}
+            productKind="garden"
+          />
+        </div>
+
+        {sec.partners ? (
+          <section className={SECTION}>
+            <h2 className="mb-0.5 text-base font-bold text-wf-900 tablet:text-lg">
+              {sec.partners.title}
+            </h2>
+            {sec.partners.subtitle ? (
+              <p className="mb-2 text-[12px] text-wf-600">
+                {sec.partners.subtitle}
+              </p>
+            ) : null}
+            <HomepageProducerGrid
+              partners={cms.partners.items}
+              viewLabel={t("viewProducer", locale)}
+              productsSuffix={t("productsSuffix", locale)}
+            />
+          </section>
+        ) : null}
+
+        {sec.why ? (
+          <HomepageWhySection
+            title={cms.why.title}
+            subtitle={cms.why.subtitle}
+            items={cms.why.items}
+          />
+        ) : null}
+
+        {sec.newest ? (
+          <section className={SECTION}>
+            <HomepageCarousel
+              title={sec.newest.title}
+              subtitle={sec.newest.subtitle}
+              products={newest}
+            />
+          </section>
+        ) : null}
+
+        {sec.best_sellers ? (
+          <section className={SECTION}>
+            <HomepageCarousel
+              title={sec.best_sellers.title}
+              subtitle={sec.best_sellers.subtitle}
+              products={bestSold}
+            />
+          </section>
+        ) : null}
+
+        <div className={AD_WRAP}>
+          <AdSlot
+            position={2}
+            creative={banner2}
+            locale={locale}
+            adLabel={t("advertisement", locale)}
+            productKind="coffee"
+          />
+        </div>
+
+        {sec.newsletter ? (
+          <section className="border-t border-wf-100 px-4 py-3.5 tablet:px-8 tablet:py-4">
+            <div className="mx-auto max-w-lg text-center">
+              <h2 className="mb-1 text-base font-bold text-wf-900 tablet:text-lg">
+                {cms.newsletter.title}
+              </h2>
+              <p className="mb-2 text-[12px] text-wf-600">
+                {cms.newsletter.subtitle}
+              </p>
+              <NewsletterForm
+                placeholder={cms.newsletter.placeholder}
+                submitLabel={cms.newsletter.submitLabel}
+                invalidEmail={cms.newsletter.invalidEmail}
+                successMessage={cms.newsletter.successMessage}
+              />
+            </div>
+          </section>
+        ) : null}
 
         <SiteFooter />
       </div>
