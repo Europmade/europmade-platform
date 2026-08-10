@@ -2,9 +2,10 @@ import { model } from "@medusajs/framework/utils"
 import Product from "./product"
 import AttributeValue from "./attribute-value"
 import ProductMedia from "./media"
+import ProductDocument from "./document"
 
 /**
- * ProductVersion — Blueprint `02-database-model.md` Deel B.3.
+ * ProductVersion — Blueprint `02-database-model.md` Deel B.3 + ADR-0037.
  * Append-only redactionele versie van een product.
  */
 const ProductVersion = model
@@ -17,6 +18,13 @@ const ProductVersion = model
     version_number: model.number(),
     title: model.text(),
     description: model.text(),
+    /**
+     * JSON array of use-case / audience tags for later toplists
+     * (e.g. ["student","budget","family"]) — ADR-0037, no ranking logic.
+     */
+    use_case_tags: model.text().nullable(),
+    /** ISO-639 of the original editorial language (seller input). */
+    source_language_code: model.text().nullable(),
     publication_status: model.enum([
       "Concept",
       "In review",
@@ -30,6 +38,9 @@ const ProductVersion = model
       mappedBy: "product_version",
     }),
     media_items: model.hasMany(() => ProductMedia, {
+      mappedBy: "product_version",
+    }),
+    documents: model.hasMany(() => ProductDocument, {
       mappedBy: "product_version",
     }),
   })

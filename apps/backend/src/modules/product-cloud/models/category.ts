@@ -3,7 +3,7 @@ import ProductCategory from "./product-category"
 import AttributeDefinition from "./attribute-definition"
 
 /**
- * Category — Blueprint `02-database-model.md` Deel B.6.
+ * Category — Blueprint `02-database-model.md` Deel B.6 + ADR-0037 (`slug`).
  * Tabelnaam `pc_category` om botsing met Medusa Category te vermijden (ADR-0008).
  */
 const Category = model
@@ -17,6 +17,8 @@ const Category = model
       .nullable(),
     children: model.hasMany(() => Category, { mappedBy: "parent_category" }),
     name: model.text(),
+    /** Storefront path segment — ADR-0037. */
+    slug: model.text().nullable(),
     product_categories: model.hasMany(() => ProductCategory, {
       mappedBy: "category",
     }),
@@ -24,6 +26,13 @@ const Category = model
       mappedBy: "category",
     }),
   })
-  .indexes([{ on: ["parent_category_id"] }])
+  .indexes([
+    { on: ["parent_category_id"] },
+    {
+      on: ["slug"],
+      unique: true,
+      where: "deleted_at IS NULL AND slug IS NOT NULL",
+    },
+  ])
 
 export default Category

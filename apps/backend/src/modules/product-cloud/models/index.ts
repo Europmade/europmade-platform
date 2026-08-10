@@ -14,6 +14,9 @@ import MatchCandidate from "./match-candidate"
 import MergeRecord from "./merge-record"
 import SplitRecord from "./split-record"
 import ProductMedia from "./media"
+import ProductDocument from "./document"
+import ProductTranslation from "./translation"
+import ProductRelation from "./product-relation"
 import ChangeProposal from "./change-proposal"
 
 export {
@@ -33,5 +36,8 @@ export {
   MergeRecord,
   SplitRecord,
   ProductMedia,
+  ProductDocument,
+  ProductTranslation,
+  ProductRelation,
   ChangeProposal,
 }

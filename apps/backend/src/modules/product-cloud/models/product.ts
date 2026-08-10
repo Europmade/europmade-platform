@@ -10,6 +10,7 @@ import MatchCandidate from "./match-candidate"
 import MergeRecord from "./merge-record"
 import SplitRecord from "./split-record"
 import ChangeProposal from "./change-proposal"
+import ProductRelation from "./product-relation"
 
 /**
  * Product — Blueprint `02-database-model.md` Deel B.2.
@@ -67,6 +68,12 @@ const Product = model
     }),
     split_records_new: model.hasMany(() => SplitRecord, {
       mappedBy: "new_product",
+    }),
+    relations_from: model.hasMany(() => ProductRelation, {
+      mappedBy: "from_product",
+    }),
+    relations_to: model.hasMany(() => ProductRelation, {
+      mappedBy: "to_product",
     }),
   })
   .indexes([

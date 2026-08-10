@@ -4,6 +4,7 @@ import type {
 } from "@medusajs/framework/http"
 import { PRODUCT_CLOUD_MODULE } from "../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../modules/product-cloud/service"
+import { slugifyCategoryName } from "../../../../modules/product-cloud/category-attributes"
 import { AdminSeedProductWithEanBodyInput } from "../validators"
 
 /**
@@ -59,9 +60,24 @@ export async function POST(
     await productCloud.listCategories({ name: body.category_name })
   )[0]
   if (!category) {
+    const slug = slugifyCategoryName(body.category_name)
     category = await productCloud.createCategories({
       name: body.category_name,
+      slug,
     })
+    await productCloud.ensureCategoryAttributeCatalog(category.id, slug)
+  } else {
+    if (!category.slug) {
+      const updated = await productCloud.updateCategories({
+        id: category.id,
+        slug: slugifyCategoryName(body.category_name),
+      })
+      category = Array.isArray(updated) ? updated[0] : updated
+    }
+    await productCloud.ensureCategoryAttributeCatalog(
+      category.id,
+      category.slug ?? slugifyCategoryName(body.category_name)
+    )
   }
 
   await productCloud.createProductCategories({

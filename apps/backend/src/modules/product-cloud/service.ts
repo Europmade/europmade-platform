@@ -22,8 +22,16 @@ import {
   MergeRecord,
   SplitRecord,
   ProductMedia,
+  ProductDocument,
+  ProductTranslation,
+  ProductRelation,
   ChangeProposal,
 } from "./models"
+import {
+  CATEGORY_ATTRIBUTE_CATALOGS,
+  slugifyCategoryName,
+  type AttributeCatalogItem,
+} from "./category-attributes"
 
 export type CreateProductGraphInput = {
   seller_id: string
@@ -97,6 +105,9 @@ class ProductCloudModuleService extends MedusaService({
   MergeRecord,
   SplitRecord,
   ProductMedia,
+  ProductDocument,
+  ProductTranslation,
+  ProductRelation,
   ChangeProposal,
 }) {
   @InjectManager()
@@ -183,8 +194,22 @@ class ProductCloudModuleService extends MedusaService({
       )
     )[0]
     if (!category) {
+      const slug = slugifyCategoryName(input.category_name)
       category = await this.createCategories(
-        { name: input.category_name },
+        { name: input.category_name, slug },
+        sharedContext
+      )
+      await this.ensureCategoryAttributeCatalog_(
+        category.id,
+        slug,
+        sharedContext
+      )
+    } else if (!category.slug) {
+      await this.updateCategories(
+        {
+          id: category.id,
+          slug: slugifyCategoryName(input.category_name),
+        },
         sharedContext
       )
     }
@@ -262,7 +287,14 @@ class ProductCloudModuleService extends MedusaService({
     const lifecyclePatch: {
       id: string
       current_owner_seller_id: string
-      lifecycle_status?: string
+      lifecycle_status?:
+        | "Retailer Created"
+        | "Concept gecontroleerd"
+        | "Actief"
+        | "Verified™"
+        | "Uitlopend"
+        | "Niet meer leverbaar"
+        | "Gearchiveerd"
     } = {
       id: input.product_id,
       current_owner_seller_id: input.claimant_seller_id,
@@ -393,6 +425,225 @@ class ProductCloudModuleService extends MedusaService({
       lifecycle_status,
     }
   }
+
+  /** Ensure category-scoped attribute definitions exist (idempotent). */
+  @InjectManager()
+  async ensureCategoryAttributeCatalog(
+    categoryId: string,
+    categorySlug: string,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{ created: number; existing: number }> {
+    return await this.ensureCategoryAttributeCatalog_(
+      categoryId,
+      categorySlug,
+      sharedContext
+    )
+  }
+
+  @InjectTransactionManager()
+  protected async ensureCategoryAttributeCatalog_(
+    categoryId: string,
+    categorySlug: string,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{ created: number; existing: number }> {
+    const catalog = CATEGORY_ATTRIBUTE_CATALOGS[categorySlug] ?? []
+    let created = 0
+    let existing = 0
+    for (const item of catalog) {
+      const found = (
+        await this.listAttributeDefinitions(
+          { category_id: categoryId, code: item.code },
+          {},
+          sharedContext
+        )
+      )[0]
+      if (found) {
+        existing += 1
+        continue
+      }
+      await this.createAttributeDefinitions(
+        {
+          category_id: categoryId,
+          name: item.name,
+          code: item.code,
+          data_type: item.data_type,
+          is_required: item.is_required,
+          unit: item.unit ?? null,
+          is_filterable: item.is_filterable ?? true,
+          is_comparable: item.is_comparable ?? true,
+          sort_order: item.sort_order ?? 0,
+          option_values: item.option_values
+            ? JSON.stringify(item.option_values)
+            : null,
+        },
+        sharedContext
+      )
+      created += 1
+    }
+    return { created, existing }
+  }
+
+  /** Upsert structured attribute values on a product version. */
+  @InjectManager()
+  async setVersionAttributeValues(
+    input: {
+      product_version_id: string
+      values: Array<{ attribute_definition_id: string; value: string }>
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const out: unknown[] = []
+    for (const row of input.values) {
+      const existing = (
+        await this.listAttributeValues(
+          {
+            product_version_id: input.product_version_id,
+            attribute_definition_id: row.attribute_definition_id,
+          },
+          {},
+          sharedContext
+        )
+      )[0]
+      if (existing) {
+        out.push(
+          await this.updateAttributeValues(
+            { id: existing.id, value: row.value },
+            sharedContext
+          )
+        )
+      } else {
+        out.push(
+          await this.createAttributeValues(
+            {
+              product_version_id: input.product_version_id,
+              attribute_definition_id: row.attribute_definition_id,
+              value: row.value,
+            },
+            sharedContext
+          )
+        )
+      }
+    }
+    return out
+  }
+
+  /** Upsert a localized field (NL/FR/DE ready) — no AI translation. */
+  @InjectManager()
+  async upsertTranslation(
+    input: {
+      entity_type: "product_version" | "category" | "attribute_definition"
+      entity_id: string
+      field_name: string
+      language_code: string
+      value: string
+      source_language_code?: string | null
+      source_value?: string | null
+      translation_status?:
+        | "Ontbreekt"
+        | "Concept"
+        | "Machine"
+        | "Beoordeeld"
+        | "Gepubliceerd"
+      translation_version?: number
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const existing = (
+      await this.listProductTranslations(
+        {
+          entity_type: input.entity_type,
+          entity_id: input.entity_id,
+          field_name: input.field_name,
+          language_code: input.language_code,
+        },
+        {},
+        sharedContext
+      )
+    )[0]
+    const payload = {
+      value: input.value,
+      source_language_code: input.source_language_code ?? null,
+      source_value: input.source_value ?? null,
+      translation_status: input.translation_status ?? "Concept",
+      translation_version: input.translation_version ?? 1,
+    }
+    if (existing) {
+      return await this.updateProductTranslations(
+        { id: existing.id, ...payload },
+        sharedContext
+      )
+    }
+    return await this.createProductTranslations(
+      {
+        entity_type: input.entity_type,
+        entity_id: input.entity_id,
+        field_name: input.field_name,
+        language_code: input.language_code,
+        ...payload,
+      },
+      sharedContext
+    )
+  }
+
+  @InjectManager()
+  async addProductDocument(
+    input: {
+      product_version_id: string
+      document_type:
+        | "CE-certificaat"
+        | "Overig compliance-document"
+        | "Autorisatiebewijs"
+        | "Handleiding"
+        | "Veiligheidsinformatieblad"
+        | "Garantiebewijs"
+        | "Conformiteitsverklaring"
+      storage_reference: string
+      distributor_authorization_id?: string | null
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    return await this.createProductDocuments(
+      {
+        product_version_id: input.product_version_id,
+        document_type: input.document_type,
+        storage_reference: input.storage_reference,
+        distributor_authorization_id:
+          input.distributor_authorization_id ?? null,
+      },
+      sharedContext
+    )
+  }
+
+  @InjectManager()
+  async linkProducts(
+    input: {
+      from_product_id: string
+      to_product_id: string
+      relation_type:
+        | "Vergelijkbaar"
+        | "Accessoire"
+        | "Gerelateerd"
+        | "VaakSamenGekocht"
+        | "Alternatief"
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const existing = (
+      await this.listProductRelations(
+        {
+          from_product_id: input.from_product_id,
+          to_product_id: input.to_product_id,
+          relation_type: input.relation_type,
+        },
+        {},
+        sharedContext
+      )
+    )[0]
+    if (existing) return existing
+    return await this.createProductRelations(input, sharedContext)
+  }
 }
 
 export default ProductCloudModuleService
+
+export type { AttributeCatalogItem }

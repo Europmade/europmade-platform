@@ -1,24 +1,20 @@
 /**
- * @europmade/types — gedeelde, generieke TypeScript-types.
+ * @europmade/types — gedeelde TypeScript-types.
  *
- * BELANGRIJK: dit package bevat bewust nog geen domeintypes (Product, Offer,
- * Partner, Verification, e.d.) — die worden pas toegevoegd zodra de bijbehorende
- * businesslogica wordt gebouwd, conform de bevroren functionele specificaties in
- * docs/03-functional-specs/. Op dit moment levert dit package uitsluitend generieke,
- * technische hulptypes.
+ * Product Cloud surface types (ADR-0037). Commerce/Offer types blijven
+ * gescheiden — Offer verwijst nooit naar product_id.
  */
 
-/** Ondersteunde landen bij MVP-lancering (Blueprint H14.10, tech-stack.md — Medusa Region-model). */
-export type SupportedCountry = "NL" | "BE" | "DE" | "FR" | "ES" | "IT";
+/** Ondersteunde landen bij MVP-lancering (Blueprint H14.10). */
+export type SupportedCountry = "NL" | "BE" | "DE" | "FR" | "ES" | "IT"
 
-/** Generieke, discriminated-union resultaatwrapper voor toekomstige API-calls. */
+/** Generieke, discriminated-union resultaatwrapper. */
 export type Result<TData, TError = string> =
   | { success: true; data: TData }
-  | { success: false; error: TError };
+  | { success: false; error: TError }
 
 /**
- * AI Content Engine entity surface (ADR-0036) — Sprint 4-ready shared contract.
- * Full payloads live in apps/web until Medusa CMS module owns persistence.
+ * AI Content Engine entity surface (ADR-0036).
  */
 export type AiContentEntityType =
   | "category"
@@ -28,4 +24,115 @@ export type AiContentEntityType =
   | "campaign"
   | "landing"
   | "search"
-  | "seller";
+  | "seller"
+
+/** MVP + next EU storefront languages for Product Cloud translations. */
+export type ProductCloudLanguageCode = "nl" | "fr" | "de" | "en"
+
+export type ProductCloudIdentifierType = "GTIN" | "MPN"
+
+export type ProductCloudAttributeDataType =
+  | "Numeriek"
+  | "Keuzelijst"
+  | "Tekst-met-eenheid"
+
+export type ProductCloudTranslationStatus =
+  | "Ontbreekt"
+  | "Concept"
+  | "Machine"
+  | "Beoordeeld"
+  | "Gepubliceerd"
+
+export type ProductCloudRelationType =
+  | "Vergelijkbaar"
+  | "Accessoire"
+  | "Gerelateerd"
+  | "VaakSamenGekocht"
+  | "Alternatief"
+
+export type ProductCloudDocumentType =
+  | "CE-certificaat"
+  | "Overig compliance-document"
+  | "Autorisatiebewijs"
+  | "Handleiding"
+  | "Veiligheidsinformatieblad"
+  | "Garantiebewijs"
+  | "Conformiteitsverklaring"
+
+/** Central product identity — never contains price/stock/seller offer fields. */
+export type ProductCloudProductIdentity = {
+  id: string
+  brand_id: string
+  manufacturer_id: string
+  lifecycle_status: string
+  category_ids: string[]
+}
+
+export type ProductCloudAttributeDefinition = {
+  id: string
+  category_id: string
+  code: string | null
+  name: string
+  data_type: ProductCloudAttributeDataType
+  is_required: boolean
+  unit: string | null
+  is_filterable: boolean
+  is_comparable: boolean
+  sort_order: number
+  option_values: string | null
+}
+
+export type ProductCloudAttributeValue = {
+  id: string
+  product_version_id: string
+  attribute_definition_id: string
+  value: string
+}
+
+export type ProductCloudTranslation = {
+  id: string
+  entity_type: "product_version" | "category" | "attribute_definition"
+  entity_id: string
+  field_name: string
+  language_code: ProductCloudLanguageCode | string
+  value: string
+  source_language_code: string | null
+  source_value: string | null
+  translation_status: ProductCloudTranslationStatus
+  translation_version: number
+}
+
+export type ProductCloudCategorySummary = {
+  id: string
+  name: string
+  slug: string | null
+  parent_category_id: string | null
+  attributes: Array<{
+    id: string
+    code: string | null
+    name: string
+    data_type: ProductCloudAttributeDataType
+    unit: string | null
+    is_required: boolean
+    is_filterable: boolean
+    is_comparable: boolean
+    sort_order: number
+    option_values: string | null
+  }>
+}
+
+/**
+ * Use-case tags on product_version (JSON) — architecture for toplists.
+ * Ranking is NOT computed here.
+ */
+export type ProductCloudUseCaseTag =
+  | "best"
+  | "value"
+  | "premium"
+  | "student"
+  | "family"
+  | "business"
+  | "budget"
+  | "travel"
+  | "pets"
+  | "professional"

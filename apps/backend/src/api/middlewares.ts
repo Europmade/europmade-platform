@@ -486,6 +486,31 @@ export default defineMiddlewares({
       ],
     },
     {
+      matcher: "/admin/product-cloud/categories",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/categories",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/categories/:id/attributes",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/translations",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/store/product-cloud/categories",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
       matcher: "/admin/product-cloud/ean-match",
       methods: ["POST"],
       middlewares: [adminAuth, validateAndTransformBody(AdminEanMatchBody)],

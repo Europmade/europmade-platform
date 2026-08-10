@@ -5,6 +5,13 @@ Alle inhoudelijke wijzigingen aan de definitieve documentatie worden hier bijgeh
 ## [Onuitgebracht]
 
 ### Toegevoegd
+- ADR-0037 — Product Cloud centrale laag: `pc_document`, `pc_translation`, `pc_product_relation`, category `slug`, attribute metadata (`code`/filterable/comparable), `use_case_tags` + vertaalstatusvelden.
+- Migratie `Migration20260810120000` + servicehelpers (`ensureCategoryAttributeCatalog`, vertalingen/documenten/relaties) en category-attribute catalogs (elektronica/tuin/mode).
+- Admin/store Product Cloud category + attribute + translation API’s (architectuur; geen frontend-koppeling).
+- `@europmade/types` Product Cloud DTO-surface (identity, attributes, translations, use-case tags).
+- Unit tests voor `category-attributes` helpers.
+
+### Toegevoegd (eerder)
 - `blueprint/` — Blueprint-einddocument (.docx + .pdf) gescheiden van `docs/` op de repository-root.
 - `docs/06-development/` — roadmap, backlog, sprint-01, sprint-02 (placeholder, wordt gevuld na de wireframe-fase).
 - `docs/07-design-system/` — colors, typography, spacing, icons, components (placeholder, wordt gevuld tijdens/na de wireframe-fase).
