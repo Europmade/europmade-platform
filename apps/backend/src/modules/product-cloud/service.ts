@@ -37,6 +37,7 @@ import {
   inferContentTypeFromField,
   normalizeLanguageCode,
   targetLanguagesForSource,
+  isActiveProductCloudLanguage,
 } from "./languages"
 import {
   getTranslationProvider,
@@ -50,6 +51,7 @@ import {
   shouldEnqueueTarget,
   shouldMarkTranslationStale,
 } from "./translation/workflow"
+import { buildLanguageCoverage, pickTranslationVersion } from "./translation/coverage"
 
 export type CreateProductGraphInput = {
   seller_id: string
@@ -76,6 +78,8 @@ export type CreateProductGraphInput = {
     media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
     storage_reference: string
   }>
+  /** ISO-639 editorial source language (nl/en/de/fr). */
+  source_language_code?: string | null
 }
 
 export type CreateProductGraphResult = {
@@ -170,6 +174,9 @@ class ProductCloudModuleService extends MedusaService({
         description: input.description,
         publication_status: "Concept",
         created_by_seller_id: input.seller_id,
+        source_language_code: input.source_language_code
+          ? normalizeLanguageCode(input.source_language_code)
+          : null,
       },
       sharedContext
     )
@@ -1074,6 +1081,111 @@ class ProductCloudModuleService extends MedusaService({
       provider_configured: providerConfigured,
       results,
     }
+  }
+
+  @InjectManager()
+  async setProductVersionSourceLanguage(
+    input: {
+      version_id: string
+      source_language_code: string
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const code = normalizeLanguageCode(input.source_language_code)
+    if (!isActiveProductCloudLanguage(code)) {
+      throw new Error("unsupported_source_language")
+    }
+    return await this.updateProductVersions(
+      {
+        id: input.version_id,
+        source_language_code: code,
+      },
+      sharedContext
+    )
+  }
+
+  @InjectManager()
+  async getProductVersionTranslationSummary(
+    input: { version_id: string },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const version = await this.retrieveProductVersion(
+      input.version_id,
+      {},
+      sharedContext
+    )
+    const translations = await this.listProductTranslations(
+      {
+        entity_type: "product_version",
+        entity_id: version.id,
+      },
+      {},
+      sharedContext
+    )
+    const coverage = buildLanguageCoverage({
+      source_language_code: version.source_language_code,
+      translations: translations.map((t) => ({
+        field_name: t.field_name,
+        language_code: t.language_code,
+        translation_status: t.translation_status,
+        value: t.value,
+        origin: t.origin,
+        source_version: t.source_version,
+        translation_version: t.translation_version,
+      })),
+    })
+    return {
+      version: {
+        id: version.id,
+        product_id: version.product_id,
+        title: version.title,
+        description: version.description,
+        source_language_code: version.source_language_code,
+        version_number: version.version_number,
+        publication_status: version.publication_status,
+      },
+      ...coverage,
+      translations,
+      provider_id: getTranslationProvider().id,
+      provider_configured: getTranslationProvider().id !== "none",
+      machine_translation_active: getTranslationProvider().id !== "none",
+    }
+  }
+
+  @InjectManager()
+  async listTranslationProductOverview(
+    input: { limit?: number } = {},
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const limit = Math.min(Math.max(input.limit ?? 50, 1), 100)
+    const products = await this.listProducts({}, { take: limit }, sharedContext)
+    const items = []
+    for (const product of products) {
+      const versions = await this.listProductVersions(
+        { product_id: product.id },
+        {},
+        sharedContext
+      )
+      const version = pickTranslationVersion(versions)
+      if (!version) continue
+      const summary = await this.getProductVersionTranslationSummary(
+        { version_id: version.id },
+        sharedContext
+      )
+      items.push({
+        product_id: product.id,
+        current_owner_seller_id: product.current_owner_seller_id,
+        lifecycle_status: product.lifecycle_status,
+        version_id: version.id,
+        title: version.title,
+        source_language_code: version.source_language_code,
+        targets: summary.targets,
+        attention_count: summary.targets.filter((t) =>
+          ["Ontbreekt", "Verouderd", "Mislukt"].includes(t.translation_status)
+        ).length,
+      })
+    }
+    return { items, count: items.length }
   }
 }
 

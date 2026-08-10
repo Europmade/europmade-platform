@@ -87,6 +87,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 
 | Onderdeel | Status | Laatste update | Opmerking |
 |---|---|---|---|
+| Product Cloud translation management UI + seller flow | **AFGEROND** | 2026-08-10 | Admin `/product-cloud/translations` (+ detail); seller bron-taal/status/enqueue owner-only; DeepL nog uit; hergebruik bestaande translation APIs. |
 | Product Cloud translation workflow (ADR-0039) | **AFGEROND** | 2026-08-10 | `pc_translation` + multi-source `PRODUCT_CLOUD_ACTIVE_LANGUAGES`; stale bij bronwijziging; manual origin-bescherming; enqueue/retranslate filters; DeepL readiness zonder productie-key; UI blijft `messages.ts`. |
 | Storefront internationalization & automatic language detection | **AFGEROND** | 2026-08-10 | UI-locales `nl`/`en`/`de`/`fr`; prioriteit handmatig → cookie/localStorage → Accept-Language/`navigator.language` → NL; auto-detect schrijft geen cookie; `messages.ts` + `em_storefront_locale` + `StorefrontLocaleProvider` + `detect-locale.ts`; cookiebanner + voorkeuren locale-aware; geen tweede i18n-systeem. Niet opnieuw openzetten tenzij bug of nieuwe taal. |
 

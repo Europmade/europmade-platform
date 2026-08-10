@@ -5119,6 +5119,100 @@ const M = {
     "Prüfen Sie die angeforderten Teile Ihres Antrags und reichen Sie erneut ein.",
     "Vérifiez les éléments demandés de votre dossier et renvoyez-le."
   ),
+  sellerTranslationsTitle: L(
+    "Productvertalingen",
+    "Product translations",
+    "Produktübersetzungen",
+    "Traductions produit"
+  ),
+  sellerTranslationsIntro: L(
+    "Stel de bron-taal in en bekijk de status van vertalingen. Productteksten lopen via Product Cloud, niet via UI-i18n.",
+    "Set the source language and view translation status. Product copy uses Product Cloud, not UI i18n.",
+    "Legen Sie die Ausgangssprache fest und prüfen Sie den Übersetzungsstatus. Produkttexte laufen über Product Cloud, nicht über UI-i18n.",
+    "Définissez la langue source et consultez le statut des traductions. Les textes produit passent par Product Cloud, pas l’i18n UI."
+  ),
+  sellerTranslationsSourceLanguage: L(
+    "Bron-taal",
+    "Source language",
+    "Ausgangssprache",
+    "Langue source"
+  ),
+  sellerTranslationsPrepare: L(
+    "Vertalingen voorbereiden",
+    "Prepare translations",
+    "Übersetzungen vorbereiten",
+    "Préparer les traductions"
+  ),
+  sellerTranslationsSaveSource: L(
+    "Bron-taal opslaan",
+    "Save source language",
+    "Ausgangssprache speichern",
+    "Enregistrer la langue source"
+  ),
+  sellerTranslationsStatusHeading: L(
+    "Status per taal",
+    "Status by language",
+    "Status pro Sprache",
+    "Statut par langue"
+  ),
+  sellerTranslationsProviderOff: L(
+    "Automatische vertaling nog niet geactiveerd",
+    "Automatic translation not activated yet",
+    "Automatische Übersetzung noch nicht aktiviert",
+    "Traduction automatique pas encore activée"
+  ),
+  sellerTranslationsBack: L(
+    "Terug naar producten",
+    "Back to products",
+    "Zurück zu Produkten",
+    "Retour aux produits"
+  ),
+  sellerTranslationsCloudHeading: L(
+    "Product Cloud — vertalingen",
+    "Product Cloud — translations",
+    "Product Cloud — Übersetzungen",
+    "Product Cloud — traductions"
+  ),
+  sellerTranslationsOpen: L(
+    "Vertalingen",
+    "Translations",
+    "Übersetzungen",
+    "Traductions"
+  ),
+  sellerTranslationsLangNl: L("Nederlands", "Dutch", "Niederländisch", "Néerlandais"),
+  sellerTranslationsLangEn: L("Engels", "English", "Englisch", "Anglais"),
+  sellerTranslationsLangDe: L("Duits", "German", "Deutsch", "Allemand"),
+  sellerTranslationsLangFr: L("Frans", "French", "Französisch", "Français"),
+  sellerTranslationsSaved: L(
+    "Bron-taal opgeslagen.",
+    "Source language saved.",
+    "Ausgangssprache gespeichert.",
+    "Langue source enregistrée."
+  ),
+  sellerTranslationsPrepared: L(
+    "Vertalingen voorbereid voor de andere actieve talen.",
+    "Translations prepared for the other active languages.",
+    "Übersetzungen für die anderen aktiven Sprachen vorbereitet.",
+    "Traductions préparées pour les autres langues actives."
+  ),
+  sellerTranslationsLoadError: L(
+    "Vertalingen laden mislukt.",
+    "Failed to load translations.",
+    "Übersetzungen konnten nicht geladen werden.",
+    "Échec du chargement des traductions."
+  ),
+  sellerTranslationsForbidden: L(
+    "Je mag dit product niet beheren.",
+    "You are not allowed to manage this product.",
+    "Sie dürfen dieses Produkt nicht verwalten.",
+    "Vous n’êtes pas autorisé à gérer ce produit."
+  ),
+  sellerTranslationsNoProducts: L(
+    "Nog geen Product Cloud-producten. Maak eerst een product aan.",
+    "No Product Cloud products yet. Create a product first.",
+    "Noch keine Product-Cloud-Produkte. Legen Sie zuerst ein Produkt an.",
+    "Pas encore de produits Product Cloud. Créez d’abord un produit."
+  ),
 } as const satisfies Record<string, LocalizedString>
 
 export type StorefrontMessageKey = keyof typeof M

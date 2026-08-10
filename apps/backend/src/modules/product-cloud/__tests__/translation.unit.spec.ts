@@ -6,6 +6,8 @@ import {
   PRODUCT_CLOUD_ACTIVE_LANGUAGES,
   inferContentTypeFromField,
 } from "../languages"
+import { buildLanguageCoverage, pickTranslationVersion } from "../translation/coverage"
+import { translationStatusUiLabel } from "../translation/status-labels"
 import {
   createTranslationProviderFromEnv,
   NullTranslationProvider,
@@ -23,6 +25,85 @@ import {
   shouldEnqueueTarget,
   shouldMarkTranslationStale,
 } from "../translation/workflow"
+import { sellerOwnsProduct } from "../translation/ownership"
+
+
+describe("translation status UI labels + coverage", () => {
+  it("maps backend statuses to sprint UI labels", () => {
+    expect(translationStatusUiLabel("Concept")).toBe("In wachtrij")
+    expect(translationStatusUiLabel("Machine")).toBe("Bezig")
+    expect(translationStatusUiLabel("Gepubliceerd")).toBe("Beschikbaar")
+    expect(translationStatusUiLabel("Mislukt")).toBe("Mislukt")
+  })
+
+  it("builds DE source → NL/EN/FR coverage including missing", () => {
+    const coverage = buildLanguageCoverage({
+      source_language_code: "de",
+      translations: [
+        {
+          field_name: "title",
+          language_code: "nl",
+          translation_status: "Gepubliceerd",
+        },
+        {
+          field_name: "title",
+          language_code: "en",
+          translation_status: "Mislukt",
+        },
+      ],
+    })
+    expect(coverage.source_language_code).toBe("de")
+    expect(coverage.targets.map((t) => t.language_code)).toEqual([
+      "nl",
+      "en",
+      "fr",
+    ])
+    expect(coverage.targets.find((t) => t.language_code === "nl")?.ui_status).toBe(
+      "Beschikbaar"
+    )
+    expect(coverage.targets.find((t) => t.language_code === "en")?.ui_status).toBe(
+      "Mislukt"
+    )
+    expect(coverage.targets.find((t) => t.language_code === "fr")?.ui_status).toBe(
+      "Ontbreekt"
+    )
+  })
+
+  it("aggregates worst status across fields for a language", () => {
+    const coverage = buildLanguageCoverage({
+      source_language_code: "nl",
+      translations: [
+        {
+          field_name: "title",
+          language_code: "en",
+          translation_status: "Gepubliceerd",
+        },
+        {
+          field_name: "description",
+          language_code: "en",
+          translation_status: "Verouderd",
+        },
+      ],
+    })
+    expect(coverage.targets.find((t) => t.language_code === "en")?.ui_status).toBe(
+      "Verouderd"
+    )
+  })
+
+  it("picks Concept version over older published", () => {
+    const version = pickTranslationVersion([
+      {
+        publication_status: "Gepubliceerd",
+        version_number: 1,
+      },
+      {
+        publication_status: "Concept",
+        version_number: 2,
+      },
+    ])
+    expect(version?.version_number).toBe(2)
+  })
+})
 
 describe("Product Cloud languages (ADR-0039)", () => {
   it("exposes NL/EN/FR/DE as active and computes generic targets", () => {
@@ -355,5 +436,13 @@ describe("Product Cloud translation workflow helpers (ADR-0039)", () => {
 describe("manual override protection (logic)", () => {
   it("documents that origin=manual must not be overwritten without force", () => {
     expect(isManualOverrideProtected("manual", false)).toBe(true)
+  })
+})
+
+describe("seller ownership for translations", () => {
+  it("allows only the owning seller", () => {
+    expect(sellerOwnsProduct("sel_a", "sel_a")).toBe(true)
+    expect(sellerOwnsProduct("sel_a", "sel_b")).toBe(false)
+    expect(sellerOwnsProduct(null, "sel_a")).toBe(false)
   })
 })

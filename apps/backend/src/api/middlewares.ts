@@ -169,6 +169,11 @@ export default defineMiddlewares({
       ],
     },
     {
+      matcher: "/store/product-cloud/products/:id/translations",
+      methods: ["GET", "PATCH", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/product-cloud/claims",
       methods: ["GET"],
       middlewares: [customerAuth],
@@ -503,6 +508,16 @@ export default defineMiddlewares({
     {
       matcher: "/admin/product-cloud/translations",
       methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/translations/overview",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/translations/summary",
+      methods: ["GET"],
       middlewares: [adminAuth],
     },
     {

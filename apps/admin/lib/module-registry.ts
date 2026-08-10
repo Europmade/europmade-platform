@@ -118,6 +118,16 @@ export const ADMIN_MORE_NAV: AdminNavItem[] = [
     available: true,
   },
   {
+    id: "pc-translations",
+    naam: "PC Vertalingen",
+    route: "/product-cloud/translations",
+    icoon: "translations",
+    permissie: "Beheerder",
+    navigatiepositie: 65,
+    primary: false,
+    available: true,
+  },
+  {
     id: "settings",
     naam: "Instellingen",
     route: null,

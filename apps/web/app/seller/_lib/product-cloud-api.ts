@@ -130,3 +130,75 @@ export function createProduct(body: CreateProductInput) {
     body: JSON.stringify(body),
   })
 }
+
+export function getProductTranslations(productId: string) {
+  return request<{
+    product_id: string
+    version: {
+      id: string
+      product_id: string
+      title: string
+      description: string
+      source_language_code: string | null
+      version_number: number
+      publication_status: string
+    }
+    source_language_code: string | null
+    targets: Array<{
+      language_code: string
+      translation_status: string
+      ui_status: string
+      field_count: number
+      has_manual: boolean
+    }>
+    translations: Array<{
+      id: string
+      field_name: string
+      language_code: string
+      value: string
+      translation_status: string
+      origin?: string
+    }>
+    provider_configured: boolean
+    provider_message: string | null
+    active_targets: string[]
+  }>(`/store/product-cloud/products/${productId}/translations`)
+}
+
+export function setProductSourceLanguage(
+  productId: string,
+  source_language_code: string
+) {
+  return request<{
+    product_id: string
+    source_language_code: string | null
+    targets: Array<{
+      language_code: string
+      translation_status: string
+      ui_status: string
+    }>
+  }>(`/store/product-cloud/products/${productId}/translations`, {
+    method: "PATCH",
+    body: JSON.stringify({ source_language_code }),
+  })
+}
+
+export function prepareProductTranslations(productId: string) {
+  return request<{
+    product_id: string
+    enqueue: {
+      provider_id: string
+      provider_configured: boolean
+      results: Array<{
+        field_name: string
+        language_code: string
+        translation_status: string
+        error?: string
+      }>
+    }
+    provider_message: string | null
+  }>(`/store/product-cloud/products/${productId}/translations`, {
+    method: "POST",
+    body: JSON.stringify({ only_missing: true }),
+  })
+}

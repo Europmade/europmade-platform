@@ -14,6 +14,7 @@ import { useDemoProducts } from "../_lib/demo-store"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
 import { t, tFormat } from "../../_lib/i18n/messages"
 import { statusLabel } from "../../_lib/i18n/status-labels"
+import { SellerCloudTranslationsPanel } from "./_components/cloud-translations-panel"
 
 type ListingFilter = "all" | "live" | "concept"
 type StockFilter = "all" | "in_stock" | "out_of_stock" | "no_offer"
@@ -312,6 +313,8 @@ export default function SellerProductsPage() {
           {notice}
         </Notice>
       ) : null}
+
+      <SellerCloudTranslationsPanel />
 
       {csvOpen ? (
         <section className="mb-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
