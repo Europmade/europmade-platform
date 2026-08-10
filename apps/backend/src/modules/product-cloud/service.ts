@@ -32,6 +32,24 @@ import {
   slugifyCategoryName,
   type AttributeCatalogItem,
 } from "./category-attributes"
+import {
+  isTranslatableField,
+  inferContentTypeFromField,
+  normalizeLanguageCode,
+  targetLanguagesForSource,
+} from "./languages"
+import {
+  getTranslationProvider,
+  TranslationProviderNotConfiguredError,
+} from "./translation/provider"
+import {
+  resolveLocalizedFields,
+  type LocalizedFieldResolution,
+} from "./translation/resolve"
+import {
+  shouldEnqueueTarget,
+  shouldMarkTranslationStale,
+} from "./translation/workflow"
 
 export type CreateProductGraphInput = {
   seller_id: string
@@ -527,7 +545,7 @@ class ProductCloudModuleService extends MedusaService({
     return out
   }
 
-  /** Upsert a localized field (NL/FR/DE ready) — no AI translation. */
+  /** Upsert a localized field (ADR-0039: versioning + origin). */
   @InjectManager()
   async upsertTranslation(
     input: {
@@ -544,7 +562,14 @@ class ProductCloudModuleService extends MedusaService({
         | "Machine"
         | "Beoordeeld"
         | "Gepubliceerd"
+        | "Verouderd"
+        | "Mislukt"
       translation_version?: number
+      source_version?: number
+      origin?: "machine" | "manual"
+      updated_by?: string | null
+      /** When false (default), refuse to overwrite origin=manual unless force. */
+      force_overwrite_manual?: boolean
     },
     @MedusaContext() sharedContext: Context = {}
   ) {
@@ -560,12 +585,27 @@ class ProductCloudModuleService extends MedusaService({
         sharedContext
       )
     )[0]
+
+    if (
+      existing &&
+      existing.origin === "manual" &&
+      !input.force_overwrite_manual &&
+      input.origin !== "manual"
+    ) {
+      return existing
+    }
+
     const payload = {
       value: input.value,
       source_language_code: input.source_language_code ?? null,
       source_value: input.source_value ?? null,
       translation_status: input.translation_status ?? "Concept",
-      translation_version: input.translation_version ?? 1,
+      translation_version:
+        input.translation_version ??
+        (existing ? Number(existing.translation_version) + 1 : 1),
+      source_version: input.source_version ?? existing?.source_version ?? 1,
+      origin: input.origin ?? existing?.origin ?? "machine",
+      updated_by: input.updated_by ?? existing?.updated_by ?? null,
     }
     if (existing) {
       return await this.updateProductTranslations(
@@ -641,6 +681,399 @@ class ProductCloudModuleService extends MedusaService({
     )[0]
     if (existing) return existing
     return await this.createProductRelations(input, sharedContext)
+  }
+
+  /**
+   * Resolve localized fields with source fallback (ADR-0039).
+   * Storefront mode: only Gepubliceerd. Never overwrites source content.
+   */
+  @InjectManager()
+  async resolveLocalizedEntityFields(
+    input: {
+      entity_type: "product_version" | "category" | "attribute_definition"
+      entity_id: string
+      locale: string
+      source_language_code?: string | null
+      source_fields: Record<string, string>
+      mode?: "storefront" | "preview"
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<LocalizedFieldResolution[]> {
+    const translations = await this.listProductTranslations(
+      {
+        entity_type: input.entity_type,
+        entity_id: input.entity_id,
+      },
+      {},
+      sharedContext
+    )
+    return resolveLocalizedFields({
+      locale: input.locale,
+      source_language_code: input.source_language_code,
+      source_fields: input.source_fields,
+      mode: input.mode ?? "storefront",
+      translations: translations.map((t) => ({
+        field_name: t.field_name,
+        language_code: t.language_code,
+        value: t.value,
+        source_language_code: t.source_language_code,
+        source_value: t.source_value,
+        translation_status: t.translation_status,
+        origin: t.origin,
+        source_version: t.source_version,
+      })),
+    })
+  }
+
+  /**
+   * Mark existing translations stale after source content changed.
+   * Does NOT overwrite values or auto-retranslate (ADR-0039).
+   */
+  @InjectManager()
+  async markTranslationsStale(
+    input: {
+      entity_type: "product_version" | "category" | "attribute_definition"
+      entity_id: string
+      new_source_version: number
+      field_names?: string[]
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const rows = await this.listProductTranslations(
+      {
+        entity_type: input.entity_type,
+        entity_id: input.entity_id,
+      },
+      {},
+      sharedContext
+    )
+    const updated = []
+    for (const row of rows) {
+      if (
+        input.field_names &&
+        !input.field_names.includes(row.field_name)
+      ) {
+        continue
+      }
+      if (
+        !shouldMarkTranslationStale({
+          translation_status: row.translation_status,
+          source_version: Number(row.source_version),
+          new_source_version: input.new_source_version,
+        })
+      ) {
+        continue
+      }
+      updated.push(
+        await this.updateProductTranslations(
+          {
+            id: row.id,
+            translation_status: "Verouderd",
+          },
+          sharedContext
+        )
+      )
+    }
+    return { marked: updated.length, translations: updated }
+  }
+
+  /** Publish a translation for storefront use. */
+  @InjectManager()
+  async publishTranslation(
+    input: {
+      entity_type: "product_version" | "category" | "attribute_definition"
+      entity_id: string
+      field_name: string
+      language_code: string
+      updated_by?: string | null
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const existing = (
+      await this.listProductTranslations(
+        {
+          entity_type: input.entity_type,
+          entity_id: input.entity_id,
+          field_name: input.field_name,
+          language_code: input.language_code,
+        },
+        {},
+        sharedContext
+      )
+    )[0]
+    if (!existing || !existing.value?.trim()) {
+      throw new Error("cannot_publish_empty_translation")
+    }
+    if (
+      existing.translation_status === "Ontbreekt" ||
+      existing.translation_status === "Mislukt"
+    ) {
+      throw new Error("cannot_publish_failed_or_missing")
+    }
+    return await this.updateProductTranslations(
+      {
+        id: existing.id,
+        translation_status: "Gepubliceerd",
+        updated_by: input.updated_by ?? existing.updated_by,
+      },
+      sharedContext
+    )
+  }
+
+  /** Manual override — protected from automatic overwrite. */
+  @InjectManager()
+  async saveManualTranslation(
+    input: {
+      entity_type: "product_version" | "category" | "attribute_definition"
+      entity_id: string
+      field_name: string
+      language_code: string
+      value: string
+      source_language_code?: string | null
+      source_value?: string | null
+      source_version?: number
+      updated_by?: string | null
+      publish?: boolean
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    return await this.upsertTranslation(
+      {
+        entity_type: input.entity_type,
+        entity_id: input.entity_id,
+        field_name: input.field_name,
+        language_code: input.language_code,
+        value: input.value,
+        source_language_code: input.source_language_code,
+        source_value: input.source_value,
+        source_version: input.source_version,
+        origin: "manual",
+        translation_status: input.publish ? "Gepubliceerd" : "Beoordeeld",
+        updated_by: input.updated_by ?? null,
+        force_overwrite_manual: true,
+      },
+      sharedContext
+    )
+  }
+
+  /**
+   * Enqueue / run machine translation for source → other active languages.
+   * Without provider: Ontbreekt placeholders. Manual rows skipped unless force.
+   */
+  @InjectManager()
+  async enqueueMachineTranslations(
+    input: {
+      entity_type: "product_version" | "category" | "attribute_definition"
+      entity_id: string
+      source_language_code: string
+      source_fields: Record<string, string>
+      target_language_codes?: string[]
+      source_version?: number
+      content_type?: string
+      category?: string
+      force_overwrite_manual?: boolean
+      only_stale?: boolean
+      /** Only create/update when row is missing or Ontbreekt. */
+      only_missing?: boolean
+      /** Only retry rows with status Mislukt. */
+      only_failed?: boolean
+      auto_publish?: boolean
+      updated_by?: string | null
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<{
+    provider_id: string
+    provider_configured: boolean
+    results: Array<{
+      field_name: string
+      language_code: string
+      translation_status: string
+      value: string
+      origin?: string
+      skipped?: boolean
+      error?: string
+    }>
+  }> {
+    const source = normalizeLanguageCode(input.source_language_code)
+    const targets =
+      input.target_language_codes?.map(normalizeLanguageCode).filter(Boolean) ??
+      targetLanguagesForSource(source)
+    const sourceVersion = input.source_version ?? 1
+
+    const provider = getTranslationProvider()
+    const providerConfigured = provider.id !== "none"
+    const results: Array<{
+      field_name: string
+      language_code: string
+      translation_status: string
+      value: string
+      origin?: string
+      skipped?: boolean
+      error?: string
+    }> = []
+
+    for (const [field_name, source_value] of Object.entries(
+      input.source_fields
+    )) {
+      if (!isTranslatableField(field_name)) {
+        results.push({
+          field_name,
+          language_code: source,
+          translation_status: "skipped",
+          value: source_value,
+          skipped: true,
+          error: "field_not_translatable",
+        })
+        continue
+      }
+      if (!source_value?.trim()) continue
+
+      const contentType =
+        input.content_type ?? inferContentTypeFromField(field_name)
+
+      for (const target of targets) {
+        if (target === source) continue
+
+        const existing = (
+          await this.listProductTranslations(
+            {
+              entity_type: input.entity_type,
+              entity_id: input.entity_id,
+              field_name,
+              language_code: target,
+            },
+            {},
+            sharedContext
+          )
+        )[0]
+
+        const decision = shouldEnqueueTarget({
+          existing_status: existing?.translation_status,
+          existing_origin: existing?.origin,
+          force_overwrite_manual: input.force_overwrite_manual,
+          only_stale: input.only_stale,
+          only_missing: input.only_missing,
+          only_failed: input.only_failed,
+        })
+        if (!decision.enqueue) {
+          results.push({
+            field_name,
+            language_code: target,
+            translation_status: existing?.translation_status ?? "Ontbreekt",
+            value: existing?.value ?? "",
+            origin: existing?.origin,
+            skipped: true,
+            error: decision.skip_reason,
+          })
+          continue
+        }
+
+        if (!providerConfigured) {
+          await this.upsertTranslation(
+            {
+              entity_type: input.entity_type,
+              entity_id: input.entity_id,
+              field_name,
+              language_code: target,
+              value: "",
+              source_language_code: source,
+              source_value,
+              translation_status: "Ontbreekt",
+              source_version: sourceVersion,
+              origin: "machine",
+              force_overwrite_manual: input.force_overwrite_manual,
+              updated_by: input.updated_by,
+            },
+            sharedContext
+          )
+          results.push({
+            field_name,
+            language_code: target,
+            translation_status: "Ontbreekt",
+            value: "",
+            origin: "machine",
+            error: "provider_not_configured",
+          })
+          continue
+        }
+
+        try {
+          const translated = await provider.translate({
+            text: source_value,
+            source_language: source,
+            target_language: target,
+            field_name,
+            content_type: contentType,
+            entity_type: input.entity_type,
+            entity_id: input.entity_id,
+            category: input.category,
+          })
+          const status = input.auto_publish ? "Gepubliceerd" : "Machine"
+          await this.upsertTranslation(
+            {
+              entity_type: input.entity_type,
+              entity_id: input.entity_id,
+              field_name,
+              language_code: target,
+              value: translated.text,
+              source_language_code: source,
+              source_value,
+              translation_status: status,
+              source_version: sourceVersion,
+              origin: "machine",
+              force_overwrite_manual: input.force_overwrite_manual,
+              updated_by: input.updated_by,
+            },
+            sharedContext
+          )
+          results.push({
+            field_name,
+            language_code: target,
+            translation_status: status,
+            value: translated.text,
+            origin: "machine",
+          })
+        } catch (err) {
+          const message =
+            err instanceof TranslationProviderNotConfiguredError
+              ? err.message
+              : err instanceof Error
+                ? err.message
+                : "translation_failed"
+          await this.upsertTranslation(
+            {
+              entity_type: input.entity_type,
+              entity_id: input.entity_id,
+              field_name,
+              language_code: target,
+              value: existing?.value ?? "",
+              source_language_code: source,
+              source_value,
+              translation_status: "Mislukt",
+              source_version: sourceVersion,
+              origin: "machine",
+              force_overwrite_manual: input.force_overwrite_manual,
+              updated_by: input.updated_by,
+            },
+            sharedContext
+          )
+          results.push({
+            field_name,
+            language_code: target,
+            translation_status: "Mislukt",
+            value: existing?.value ?? "",
+            origin: "machine",
+            error: message,
+          })
+        }
+      }
+    }
+
+    return {
+      provider_id: provider.id,
+      provider_configured: providerConfigured,
+      results,
+    }
   }
 }
 

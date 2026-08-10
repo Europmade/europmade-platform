@@ -5,6 +5,7 @@ Alle inhoudelijke wijzigingen aan de definitieve documentatie worden hier bijgeh
 ## [Onuitgebracht]
 
 ### Afgerond
+- **Product Cloud translation workflow (ADR-0039) — workflow compleet** (2026-08-10). Centrale productcontent-vertalingen via `pc_translation` + `PRODUCT_CLOUD_ACTIVE_LANGUAGES` (nl/en/fr/de, willekeurige bron→targets). Statusmapping sprint-labels ↔ ADR-enum; `markTranslationsStale` bij concept title/description-wijziging; enqueue/retranslate filters `only_missing` / `only_stale` / `only_failed`; manual `origin` bescherming; provider `none` zonder neptekst. DeepL **niet** productief geactiveerd (env-only later). UI-teksten blijven `messages.ts`.
 - **Storefront internationalization & automatic language detection — AFGEROND** (2026-08-10). Ondersteunde UI-locales: `nl` / `en` / `de` / `fr`. Prioriteit: handmatige keuze → `em_storefront_locale` cookie/localStorage → Accept-Language / `navigator.language` → NL-fallback. Auto-detectie schrijft geen cookie/storage. Locale-aware o.a. homepage, mega-menu, categorie/PDP/Buy Box/FAQ/specs, buyer/seller portals, partner onboarding, auth, content/juridisch, footer, cookievoorkeuren + consent-banner, statuslabels, metadata. Architectuur uitsluitend: `messages.ts`, `StorefrontLocaleProvider`, `em_storefront_locale`, locale helpers, `detect-locale.ts` (geen tweede i18n-systeem). Product-/merk-/sellernamen blijven brondata. Niet opnieuw als open sprintwerk opnemen tenzij concreet bug of nieuwe taal.
 
 ### Aangepast

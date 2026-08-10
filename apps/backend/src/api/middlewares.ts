@@ -506,8 +506,38 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/product-cloud/translations/enqueue",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/translations/publish",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/translations/manual",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/translations/mark-stale",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/translations/retranslate",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/store/product-cloud/categories",
       methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/product-cloud/translations",
+      methods: ["GET", "POST"],
       middlewares: [],
     },
     {

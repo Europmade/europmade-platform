@@ -29,6 +29,12 @@ export type AiContentEntityType =
 /** MVP + next EU storefront languages for Product Cloud translations. */
 export type ProductCloudLanguageCode = "nl" | "fr" | "de" | "en"
 
+/** Active Product Cloud translation languages (ADR-0039) — NL/EN/FR/DE. */
+export const PRODUCT_CLOUD_ACTIVE_LANGUAGES = ["nl", "en", "fr", "de"] as const
+
+export type ProductCloudActiveLanguage =
+  (typeof PRODUCT_CLOUD_ACTIVE_LANGUAGES)[number]
+
 export type ProductCloudIdentifierType = "GTIN" | "MPN"
 
 export type ProductCloudAttributeDataType =
@@ -42,6 +48,22 @@ export type ProductCloudTranslationStatus =
   | "Machine"
   | "Beoordeeld"
   | "Gepubliceerd"
+  | "Verouderd"
+  | "Mislukt"
+
+export type ProductCloudTranslationOrigin = "machine" | "manual"
+
+export type ProductCloudLocalizedFieldResolution = {
+  field_name: string
+  locale: string
+  value: string
+  source: "source" | "translation" | "missing"
+  translation_status: ProductCloudTranslationStatus | string | null
+  translation_exists: boolean
+  translation_failed: boolean
+  translation_stale?: boolean
+  origin?: ProductCloudTranslationOrigin | string | null
+}
 
 export type ProductCloudRelationType =
   | "Vergelijkbaar"
@@ -100,6 +122,9 @@ export type ProductCloudTranslation = {
   source_value: string | null
   translation_status: ProductCloudTranslationStatus
   translation_version: number
+  source_version?: number
+  origin?: ProductCloudTranslationOrigin
+  updated_by?: string | null
 }
 
 export type ProductCloudCategorySummary = {

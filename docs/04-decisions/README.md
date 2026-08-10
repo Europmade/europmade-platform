@@ -44,3 +44,6 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0034](./0034-finance-invoice-payout-soft-schema.md) | Finance invoice/payout soft-schema & MVP-cadans | Geaccepteerd | Finance |
 | [0035](./0035-ai-support-mvp-deterministic-advisor.md) | AI-ondersteuning MVP: deterministische advisor | Geaccepteerd | AI-ondersteuning |
 | [0036](./0036-ai-content-engine-offline-first.md) | AI Content Engine: offline-first, provider-agnostic | Geaccepteerd | CMS, SEO, AI Content |
+| [0037](./0037-product-cloud-central-layer-extensions.md) | Product Cloud centrale laag: document/translation/relaties/attrs | Geaccepteerd | Product Cloud |
+| [0038](./0038-product-cloud-storefront-and-translation-provider.md) | Storefront-koppeling + vertaalprovider-abstractie | Geaccepteerd (deels aangescherpt door [0039](./0039-translation-layer-mvp.md)) | Product Cloud, storefront, i18n |
+| [0039](./0039-translation-layer-mvp.md) | Translation Layer MVP: EN, DeepL, versioning, manual | Geaccepteerd | Product Cloud, i18n |

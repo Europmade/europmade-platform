@@ -96,15 +96,45 @@ export const upsertConceptVersionStep = createStep(
     let version: ProductVersionRow
 
     if (activeConcept) {
+      const nextTitle = input.title ?? activeConcept.title
+      const nextDescription = input.description ?? activeConcept.description
+      const titleChanged =
+        input.title !== undefined && input.title !== activeConcept.title
+      const descriptionChanged =
+        input.description !== undefined &&
+        input.description !== activeConcept.description
+
       const updated = await productCloud.updateProductVersions({
         id: activeConcept.id,
-        title: input.title ?? activeConcept.title,
-        description: input.description ?? activeConcept.description,
+        title: nextTitle,
+        description: nextDescription,
         publication_status: "Concept",
       })
       version = (
         Array.isArray(updated) ? updated[0] : updated
       ) as ProductVersionRow
+
+      // ADR-0039: brontekst-wijziging → bestaande vertalingen Verouderd (geen auto-MT).
+      if (titleChanged || descriptionChanged) {
+        const existingTranslations =
+          await productCloud.listProductTranslations({
+            entity_type: "product_version",
+            entity_id: activeConcept.id,
+          })
+        const maxSourceVersion = existingTranslations.reduce(
+          (max, row) => Math.max(max, Number(row.source_version ?? 1)),
+          1
+        )
+        const field_names: string[] = []
+        if (titleChanged) field_names.push("title")
+        if (descriptionChanged) field_names.push("description")
+        await productCloud.markTranslationsStale({
+          entity_type: "product_version",
+          entity_id: activeConcept.id,
+          new_source_version: maxSourceVersion + 1,
+          field_names,
+        })
+      }
     } else {
       const published = versions
         .filter((v) => v.publication_status === "Gepubliceerd")
