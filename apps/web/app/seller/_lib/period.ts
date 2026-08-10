@@ -2,6 +2,9 @@
  * Periodefilter voor Seller Dashboard-KPI's (zelfde model als admin cockpit).
  */
 
+import type { StorefrontLocale } from "../../_lib/i18n/locales"
+import { t, type StorefrontMessageKey } from "../../_lib/i18n/messages"
+
 export type PeriodKey =
   | "today"
   | "yesterday"
@@ -19,14 +22,27 @@ export type PeriodOption = {
   label: string
 }
 
-export const PERIOD_OPTIONS: PeriodOption[] = [
-  { key: "today", label: "Vandaag" },
-  { key: "this_week", label: "Deze week" },
-  { key: "this_month", label: "Deze maand" },
-  { key: "previous_month", label: "Vorige maand" },
-  { key: "this_quarter", label: "Dit kwartaal" },
-  { key: "this_year", label: "Dit jaar" },
+type PeriodOptionDef = {
+  key: PeriodKey
+  labelKey: StorefrontMessageKey
+}
+
+export const PERIOD_OPTIONS: PeriodOptionDef[] = [
+  { key: "today", labelKey: "periodToday" },
+  { key: "this_week", labelKey: "periodThisWeek" },
+  { key: "this_month", labelKey: "periodThisMonth" },
+  { key: "previous_month", labelKey: "periodPreviousMonth" },
+  { key: "this_quarter", labelKey: "periodThisQuarter" },
+  { key: "this_year", labelKey: "periodThisYear" },
 ]
+
+/** Localized period options for the current storefront locale. */
+export function periodOptions(locale: StorefrontLocale): PeriodOption[] {
+  return PERIOD_OPTIONS.map((opt) => ({
+    key: opt.key,
+    label: t(opt.labelKey, locale),
+  }))
+}
 
 export type PeriodRange = {
   key: PeriodKey
@@ -113,9 +129,9 @@ export function isInPeriod(
   range: PeriodRange
 ): boolean {
   if (!iso) return false
-  const t = new Date(iso).getTime()
-  if (!Number.isFinite(t)) return false
-  if (range.from && t < range.from.getTime()) return false
-  if (t >= range.to.getTime()) return false
+  const ts = new Date(iso).getTime()
+  if (!Number.isFinite(ts)) return false
+  if (range.from && ts < range.from.getTime()) return false
+  if (ts >= range.to.getTime()) return false
   return true
 }

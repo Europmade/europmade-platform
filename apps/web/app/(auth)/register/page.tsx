@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { Suspense, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, Input, Notice } from "@europmade/ui";
@@ -12,11 +12,14 @@ import {
   registerAuthIdentity,
 } from "../_lib/medusa-auth";
 import { claimPendingGuestOrder, mergeGuestCart } from "../../_lib/order-service-api";
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
+import { t } from "../../_lib/i18n/messages";
 
 // Eén registratieflow — geen rolkeuze, geen aparte velden voor "ik ben een
 // retailer/producent" (authenticatie/spec.md §1.3, wireframe-fix screen 2).
-export default function RegisterPage() {
+function RegisterPageContent() {
   const router = useRouter();
+  const locale = useStorefrontLocale();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect")?.trim() || "";
   const claimPaymentReference = searchParams.get("payment_reference")?.trim() || "";
@@ -70,7 +73,7 @@ export default function RegisterPage() {
       if (message.includes("already exists")) {
         setExistingAccount(true);
       } else {
-        setError("Registreren is niet gelukt. Probeer het opnieuw.");
+        setError(t("authRegisterFailed", locale));
       }
     } finally {
       setIsSubmitting(false);
@@ -79,18 +82,18 @@ export default function RegisterPage() {
 
   return (
     <AuthCard
-      title="Account aanmaken"
-      subtitle="Eén account voor kopen — en later, als je dat wilt, ook verkopen"
+      title={t("authRegisterTitle", locale)}
+      subtitle={t("authRegisterSubtitle", locale)}
     >
       <form onSubmit={handleSubmit}>
         {existingAccount && (
           <Notice variant="warning" className="mb-4">
-            Dit e-mailadres is al geregistreerd.{" "}
+            {t("authEmailExists", locale)}{" "}
             <Link
               href={`/login${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
               className="underline decoration-dotted"
             >
-              Inloggen
+              {t("authLoginTitle", locale)}
             </Link>
           </Notice>
         )}
@@ -100,64 +103,67 @@ export default function RegisterPage() {
           </Notice>
         )}
         <Input
-          label="Naam"
-          placeholder="Voor- en achternaam"
+          label={t("authFullName", locale)}
+          placeholder={t("authFullNamePlaceholder", locale)}
           autoComplete="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
         />
         <Input
-          label="E-mailadres"
+          label={t("authEmail", locale)}
           type="email"
-          placeholder="naam@voorbeeld.nl"
+          placeholder={t("authEmailPlaceholder", locale)}
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <Input
-          label="Wachtwoord"
+          label={t("authPassword", locale)}
           type="password"
-          placeholder="Minimaal 8 tekens"
+          placeholder={t("authPasswordHint", locale)}
           autoComplete="new-password"
           minLength={8}
-          hint="Minimaal 8 tekens, combinatie van letters en cijfers aanbevolen."
+          hint={t("authPasswordHintLong", locale)}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
         <div className="mb-5">
           <Checkbox
-            label={
-              <>
-                Ik ga akkoord met de <span className="underline decoration-dotted">voorwaarden</span> en
-                het <span className="underline decoration-dotted">privacybeleid</span>
-              </>
-            }
+            label={t("authAcceptTerms", locale)}
             checked={acceptedTerms}
             onChange={(e) => setAcceptedTerms(e.target.checked)}
             required
           />
         </div>
         <Button type="submit" className="w-full" disabled={isSubmitting || !acceptedTerms}>
-          {isSubmitting ? "Bezig…" : "Account aanmaken"}
+          {isSubmitting ? t("authCreatingAccount", locale) : t("authRegisterTitle", locale)}
         </Button>
       </form>
       <div className="my-[22px] flex items-center gap-[10px] text-[11px] text-wf-500">
         <span className="h-px flex-1 bg-wf-300" />
-        of
+        {t("authOr", locale)}
         <span className="h-px flex-1 bg-wf-300" />
       </div>
       <p className="text-center text-xs text-wf-600">
-        Al een account?{" "}
+        {t("authAlreadyHaveAccount", locale)}{" "}
         <Link
           href={`/login${redirectTo ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
           className="text-wf-800 underline decoration-dotted"
         >
-          Inloggen
+          {t("authLoginTitle", locale)}
         </Link>
       </p>
     </AuthCard>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }

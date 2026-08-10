@@ -13,12 +13,15 @@ import {
   savePreferences,
   type CookiePreferences,
 } from "../_lib/cookie-consent"
+import { useStorefrontLocale } from "../_lib/i18n/use-storefront-locale"
+import { t } from "../_lib/i18n/messages"
 
 /**
  * Cookie Consent — Eerste bezoek (S3-01-06 / cookie-01 wireframe).
  */
 export function CookieConsentBanner() {
   const pathname = usePathname()
+  const locale = useStorefrontLocale()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -57,28 +60,28 @@ export function CookieConsentBanner() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-wf-900 bg-white px-4 py-4 shadow-[0_-4px_16px_rgba(0,0,0,0.12)] tablet:px-7">
-      <h3 className="text-sm font-bold text-wf-900">Jouw privacy</h3>
+      <h3 className="text-sm font-bold text-wf-900">
+        {t("cookieBannerTitle", locale)}
+      </h3>
       <p className="mt-2 max-w-2xl text-[11.5px] leading-relaxed text-wf-600">
-        We gebruiken cookies voor het functioneren van de site en, met jouw
-        toestemming, voor affiliate-trackinglinks. Zonder toestemming kun je nog
-        steeds via een coupon-code aan een Affiliate worden toegeschreven.
+        {t("cookieBannerBody", locale)}
       </p>
       <div className="mt-3.5 flex flex-wrap gap-2.5">
         <Button type="button" onClick={() => void applyDecision(true)}>
-          Alles accepteren
+          {t("cookieAcceptAll", locale)}
         </Button>
         <Button
           type="button"
           variant="secondary"
           onClick={() => void applyDecision(false)}
         >
-          Weigeren
+          {t("cookieReject", locale)}
         </Button>
         <Link
           href="/cookie-preferences"
           className="inline-flex items-center justify-center rounded-wf border border-transparent px-[18px] py-[9px] text-sm font-semibold text-wf-700 underline hover:text-wf-900"
         >
-          Voorkeuren beheren
+          {t("cookieManagePreferences", locale)}
         </Link>
       </div>
     </div>

@@ -1,28 +1,21 @@
 import type { Metadata } from "next"
 import { ContentPage } from "../_components/marketplace/content-page"
+import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
+import { t } from "../_lib/i18n/messages"
 
 export const metadata: Metadata = {
-  title: "Buy Box uitgelegd — EuropMade",
+  title: "Buy Box — EuropMade",
   description:
-    "Hoe EuropMade de beste totale aanbieding selecteert — nooit op basis van advertenties of commissies.",
+    "How EuropMade selects the best overall offer — never based on ads or commissions.",
 }
 
-export default function BuyBoxUitlegPage() {
+export default async function BuyBoxUitlegPage() {
+  const locale = await getStorefrontLocaleFromCookies()
   return (
-    <ContentPage title="Buy Box uitgelegd">
-      <p>
-        De Buy Box toont automatisch de beste totale aanbieding voor jou. We
-        wegen onder meer prijs, levertijd, beoordeling, voorraad en
-        betrouwbaarheid.
-      </p>
-      <p>
-        Advertenties, commissies of platformbelang spelen géén rol bij de
-        selectie. Zo blijft de keuze eerlijk voor klant én verkoper.
-      </p>
-      <p>
-        Via &quot;Alle aanbieders bekijken&quot; vergelijk je zelf alle
-        beschikbare offers voor hetzelfde product.
-      </p>
+    <ContentPage title={t("buyBoxPageTitle", locale)}>
+      <p>{t("buyBoxPageP1", locale)}</p>
+      <p>{t("buyBoxPageP2", locale)}</p>
+      <p>{t("buyBoxPageP3", locale)}</p>
     </ContentPage>
   )
 }

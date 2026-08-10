@@ -282,7 +282,11 @@ export function CategoryListingClient({
             <ul className="grid grid-cols-2 items-stretch gap-2.5 tablet:grid-cols-3 desktop:grid-cols-4 desktop:gap-3">
               {pageItems.map((product) => (
                 <li key={product.slug} className="h-full min-h-0">
-                  <ProductCarouselCard product={product} layout="grid" />
+                  <ProductCarouselCard
+                    product={product}
+                    layout="grid"
+                    locale={locale}
+                  />
                 </li>
               ))}
             </ul>

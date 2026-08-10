@@ -7,8 +7,8 @@ import { KpiCard } from "./_components/kpi-card"
 import { PeriodFilter } from "./_components/period-filter"
 import { DashboardSection } from "./_components/dashboard-section"
 import {
-  PERIOD_OPTIONS,
   isInPeriod,
+  periodOptions,
   resolvePeriodRange,
   type PeriodKey,
 } from "./_lib/period"
@@ -20,15 +20,18 @@ import {
   DEMO_REVIEWS,
 } from "./_lib/demo-data"
 import { DEMO_MESSAGE_THREADS, DEMO_RETURN_DETAILS } from "./_lib/demo-data-details"
+import { useStorefrontLocale } from "../_lib/i18n/use-storefront-locale"
+import { t, tFormat } from "../_lib/i18n/messages"
 
 /**
  * Seller Dashboard — periodefilter herberekent alle KPI's op demo-data.
  */
 export default function SellerDashboardPage() {
+  const locale = useStorefrontLocale()
   const [period, setPeriod] = useState<PeriodKey>("this_month")
   const range = useMemo(() => resolvePeriodRange(period), [period])
-  const periodLabel =
-    PERIOD_OPTIONS.find((o) => o.key === period)?.label ?? period
+  const options = periodOptions(locale)
+  const periodLabel = options.find((o) => o.key === period)?.label ?? period
 
   const periodOrders = useMemo(
     () => DEMO_ORDERS.filter((o) => isInPeriod(o.created_at, range)),
@@ -77,60 +80,73 @@ export default function SellerDashboardPage() {
 
   const actions = [
     {
-      label: `${unreadMessages} nieuwe berichten`,
+      label: tFormat("sellerNewMessages", locale, { count: unreadMessages }),
       href: "/seller/messages",
       show: unreadMessages > 0,
     },
     {
-      label: `${productsInReview} producten wachten op goedkeuring`,
+      label: tFormat("sellerProductsAwaiting", locale, {
+        count: productsInReview,
+      }),
       href: "/seller/products",
       show: productsInReview > 0,
     },
     {
-      label: `${openReturns} open retouren`,
+      label: tFormat("sellerOpenReturns", locale, { count: openReturns }),
       href: "/seller/returns",
       show: openReturns > 0,
     },
     {
-      label: `${openInvoices} open facturen`,
+      label: tFormat("sellerOpenInvoices", locale, { count: openInvoices }),
       href: "/seller/marketing/billing",
       show: openInvoices > 0,
     },
   ].filter((a) => a.show)
 
+  const dateLocale =
+    locale === "en"
+      ? "en-GB"
+      : locale === "de"
+        ? "de-DE"
+        : locale === "fr"
+          ? "fr-FR"
+          : "nl-NL"
+
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Dashboard" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavDashboard", locale) },
       ]}
     >
       <div className="mb-5 flex flex-col gap-3 tablet:flex-row tablet:items-end tablet:justify-between">
         <div>
-          <h1 className="text-[19px] font-bold text-wf-900">Dashboard</h1>
+          <h1 className="text-[19px] font-bold text-wf-900">
+            {t("sellerNavDashboard", locale)}
+          </h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            Overzicht van verkopen, producten en openstaande acties.
+            {t("sellerDashboardIntro", locale)}
           </p>
         </div>
         <PeriodFilter value={period} onChange={setPeriod} />
       </div>
 
       <p className="mb-5 text-[10.5px] text-wf-500">
-        Periode: {periodLabel}
+        {t("sellerPeriod", locale)}: {periodLabel}
         {range.from
-          ? ` · vanaf ${range.from.toLocaleDateString("nl-NL")}`
+          ? ` · ${t("sellerPeriodFrom", locale)} ${range.from.toLocaleDateString(dateLocale)}`
           : null}{" "}
         · Noordzee Ambacht BV
       </p>
 
       <section className="mb-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Actie vereist
+          {t("sellerActionRequired", locale)}
         </h2>
         <div className="overflow-hidden rounded-lg border border-wf-300 bg-white">
           {actions.length === 0 ? (
             <p className="px-[18px] py-4 text-xs text-wf-600">
-              Geen openstaande acties in deze periode.
+              {t("sellerNoActions", locale)}
             </p>
           ) : (
             actions.map((item) => (
@@ -140,7 +156,7 @@ export default function SellerDashboardPage() {
               >
                 <span>
                   <span className="mr-2 inline-block rounded-full border border-wf-700 px-2 py-0.5 text-[10px] font-semibold uppercase">
-                    Actie
+                    {t("sellerAction", locale)}
                   </span>
                   {item.label}
                 </span>
@@ -148,7 +164,7 @@ export default function SellerDashboardPage() {
                   href={item.href}
                   className="shrink-0 text-[11px] text-wf-800 underline"
                 >
-                  Openen
+                  {t("sellerOpen", locale)}
                 </Link>
               </div>
             ))
@@ -156,94 +172,106 @@ export default function SellerDashboardPage() {
         </div>
       </section>
 
-      <DashboardSection title="Prestaties gekozen periode" wrapChildren={false}>
+      <DashboardSection
+        title={t("sellerPerformance", locale)}
+        wrapChildren={false}
+      >
         <div className="mb-4 grid grid-cols-1 gap-4 tablet:grid-cols-2 desktop:grid-cols-3">
           <KpiCard
             emphasis="primary"
             periodKey={period}
             value={formatEuro(periodRevenue)}
-            label="Omzet"
+            label={t("sellerRevenue", locale)}
             source="api"
             href="/seller/finance"
-            linkLabel="Financiën"
+            linkLabel={t("sellerNavFinance", locale)}
           />
           <KpiCard
             periodKey={period}
             value={String(periodOrders.length)}
-            label="Orders"
+            label={t("sellerNavOrders", locale)}
             source="api"
             href="/seller/orders"
-            linkLabel="Orders"
+            linkLabel={t("sellerNavOrders", locale)}
           />
           <KpiCard
             value={String(productsOnline)}
-            label="Producten online"
+            label={t("sellerProductsOnline", locale)}
             source="api"
-            note={`${productsConcept} in concept`}
+            note={tFormat("sellerInConcept", locale, {
+              count: productsConcept,
+            })}
             href="/seller/products"
-            linkLabel="Producten"
+            linkLabel={t("sellerNavProducts", locale)}
           />
           <KpiCard
             periodKey={period}
             value={String(periodReturns.length)}
-            label="Retouren"
+            label={t("sellerNavReturns", locale)}
             source="api"
             href="/seller/returns"
-            linkLabel="Retouren"
+            linkLabel={t("sellerNavReturns", locale)}
           />
           <KpiCard
             periodKey={period}
             value={String(periodMessages.length)}
-            label="Berichten"
+            label={t("sellerNavMessages", locale)}
             source="api"
-            note={`${unreadMessages} ongelezen`}
+            note={tFormat("sellerUnread", locale, { count: unreadMessages })}
             href="/seller/messages"
-            linkLabel="Berichten"
+            linkLabel={t("sellerNavMessages", locale)}
           />
           <KpiCard
             value={String(openInvoices)}
-            label="Open facturen"
+            label={t("sellerOpenInvoicesLabel", locale)}
             source="api"
             href="/seller/marketing/billing"
-            linkLabel="Facturen"
+            linkLabel={t("sellerInvoices", locale)}
           />
         </div>
         <div className="grid grid-cols-1 gap-4 tablet:grid-cols-3">
           <KpiCard
             value={String(productsInReview)}
-            label="Producten in beoordeling"
+            label={t("sellerProductsInReview", locale)}
             source="api"
             href="/seller/products"
-            linkLabel="Producten"
+            linkLabel={t("sellerNavProducts", locale)}
           />
           <KpiCard
             value={String(unansweredReviews)}
-            label="Reviews wachten op reactie"
+            label={t("sellerReviewsAwaiting", locale)}
             source="api"
             href="/seller/reviews"
-            linkLabel="Reviews"
+            linkLabel={t("sellerNavReviews", locale)}
           />
           <KpiCard
             value={String(openReturns)}
-            label="Open retouren"
+            label={t("sellerOpenReturnsLabel", locale)}
             source="api"
             href="/seller/returns"
-            linkLabel="Retouren"
+            linkLabel={t("sellerNavReturns", locale)}
           />
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Omzet per maand (periode)" wrapChildren={false}>
+      <DashboardSection
+        title={t("sellerRevenueByMonth", locale)}
+        wrapChildren={false}
+      >
         <div className="mt-2 overflow-hidden rounded-lg border border-wf-300 bg-white">
           {revenueByMonth.length === 0 ? (
             <p className="px-4 py-6 text-center text-xs text-wf-600">
-              Geen omzet in deze periode.
+              {t("sellerNoRevenue", locale)}
             </p>
           ) : (
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr>
-                  {["Maand", "Omzet", "Aandeel"].map((h) => (
+                  {[
+                    t("sellerMonth", locale),
+                    t("sellerRevenue", locale),
+                    t("sellerShare", locale),
+                  ].map((h) => (
                     <th
                       key={h}
                       className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"

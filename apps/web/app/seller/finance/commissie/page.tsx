@@ -5,6 +5,10 @@ import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
 import { DEMO_ORDERS } from "../../_lib/demo-data"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
+import { t } from "../../../_lib/i18n/messages"
+import { statusLabel } from "../../../_lib/i18n/status-labels"
 
 const DEMO_COMMISSIONS = DEMO_ORDERS.slice(0, 10).map((o, i) => ({
   id: `com_${i}`,
@@ -17,24 +21,28 @@ const DEMO_COMMISSIONS = DEMO_ORDERS.slice(0, 10).map((o, i) => ({
 }))
 
 export default function SellerFinanceCommissiePage() {
+  const locale = useStorefrontLocale()
+  const intl = storefrontIntlLocale(locale)
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Financiën", href: "/seller/finance" },
-        { label: "Commissie" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavFinance", locale), href: "/seller/finance" },
+        { label: t("sellerFinanceCommission", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Commissie-overzicht</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("sellerFinanceCommissionOverview", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Ingehouden platformcommissie per order.
+        {t("sellerFinanceCommissionIntro", locale)}
       </p>
 
       {DEMO_COMMISSIONS.length === 0 ? (
         <div className="mt-6">
           <EmptyState
-            title="Geen commissies"
-            description="Commissieregels verschijnen hier zodra er betaalde orders zijn."
+            title={t("sellerFinanceCommissionEmptyTitle", locale)}
+            description={t("sellerFinanceCommissionEmptyDesc", locale)}
           />
         </div>
       ) : (
@@ -42,16 +50,21 @@ export default function SellerFinanceCommissiePage() {
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                {["Order", "Datum", "Basis", "Tarief", "Commissie", "Status"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {[
+                  t("commonOrder", locale),
+                  t("commonDate", locale),
+                  t("commonBase", locale),
+                  t("commonRate", locale),
+                  t("commonCommission", locale),
+                  t("commonStatus", locale),
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -59,13 +72,15 @@ export default function SellerFinanceCommissiePage() {
                 <tr key={row.id} className="border-b border-wf-200 last:border-b-0">
                   <td className="px-4 py-2.5">{row.order_number}</td>
                   <td className="px-4 py-2.5">
-                    {new Date(row.date).toLocaleDateString("nl-NL")}
+                    {new Date(row.date).toLocaleDateString(intl)}
                   </td>
                   <td className="px-4 py-2.5">{formatEuro(row.base)}</td>
                   <td className="px-4 py-2.5">{row.rate * 100}%</td>
                   <td className="px-4 py-2.5">{formatEuro(row.amount)}</td>
                   <td className="px-4 py-2.5">
-                    <Badge variant="outline">{row.status}</Badge>
+                    <Badge variant="outline">
+                      {statusLabel(row.status, locale)}
+                    </Badge>
                   </td>
                 </tr>
               ))}

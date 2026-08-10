@@ -6,28 +6,33 @@ import {
   mvpMarketingModules,
 } from "../_lib/marketing/module-registry"
 import { MarketingModuleCard } from "./_components/marketing-module-card"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t } from "../../_lib/i18n/messages"
 
 /**
  * Marketing Center hub — MVP-modules + uitbreidpunten (registry only).
  */
 export default function SellerMarketingCenterPage() {
+  const locale = useStorefrontLocale()
   const mvp = mvpMarketingModules()
   const extensions = extensionMarketingModules()
 
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Marketing" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavMarketing", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Marketing Center</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("sellerNavMarketing", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Banners, sponsored products, affiliate-commissies en marketingfacturen.
+        {t("sellerMarketingIntro", locale)}
       </p>
 
       <h2 className="mb-2.5 mt-8 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-        Marketplace-modules
+        {t("sellerMarketingModules", locale)}
       </h2>
       <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
         {mvp.map((module) => (

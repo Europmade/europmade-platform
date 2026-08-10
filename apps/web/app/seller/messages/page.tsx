@@ -9,8 +9,13 @@ import { EmptyState } from "../_components/empty-state"
 import { DEMO_ORDERS } from "../_lib/demo-data"
 import { DEMO_ORDER_DETAILS } from "../_lib/demo-data-details"
 import { useDemoMessages } from "../_lib/demo-store"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { storefrontIntlLocale } from "../../_lib/i18n/locales"
+import { t, tFormat } from "../../_lib/i18n/messages"
 
 export default function SellerMessagesPage() {
+  const locale = useStorefrontLocale()
+  const intl = storefrontIntlLocale(locale)
   const router = useRouter()
   const [threads, setThreads] = useDemoMessages()
   const [composeOpen, setComposeOpen] = useState(false)
@@ -18,11 +23,11 @@ export default function SellerMessagesPage() {
   const [subject, setSubject] = useState("")
   const [body, setBody] = useState("")
   const [note, setNote] = useState<string | null>(null)
-  const unread = threads.filter((t) => t.unread).length
+  const unread = threads.filter((thread) => thread.unread).length
 
   function sendNewMessage() {
     if (!subject.trim() || !body.trim() || !orderId) {
-      setNote("Vul order, onderwerp en bericht in.")
+      setNote(t("sellerMessagesFillRequired", locale))
       return
     }
     const order = DEMO_ORDER_DETAILS.find((o) => o.id === orderId)
@@ -33,7 +38,8 @@ export default function SellerMessagesPage() {
         order_id: orderId,
         order_number: order?.order_number ?? null,
         return_id: null,
-        customer_name: order?.customer.name ?? "Klant",
+        customer_name:
+          order?.customer.name ?? t("sellerMessagesCustomerFallback", locale),
         customer_email: order?.customer.email ?? "",
         subject: subject.trim(),
         unread: false,
@@ -59,20 +65,24 @@ export default function SellerMessagesPage() {
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Berichten" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavMessages", locale) },
       ]}
     >
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[19px] font-bold text-wf-900">Berichten</h1>
+          <h1 className="text-[19px] font-bold text-wf-900">
+            {t("sellerNavMessages", locale)}
+          </h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            Conversaties met klanten over orders en retouren.
-            {unread > 0 ? ` · ${unread} ongelezen` : null}
+            {t("sellerMessagesIntro", locale)}
+            {unread > 0
+              ? ` · ${tFormat("sellerMessagesUnreadCount", locale, { count: unread })}`
+              : null}
           </p>
         </div>
         <Button type="button" onClick={() => setComposeOpen(true)}>
-          Nieuw bericht
+          {t("sellerMessagesNew", locale)}
         </Button>
       </div>
 
@@ -85,12 +95,12 @@ export default function SellerMessagesPage() {
       {composeOpen ? (
         <section className="mb-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="mb-3 text-xs font-semibold text-wf-900">
-            Nieuw bericht versturen
+            {t("sellerMessagesCompose", locale)}
           </h2>
           <div className="grid grid-cols-1 gap-3 tablet:grid-cols-2">
             <div>
               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-                Gekoppelde order
+                {t("sellerMessagesLinkedOrder", locale)}
               </label>
               <select
                 className="h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs"
@@ -105,23 +115,23 @@ export default function SellerMessagesPage() {
               </select>
             </div>
             <Input
-              label="Onderwerp"
+              label={t("commonSubject", locale)}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              placeholder="Onderwerp van het bericht"
+              placeholder={t("sellerMessagesSubjectPlaceholder", locale)}
             />
           </div>
           <div className="mt-3">
             <Input
-              label="Bericht"
+              label={t("commonMessage", locale)}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Schrijf je bericht…"
+              placeholder={t("sellerMessagesBodyPlaceholder", locale)}
             />
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button type="button" onClick={sendNewMessage}>
-              Versturen
+              {t("commonSubmit", locale)}
             </Button>
             <Button
               type="button"
@@ -131,7 +141,7 @@ export default function SellerMessagesPage() {
                 setNote(null)
               }}
             >
-              Annuleren
+              {t("commonCancel", locale)}
             </Button>
           </div>
         </section>
@@ -139,38 +149,42 @@ export default function SellerMessagesPage() {
 
       {threads.length === 0 ? (
         <EmptyState
-          title="Geen berichten"
-          description="Klantvragen over orders verschijnen hier. Je kunt ook zelf een nieuw bericht starten."
+          title={t("sellerMessagesEmptyTitle", locale)}
+          description={t("sellerMessagesEmptyDesc", locale)}
           primaryAction={{
-            label: "Nieuw bericht",
+            label: t("sellerMessagesNew", locale),
             onClick: () => setComposeOpen(true),
           }}
         />
       ) : (
         <ul className="divide-y divide-wf-200 rounded-lg border border-wf-300 bg-white">
-          {threads.map((t) => (
-            <li key={t.id}>
+          {threads.map((thread) => (
+            <li key={thread.id}>
               <Link
-                href={`/seller/messages/${t.id}`}
+                href={`/seller/messages/${thread.id}`}
                 className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-xs hover:bg-wf-50"
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 font-semibold text-wf-900">
-                    {t.subject}
-                    {t.unread ? (
-                      <Badge variant="outline">Ongelezen</Badge>
+                    {thread.subject}
+                    {thread.unread ? (
+                      <Badge variant="outline">
+                        {t("commonUnread", locale)}
+                      </Badge>
                     ) : null}
                   </div>
                   <div className="mt-0.5 text-wf-700">
-                    {t.customer_name}
-                    {t.order_number ? ` · Order #${t.order_number}` : null}
+                    {thread.customer_name}
+                    {thread.order_number
+                      ? ` · ${t("commonOrder", locale)} #${thread.order_number}`
+                      : null}
                   </div>
                   <div className="mt-0.5 truncate text-wf-600">
-                    {t.messages[t.messages.length - 1]?.body}
+                    {thread.messages[thread.messages.length - 1]?.body}
                   </div>
                 </div>
                 <span className="shrink-0 text-wf-500">
-                  {new Date(t.updated_at).toLocaleDateString("nl-NL")}
+                  {new Date(thread.updated_at).toLocaleDateString(intl)}
                 </span>
               </Link>
             </li>

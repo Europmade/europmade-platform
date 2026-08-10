@@ -8,14 +8,12 @@ import { AuthCard } from "../_components/auth-card";
 import { createSession, login, verifyMfaChallenge } from "../_lib/medusa-auth";
 import { claimPendingGuestOrder, mergeGuestCart } from "../../_lib/order-service-api";
 import { getOnboarding } from "../../partner-onboarding/_lib/partner-onboarding-api";
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
+import { t } from "../../_lib/i18n/messages";
 
 type Step =
   | { name: "credentials" }
   | { name: "mfa"; challengeId: string; useRecoveryCode: boolean };
-
-// Bij een mislukte poging: altijd één generieke melding, nooit specifiek welk
-// van de twee velden onjuist is (authenticatie/spec.md §1.2).
-const GENERIC_LOGIN_ERROR = "E-mailadres of wachtwoord onjuist.";
 
 // Alleen interne, relatieve paden toestaan als terugkeer-bestemming na login
 // (voorkomt een open redirect via een gemanipuleerde `redirect`-queryparam).
@@ -27,6 +25,7 @@ function sanitizeRedirectTarget(value: string | null): string {
 
 function LoginPageContent() {
   const router = useRouter();
+  const locale = useStorefrontLocale();
   const searchParams = useSearchParams();
   const redirectTo = sanitizeRedirectTarget(searchParams.get("redirect"));
   const claimPaymentReference = searchParams.get("payment_reference");
@@ -75,9 +74,9 @@ function LoginPageContent() {
         await finishLogin(result.token);
         return;
       }
-      setError(GENERIC_LOGIN_ERROR);
+      setError(t("authLoginError", locale));
     } catch {
-      setError(GENERIC_LOGIN_ERROR);
+      setError(t("authLoginError", locale));
     } finally {
       setIsSubmitting(false);
     }
@@ -98,8 +97,8 @@ function LoginPageContent() {
     } catch {
       setError(
         step.useRecoveryCode
-          ? "Deze herstelcode is onjuist of al gebruikt."
-          : "Deze code is onjuist of verlopen.",
+          ? t("authMfaRecoveryError", locale)
+          : t("authMfaCodeError", locale),
       );
     } finally {
       setIsSubmitting(false);
@@ -109,7 +108,10 @@ function LoginPageContent() {
   if (step.name === "mfa") {
     const { useRecoveryCode } = step;
     return (
-      <AuthCard title="Verificatiecode" subtitle="Voer de code in uit je authenticator-app">
+      <AuthCard
+        title={t("authMfaTitle", locale)}
+        subtitle={t("authMfaSubtitle", locale)}
+      >
         <form onSubmit={handleMfaSubmit}>
           {error && (
             <Notice variant="warning" className="mb-4">
@@ -118,8 +120,8 @@ function LoginPageContent() {
           )}
           {useRecoveryCode ? (
             <Input
-              label="Herstelcode"
-              placeholder="bv. 7F3K-9X2M"
+              label={t("authRecoveryCode", locale)}
+              placeholder={t("authRecoveryCodePlaceholder", locale)}
               value={code}
               onChange={(e) => setCode(e.target.value)}
               autoFocus
@@ -130,13 +132,13 @@ function LoginPageContent() {
           )}
           <div className="my-[18px] flex items-center justify-between text-xs">
             <Checkbox
-              label="Vertrouw dit apparaat 30 dagen"
+              label={t("authTrustDevice", locale)}
               checked={trustDevice}
               onChange={(e) => setTrustDevice(e.target.checked)}
             />
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting || code.length === 0}>
-            Bevestigen
+            {t("authConfirm", locale)}
           </Button>
           <p className="mt-4 text-center text-xs text-wf-600">
             {useRecoveryCode ? (
@@ -149,11 +151,11 @@ function LoginPageContent() {
                   setStep({ ...step, useRecoveryCode: false });
                 }}
               >
-                Gebruik je authenticator-app
+                {t("authUseAuthenticator", locale)}
               </button>
             ) : (
               <>
-                Geen toegang tot je app?{" "}
+                {t("authNoAppAccess", locale)}{" "}
                 <button
                   type="button"
                   className="underline decoration-dotted"
@@ -163,7 +165,7 @@ function LoginPageContent() {
                     setStep({ ...step, useRecoveryCode: true });
                   }}
                 >
-                  Gebruik een herstelcode
+                  {t("authUseRecovery", locale)}
                 </button>
               </>
             )}
@@ -174,7 +176,10 @@ function LoginPageContent() {
   }
 
   return (
-    <AuthCard title="Inloggen" subtitle="Welkom terug bij EuropMade">
+    <AuthCard
+      title={t("authLoginTitle", locale)}
+      subtitle={t("authWelcomeBack", locale)}
+    >
       <form onSubmit={handleCredentialsSubmit}>
         {error && (
           <Notice variant="warning" className="mb-4">
@@ -182,16 +187,16 @@ function LoginPageContent() {
           </Notice>
         )}
         <Input
-          label="E-mailadres"
+          label={t("authEmail", locale)}
           type="email"
-          placeholder="naam@voorbeeld.nl"
+          placeholder={t("authEmailPlaceholder", locale)}
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <Input
-          label="Wachtwoord"
+          label={t("authPassword", locale)}
           type="password"
           placeholder="••••••••"
           autoComplete="current-password"
@@ -201,30 +206,30 @@ function LoginPageContent() {
         />
         <div className="mb-[18px] flex flex-col items-start gap-2 text-xs tablet:flex-row tablet:items-center tablet:justify-between">
           <Checkbox
-            label="Onthoud mij"
+            label={t("authRememberMe", locale)}
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
           />
           <Link href="/forgot-password" className="text-wf-800 underline decoration-dotted">
-            Wachtwoord vergeten?
+            {t("authForgotPassword", locale)}
           </Link>
         </div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Bezig met inloggen…" : "Inloggen"}
+          {isSubmitting ? t("authSigningIn", locale) : t("authLoginTitle", locale)}
         </Button>
       </form>
       <div className="my-[22px] flex items-center gap-[10px] text-[11px] text-wf-500">
         <span className="h-px flex-1 bg-wf-300" />
-        of
+        {t("authOr", locale)}
         <span className="h-px flex-1 bg-wf-300" />
       </div>
       <p className="text-center text-xs text-wf-600">
-        Nog geen account?{" "}
+        {t("authNoAccount", locale)}{" "}
         <Link
           href={`/register${redirectTo !== "/" ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`}
           className="text-wf-800 underline decoration-dotted"
         >
-          Registreren
+          {t("authRegister", locale)}
         </Link>
       </p>
     </AuthCard>

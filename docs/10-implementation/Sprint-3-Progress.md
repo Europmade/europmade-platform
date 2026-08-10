@@ -81,6 +81,14 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | S3-13-01 | EPIC-13 | **Gereed** | — | 2026-07-31 | Buyer-shell `/account` (ADR-0024); P0-nav + home KPI’s |
 | S3-13-02 | EPIC-13 | **Gereed** | — | 2026-07-31 | Seller home + Orders/Retouren-nav (verrijkt ADR-0011) |
 
+---
+
+## Afgeronde sprintonderdelen (niet als los S3-ticket)
+
+| Onderdeel | Status | Laatste update | Opmerking |
+|---|---|---|---|
+| Storefront internationalization & automatic language detection | **AFGEROND** | 2026-08-10 | UI-locales `nl`/`en`/`de`/`fr`; prioriteit handmatig → cookie/localStorage → Accept-Language/`navigator.language` → NL; auto-detect schrijft geen cookie; `messages.ts` + `em_storefront_locale` + `StorefrontLocaleProvider` + `detect-locale.ts`; cookiebanner + voorkeuren locale-aware; geen tweede i18n-systeem. Niet opnieuw openzetten tenzij bug of nieuwe taal. |
+
 ## Samenvatting
 
 | Status | Aantal |

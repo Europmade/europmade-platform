@@ -17,7 +17,7 @@ export function CategoryPageView({ page, products }: CategoryPageViewProps) {
   const productKind = CATEGORY_PRODUCT_KIND[page.slug] ?? "coffee"
 
   return (
-    <PublicStorefrontChrome>
+    <PublicStorefrontChrome locale={page.locale}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

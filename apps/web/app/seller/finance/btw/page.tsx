@@ -3,6 +3,8 @@
 import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t } from "../../../_lib/i18n/messages"
 
 const DEMO_VAT = [
   { country: "NL", rate: 21, base: 18420.5, vat: 3868.31 },
@@ -12,24 +14,27 @@ const DEMO_VAT = [
 ]
 
 export default function SellerFinanceBtwPage() {
+  const locale = useStorefrontLocale()
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Financiën", href: "/seller/finance" },
-        { label: "BTW (OSS)" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavFinance", locale), href: "/seller/finance" },
+        { label: t("sellerFinanceVatOssShort", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">BTW-overzicht (OSS)</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("sellerFinanceVatOss", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Omzet en BTW per EU-land voor One-Stop-Shop rapportage.
+        {t("sellerFinanceVatIntro", locale)}
       </p>
 
       {DEMO_VAT.length === 0 ? (
         <div className="mt-6">
           <EmptyState
-            title="Geen BTW-gegevens"
-            description="OSS-regels verschijnen hier zodra er grensoverschrijdende verkopen zijn."
+            title={t("sellerFinanceVatEmptyTitle", locale)}
+            description={t("sellerFinanceVatEmptyDesc", locale)}
           />
         </div>
       ) : (
@@ -37,7 +42,12 @@ export default function SellerFinanceBtwPage() {
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                {["Land", "Tarief", "Grondslag", "BTW"].map((h) => (
+                {[
+                  t("commonCountry", locale),
+                  t("sellerFinanceVatRate", locale),
+                  t("sellerFinanceVatBase", locale),
+                  t("sellerFinanceVatLabel", locale),
+                ].map((h) => (
                   <th
                     key={h}
                     className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"

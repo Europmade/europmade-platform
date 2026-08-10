@@ -17,6 +17,9 @@ import {
   ProductCloudApiError,
   type CatalogProduct,
 } from "../../_lib/product-cloud-api"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t, tFormat } from "../../../_lib/i18n/messages"
+import type { StorefrontLocale } from "../../../_lib/i18n/locales"
 
 function parseMoney(raw: string): number | null {
   const normalized = raw.trim().replace(/\s/g, "").replace(",", ".")
@@ -35,21 +38,27 @@ function formatWeightPct(n: number): string {
   return `${Math.round(n * 100)}%`
 }
 
-const WEIGHT_LABELS: Array<{ key: keyof NonNullable<OfferBuyBoxPosition["weights"]>; label: string }> = [
-  { key: "price", label: "Prijs" },
-  { key: "delivery", label: "Levertijd" },
-  { key: "seller_review", label: "Verkopersreview" },
-  { key: "stock", label: "Voorraad" },
-  { key: "performance", label: "Performance" },
-  { key: "returns", label: "Retourprestaties" },
-]
+function weightLabels(
+  locale: StorefrontLocale
+): Array<{ key: keyof NonNullable<OfferBuyBoxPosition["weights"]>; label: string }> {
+  return [
+    { key: "price", label: t("commonPrice", locale) },
+    { key: "delivery", label: t("sellerOfferWeightDelivery", locale) },
+    { key: "seller_review", label: t("sellerOfferWeightSellerReview", locale) },
+    { key: "stock", label: t("commonStock", locale) },
+    { key: "performance", label: t("sellerOfferWeightPerformance", locale) },
+    { key: "returns", label: t("sellerOfferWeightReturns", locale) },
+  ]
+}
 
 function BuyBoxPositionPanel({
   position,
   offerId,
+  locale,
 }: {
   position: OfferBuyBoxPosition | null
   offerId: string | null
+  locale: StorefrontLocale
 }) {
   const [weightsOpen, setWeightsOpen] = useState(false)
 
@@ -57,11 +66,10 @@ function BuyBoxPositionPanel({
     return (
       <div className="rounded-lg border border-wf-200 p-5">
         <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-          Buy Box-positie
+          {t("sellerOfferBuyBox", locale)}
         </h3>
         <p className="text-[11px] text-wf-600">
-          Nog geen aanbod voor deze identifier/regio. Na opslaan toont de server
-          je Buy Box-positie.
+          {t("sellerOfferBuyBoxEmpty", locale)}
         </p>
       </div>
     )
@@ -71,18 +79,18 @@ function BuyBoxPositionPanel({
     return (
       <div className="rounded-lg border border-wf-200 p-5">
         <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-          Buy Box-positie
+          {t("sellerOfferBuyBox", locale)}
         </h3>
-        <Notice>Buy Box-positie wordt geladen…</Notice>
+        <Notice>{t("sellerOfferBuyBoxLoading", locale)}</Notice>
       </div>
     )
   }
 
-  const statusLabel = position.is_winner
-    ? "Buy Box-winnaar"
+  const buyBoxStatus = position.is_winner
+    ? t("sellerOfferBuyBoxWinner", locale)
     : position.rank != null
-      ? `Positie #${position.rank}`
-      : "Niet in ranking"
+      ? tFormat("sellerOfferBuyBoxRank", locale, { rank: position.rank })
+      : t("sellerOfferBuyBoxUnranked", locale)
 
   const competing =
     position.competing_offer_count ??
@@ -91,16 +99,16 @@ function BuyBoxPositionPanel({
   return (
     <div className="rounded-lg border border-wf-200 p-5">
       <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-        Buy Box-positie
+        {t("sellerOfferBuyBox", locale)}
       </h3>
       <div className="mb-2.5 flex items-center justify-between gap-3 text-xs">
-        <span className="text-wf-600">Huidige status</span>
+        <span className="text-wf-600">{t("sellerOfferCurrentStatus", locale)}</span>
         <Badge variant={position.is_winner ? "solid" : "outline"}>
-          {statusLabel}
+          {buyBoxStatus}
         </Badge>
       </div>
       <div className="mb-2.5 flex items-center justify-between gap-3 text-xs">
-        <span className="text-wf-600">Concurrerende aanbieders</span>
+        <span className="text-wf-600">{t("sellerOfferCompetitors", locale)}</span>
         <span className="font-semibold text-wf-900">{competing}</span>
       </div>
       <button
@@ -108,11 +116,13 @@ function BuyBoxPositionPanel({
         className="text-xs font-semibold text-wf-800 underline decoration-dotted"
         onClick={() => setWeightsOpen((open) => !open)}
       >
-        {weightsOpen ? "Verberg wegingsfactoren" : "Bekijk wegingsfactoren"}
+        {weightsOpen
+          ? t("sellerOfferHideWeights", locale)
+          : t("sellerOfferShowWeights", locale)}
       </button>
       {weightsOpen && position.weights ? (
         <ul className="mt-3 space-y-1.5 border-t border-wf-200 pt-3 text-[11px] text-wf-700">
-          {WEIGHT_LABELS.map(({ key, label }) => (
+          {weightLabels(locale).map(({ key, label }) => (
             <li key={key} className="flex justify-between gap-2">
               <span>{label}</span>
               <span className="font-semibold">
@@ -128,6 +138,7 @@ function BuyBoxPositionPanel({
 }
 
 function SellerProductOfferInner() {
+  const locale = useStorefrontLocale()
   const router = useRouter()
   const searchParams = useSearchParams()
   const identifierId = searchParams.get("identifier_id")?.trim() ?? ""
@@ -154,9 +165,7 @@ function SellerProductOfferInner() {
     if (!identifierId) {
       setCatalog("error")
       setExisting(null)
-      setError(
-        "Geen identifier_id — open dit scherm via match of nieuw product."
-      )
+      setError(t("sellerOfferNoIdentifier", locale))
       return
     }
 
@@ -191,7 +200,7 @@ function SellerProductOfferInner() {
           err instanceof CommerceCloudApiError ||
           err instanceof ProductCloudApiError
             ? err.message
-            : "Laden mislukt."
+            : t("commonLoadFailed", locale)
         setError(message)
         setCatalog("error")
         setExisting(null)
@@ -200,7 +209,7 @@ function SellerProductOfferInner() {
     return () => {
       cancelled = true
     }
-  }, [identifierId, regionCode])
+  }, [identifierId, regionCode, locale])
 
   const product = useMemo(() => {
     if (catalog === "loading" || catalog === "error") return null
@@ -220,15 +229,15 @@ function SellerProductOfferInner() {
     const ship = parseMoney(shipping)
     const qty = Number.parseInt(quantity.trim(), 10)
     if (base == null) {
-      setError("Vul een geldige basisprijs in.")
+      setError(t("sellerOfferInvalidBase", locale))
       return
     }
     if (ship == null) {
-      setError("Vul geldige verzendkosten in.")
+      setError(t("sellerOfferInvalidShipping", locale))
       return
     }
     if (!Number.isInteger(qty) || qty < 0) {
-      setError("Voorraad moet een geheel getal ≥ 0 zijn.")
+      setError(t("sellerOfferInvalidStock", locale))
       return
     }
 
@@ -245,7 +254,9 @@ function SellerProductOfferInner() {
         vat_rate: 0.21,
       })
       setSavedMessage(
-        result.created ? "Aanbod aangemaakt." : "Aanbod bijgewerkt."
+        result.created
+          ? t("sellerOfferCreated", locale)
+          : t("sellerOfferUpdated", locale)
       )
       const refreshed = await listOffers({
         identifier_id: identifierId,
@@ -261,7 +272,7 @@ function SellerProductOfferInner() {
       setError(
         err instanceof CommerceCloudApiError
           ? err.message
-          : "Opslaan mislukt. Probeer opnieuw."
+          : t("sellerOfferSaveFailed", locale)
       )
     } finally {
       setBusy(false)
@@ -271,35 +282,39 @@ function SellerProductOfferInner() {
   const offerId =
     existing && existing !== "loading" ? existing.offer.id : null
 
+  const crumbTitle = t("sellerOfferTitle", locale)
+
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Producten", href: "/seller/products" },
-        { label: "Productdetail — commerciële gegevens" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavProducts", locale), href: "/seller/products" },
+        { label: crumbTitle },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">
-        Productdetail — commerciële gegevens
-      </h1>
+      <h1 className="text-[19px] font-bold text-wf-900">{crumbTitle}</h1>
       <p className="mb-5 mt-1.5 text-xs text-wf-600">
-        {product?.title ?? previewTitle ?? "Product"} — jouw aanbod (Offer)
-        {regionCode ? ` · regio ${regionCode}` : ""}
+        {tFormat("sellerOfferIntro", locale, {
+          title: product?.title ?? previewTitle ?? t("commonProduct", locale),
+        })}
+        {regionCode
+          ? tFormat("sellerOfferRegion", locale, { region: regionCode })
+          : ""}
       </p>
 
       {catalog === "loading" || existing === "loading" ? (
-        <p className="text-sm text-wf-600">Laden…</p>
+        <p className="text-sm text-wf-600">{t("commonLoading", locale)}</p>
       ) : (
         <>
           <div className="mb-4 flex flex-wrap gap-2 text-[11px] text-wf-500">
             <span className="rounded-wf border border-wf-400 bg-wf-100 px-2.5 py-1 font-semibold text-wf-800">
-              Commercieel
+              {t("sellerOfferCommercial", locale)}
             </span>
             <span className="rounded-wf border border-transparent px-2.5 py-1">
-              Voorraad
+              {t("commonStock", locale)}
             </span>
             <span className="rounded-wf border border-transparent px-2.5 py-1">
-              Verzending
+              {t("sellerOrderShipping", locale)}
             </span>
           </div>
 
@@ -307,11 +322,11 @@ function SellerProductOfferInner() {
             <div>
               <div className="mb-4 rounded-lg border border-wf-200 p-5">
                 <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-                  Prijs
+                  {t("commonPrice", locale)}
                 </h3>
                 <div className="mb-3.5">
                   <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-                    Basisprijs
+                    {t("sellerOfferBasePrice", locale)}
                   </label>
                   <Input
                     value={basePrice}
@@ -321,7 +336,7 @@ function SellerProductOfferInner() {
                 </div>
                 <div className="mb-3.5">
                   <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-                    Verzendkosten
+                    {t("sellerOrderShippingCost", locale)}
                   </label>
                   <Input
                     value={shipping}
@@ -330,17 +345,18 @@ function SellerProductOfferInner() {
                   />
                 </div>
                 <p className="text-[10.5px] text-wf-500">
-                  Totaalprijs (Buy Box-vergelijking):{" "}
-                  {totalHint != null ? formatEuro(totalHint) : "—"}
+                  {tFormat("sellerOfferTotalHint", locale, {
+                    total: totalHint != null ? formatEuro(totalHint) : "—",
+                  })}
                 </p>
               </div>
               <div className="rounded-lg border border-wf-200 p-5">
                 <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-                  Voorraad
+                  {t("commonStock", locale)}
                 </h3>
                 <div className="mb-3.5">
                   <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-                    Aantal op voorraad
+                    {t("sellerOfferQtyInStock", locale)}
                   </label>
                   <Input
                     value={quantity}
@@ -351,7 +367,11 @@ function SellerProductOfferInner() {
               </div>
             </div>
 
-            <BuyBoxPositionPanel position={buyBox} offerId={offerId} />
+            <BuyBoxPositionPanel
+              position={buyBox}
+              offerId={offerId}
+              locale={locale}
+            />
           </div>
 
           {error ? (
@@ -369,14 +389,14 @@ function SellerProductOfferInner() {
               type="button"
               onClick={() => router.push("/seller/products")}
             >
-              Annuleren
+              {t("commonCancel", locale)}
             </Button>
             <Button
               type="button"
               disabled={busy || !identifierId}
               onClick={() => void onSave()}
             >
-              {busy ? "Opslaan…" : "Opslaan"}
+              {busy ? t("commonSaving", locale) : t("commonSave", locale)}
             </Button>
           </div>
         </>
@@ -385,22 +405,25 @@ function SellerProductOfferInner() {
   )
 }
 
+function OfferSuspenseFallback() {
+  const locale = useStorefrontLocale()
+  return (
+    <SellerGate
+      breadcrumb={[
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavProducts", locale), href: "/seller/products" },
+        { label: t("sellerOfferTitle", locale) },
+      ]}
+    >
+      <p className="text-sm text-wf-600">{t("commonLoading", locale)}</p>
+    </SellerGate>
+  )
+}
+
 /** product-05 — commerciële gegevens / Buy Box-positie (S3-04-03/04). */
 export default function SellerProductOfferPage() {
   return (
-    <Suspense
-      fallback={
-        <SellerGate
-          breadcrumb={[
-            { label: "Seller Dashboard", href: "/seller" },
-            { label: "Producten", href: "/seller/products" },
-            { label: "Productdetail — commerciële gegevens" },
-          ]}
-        >
-          <p className="text-sm text-wf-600">Laden…</p>
-        </SellerGate>
-      }
-    >
+    <Suspense fallback={<OfferSuspenseFallback />}>
       <SellerProductOfferInner />
     </Suspense>
   )

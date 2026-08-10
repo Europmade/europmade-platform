@@ -11,6 +11,9 @@ import {
   type ProductCloudStatus,
 } from "../_lib/demo-data"
 import { useDemoProducts } from "../_lib/demo-store"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t, tFormat } from "../../_lib/i18n/messages"
+import { statusLabel } from "../../_lib/i18n/status-labels"
 
 type ListingFilter = "all" | "live" | "concept"
 type StockFilter = "all" | "in_stock" | "out_of_stock" | "no_offer"
@@ -42,6 +45,7 @@ type BulkField =
  * Productbeheer — CSV-import, bulk wijzigen, Product Cloud Status (MVP).
  */
 export default function SellerProductsPage() {
+  const locale = useStorefrontLocale()
   const [products, setProducts] = useDemoProducts()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [query, setQuery] = useState("")
@@ -106,7 +110,7 @@ export default function SellerProductsPage() {
       .map((l) => l.trim())
       .filter(Boolean)
     if (lines.length < 2) {
-      setCsvError("CSV moet een header en minstens één datarij bevatten.")
+      setCsvError(t("sellerProductsCsvHeaderError", locale))
       setCsvPreview([])
       return
     }
@@ -119,7 +123,7 @@ export default function SellerProductsPage() {
       category: header.findIndex((h) => h === "category" || h === "categorie"),
     }
     if (idx.title < 0 || idx.ean < 0) {
-      setCsvError("Verplichte kolommen ontbreken: title/titel en ean/sku.")
+      setCsvError(t("sellerProductsCsvColumnsError", locale))
       setCsvPreview([])
       return
     }
@@ -138,10 +142,12 @@ export default function SellerProductsPage() {
       const stock =
         stockRaw && Number.isFinite(Number(stockRaw)) ? Number(stockRaw) : null
       let error: string | undefined
-      if (!title) error = "Titel ontbreekt"
-      else if (!ean || ean.length < 8) error = "EAN ongeldig"
-      else if (products.some((p) => p.ean === ean)) error = "EAN bestaat al"
-      else if (rows.some((r) => r.ean === ean)) error = "Dubbele EAN in CSV"
+      if (!title) error = t("sellerProductsCsvTitleMissing", locale)
+      else if (!ean || ean.length < 8) error = t("sellerProductsCsvEanInvalid", locale)
+      else if (products.some((p) => p.ean === ean))
+        error = t("sellerProductsCsvEanExists", locale)
+      else if (rows.some((r) => r.ean === ean))
+        error = t("sellerProductsCsvEanDuplicate", locale)
       rows.push({ title, ean, price, stock, category, error })
     }
     setCsvPreview(rows)
@@ -150,7 +156,7 @@ export default function SellerProductsPage() {
   function runCsvImport() {
     const valid = csvPreview.filter((r) => !r.error)
     if (valid.length === 0) {
-      setCsvError("Geen geldige rijen om te importeren.")
+      setCsvError(t("sellerProductsCsvNoValid", locale))
       return
     }
     const imported: DemoProduct[] = valid.map((r, i) => ({
@@ -161,11 +167,13 @@ export default function SellerProductsPage() {
       listing: "concept",
       stock: r.stock,
       price: r.price,
-      category: r.category || "Nog niet ingedeeld",
+      category: r.category || t("sellerProductsUncategorized", locale),
       product_cloud_status: "Niet gekoppeld" as ProductCloudStatus,
     }))
     setProducts((prev) => [...imported, ...prev])
-    setNotice(`${imported.length} producten geïmporteerd.`)
+    setNotice(
+      tFormat("sellerProductsCsvImported", locale, { count: imported.length })
+    )
     setCsvOpen(false)
     setCsvFile(null)
     setCsvPreview([])
@@ -173,7 +181,7 @@ export default function SellerProductsPage() {
 
   function applyBulk() {
     if (selected.size === 0) {
-      setNotice("Selecteer eerst producten.")
+      setNotice(t("sellerProductsSelectFirst", locale))
       return
     }
     setProducts((prev) =>
@@ -199,7 +207,9 @@ export default function SellerProductsPage() {
         return next
       })
     )
-    setNotice(`${selected.size} producten bijgewerkt.`)
+    setNotice(
+      tFormat("sellerProductsUpdated", locale, { count: selected.size })
+    )
     setBulkOpen(false)
     setBulkValue("")
     setSelected(new Set())
@@ -209,43 +219,65 @@ export default function SellerProductsPage() {
     "h-9 rounded-[5px] border border-wf-400 bg-white px-3 text-xs text-wf-800"
   const validCsvCount = csvPreview.filter((r) => !r.error).length
 
+  const csvHeaders = [
+    t("commonTitle", locale),
+    "EAN",
+    t("commonPrice", locale),
+    t("commonStock", locale),
+    t("commonCategory", locale),
+    t("commonStatus", locale),
+  ]
+
+  const tableHeaders = [
+    t("commonTitle", locale),
+    t("sellerProductsEanId", locale),
+    t("sellerProductsLifecycle", locale),
+    t("sellerProductsListing", locale),
+    t("sellerProductsCloudStatus", locale),
+    t("commonStock", locale),
+    t("commonPrice", locale),
+    t("commonCategory", locale),
+  ]
+
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Producten" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavProducts", locale) },
       ]}
     >
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[19px] font-bold text-wf-900">Producten</h1>
+          <h1 className="text-[19px] font-bold text-wf-900">
+            {t("sellerNavProducts", locale)}
+          </h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            Zoeken, filteren, CSV-import en bulkacties.
+            {t("sellerProductsIntro", locale)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="secondary" onClick={() => setCsvOpen(true)}>
-            CSV import
+            {t("sellerProductsCsvImport", locale)}
           </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={() => {
               if (selected.size === 0) {
-                setNotice("Selecteer eerst producten voor bulk wijzigen.")
+                setNotice(t("sellerProductsSelectBulk", locale))
                 return
               }
               setBulkOpen(true)
             }}
           >
-            Bulk wijzigen
+            {t("sellerProductsBulkEdit", locale)}
           </Button>
           <Button
             type="button"
             variant="secondary"
             onClick={() => {
               if (selected.size === 0) {
-                setNotice("Selecteer eerst producten om te publiceren.")
+                setNotice(t("sellerProductsSelectPublish", locale))
                 return
               }
               setBulkField("publish")
@@ -256,17 +288,21 @@ export default function SellerProductsPage() {
                     : p
                 )
               )
-              setNotice(`${selected.size} producten gepubliceerd.`)
+              setNotice(
+                tFormat("sellerProductsPublished", locale, {
+                  count: selected.size,
+                })
+              )
               setSelected(new Set())
             }}
           >
-            Bulk publiceren
+            {t("sellerProductsBulkPublish", locale)}
           </Button>
           <Link
             href="/seller/products/add"
             className="inline-flex items-center justify-center rounded-wf border border-transparent bg-wf-900 px-[18px] py-[9px] text-sm font-semibold text-white hover:bg-wf-800"
           >
-            Nieuw product
+            {t("sellerProductsNew", locale)}
           </Link>
         </div>
       </div>
@@ -279,15 +315,16 @@ export default function SellerProductsPage() {
 
       {csvOpen ? (
         <section className="mb-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
-          <h2 className="text-xs font-semibold text-wf-900">CSV import</h2>
+          <h2 className="text-xs font-semibold text-wf-900">
+            {t("sellerProductsCsvImport", locale)}
+          </h2>
           <p className="mt-1 text-[11.5px] text-wf-600">
-            Kolommen: title/titel, ean/sku, price/prijs, stock/voorraad,
-            category/categorie (scheidingsteken ; of ,).
+            {t("sellerProductsCsvHint", locale)}
           </p>
           <div className="mt-3 max-w-md">
             <FileUpload
-              label="CSV-bestand"
-              requirementLabel="CSV, max. 5 MB"
+              label={t("sellerProductsCsvFile", locale)}
+              requirementLabel={t("sellerProductsCsvRequirement", locale)}
               accept=".csv,text/csv"
               value={csvFile}
               onChange={(file) => {
@@ -307,16 +344,14 @@ export default function SellerProductsPage() {
               <table className="w-full border-collapse text-xs">
                 <thead>
                   <tr>
-                    {["Titel", "EAN", "Prijs", "Voorraad", "Categorie", "Status"].map(
-                      (h) => (
-                        <th
-                          key={h}
-                          className="border-b border-wf-400 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
-                        >
-                          {h}
-                        </th>
-                      )
-                    )}
+                    {csvHeaders.map((h) => (
+                      <th
+                        key={h}
+                        className="border-b border-wf-400 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                      >
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -343,7 +378,10 @@ export default function SellerProductsPage() {
                 </tbody>
               </table>
               <p className="mt-2 text-[11px] text-wf-500">
-                {validCsvCount} van {csvPreview.length} rijen geldig
+                {tFormat("sellerProductsCsvValidRows", locale, {
+                  valid: validCsvCount,
+                  total: csvPreview.length,
+                })}
               </p>
             </div>
           ) : null}
@@ -353,7 +391,7 @@ export default function SellerProductsPage() {
               onClick={runCsvImport}
               disabled={validCsvCount === 0}
             >
-              Import uitvoeren
+              {t("sellerProductsCsvRun", locale)}
             </Button>
             <Button
               type="button"
@@ -365,7 +403,7 @@ export default function SellerProductsPage() {
                 setCsvError(null)
               }}
             >
-              Annuleren
+              {t("commonCancel", locale)}
             </Button>
           </div>
         </section>
@@ -374,57 +412,67 @@ export default function SellerProductsPage() {
       {bulkOpen ? (
         <section className="mb-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="text-xs font-semibold text-wf-900">
-            Bulk wijzigen ({selected.size} producten)
+            {tFormat("sellerProductsBulkTitle", locale, {
+              count: selected.size,
+            })}
           </h2>
           <div className="mt-3 grid grid-cols-1 gap-3 tablet:grid-cols-3">
             <div>
               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-                Veld
+                {t("commonField", locale)}
               </label>
               <select
                 className={selectClass + " w-full"}
                 value={bulkField}
                 onChange={(e) => setBulkField(e.target.value as BulkField)}
               >
-                <option value="price">Prijs wijzigen</option>
-                <option value="stock">Voorraad wijzigen</option>
-                <option value="category">Categorie wijzigen</option>
-                <option value="status">Status wijzigen</option>
-                <option value="publish">Publiceren</option>
-                <option value="offline">Offline zetten</option>
+                <option value="price">{t("sellerProductsBulkPrice", locale)}</option>
+                <option value="stock">{t("sellerProductsBulkStock", locale)}</option>
+                <option value="category">
+                  {t("sellerProductsBulkCategory", locale)}
+                </option>
+                <option value="status">
+                  {t("sellerProductsBulkStatus", locale)}
+                </option>
+                <option value="publish">
+                  {t("sellerProductsBulkPublishOption", locale)}
+                </option>
+                <option value="offline">
+                  {t("sellerProductsBulkOffline", locale)}
+                </option>
               </select>
             </div>
             {bulkField !== "publish" && bulkField !== "offline" ? (
               <Input
-                label="Nieuwe waarde"
+                label={t("commonNewValue", locale)}
                 value={bulkValue}
                 onChange={(e) => setBulkValue(e.target.value)}
                 placeholder={
                   bulkField === "status"
-                    ? "bijv. Actief"
+                    ? t("sellerProductsPlaceholderStatus", locale)
                     : bulkField === "category"
-                      ? "bijv. Voeding > Snacks"
-                      : "bijv. 12.95"
+                      ? t("sellerProductsPlaceholderCategory", locale)
+                      : t("sellerProductsPlaceholderPrice", locale)
                 }
               />
             ) : (
               <p className="self-end text-xs text-wf-600">
                 {bulkField === "publish"
-                  ? "Geselecteerde producten worden live gezet."
-                  : "Geselecteerde producten worden offline (concept) gezet."}
+                  ? t("sellerProductsBulkPublishHint", locale)
+                  : t("sellerProductsBulkOfflineHint", locale)}
               </p>
             )}
           </div>
           <div className="mt-4 flex gap-2">
             <Button type="button" onClick={applyBulk}>
-              Bevestigen
+              {t("commonConfirm", locale)}
             </Button>
             <Button
               type="button"
               variant="secondary"
               onClick={() => setBulkOpen(false)}
             >
-              Annuleren
+              {t("commonCancel", locale)}
             </Button>
           </div>
         </section>
@@ -433,10 +481,10 @@ export default function SellerProductsPage() {
       <div className="mb-4 flex flex-wrap items-end gap-2.5">
         <div className="min-w-[180px] flex-1">
           <Input
-            label="Zoeken"
+            label={t("commonSearch", locale)}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Zoek op titel, EAN, status…"
+            placeholder={t("sellerProductsSearchPlaceholder", locale)}
           />
         </div>
         <div>
@@ -444,7 +492,7 @@ export default function SellerProductsPage() {
             htmlFor="listing-filter"
             className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500"
           >
-            Listing
+            {t("sellerProductsListing", locale)}
           </label>
           <select
             id="listing-filter"
@@ -452,9 +500,9 @@ export default function SellerProductsPage() {
             value={listingFilter}
             onChange={(e) => setListingFilter(e.target.value as ListingFilter)}
           >
-            <option value="all">Alle</option>
-            <option value="live">Live</option>
-            <option value="concept">Concept</option>
+            <option value="all">{t("commonAll", locale)}</option>
+            <option value="live">{statusLabel("Live", locale)}</option>
+            <option value="concept">{statusLabel("Concept", locale)}</option>
           </select>
         </div>
         <div>
@@ -462,7 +510,7 @@ export default function SellerProductsPage() {
             htmlFor="lifecycle-filter"
             className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500"
           >
-            Lifecycle
+            {t("sellerProductsLifecycle", locale)}
           </label>
           <select
             id="lifecycle-filter"
@@ -472,11 +520,17 @@ export default function SellerProductsPage() {
               setLifecycleFilter(e.target.value as LifecycleFilter)
             }
           >
-            <option value="all">Alle</option>
-            <option value="Actief">Actief</option>
-            <option value="Concept gecontroleerd">Concept gecontroleerd</option>
-            <option value="Retailer Created">Retailer Created</option>
-            <option value="Gearchiveerd">Gearchiveerd</option>
+            <option value="all">{t("commonAll", locale)}</option>
+            <option value="Actief">{statusLabel("Actief", locale)}</option>
+            <option value="Concept gecontroleerd">
+              {statusLabel("Concept gecontroleerd", locale)}
+            </option>
+            <option value="Retailer Created">
+              {statusLabel("Retailer Created", locale)}
+            </option>
+            <option value="Gearchiveerd">
+              {statusLabel("Gearchiveerd", locale)}
+            </option>
           </select>
         </div>
         <div>
@@ -484,7 +538,7 @@ export default function SellerProductsPage() {
             htmlFor="stock-filter"
             className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500"
           >
-            Voorraad
+            {t("commonStock", locale)}
           </label>
           <select
             id="stock-filter"
@@ -492,25 +546,33 @@ export default function SellerProductsPage() {
             value={stockFilter}
             onChange={(e) => setStockFilter(e.target.value as StockFilter)}
           >
-            <option value="all">Alle</option>
-            <option value="in_stock">Op voorraad</option>
-            <option value="out_of_stock">Geen voorraad</option>
-            <option value="no_offer">Geen aanbod</option>
+            <option value="all">{t("commonAll", locale)}</option>
+            <option value="in_stock">{t("sellerProductsInStock", locale)}</option>
+            <option value="out_of_stock">
+              {t("sellerProductsOutOfStock", locale)}
+            </option>
+            <option value="no_offer">{t("sellerProductsNoOffer", locale)}</option>
           </select>
         </div>
       </div>
 
       {products.length === 0 ? (
         <EmptyState
-          title="Geen producten"
-          description="Importeer een CSV of voeg handmatig een nieuw product toe."
-          primaryAction={{ label: "CSV importeren", onClick: () => setCsvOpen(true) }}
-          secondaryAction={{ label: "Nieuw product", href: "/seller/products/add" }}
+          title={t("sellerProductsEmptyTitle", locale)}
+          description={t("sellerProductsEmptyDesc", locale)}
+          primaryAction={{
+            label: t("sellerProductsCsvImportAction", locale),
+            onClick: () => setCsvOpen(true),
+          }}
+          secondaryAction={{
+            label: t("sellerProductsNew", locale),
+            href: "/seller/products/add",
+          }}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Geen resultaten"
-          description="Pas je zoekopdracht of filters aan."
+          title={t("commonEmptyFilter", locale)}
+          description={t("commonEmptyFilterHint", locale)}
         />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-wf-300 bg-white">
@@ -520,7 +582,7 @@ export default function SellerProductsPage() {
                 <th className="border-b border-wf-400 px-3 py-2.5 text-left">
                   <input
                     type="checkbox"
-                    aria-label="Selecteer alle"
+                    aria-label={t("sellerProductsSelectAll", locale)}
                     checked={
                       filtered.length > 0 &&
                       filtered.every((p) => selected.has(p.id))
@@ -528,16 +590,7 @@ export default function SellerProductsPage() {
                     onChange={(e) => toggleAll(e.target.checked)}
                   />
                 </th>
-                {[
-                  "Titel",
-                  "EAN / ID",
-                  "Lifecycle",
-                  "Listing",
-                  "Product Cloud Status",
-                  "Voorraad",
-                  "Prijs",
-                  "Categorie",
-                ].map((h) => (
+                {tableHeaders.map((h) => (
                   <th
                     key={h}
                     className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
@@ -553,7 +606,9 @@ export default function SellerProductsPage() {
                   <td className="px-3 py-2.5">
                     <input
                       type="checkbox"
-                      aria-label={`Selecteer ${p.title}`}
+                      aria-label={tFormat("sellerProductsSelectOne", locale, {
+                        title: p.title,
+                      })}
                       checked={selected.has(p.id)}
                       onChange={(e) => toggleOne(p.id, e.target.checked)}
                     />
@@ -561,13 +616,22 @@ export default function SellerProductsPage() {
                   <td className="px-4 py-2.5 text-wf-800">{p.title}</td>
                   <td className="px-4 py-2.5 text-wf-800">{p.ean}</td>
                   <td className="px-4 py-2.5">
-                    <Badge variant="outline">{p.lifecycle_status}</Badge>
+                    <Badge variant="outline">
+                      {statusLabel(p.lifecycle_status, locale)}
+                    </Badge>
                   </td>
                   <td className="px-4 py-2.5">
-                    <Badge>{p.listing === "live" ? "Live" : "Concept"}</Badge>
+                    <Badge>
+                      {statusLabel(
+                        p.listing === "live" ? "Live" : "Concept",
+                        locale
+                      )}
+                    </Badge>
                   </td>
                   <td className="px-4 py-2.5">
-                    <Badge variant="outline">{p.product_cloud_status}</Badge>
+                    <Badge variant="outline">
+                      {statusLabel(p.product_cloud_status, locale)}
+                    </Badge>
                   </td>
                   <td className="px-4 py-2.5 text-wf-800">
                     {p.stock == null ? "—" : p.stock}
@@ -581,8 +645,13 @@ export default function SellerProductsPage() {
             </tbody>
           </table>
           <div className="px-4 py-3.5 text-[11px] text-wf-500">
-            {filtered.length} van {products.length} producten
-            {selected.size > 0 ? ` · ${selected.size} geselecteerd` : null}
+            {tFormat("sellerProductsCount", locale, {
+              filtered: filtered.length,
+              total: products.length,
+            })}
+            {selected.size > 0
+              ? ` · ${tFormat("commonSelected", locale, { count: selected.size })}`
+              : null}
           </div>
         </div>
       )}

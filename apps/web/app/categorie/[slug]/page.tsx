@@ -1,10 +1,8 @@
 import type { Metadata } from "next"
-import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { CategoryPageView } from "../../_components/category/category-page-view"
 import { resolveCategoryPage } from "../../_lib/cms/resolve-category"
-import { resolveStorefrontLocaleFromCookie } from "../../_lib/cms/resolve-homepage"
-import { LOCALE_COOKIE } from "../../_lib/i18n/locales"
+import { getStorefrontLocaleFromCookies } from "../../_lib/i18n/get-storefront-locale"
 import {
   findMarketplaceCategory,
   MARKETPLACE_CATEGORIES,
@@ -14,6 +12,7 @@ import {
   productsForCategory,
 } from "../../_lib/listing-products"
 import { resolveListingProducts } from "../../_lib/storefront-catalog"
+import { fetchProductCloudCategoryBySlug } from "../../_lib/product-cloud-store"
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>
@@ -27,16 +26,24 @@ export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params
-  const cookieStore = await cookies()
-  const locale = resolveStorefrontLocaleFromCookie(
-    cookieStore.get(LOCALE_COOKIE)?.value
-  )
-  const { products } = await resolveListingProducts({ categorySlug: slug })
+  const locale = await getStorefrontLocaleFromCookies()
+  const { products } = await resolveListingProducts({
+    categorySlug: slug,
+    locale,
+  })
   const pool =
     products.length > 0 ? products : productsForCategory(slug).length
       ? productsForCategory(slug)
       : LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
-  const page = resolveCategoryPage(slug, pool, locale)
+  const productCloud = await fetchProductCloudCategoryBySlug(slug, locale)
+  const page = resolveCategoryPage(
+    slug,
+    pool,
+    locale,
+    undefined,
+    new Date(),
+    productCloud
+  )
   if (!page) {
     return { title: "Category — EuropMade" }
   }
@@ -65,13 +72,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params
   if (!findMarketplaceCategory(slug)) notFound()
 
-  const cookieStore = await cookies()
-  const locale = resolveStorefrontLocaleFromCookie(
-    cookieStore.get(LOCALE_COOKIE)?.value
-  )
+  const locale = await getStorefrontLocaleFromCookies()
 
   const { products: apiProducts } = await resolveListingProducts({
     categorySlug: slug,
+    locale,
   })
 
   // Seed fallback for empty catalog (demo / offline) — seller images replace later.
@@ -83,7 +88,15 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         ? seed
         : LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
 
-  const page = resolveCategoryPage(slug, products, locale)
+  const productCloud = await fetchProductCloudCategoryBySlug(slug, locale)
+  const page = resolveCategoryPage(
+    slug,
+    products,
+    locale,
+    undefined,
+    new Date(),
+    productCloud
+  )
   if (!page) notFound()
 
   return <CategoryPageView page={page} products={products} />

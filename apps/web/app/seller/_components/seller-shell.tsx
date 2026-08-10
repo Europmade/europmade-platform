@@ -3,6 +3,9 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@europmade/utils"
+import { LocaleCurrencySwitcher } from "../../_components/marketplace/locale-currency-switcher"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t } from "../../_lib/i18n/messages"
 import {
   findActiveSellerNav,
   primaryNavSorted,
@@ -29,6 +32,7 @@ export function SellerShell({
   children,
 }: SellerShellProps) {
   const pathname = usePathname()
+  const locale = useStorefrontLocale()
   const primary = primaryNavSorted()
   const active = findActiveSellerNav(pathname)
 
@@ -38,10 +42,11 @@ export function SellerShell({
         <aside className="hidden w-[220px] shrink-0 border-r border-wf-300 bg-wf-100 p-3.5 tablet:block">
           <div className="mb-5 h-5 w-[110px] rounded-sm bg-wf-300" aria-hidden />
           <p className="px-3 pb-1 text-[9.5px] font-semibold uppercase tracking-wide text-wf-500">
-            Seller Dashboard
+            {t("sellerDashboardTitle", locale)}
           </p>
-          <nav className="flex flex-col gap-0.5" aria-label="Seller navigatie">
+          <nav className="flex flex-col gap-0.5" aria-label={t("sellerNavAria", locale)}>
             {primary.map((item) => {
+              const label = t(item.labelKey, locale)
               const isActive = navActive(pathname, item.route)
               const className = cn(
                 "flex items-center gap-2 rounded-md px-3 py-2 text-xs text-wf-700",
@@ -61,17 +66,17 @@ export function SellerShell({
                   <span
                     key={item.id}
                     className={cn(className, "cursor-not-allowed opacity-50")}
-                    title="Nog niet beschikbaar"
+                    title={t("notAvailableYet", locale)}
                   >
                     {icon}
-                    <span>{item.naam}</span>
+                    <span>{label}</span>
                   </span>
                 )
               }
               return (
                 <Link key={item.id} href={item.route} className={className}>
                   {icon}
-                  <span>{item.naam}</span>
+                  <span>{label}</span>
                 </Link>
               )
             })}
@@ -86,13 +91,14 @@ export function SellerShell({
                 aria-hidden
               />
               <div className="border-l border-wf-300 pl-3.5 text-xs font-bold text-wf-700">
-                {active?.naam ?? roleLabel}
+                {active ? t(active.labelKey, locale) : roleLabel}
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <LocaleCurrencySwitcher />
               <span
                 className="relative flex h-[26px] w-[26px] items-center justify-center rounded-full border border-wf-400 text-xs text-wf-600"
-                aria-label="Notificaties"
+                aria-label={t("notifications", locale)}
               >
                 🔔
               </span>
@@ -141,7 +147,7 @@ export function SellerShell({
                         "border-wf-900 bg-wf-900 text-white"
                     )}
                   >
-                    {item.naam}
+                    {t(item.labelKey, locale)}
                   </Link>
                 ))}
             </div>

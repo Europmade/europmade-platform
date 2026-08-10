@@ -122,7 +122,10 @@ export function CategoryExperience({ page, products }: CategoryExperienceProps) 
         top3Heading={guide.top3Heading}
       />
 
-      <CategoryDynamicBlocks blocks={page.dynamicBlocks} />
+      <CategoryDynamicBlocks
+        blocks={page.dynamicBlocks}
+        locale={page.locale}
+      />
 
       <CategoryBuyGuide
         title={t("buyGuideHeading", page.locale)}

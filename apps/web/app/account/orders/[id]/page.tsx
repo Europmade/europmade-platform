@@ -13,6 +13,9 @@ import {
   type OrderLineView,
   type ReturnView,
 } from "../../../_lib/order-service-api"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t, tFormat } from "../../../_lib/i18n/messages"
+import { statusLabel } from "../../../_lib/i18n/status-labels"
 
 function money(unit: string | number, qty: number): number {
   const n = typeof unit === "number" ? unit : Number(unit)
@@ -21,6 +24,7 @@ function money(unit: string | number, qty: number): number {
 }
 
 export default function BuyerOrderDetailPage() {
+  const locale = useStorefrontLocale()
   const params = useParams<{ id: string }>()
   const orderId = params.id
   const [order, setOrder] = useState<Awaited<
@@ -44,35 +48,43 @@ export default function BuyerOrderDetailPage() {
         setError(
           err instanceof OrderServiceApiError
             ? err.message
-            : "Order laden mislukt."
+            : t("buyerOrderLoadError", locale)
         )
       })
     return () => {
       cancelled = true
     }
-  }, [orderId])
+  }, [orderId, locale])
 
   const returnByLine = new Map(returns.map((r) => [r.order_line_id, r]))
 
   return (
     <BuyerGate
       breadcrumb={[
-        { label: "Mijn EuropMade", href: "/account" },
-        { label: "Mijn bestellingen", href: "/account/orders" },
-        { label: order ? `#${order.order.order_number}` : "Orderdetail" },
+        { label: t("buyerPortalTitle", locale), href: "/account" },
+        { label: t("buyerNavOrders", locale), href: "/account/orders" },
+        {
+          label: order
+            ? `#${order.order.order_number}`
+            : t("buyerOrderDetail", locale),
+        },
       ]}
     >
       {error ? (
         <Notice variant="warning">{error}</Notice>
       ) : !order ? (
-        <p className="text-xs text-wf-600">Laden…</p>
+        <p className="text-xs text-wf-600">{t("loading", locale)}</p>
       ) : (
         <>
           <h1 className="text-[19px] font-bold text-wf-900">
-            Bestelling #{order.order.order_number}
+            {tFormat("buyerOrderTitle", locale, {
+              number: order.order.order_number,
+            })}
           </h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            Betaling: {order.order.payment_status}
+            {tFormat("buyerPaymentStatus", locale, {
+              status: statusLabel(order.order.payment_status, locale),
+            })}
             {order.order_set
               ? ` · Ref ${order.order_set.payment_reference}`
               : ""}
@@ -80,13 +92,17 @@ export default function BuyerOrderDetailPage() {
 
           <div className="mt-5 grid gap-3 tablet:grid-cols-2">
             <div className="rounded-md border border-wf-300 p-3 text-xs">
-              <div className="font-semibold text-wf-800">Verzendadres</div>
+              <div className="font-semibold text-wf-800">
+                {t("buyerShippingAddress", locale)}
+              </div>
               <p className="mt-1 whitespace-pre-wrap text-wf-700">
                 {order.order.shipping_address}
               </p>
             </div>
             <div className="rounded-md border border-wf-300 p-3 text-xs">
-              <div className="font-semibold text-wf-800">Factuuradres</div>
+              <div className="font-semibold text-wf-800">
+                {t("buyerBillingAddress", locale)}
+              </div>
               <p className="mt-1 whitespace-pre-wrap text-wf-700">
                 {order.order.billing_address}
               </p>
@@ -94,8 +110,7 @@ export default function BuyerOrderDetailPage() {
           </div>
 
           <p className="mt-4 text-[11px] text-wf-500">
-            Track &amp; trace volgt zodra Shipment (Blueprint Status Open) is
-            uitgewerkt.
+            {t("buyerTrackTraceNote", locale)}
           </p>
 
           <div className="mt-5">
@@ -103,11 +118,13 @@ export default function BuyerOrderDetailPage() {
               href={`/account/messages/${order.order.id}`}
               className="text-xs font-semibold text-wf-900 underline"
             >
-              Berichten over deze bestelling →
+              {t("buyerMessagesForOrder", locale)}
             </Link>
           </div>
 
-          <h2 className="mt-6 text-sm font-bold text-wf-900">Orderregels</h2>
+          <h2 className="mt-6 text-sm font-bold text-wf-900">
+            {t("buyerOrderLines", locale)}
+          </h2>
           <ul className="mt-3 divide-y divide-wf-200 rounded-md border border-wf-300">
             {order.lines.map((line: OrderLineView) => {
               const ret = returnByLine.get(line.id)
@@ -132,7 +149,11 @@ export default function BuyerOrderDetailPage() {
                     </div>
                     {ret ? (
                       <div className="mt-1">
-                        <Badge variant="outline">Retour: {ret.status}</Badge>
+                        <Badge variant="outline">
+                          {tFormat("buyerReturnBadge", locale, {
+                            status: statusLabel(ret.status, locale),
+                          })}
+                        </Badge>
                       </div>
                     ) : null}
                   </div>
@@ -142,7 +163,7 @@ export default function BuyerOrderDetailPage() {
                         href={`/account/returns/${ret.id}`}
                         className="font-semibold text-wf-900 hover:underline"
                       >
-                        Retour bekijken
+                        {t("buyerViewReturn", locale)}
                       </Link>
                     ) : null}
                     {!open && !ret ? (
@@ -150,14 +171,14 @@ export default function BuyerOrderDetailPage() {
                         href={`/account/returns/new?order_line_id=${line.id}&order_id=${order.order.id}`}
                         className="rounded-md bg-wf-900 px-3 py-1.5 font-semibold text-white hover:bg-wf-800"
                       >
-                        Retour aanmelden
+                        {t("buyerRequestReturn", locale)}
                       </Link>
                     ) : null}
                     <Link
                       href={`/account/reviews/new?order_line_id=${line.id}&type=Productreview`}
                       className="rounded-md border border-wf-400 px-3 py-1.5 font-semibold text-wf-900 hover:bg-wf-100"
                     >
-                      Review
+                      {t("buyerWriteReview", locale)}
                     </Link>
                   </div>
                 </li>

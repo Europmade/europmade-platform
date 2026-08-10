@@ -60,10 +60,15 @@ export function getCartLineMetaMap(
   return out
 }
 
+import { DEFAULT_STOREFRONT_LOCALE } from "./i18n/locales"
+import { t } from "./i18n/messages"
+import { defaultDeliveryLabel } from "./offer-delivery"
+
 export function fallbackCartLineMeta(
   offerId: string,
   sellerId: string
 ): CartLineMeta {
+  const locale = DEFAULT_STOREFRONT_LOCALE
   return {
     offer_id: offerId,
     product_id: "",
@@ -72,9 +77,9 @@ export function fallbackCartLineMeta(
     seller_id: sellerId,
     seller_name: `Verkoper ${sellerId.slice(-6)}`,
     verified: true,
-    delivery: "2–4 werkdagen",
-    stock: "Op voorraad",
-    returns: "30 dagen retour",
+    delivery: defaultDeliveryLabel(locale),
+    stock: t("inStock", locale),
+    returns: t("trust30DayReturn", locale),
     image_hue: hashHue(offerId),
   }
 }

@@ -7,11 +7,17 @@ import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
 import { DEMO_ORDERS } from "../../_lib/demo-data"
 import { useDemoSellerInvoices } from "../../_lib/demo-store"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
+import { t } from "../../../_lib/i18n/messages"
+import { statusLabel } from "../../../_lib/i18n/status-labels"
 
 /**
  * Facturen — verkoper uploadt/koppelt eigen klantfacturen (EuropMade genereert ze niet).
  */
 export default function SellerFinanceFacturenPage() {
+  const locale = useStorefrontLocale()
+  const intl = storefrontIntlLocale(locale)
   const [invoices, setInvoices] = useDemoSellerInvoices()
   const [orderNumber, setOrderNumber] = useState(
     DEMO_ORDERS[0]?.order_number ?? ""
@@ -21,7 +27,7 @@ export default function SellerFinanceFacturenPage() {
 
   function uploadInvoice() {
     if (!file || !orderNumber) {
-      setNote("Kies een order en upload een factuurbestand.")
+      setNote(t("sellerFinanceInvoiceNeedOrderFile", locale))
       return
     }
     const order = DEMO_ORDERS.find((o) => o.order_number === orderNumber)
@@ -37,21 +43,22 @@ export default function SellerFinanceFacturenPage() {
       ...prev,
     ])
     setFile(null)
-    setNote("Factuur gekoppeld aan order. EuropMade genereert geen klantfacturen.")
+    setNote(t("sellerFinanceInvoiceLinked", locale))
   }
 
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Financiën", href: "/seller/finance" },
-        { label: "Facturen" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavFinance", locale), href: "/seller/finance" },
+        { label: t("sellerInvoices", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Facturen</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("sellerInvoices", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Jij bent juridisch de verkoper. Upload of koppel jouw eigen
-        klantfacturen — EuropMade genereert deze niet.
+        {t("sellerFinanceInvoicesIntro", locale)}
       </p>
 
       {note ? (
@@ -62,12 +69,12 @@ export default function SellerFinanceFacturenPage() {
 
       <section className="mt-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
         <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Factuur uploaden / koppelen
+          {t("sellerFinanceInvoicesUpload", locale)}
         </h2>
         <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
           <div>
             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-              Order
+              {t("commonOrder", locale)}
             </label>
             <select
               className="h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs"
@@ -82,8 +89,8 @@ export default function SellerFinanceFacturenPage() {
             </select>
           </div>
           <FileUpload
-            label="Factuurbestand"
-            requirementLabel="PDF, max. 10 MB"
+            label={t("sellerFinanceInvoiceFile", locale)}
+            requirementLabel={t("sellerFinanceInvoiceRequirement", locale)}
             accept="application/pdf,.pdf"
             value={file}
             onChange={setFile}
@@ -91,7 +98,7 @@ export default function SellerFinanceFacturenPage() {
         </div>
         <div className="mt-4">
           <Button type="button" onClick={uploadInvoice}>
-            Koppelen
+            {t("sellerFinanceInvoiceLink", locale)}
           </Button>
         </div>
       </section>
@@ -99,8 +106,8 @@ export default function SellerFinanceFacturenPage() {
       {invoices.length === 0 ? (
         <div className="mt-6">
           <EmptyState
-            title="Geen facturen"
-            description="Upload jouw eigen klantfacturen en koppel ze aan orders."
+            title={t("sellerFinanceInvoicesEmptyTitle", locale)}
+            description={t("sellerFinanceInvoicesEmptyDesc", locale)}
           />
         </div>
       ) : (
@@ -108,16 +115,20 @@ export default function SellerFinanceFacturenPage() {
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                {["Order", "Bestand", "Bedrag", "Geüpload", "Status"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {[
+                  t("commonOrder", locale),
+                  t("commonFile", locale),
+                  t("commonAmount", locale),
+                  t("sellerFinanceUploadedAt", locale),
+                  t("commonStatus", locale),
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -130,10 +141,12 @@ export default function SellerFinanceFacturenPage() {
                   <td className="px-4 py-2.5">{inv.file_name}</td>
                   <td className="px-4 py-2.5">{formatEuro(inv.amount)}</td>
                   <td className="px-4 py-2.5">
-                    {new Date(inv.uploaded_at).toLocaleDateString("nl-NL")}
+                    {new Date(inv.uploaded_at).toLocaleDateString(intl)}
                   </td>
                   <td className="px-4 py-2.5">
-                    <Badge variant="outline">{inv.status}</Badge>
+                    <Badge variant="outline">
+                      {statusLabel(inv.status, locale)}
+                    </Badge>
                   </td>
                 </tr>
               ))}

@@ -8,14 +8,25 @@ import {
   createProduct,
   ProductCloudApiError,
 } from "../../_lib/product-cloud-api"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t, type StorefrontMessageKey } from "../../../_lib/i18n/messages"
 
-const CATEGORIES = [
-  "Algemeen",
-  "Elektronica",
-  "Mode",
-  "Home & Living",
-  "Sport & Outdoor",
-  "Beauty & Verzorging",
+const CATEGORY_KEYS = [
+  { value: "Algemeen", key: "sellerProductCatGeneral" as StorefrontMessageKey },
+  {
+    value: "Elektronica",
+    key: "sellerProductCatElectronics" as StorefrontMessageKey,
+  },
+  { value: "Mode", key: "sellerProductCatFashion" as StorefrontMessageKey },
+  { value: "Home & Living", key: "sellerProductCatHome" as StorefrontMessageKey },
+  {
+    value: "Sport & Outdoor",
+    key: "sellerProductCatSport" as StorefrontMessageKey,
+  },
+  {
+    value: "Beauty & Verzorging",
+    key: "sellerProductCatBeauty" as StorefrontMessageKey,
+  },
 ] as const
 
 /** GTIN: 8–14 digits; otherwise MPN (ADR-0016). */
@@ -32,6 +43,7 @@ function resolveIdentifier(raw: string): {
 
 /** product-04 — Retailer Created (S3-03-06, ADR-0016). */
 export default function SellerProductNewPage() {
+  const locale = useStorefrontLocale()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState("")
@@ -47,19 +59,19 @@ export default function SellerProductNewPage() {
     const trimmedBrand = brand.trim()
     const trimmedId = identifier.trim()
     if (!trimmedTitle) {
-      setError("Vul een producttitel in.")
+      setError(t("sellerProductNewTitleRequired", locale))
       return
     }
     if (!trimmedBrand) {
-      setError("Vul een merknaam in.")
+      setError(t("sellerProductNewBrandRequired", locale))
       return
     }
     if (!category) {
-      setError("Kies een categorie.")
+      setError(t("sellerProductNewCategoryRequired", locale))
       return
     }
     if (!trimmedId) {
-      setError("Vul een EAN/GTIN of MPN in.")
+      setError(t("sellerProductNewIdRequired", locale))
       return
     }
 
@@ -93,15 +105,12 @@ export default function SellerProductNewPage() {
           )
           return
         }
-        setError(
-          result.message ??
-            "Dit product bestaat al. Zoek op EAN om een aanbod te koppelen."
-        )
+        setError(result.message ?? t("sellerProductNewExists", locale))
         return
       }
 
       if (!result.identifier_id) {
-        setError("Product aangemaakt, maar identifier ontbreekt.")
+        setError(t("sellerProductNewCreatedNoId", locale))
         return
       }
 
@@ -112,7 +121,7 @@ export default function SellerProductNewPage() {
       setError(
         err instanceof ProductCloudApiError
           ? err.message
-          : "Aanmaken mislukt. Probeer opnieuw."
+          : t("sellerProductNewCreateFailed", locale)
       )
     } finally {
       setBusy(false)
@@ -122,74 +131,72 @@ export default function SellerProductNewPage() {
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Producten", href: "/seller/products" },
-        { label: "Nieuw product aanmaken — Retailer Created" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavProducts", locale), href: "/seller/products" },
+        { label: t("sellerProductNewBreadcrumb", locale) },
       ]}
     >
       <h1 className="text-[19px] font-bold text-wf-900">
-        Nieuw product aanmaken
+        {t("sellerProductNewTitle", locale)}
       </h1>
       <p className="mb-5 mt-1.5 text-xs text-wf-600">
-        Retailer Created — dit product krijgt de status &apos;Retailer
-        Created&apos; tot een Producent/Merkhouder het eventueel claimt (Product
-        Cloud Architecture Deel 8.1).
+        {t("sellerProductNewIntro", locale)}
       </p>
 
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-          Producttitel
+          {t("sellerProductNewTitleLabel", locale)}
         </label>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Bijv. Draadloze koptelefoon XR-200"
+          placeholder={t("sellerProductNewTitlePlaceholder", locale)}
         />
       </div>
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-          Merk
+          {t("commonBrand", locale)}
         </label>
         <Input
           value={brand}
           onChange={(e) => setBrand(e.target.value)}
-          placeholder="Merknaam"
+          placeholder={t("sellerProductNewBrandPlaceholder", locale)}
         />
       </div>
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-          Categorie
+          {t("commonCategory", locale)}
         </label>
         <select
           className="w-full rounded-wf border border-wf-400 bg-white px-3 py-2 text-sm text-wf-800"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="">Kies categorie...</option>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          <option value="">{t("sellerProductNewChooseCategory", locale)}</option>
+          {CATEGORY_KEYS.map((c) => (
+            <option key={c.value} value={c.value}>
+              {t(c.key, locale)}
             </option>
           ))}
         </select>
       </div>
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-          EAN/GTIN (optioneel) of MPN
+          {t("sellerProductNewIdentifierLabel", locale)}
         </label>
         <Input
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          placeholder="EAN of fabrikantnummer"
+          placeholder={t("sellerProductNewIdentifierPlaceholder", locale)}
         />
       </div>
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-          Hoofdafbeelding
+          {t("sellerProductNewMainImage", locale)}
         </label>
         <div className="flex flex-wrap items-center gap-2.5 rounded-wf border border-dashed border-wf-400 px-3 py-2.5">
           <span className="text-xs text-wf-600">
-            {fileName ?? "Nog geen bestand gekozen"}
+            {fileName ?? t("sellerProductNewNoFile", locale)}
           </span>
           <input
             ref={fileRef}
@@ -206,14 +213,13 @@ export default function SellerProductNewPage() {
             className="rounded-wf border border-wf-500 bg-white px-3 py-1.5 text-xs font-semibold text-wf-800"
             onClick={() => fileRef.current?.click()}
           >
-            Uploaden
+            {t("commonUpload", locale)}
           </button>
         </div>
       </div>
 
       <Notice variant="warning" className="mb-4 max-w-xl">
-        Verplicht vóór publicatie: minimaal één hoofdafbeelding en alle
-        verplichte attributen voor deze categorie.
+        {t("sellerProductNewPublishNotice", locale)}
       </Notice>
 
       {error ? (
@@ -228,10 +234,12 @@ export default function SellerProductNewPage() {
           type="button"
           onClick={() => router.push("/seller/products")}
         >
-          Annuleren
+          {t("commonCancel", locale)}
         </Button>
         <Button type="button" disabled={busy} onClick={() => void onSubmit()}>
-          {busy ? "Bezig…" : "Product aanmaken (concept)"}
+          {busy
+            ? t("commonBusy", locale)
+            : t("sellerProductNewCreate", locale)}
         </Button>
       </div>
     </SellerGate>

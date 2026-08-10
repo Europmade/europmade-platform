@@ -4,6 +4,11 @@ import { ListingResults } from "./listing-results"
 import { PublicStorefrontChrome } from "./public-storefront-chrome"
 import type { ListingProduct } from "../../_lib/listing-products"
 import type { EmptyStateVariant } from "./listing-empty-state"
+import {
+  DEFAULT_STOREFRONT_LOCALE,
+  type StorefrontLocale,
+} from "../../_lib/i18n/locales"
+import { t } from "../../_lib/i18n/messages"
 
 export type MarketplaceListingProps = {
   mode: "search" | "category"
@@ -14,6 +19,7 @@ export type MarketplaceListingProps = {
   searchQuery?: string
   showCategoryAdSlot?: boolean
   products: ListingProduct[]
+  locale?: StorefrontLocale
 }
 
 /**
@@ -29,9 +35,10 @@ export function MarketplaceListing({
   searchQuery,
   showCategoryAdSlot = false,
   products,
+  locale = DEFAULT_STOREFRONT_LOCALE,
 }: MarketplaceListingProps) {
   return (
-    <PublicStorefrontChrome searchQuery={searchQuery}>
+    <PublicStorefrontChrome searchQuery={searchQuery} locale={locale}>
       <div className="page-head px-4 pt-[18px] tablet:px-8">
         {mode === "category" && breadcrumbLabel ? (
           <nav
@@ -41,13 +48,13 @@ export function MarketplaceListing({
             <ol className="flex flex-wrap items-center gap-1.5">
               <li>
                 <Link href="/" className="hover:underline">
-                  Home
+                  {t("breadcrumbHome", locale)}
                 </Link>
               </li>
               <li aria-hidden>/</li>
               <li>
                 <Link href="/categorie" className="hover:underline">
-                  Categorieën
+                  {t("breadcrumbCategories", locale)}
                 </Link>
               </li>
               <li aria-hidden>/</li>
@@ -76,6 +83,7 @@ export function MarketplaceListing({
         emptyVariant={emptyVariant}
         searchQuery={searchQuery}
         categoryLabel={breadcrumbLabel}
+        locale={locale}
       />
     </PublicStorefrontChrome>
   )

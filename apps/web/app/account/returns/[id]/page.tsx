@@ -11,8 +11,12 @@ import {
   escalateReturn,
   getReturn,
 } from "../../../_lib/order-service-api"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t } from "../../../_lib/i18n/messages"
+import { statusLabel } from "../../../_lib/i18n/status-labels"
 
 export default function BuyerReturnDetailPage() {
+  const locale = useStorefrontLocale()
   const params = useParams<{ id: string }>()
   const [data, setData] = useState<Awaited<ReturnType<typeof getReturn>> | null>(
     null
@@ -31,13 +35,13 @@ export default function BuyerReturnDetailPage() {
         setError(
           err instanceof OrderServiceApiError
             ? err.message
-            : "Retour laden mislukt."
+            : t("buyerReturnLoadError", locale)
         )
       })
     return () => {
       cancelled = true
     }
-  }, [params.id])
+  }, [params.id, locale])
 
   async function onEscalate() {
     setBusy(true)
@@ -49,7 +53,7 @@ export default function BuyerReturnDetailPage() {
       setError(
         err instanceof OrderServiceApiError
           ? err.message
-          : "Escaleren mislukt."
+          : t("buyerEscalateFailed", locale)
       )
     } finally {
       setBusy(false)
@@ -67,9 +71,9 @@ export default function BuyerReturnDetailPage() {
   return (
     <BuyerGate
       breadcrumb={[
-        { label: "Mijn EuropMade", href: "/account" },
-        { label: "Retouren", href: "/account/returns" },
-        { label: ret ? ret.id.slice(0, 12) : "Detail" },
+        { label: t("buyerPortalTitle", locale), href: "/account" },
+        { label: t("buyerNavReturns", locale), href: "/account/returns" },
+        { label: ret ? ret.id.slice(0, 12) : t("buyerDetail", locale) },
       ]}
     >
       {error ? (
@@ -79,12 +83,14 @@ export default function BuyerReturnDetailPage() {
       ) : null}
 
       {!data || !ret ? (
-        <p className="text-xs text-wf-600">Laden…</p>
+        <p className="text-xs text-wf-600">{t("loading", locale)}</p>
       ) : (
         <>
-          <h1 className="text-[19px] font-bold text-wf-900">Retourstatus</h1>
+          <h1 className="text-[19px] font-bold text-wf-900">
+            {t("buyerReturnStatus", locale)}
+          </h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            Order{" "}
+            {t("commonOrder", locale)}{" "}
             <Link
               href={`/account/orders/${data.order_id}`}
               className="font-semibold underline"
@@ -95,24 +101,34 @@ export default function BuyerReturnDetailPage() {
 
           <div className="mt-5 space-y-3 rounded-md border border-wf-300 p-4 text-xs">
             <div>
-              <span className="text-wf-600">Status: </span>
-              <Badge variant="outline">{ret.status}</Badge>
+              <span className="text-wf-600">
+                {t("commonStatus", locale)}:{" "}
+              </span>
+              <Badge variant="outline">
+                {statusLabel(ret.status, locale)}
+              </Badge>
             </div>
             <div>
-              <span className="text-wf-600">Reden: </span>
+              <span className="text-wf-600">
+                {t("buyerReason", locale)}:{" "}
+              </span>
               <span className="text-wf-900">{ret.reason}</span>
             </div>
             {ret.seller_decision_reason ? (
               <div>
-                <span className="text-wf-600">Seller-besluit: </span>
+                <span className="text-wf-600">
+                  {t("buyerSellerDecision", locale)}:{" "}
+                </span>
                 <span className="text-wf-900">{ret.seller_decision_reason}</span>
               </div>
             ) : null}
             {ret.refund_status ? (
               <div>
-                <span className="text-wf-600">Refund: </span>
+                <span className="text-wf-600">
+                  {t("buyerRefund", locale)}:{" "}
+                </span>
                 <span className="text-wf-900">
-                  {ret.refund_status}
+                  {statusLabel(ret.refund_status, locale)}
                   {amount != null && Number.isFinite(amount)
                     ? ` · ${formatEuro(amount)}`
                     : ""}
@@ -124,7 +140,7 @@ export default function BuyerReturnDetailPage() {
           {ret.status === "Afgewezen" ? (
             <div className="mt-4">
               <Button type="button" disabled={busy} onClick={onEscalate}>
-                Escaleren naar Beheerder
+                {t("buyerEscalate", locale)}
               </Button>
             </div>
           ) : null}

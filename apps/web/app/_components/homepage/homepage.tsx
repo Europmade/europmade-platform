@@ -1,9 +1,5 @@
-import { cookies } from "next/headers"
-import {
-  resolveHomepageCms,
-  resolveStorefrontLocaleFromCookie,
-} from "../../_lib/cms/resolve-homepage"
-import { LOCALE_COOKIE } from "../../_lib/i18n/locales"
+import { getStorefrontLocaleFromCookies } from "../../_lib/i18n/get-storefront-locale"
+import { resolveHomepageCms } from "../../_lib/cms/resolve-homepage"
 import { t } from "../../_lib/i18n/messages"
 import { LISTING_PRODUCTS } from "../../_lib/listing-products"
 import {
@@ -25,13 +21,10 @@ const SECTION = "px-4 py-3.5 tablet:px-8 tablet:py-4"
 const AD_WRAP = "py-1 tablet:py-1.5"
 
 export async function Homepage() {
-  const cookieStore = await cookies()
-  const locale = resolveStorefrontLocaleFromCookie(
-    cookieStore.get(LOCALE_COOKIE)?.value
-  )
+  const locale = await getStorefrontLocaleFromCookies()
   const cms = resolveHomepageCms(locale)
 
-  const { products } = await resolveListingProducts()
+  const { products } = await resolveListingProducts({ locale })
   const featuredFromApi =
     products.length > 0
       ? [...products]
@@ -64,7 +57,7 @@ export async function Homepage() {
   return (
     <div className="min-h-screen bg-wf-100 text-wf-800">
       <div className="mx-auto max-w-[1160px] border border-wf-200 bg-white shadow-sm">
-        <PublicHeader />
+        <PublicHeader locale={locale} />
 
         <HomepageHero content={cms.hero} />
 
@@ -97,6 +90,7 @@ export async function Homepage() {
               title={sec.featured.title}
               subtitle={sec.featured.subtitle}
               products={featuredProducts}
+              locale={locale}
             />
           </section>
         ) : null}
@@ -143,6 +137,7 @@ export async function Homepage() {
               title={sec.newest.title}
               subtitle={sec.newest.subtitle}
               products={newest}
+              locale={locale}
             />
           </section>
         ) : null}
@@ -153,6 +148,7 @@ export async function Homepage() {
               title={sec.best_sellers.title}
               subtitle={sec.best_sellers.subtitle}
               products={bestSold}
+              locale={locale}
             />
           </section>
         ) : null}
@@ -186,7 +182,7 @@ export async function Homepage() {
           </section>
         ) : null}
 
-        <SiteFooter />
+        <SiteFooter locale={locale} />
       </div>
     </div>
   )

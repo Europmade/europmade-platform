@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { PublicStorefrontChrome } from "./public-storefront-chrome"
+import { getStorefrontLocaleFromCookies } from "../../_lib/i18n/get-storefront-locale"
 
 type ContentPageProps = {
   title: string
@@ -8,10 +9,12 @@ type ContentPageProps = {
 
 /**
  * Eenvoudige contentlayout — hergebruikt PublicStorefrontChrome.
+ * Locale server-side uit cookie (dit is een Server Component).
  */
-export function ContentPage({ title, children }: ContentPageProps) {
+export async function ContentPage({ title, children }: ContentPageProps) {
+  const locale = await getStorefrontLocaleFromCookies()
   return (
-    <PublicStorefrontChrome>
+    <PublicStorefrontChrome locale={locale}>
       <main className="px-4 py-10 tablet:px-8 tablet:py-12">
         <h1 className="text-[22px] font-bold text-wf-900 tablet:text-[28px]">
           {title}
@@ -26,11 +29,13 @@ export function ContentPage({ title, children }: ContentPageProps) {
 
 export function ContentNav({
   items,
+  ariaLabel,
 }: {
   items: Array<{ href: string; label: string }>
+  ariaLabel?: string
 }) {
   return (
-    <nav aria-label="Op deze pagina" className="mb-6">
+    <nav aria-label={ariaLabel ?? "On this page"} className="mb-6">
       <ul className="flex flex-col gap-1.5">
         {items.map((item) => (
           <li key={item.href}>

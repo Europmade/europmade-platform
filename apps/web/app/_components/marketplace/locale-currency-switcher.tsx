@@ -9,6 +9,7 @@ import {
   STOREFRONT_LOCALES,
   type StorefrontLocale,
 } from "../../_lib/i18n/locales"
+import { readLocaleFromBrowser } from "../../_lib/i18n/use-storefront-locale"
 import { t } from "../../_lib/i18n/messages"
 
 const LOCALE_KEY = "em_storefront_locale"
@@ -46,12 +47,9 @@ export function LocaleCurrencySwitcher() {
   const [currency, setCurrency] = useState("EUR")
 
   useEffect(() => {
-    const storedLocale = localStorage.getItem(LOCALE_KEY) ?? ""
-    setLocale(
-      isStorefrontLocale(storedLocale)
-        ? storedLocale
-        : DEFAULT_STOREFRONT_LOCALE
-    )
+    // Display current resolved locale; do not persist auto-detection here.
+    // Manual choice writes cookie + localStorage in changeLocale only.
+    setLocale(readLocaleFromBrowser())
     const storedCurrency = localStorage.getItem(CURRENCY_KEY) ?? "EUR"
     const allowed = MVP_CURRENCIES.some((c) => c.code === storedCurrency)
       ? storedCurrency
@@ -65,7 +63,7 @@ export function LocaleCurrencySwitcher() {
     localStorage.setItem(LOCALE_KEY, value)
     setCookie(LOCALE_COOKIE, value)
     document.documentElement.lang = value
-    // SSR homepage resolves from cookie — soft reload to apply CMS locale.
+    // SSR resolves from cookie — soft reload to apply CMS locale.
     window.location.reload()
   }
 

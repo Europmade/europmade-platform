@@ -6,6 +6,8 @@ import {
   OrderServiceApiError,
   listOrders,
 } from "../../_lib/order-service-api"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t } from "../../_lib/i18n/messages"
 import { BuyerShell } from "./buyer-shell"
 
 export type BuyerGateProps = {
@@ -19,6 +21,7 @@ export type BuyerGateProps = {
 export function BuyerGate({ breadcrumb, children }: BuyerGateProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const locale = useStorefrontLocale()
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -46,7 +49,7 @@ export function BuyerGate({ breadcrumb, children }: BuyerGateProps) {
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-wf-100 text-sm text-wf-600">
-        Laden…
+        {t("loading", locale)}
       </div>
     )
   }

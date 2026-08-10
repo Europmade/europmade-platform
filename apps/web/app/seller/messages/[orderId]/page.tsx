@@ -7,12 +7,17 @@ import { Badge, Button, Input, Notice } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { useDemoMessages } from "../../_lib/demo-store"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
+import { t, tFormat } from "../../../_lib/i18n/messages"
 
 export default function SellerMessageThreadPage() {
+  const locale = useStorefrontLocale()
+  const intl = storefrontIntlLocale(locale)
   const params = useParams<{ orderId: string }>()
   const [threads, setThreads] = useDemoMessages()
   const thread = useMemo(
-    () => threads.find((t) => t.id === params.orderId),
+    () => threads.find((item) => item.id === params.orderId),
     [threads, params.orderId]
   )
   const [reply, setReply] = useState("")
@@ -22,7 +27,7 @@ export default function SellerMessageThreadPage() {
     if (!thread?.unread) return
     const id = thread.id
     setThreads((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, unread: false } : t))
+      prev.map((item) => (item.id === id ? { ...item, unread: false } : item))
     )
   }, [thread?.id, thread?.unread, setThreads])
 
@@ -30,15 +35,18 @@ export default function SellerMessageThreadPage() {
     return (
       <SellerGate
         breadcrumb={[
-          { label: "Seller Dashboard", href: "/seller" },
-          { label: "Berichten", href: "/seller/messages" },
-          { label: "Onbekend" },
+          { label: t("sellerDashboardTitle", locale), href: "/seller" },
+          { label: t("sellerNavMessages", locale), href: "/seller/messages" },
+          { label: t("commonUnknown", locale) },
         ]}
       >
         <EmptyState
-          title="Bericht niet gevonden"
-          description="Deze conversatie bestaat niet."
-          primaryAction={{ label: "Terug", href: "/seller/messages" }}
+          title={t("sellerMessagesNotFoundTitle", locale)}
+          description={t("sellerMessagesNotFoundDesc", locale)}
+          primaryAction={{
+            label: t("commonBack", locale),
+            href: "/seller/messages",
+          }}
         />
       </SellerGate>
     )
@@ -49,14 +57,14 @@ export default function SellerMessageThreadPage() {
     const body = reply.trim()
     const id = thread.id
     setThreads((prev) =>
-      prev.map((t) => {
-        if (t.id !== id) return t
+      prev.map((item) => {
+        if (item.id !== id) return item
         return {
-          ...t,
+          ...item,
           unread: false,
           updated_at: new Date().toISOString(),
           messages: [
-            ...t.messages,
+            ...item.messages,
             {
               id: `b_${Date.now()}`,
               sender: "seller" as const,
@@ -68,14 +76,14 @@ export default function SellerMessageThreadPage() {
       })
     )
     setReply("")
-    setNote("Bericht verzonden.")
+    setNote(t("sellerMessagesSent", locale))
   }
 
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Berichten", href: "/seller/messages" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavMessages", locale), href: "/seller/messages" },
         { label: thread.subject },
       ]}
     >
@@ -92,7 +100,7 @@ export default function SellerMessageThreadPage() {
               href={`/seller/orders/${thread.order_id}`}
               className="rounded-md border border-wf-400 px-3 py-1.5 font-semibold text-wf-800"
             >
-              Order #{thread.order_number}
+              {t("commonOrder", locale)} #{thread.order_number}
             </Link>
           ) : null}
           {thread.return_id ? (
@@ -100,10 +108,12 @@ export default function SellerMessageThreadPage() {
               href={`/seller/returns/${thread.return_id}`}
               className="rounded-md border border-wf-400 px-3 py-1.5 font-semibold text-wf-800"
             >
-              Retour {thread.return_id}
+              {tFormat("sellerMessagesReturnLink", locale, {
+                id: thread.return_id,
+              })}
             </Link>
           ) : null}
-          <Badge variant="outline">Gelezen</Badge>
+          <Badge variant="outline">{t("commonRead", locale)}</Badge>
         </div>
       </div>
 
@@ -115,15 +125,15 @@ export default function SellerMessageThreadPage() {
 
       <section className="mb-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
         <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Klantinformatie
+          {t("sellerMessagesCustomerInfo", locale)}
         </h2>
         <dl className="grid gap-2 text-xs tablet:grid-cols-2">
           <div>
-            <dt className="text-wf-500">Naam</dt>
+            <dt className="text-wf-500">{t("commonName", locale)}</dt>
             <dd className="text-wf-800">{thread.customer_name}</dd>
           </div>
           <div>
-            <dt className="text-wf-500">E-mail</dt>
+            <dt className="text-wf-500">{t("commonEmail", locale)}</dt>
             <dd className="text-wf-800">{thread.customer_email}</dd>
           </div>
         </dl>
@@ -131,7 +141,7 @@ export default function SellerMessageThreadPage() {
 
       <section className="mb-5 space-y-3 rounded-lg border border-wf-300 bg-white px-5 py-4">
         <h2 className="text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Conversatie
+          {t("sellerMessagesConversation", locale)}
         </h2>
         {thread.messages.map((m) => (
           <div
@@ -143,13 +153,17 @@ export default function SellerMessageThreadPage() {
             }`}
           >
             <div className="mb-1 text-[10px] opacity-80">
-              {m.sender === "seller" ? "Jij" : thread.customer_name} ·{" "}
-              {new Date(m.created_at).toLocaleString("nl-NL")}
+              {m.sender === "seller"
+                ? t("commonYou", locale)
+                : thread.customer_name}{" "}
+              · {new Date(m.created_at).toLocaleString(intl)}
             </div>
             <p>{m.body}</p>
             {m.attachment_name ? (
               <p className="mt-1 underline opacity-90">
-                Bijlage: {m.attachment_name}
+                {tFormat("sellerMessagesAttachmentLabel", locale, {
+                  name: m.attachment_name,
+                })}
               </p>
             ) : null}
           </div>
@@ -158,14 +172,14 @@ export default function SellerMessageThreadPage() {
 
       <section className="rounded-lg border border-wf-300 bg-white px-5 py-4">
         <Input
-          label="Antwoord"
+          label={t("commonReply", locale)}
           value={reply}
           onChange={(e) => setReply(e.target.value)}
-          placeholder="Schrijf een bericht…"
+          placeholder={t("sellerMessagesReplyPlaceholder", locale)}
         />
         <div className="mt-3">
           <Button type="button" onClick={sendReply} disabled={!reply.trim()}>
-            Versturen
+            {t("commonSubmit", locale)}
           </Button>
         </div>
       </section>

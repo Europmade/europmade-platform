@@ -4,7 +4,27 @@ Alle inhoudelijke wijzigingen aan de definitieve documentatie worden hier bijgeh
 
 ## [Onuitgebracht]
 
+### Afgerond
+- **Storefront internationalization & automatic language detection — AFGEROND** (2026-08-10). Ondersteunde UI-locales: `nl` / `en` / `de` / `fr`. Prioriteit: handmatige keuze → `em_storefront_locale` cookie/localStorage → Accept-Language / `navigator.language` → NL-fallback. Auto-detectie schrijft geen cookie/storage. Locale-aware o.a. homepage, mega-menu, categorie/PDP/Buy Box/FAQ/specs, buyer/seller portals, partner onboarding, auth, content/juridisch, footer, cookievoorkeuren + consent-banner, statuslabels, metadata. Architectuur uitsluitend: `messages.ts`, `StorefrontLocaleProvider`, `em_storefront_locale`, locale helpers, `detect-locale.ts` (geen tweede i18n-systeem). Product-/merk-/sellernamen blijven brondata. Niet opnieuw als open sprintwerk opnemen tenzij concreet bug of nieuwe taal.
+
+### Aangepast
+- Footer legal-links naar echte routes (`/juridisch/privacybeleid`, `/cookie-preferences`, `/juridisch/algemene-voorwaarden`).
+- Merk-label vertaalbaar; merknamen/productnamen/seller-namen ongewijzigd.
+
 ### Toegevoegd
+- ADR-0039 — Translation Layer MVP: actieve talen NL/EN/FR/DE, DeepL-provider, source_version/origin, stale (`Verouderd`), manual override-bescherming, publish-only storefront-resolve.
+- Migratie `Migration20260810140000` (`source_version`, `origin`, `updated_by`, statussen Verouderd/Mislukt).
+- Admin: `translations/publish`, `translations/manual`, `translations/mark-stale`, `translations/retranslate` (+ uitgebreide enqueue).
+- Technische-tokenvalidatie voor productcontent; contentType-context op TranslateRequest.
+
+### Toegevoegd (3B.8 / ADR-0038)
+- ADR-0038 — Product Cloud storefront-koppeling + vertaalprovider-abstractie (NL/FR/DE actief; EU-talen uitbreidbaar; geen nep-MT).
+- Store: `GET /store/product-cloud/categories?locale=`, `GET /store/product-cloud/translations` (resolve + fallback).
+- Admin: `POST /admin/product-cloud/translations/enqueue` (source → targets; zonder credentials → status `Ontbreekt`).
+- Centrale taal-/veldenconfig + TranslationProvider (`none` default) + resolve helpers.
+- Storefront: `product-cloud-store.ts` + categoriepagina koppelt PC-slug/attrs met CMS-fallback.
+
+### Toegevoegd (3B.7 / ADR-0037)
 - ADR-0037 — Product Cloud centrale laag: `pc_document`, `pc_translation`, `pc_product_relation`, category `slug`, attribute metadata (`code`/filterable/comparable), `use_case_tags` + vertaalstatusvelden.
 - Migratie `Migration20260810120000` + servicehelpers (`ensureCategoryAttributeCatalog`, vertalingen/documenten/relaties) en category-attribute catalogs (elektronica/tuin/mode).
 - Admin/store Product Cloud category + attribute + translation API’s (architectuur; geen frontend-koppeling).

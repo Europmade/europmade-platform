@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 import { ContentPage } from "../_components/marketplace/content-page"
+import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
+import { t } from "../_lib/i18n/messages"
 
 export const metadata: Metadata = {
   title: "Over EuropMade — EuropMade",
@@ -7,24 +9,13 @@ export const metadata: Metadata = {
     "EuropMade is de marketplace voor producten die daadwerkelijk in Europa zijn geproduceerd.",
 }
 
-export default function OverPage() {
+export default async function OverPage() {
+  const locale = await getStorefrontLocaleFromCookies()
   return (
-    <ContentPage title="Over EuropMade">
-      <p>
-        EuropMade is het marketplace-platform voor producten die daadwerkelijk
-        in Europa zijn geproduceerd. Wij verkopen zelf geen producten: onafhankelijke
-        retailers en producenten bieden hun aanbod aan, en jij koopt rechtstreeks
-        bij hen.
-      </p>
-      <p>
-        Elke productpagina bevat gecontroleerde informatie over herkomst,
-        producent en materiaal. De Buy Box selecteert automatisch de beste totale
-        aanbieding voor jou — nooit op basis van advertenties of commissies.
-      </p>
-      <p>
-        Ons doel: het meest transparante, betrouwbare en eerlijke
-        marketplace-platform van Europa.
-      </p>
+    <ContentPage title={t("aboutPageTitle", locale)}>
+      <p>{t("aboutPageP1", locale)}</p>
+      <p>{t("aboutPageP2", locale)}</p>
+      <p>{t("aboutPageP3", locale)}</p>
     </ContentPage>
   )
 }

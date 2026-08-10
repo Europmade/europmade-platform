@@ -9,13 +9,23 @@ import {
   submitReview,
   type ReviewType,
 } from "../../../_lib/review-api"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import type { StorefrontLocale } from "../../../_lib/i18n/locales"
+import { t, tFormat } from "../../../_lib/i18n/messages"
 
 function parseType(raw: string | null): ReviewType | null {
   if (raw === "Productreview" || raw === "Verkopersreview") return raw
   return null
 }
 
+function reviewTypeLabel(type: string, locale: StorefrontLocale): string {
+  if (type === "Productreview") return t("buyerProductReview", locale)
+  if (type === "Verkopersreview") return t("buyerSellerReview", locale)
+  return type
+}
+
 function NewReviewForm() {
+  const locale = useStorefrontLocale()
   const router = useRouter()
   const params = useSearchParams()
   const orderLineId = params.get("order_line_id")?.trim() ?? ""
@@ -31,7 +41,7 @@ function NewReviewForm() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     if (!orderLineId || !reviewType) {
-      setError("Orderregel en reviewtype zijn verplicht.")
+      setError(t("buyerReviewFieldsRequired", locale))
       return
     }
     setBusy(true)
@@ -48,38 +58,45 @@ function NewReviewForm() {
       setError(
         err instanceof ReviewApiError
           ? err.message
-          : "Review plaatsen mislukt."
+          : t("buyerReviewSubmitFailed", locale)
       )
     } finally {
       setBusy(false)
     }
   }
 
+  const typeLabel = reviewType
+    ? reviewTypeLabel(reviewType, locale)
+    : null
+
   return (
     <BuyerGate
       breadcrumb={[
-        { label: "Mijn EuropMade", href: "/account" },
-        { label: "Reviews", href: "/account/reviews" },
-        { label: reviewType ?? "Nieuwe review" },
+        { label: t("buyerPortalTitle", locale), href: "/account" },
+        { label: t("buyerNavReviews", locale), href: "/account/reviews" },
+        { label: typeLabel ?? t("buyerNewReview", locale) },
       ]}
     >
       <h1 className="text-[19px] font-bold text-wf-900">
-        {reviewType ?? "Review"} plaatsen
+        {typeLabel
+          ? tFormat("buyerPlaceReview", locale, { type: typeLabel })
+          : t("buyerWriteReview", locale)}
       </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Score (1–5) en optionele toelichting. Product- en verkopersreviews zijn
-        gescheiden formulieren.
+        {t("buyerReviewFormIntro", locale)}
       </p>
 
       {!orderLineId || !reviewType ? (
         <Notice variant="warning" className="mt-4">
-          Ongeldige link. Kies een review vanaf Mijn reviews.
+          {t("buyerInvalidReviewLink", locale)}
         </Notice>
       ) : (
         <form onSubmit={onSubmit} className="mt-5 max-w-md space-y-4">
           {error ? <Notice variant="warning">{error}</Notice> : null}
           <label className="block text-xs">
-            <span className="font-semibold text-wf-800">Score</span>
+            <span className="font-semibold text-wf-800">
+              {t("buyerScore", locale)}
+            </span>
             <select
               className="mt-1 w-full rounded-md border border-wf-400 px-3 py-2"
               value={score}
@@ -93,14 +110,16 @@ function NewReviewForm() {
             </select>
           </label>
           <label className="block text-xs">
-            <span className="font-semibold text-wf-800">Toelichting</span>
+            <span className="font-semibold text-wf-800">
+              {t("buyerExplanation", locale)}
+            </span>
             <textarea
               className="mt-1 w-full rounded-md border border-wf-400 px-3 py-2"
               rows={4}
               maxLength={5000}
               value={text}
               onChange={(ev) => setText(ev.target.value)}
-              placeholder="Optioneel"
+              placeholder={t("buyerOptional", locale)}
             />
           </label>
           <button
@@ -108,7 +127,7 @@ function NewReviewForm() {
             disabled={busy}
             className="rounded-md bg-wf-900 px-4 py-2 text-xs font-semibold text-white hover:bg-wf-800 disabled:opacity-50"
           >
-            {busy ? "Bezig…" : "Review plaatsen"}
+            {busy ? t("buyerBusy", locale) : t("buyerSubmitReview", locale)}
           </button>
         </form>
       )}
@@ -116,21 +135,24 @@ function NewReviewForm() {
   )
 }
 
+function NewReviewFallback() {
+  const locale = useStorefrontLocale()
+  return (
+    <BuyerGate
+      breadcrumb={[
+        { label: t("buyerPortalTitle", locale), href: "/account" },
+        { label: t("buyerNavReviews", locale), href: "/account/reviews" },
+        { label: t("loading", locale) },
+      ]}
+    >
+      <p className="text-xs text-wf-600">{t("loading", locale)}</p>
+    </BuyerGate>
+  )
+}
+
 export default function NewReviewPage() {
   return (
-    <Suspense
-      fallback={
-        <BuyerGate
-          breadcrumb={[
-            { label: "Mijn EuropMade", href: "/account" },
-            { label: "Reviews", href: "/account/reviews" },
-            { label: "Laden…" },
-          ]}
-        >
-          <p className="text-xs text-wf-600">Laden…</p>
-        </BuyerGate>
-      }
-    >
+    <Suspense fallback={<NewReviewFallback />}>
       <NewReviewForm />
     </Suspense>
   )

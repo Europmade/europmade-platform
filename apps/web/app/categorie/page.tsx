@@ -2,6 +2,12 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { AdSlot } from "../_components/homepage/ad-slot"
 import { PublicStorefrontChrome } from "../_components/marketplace/public-storefront-chrome"
+import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
+import {
+  categoryNavLabel,
+  t,
+  tFormat,
+} from "../_lib/i18n/messages"
 import {
   MARKETPLACE_CATEGORIES,
   POPULAR_MARKETPLACE_CATEGORIES,
@@ -26,35 +32,37 @@ export const metadata: Metadata = {
  * Secties: header/nav (CMP-001), breadcrumb, page-head, populaire tegels,
  * volledige categoriegrid (CMP-032), advertentieslot (CMP-033), SEO-blok, footer.
  */
-export default function CategoriesIndexPage() {
+export default async function CategoriesIndexPage() {
+  const locale = await getStorefrontLocaleFromCookies()
   return (
-    <PublicStorefrontChrome>
+    <PublicStorefrontChrome locale={locale}>
       <div className="page-head px-4 pt-[18px] tablet:px-8">
         <nav className="mb-2 text-[11.5px] text-wf-600" aria-label="Breadcrumb">
           <ol className="flex items-center gap-1.5">
             <li>
               <Link href="/" className="hover:underline">
-                Home
+                {t("breadcrumbHome", locale)}
               </Link>
             </li>
             <li aria-hidden>/</li>
             <li className="font-semibold text-wf-800" aria-current="page">
-              Categorieën
+              {t("breadcrumbCategories", locale)}
             </li>
           </ol>
         </nav>
         <h1 className="m-0 text-[16px] font-bold text-wf-900 tablet:text-[22px]">
-          Categorieën
+          {t("breadcrumbCategories", locale)}
         </h1>
         <p className="mt-1 text-[10.5px] text-wf-600 tablet:text-[12.5px]">
-          {MARKETPLACE_CATEGORIES.length} hoofdcategorieën — kies een categorie
-          om verder te browsen
+          {tFormat("categoriesIndexMeta", locale, {
+            count: MARKETPLACE_CATEGORIES.length,
+          })}
         </p>
       </div>
 
       <section className="px-4 py-6 tablet:px-8 tablet:py-8">
         <h2 className="mb-4 text-base font-bold text-wf-900 tablet:text-lg">
-          Populaire categorieën
+          {t("popularCategories", locale)}
         </h2>
         <ul className="grid grid-cols-2 gap-3 tablet:grid-cols-3 desktop:grid-cols-6 desktop:gap-4">
           {POPULAR_MARKETPLACE_CATEGORIES.map((cat) => (
@@ -68,7 +76,7 @@ export default function CategoriesIndexPage() {
                   aria-hidden
                 />
                 <span className="text-xs font-semibold text-wf-800">
-                  {cat.label}
+                  {categoryNavLabel(cat.slug, cat.label, locale)}
                 </span>
               </Link>
             </li>
@@ -82,10 +90,10 @@ export default function CategoriesIndexPage() {
 
       <section className="px-4 py-6 tablet:px-8 tablet:py-8">
         <h2 className="mb-1 text-base font-bold text-wf-900 tablet:text-lg">
-          Alle categorieën
+          {t("allCategories", locale)}
         </h2>
         <p className="mb-4 text-[12.5px] text-wf-600">
-          Productresultaten per categorie volgen zodra de catalogus live is.
+          {t("categoriesCatalogHint", locale)}
         </p>
         <ul className="grid grid-cols-2 gap-3 tablet:grid-cols-3 desktop:grid-cols-5 desktop:gap-4">
           {MARKETPLACE_CATEGORIES.map((cat) => (
@@ -99,7 +107,7 @@ export default function CategoriesIndexPage() {
                   aria-hidden
                 />
                 <span className="text-xs font-semibold text-wf-800">
-                  {cat.label}
+                  {categoryNavLabel(cat.slug, cat.label, locale)}
                 </span>
               </Link>
             </li>
@@ -109,19 +117,16 @@ export default function CategoriesIndexPage() {
 
       <section className="border-t border-wf-200 px-4 py-8 tablet:px-8 tablet:py-10">
         <h2 className="text-base font-bold text-wf-900 tablet:text-lg">
-          Shop Europese makers per categorie
+          {t("categoriesSeoTitle", locale)}
         </h2>
         <p className="mt-2 max-w-[640px] text-[13px] leading-relaxed text-wf-600">
-          Op EuropMade vind je uitsluitend producten die in Europa zijn
-          geproduceerd. Elke categoriepagina toont straks geverifieerde
-          productinformatie, aanbiedersvergelijking en de Buy Box — zonder
-          gesponsorde rangschikking.
+          {t("categoriesSeoBody", locale)}
         </p>
         <Link
           href="/"
           className="mt-4 inline-block text-[12.5px] font-semibold text-wf-800 underline"
         >
-          Terug naar de homepage
+          {t("backToHomepage", locale)}
         </Link>
       </section>
     </PublicStorefrontChrome>

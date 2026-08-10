@@ -8,8 +8,11 @@ import {
   OrderServiceApiError,
   requestReturn,
 } from "../../../_lib/order-service-api"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t } from "../../../_lib/i18n/messages"
 
 function ReturnForm() {
+  const locale = useStorefrontLocale()
   const router = useRouter()
   const search = useSearchParams()
   const orderLineId = search.get("order_line_id") ?? ""
@@ -21,7 +24,7 @@ function ReturnForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!orderLineId) {
-      setError("Geen orderregel geselecteerd.")
+      setError(t("buyerNoOrderLineSelected", locale))
       return
     }
     setBusy(true)
@@ -33,7 +36,7 @@ function ReturnForm() {
       setError(
         err instanceof OrderServiceApiError
           ? err.message
-          : "Retour aanmelden mislukt."
+          : t("buyerReturnRequestFailed", locale)
       )
     } finally {
       setBusy(false)
@@ -43,30 +46,38 @@ function ReturnForm() {
   return (
     <BuyerGate
       breadcrumb={[
-        { label: "Mijn EuropMade", href: "/account" },
-        { label: "Mijn bestellingen", href: "/account/orders" },
+        { label: t("buyerPortalTitle", locale), href: "/account" },
+        { label: t("buyerNavOrders", locale), href: "/account/orders" },
         ...(orderId
-          ? [{ label: "Order", href: `/account/orders/${orderId}` }]
+          ? [
+              {
+                label: t("commonOrder", locale),
+                href: `/account/orders/${orderId}`,
+              },
+            ]
           : []),
-        { label: "Retour aanmelden" },
+        { label: t("buyerRequestReturn", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Retour aanmelden</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("buyerNewReturn", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Alleen binnen de wettelijke herroepingstermijn van 14 dagen.
+        {t("buyerReturnWindowNote", locale)}
       </p>
 
       {!orderLineId ? (
         <Notice variant="warning" className="mt-4">
-          Selecteer een orderregel via orderdetail.
+          {t("buyerSelectOrderLine", locale)}
         </Notice>
       ) : (
         <form onSubmit={onSubmit} className="mt-5 max-w-lg space-y-4">
           <div className="text-xs text-wf-600">
-            Orderregel: <span className="font-mono text-wf-800">{orderLineId}</span>
+            {t("buyerOrderLineLabel", locale)}:{" "}
+            <span className="font-mono text-wf-800">{orderLineId}</span>
           </div>
           <label className="block text-xs font-semibold text-wf-800">
-            Reden
+            {t("buyerReason", locale)}
             <textarea
               className="mt-1.5 w-full rounded-md border border-wf-400 px-3 py-2 text-sm text-wf-900"
               rows={4}
@@ -74,12 +85,14 @@ function ReturnForm() {
               minLength={3}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Waarom wil je dit product retourneren?"
+              placeholder={t("buyerReasonPlaceholder", locale)}
             />
           </label>
           {error ? <Notice variant="warning">{error}</Notice> : null}
           <Button type="submit" disabled={busy || reason.trim().length < 3}>
-            {busy ? "Versturen…" : "Retourverzoek versturen"}
+            {busy
+              ? t("buyerSubmitting", locale)
+              : t("buyerSubmitReturn", locale)}
           </Button>
         </form>
       )}
@@ -88,11 +101,12 @@ function ReturnForm() {
 }
 
 export default function NewReturnPage() {
+  const locale = useStorefrontLocale()
   return (
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center text-sm text-wf-600">
-          Laden…
+          {t("loading", locale)}
         </div>
       }
     >

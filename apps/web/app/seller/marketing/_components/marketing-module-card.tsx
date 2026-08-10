@@ -1,27 +1,36 @@
+"use client"
+
 import Link from "next/link"
 import { Badge } from "@europmade/ui"
 import type { MarketingModuleDefinition } from "../../_lib/marketing/module-registry"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t } from "../../../_lib/i18n/messages"
 
 export function MarketingModuleCard({
   module,
 }: {
   module: MarketingModuleDefinition
 }) {
+  const locale = useStorefrontLocale()
   const unavailable = module.status !== "available" || !module.href
   const inner = (
     <>
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-sm font-bold text-wf-900">{module.title}</h3>
+        <h3 className="text-sm font-bold text-wf-900">
+          {t(module.titleKey, locale)}
+        </h3>
         {unavailable ? (
-          <Badge variant="outline">Nog niet beschikbaar</Badge>
+          <Badge variant="outline">{t("commonUnavailable", locale)}</Badge>
         ) : (
-          <Badge variant="solid">Beschikbaar</Badge>
+          <Badge variant="solid">{t("commonAvailable", locale)}</Badge>
         )}
       </div>
-      <p className="mt-2 text-[11.5px] text-wf-600">{module.description}</p>
+      <p className="mt-2 text-[11.5px] text-wf-600">
+        {t(module.descriptionKey, locale)}
+      </p>
       {!unavailable ? (
         <span className="mt-3 inline-block text-[11px] font-semibold text-wf-800 underline">
-          Openen →
+          {t("commonOpenArrow", locale)}
         </span>
       ) : null}
     </>

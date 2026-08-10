@@ -13,12 +13,15 @@ import {
   type CookiePreferences,
 } from "../_lib/cookie-consent"
 import { cn } from "@europmade/utils"
+import { useStorefrontLocale } from "../_lib/i18n/use-storefront-locale"
+import { t } from "../_lib/i18n/messages"
 
 /**
  * Cookie Consent — Voorkeuren beheren (S3-01-06 / cookie-02).
  */
 export default function CookiePreferencesPage() {
   const router = useRouter()
+  const locale = useStorefrontLocale()
   const [affiliateTracking, setAffiliateTracking] = useState(true)
   const [analytics, setAnalytics] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -60,27 +63,29 @@ export default function CookiePreferencesPage() {
   return (
     <div className="min-h-screen bg-wf-100 px-4 py-10">
       <div className="mx-auto max-w-xl rounded-md border border-wf-400 bg-white px-6 py-8">
-        <h1 className="text-[19px] font-bold text-wf-900">Cookievoorkeuren</h1>
+        <h1 className="text-[19px] font-bold text-wf-900">
+          {t("cookiePrefsTitle", locale)}
+        </h1>
         <p className="mt-1.5 text-xs text-wf-600">
-          Beheer per categorie welke cookies zijn toegestaan.
+          {t("cookiePrefsIntro", locale)}
         </p>
 
         <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 space-y-4">
           <ToggleRow
-            title="Noodzakelijk"
-            description="Vereist voor het functioneren van de website (bijv. sessiebeheer, winkelwagen). Kan niet worden uitgeschakeld."
+            title={t("cookieNecessary", locale)}
+            description={t("cookieNecessaryDesc", locale)}
             on
             locked
           />
           <ToggleRow
-            title="Affiliate-tracking"
-            description="Maakt cookie-gebaseerde toeschrijving aan een Affiliate mogelijk (ConsentRecord)."
+            title={t("cookieAffiliate", locale)}
+            description={t("cookieAffiliateDesc", locale)}
             on={affiliateTracking}
             onToggle={() => setAffiliateTracking((v) => !v)}
           />
           <ToggleRow
-            title="Analytics"
-            description="Geanonimiseerde statistieken over websitegebruik."
+            title={t("cookieAnalytics", locale)}
+            description={t("cookieAnalyticsDesc", locale)}
             on={analytics}
             onToggle={() => setAnalytics((v) => !v)}
           />
@@ -91,10 +96,10 @@ export default function CookiePreferencesPage() {
               variant="secondary"
               onClick={() => router.back()}
             >
-              Annuleren
+              {t("cancel", locale)}
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Opslaan…" : "Voorkeuren opslaan"}
+              {saving ? t("saving", locale) : t("savePreferences", locale)}
             </Button>
           </div>
         </form>

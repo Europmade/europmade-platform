@@ -33,6 +33,17 @@ import { ProductGallery } from "./product-gallery"
 import { TrustStrip } from "./trust-strip"
 import { ProductCarousel } from "./product-carousel"
 import { partnerHref } from "../../_lib/partner-profiles"
+import {
+  DEFAULT_STOREFRONT_LOCALE,
+  type StorefrontLocale,
+} from "../../_lib/i18n/locales"
+import { t, tFormat } from "../../_lib/i18n/messages"
+import {
+  defaultDeliveryLabel,
+  formatOfferShipping,
+  isFreeShippingValue,
+  localizeDeliveryLabelIfKnown,
+} from "../../_lib/offer-delivery"
 
 type TabId =
   | "description"
@@ -46,7 +57,13 @@ type TabId =
  * Productpagina + Buy Box — 1-op-1 sectiestructuur uit
  * sprint-1a/01-productpagina-buybox-{desktop,tablet,mobile}.html
  */
-export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
+export function ProductDetailPage({
+  detail,
+  locale = DEFAULT_STOREFRONT_LOCALE,
+}: {
+  detail: PdpDetail
+  locale?: StorefrontLocale
+}) {
   const { addLine } = useCart()
   const [colorId, setColorId] = useState(detail.selectedColorId)
   const [sizeId, setSizeId] = useState(detail.selectedSizeId)
@@ -72,19 +89,19 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
   }
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: "description", label: "Omschrijving" },
-    { id: "suitable", label: "Geschikt voor" },
-    { id: "specs", label: "Specificaties" },
-    { id: "downloads", label: "Downloads" },
+    { id: "description", label: t("tabDescription", locale) },
+    { id: "suitable", label: t("tabSuitable", locale) },
+    { id: "specs", label: t("tabSpecs", locale) },
+    { id: "downloads", label: t("tabDownloads", locale) },
     {
       id: "product-reviews",
-      label: `Productreviews (${detail.reviewCount})`,
+      label: `${t("tabProductReviews", locale)} (${detail.reviewCount})`,
     },
     {
       id: "seller-reviews",
       label: selected
-        ? `Verkopersreviews (${selected.retailer})`
-        : "Verkopersreviews",
+        ? `${t("tabSellerReviews", locale)} (${selected.retailer})`
+        : t("tabSellerReviews", locale),
     },
   ]
 
@@ -170,9 +187,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
 
   async function addToCart() {
     if (!selected || !selected.id.startsWith("offr_")) {
-      setCartNote(
-        "Er is geen actieve Commerce Cloud-aanbieding voor dit product."
-      )
+      setCartNote(t("noActiveCommerceOffer", locale))
       return
     }
     setCartBusy(true)
@@ -190,9 +205,9 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
         seller_id: "",
         seller_name: selected.retailer,
         verified: detail.listing.verified || detail.euOwnershipPercent >= 50,
-        delivery: selected.delivery || "2–4 werkdagen",
-        stock: selected.stock || "Op voorraad",
-        returns: selected.returns || "30 dagen retour",
+        delivery: selected.delivery || defaultDeliveryLabel(locale),
+        stock: selected.stock || t("inStock", locale),
+        returns: selected.returns || t("trust30DayReturn", locale),
         color,
         size,
         variant: [color, size].filter(Boolean).join(" / ") || undefined,
@@ -202,7 +217,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
       setCartNote(
         err instanceof OrderServiceApiError
           ? err.message
-          : "Toevoegen mislukt. De aanbieding is mogelijk nog niet in Commerce Cloud beschikbaar."
+          : t("addFailed", locale)
       )
     } finally {
       setCartBusy(false)
@@ -210,7 +225,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
   }
 
   return (
-    <PublicStorefrontChrome>
+    <PublicStorefrontChrome locale={locale}>
       <nav
         className="px-4 pt-3.5 text-xs text-wf-500 tablet:px-8"
         aria-label="Breadcrumb"
@@ -260,13 +275,9 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
             <button
               type="button"
               className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-wf-600 transition hover:bg-wf-100 hover:text-wf-900"
-              aria-label="Toevoegen aan favorieten"
-              title="Favorieten volgen later"
-              onClick={() =>
-                setWishlistNote(
-                  "Favorieten volgen later — wishlist staat buiten de huidige MVP-scope."
-                )
-              }
+              aria-label={t("favoritesLater", locale)}
+              title={t("favoritesLater", locale)}
+              onClick={() => setWishlistNote(t("favoritesLater", locale))}
             >
               ♡
             </button>
@@ -292,7 +303,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                   ?.scrollIntoView({ behavior: "smooth" })
               }}
             >
-              {detail.reviewCount} reviews
+              {tFormat("reviewsCount", locale, { count: detail.reviewCount })}
             </button>
           </div>
 
@@ -317,8 +328,10 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
             href="#aanbieders"
             className="mt-1.5 inline-block text-[13px] font-semibold text-wf-700 underline-offset-2 hover:underline"
           >
-            Laagste prijs {lowestOfferPriceLabel(detail)} · {offers.length}{" "}
-            aanbieders vergelijken ↓
+            {tFormat("lowestPriceCompare", locale, {
+              price: lowestOfferPriceLabel(detail),
+              count: offers.length,
+            })}
           </a>
 
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -326,24 +339,26 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
               href="/verified"
               className="inline-flex h-7 items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 text-[11px] font-bold leading-none text-white"
             >
-              ✓ EU Verified™
+              ✓ {t("euVerified", locale)}™
             </Link>
             <span className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800">
-              Gemaakt in {detail.listing.countryLabel}
+              {t("madeInLabel", locale)} {detail.listing.countryLabel}
             </span>
             <Link
               href={`/merk/${brandSlug}`}
               className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
             >
-              Producent: {detail.manufacturer} ›
+              {t("producerLabel", locale)} {detail.manufacturer} ›
             </Link>
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
             <Badge variant="outline">
-              EU-eigendom: {detail.euOwnershipPercent}%
+              {t("euOwnership", locale)}: {detail.euOwnershipPercent}%
             </Badge>
             <Link href={`/merk/${brandSlug}`}>
-              <Badge variant="outline">Merk: {detail.listing.brand}</Badge>
+              <Badge variant="outline">
+                {t("brandLabel", locale)} {detail.listing.brand}
+              </Badge>
             </Link>
           </div>
 
@@ -357,7 +372,9 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
             >
               {detail.colorVariants.length > 0 ? (
                 <div className="min-w-0 rounded-lg border border-wf-200 px-2.5 py-2">
-                  <p className="mb-1.5 text-[11px] font-semibold text-wf-800">Kleur</p>
+                  <p className="mb-1.5 text-[11px] font-semibold text-wf-800">
+                    {t("color", locale)}
+                  </p>
                   <div className="flex flex-wrap gap-1.5">
                     {detail.colorVariants.map((v) => (
                       <button
@@ -371,7 +388,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                             : "border-wf-400"
                         }`}
                         aria-pressed={colorId === v.id}
-                        aria-label={`Kleur ${v.id}`}
+                        aria-label={`${t("color", locale)} ${v.id}`}
                       >
                         <span
                           className="h-5 w-5 rounded-full border border-wf-400"
@@ -385,7 +402,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
               {detail.sizeVariants.length > 0 ? (
                 <div className="min-w-0 rounded-lg border border-wf-200 px-2.5 py-2">
                   <p className="mb-1.5 text-[11px] font-semibold text-wf-800">
-                    Werkgebied
+                    {t("workArea", locale)}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {detail.sizeVariants.map((v) => (
@@ -415,7 +432,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
 
           <div className="mt-2 border-t border-wf-200 pt-2">
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-              Kenmerken
+              {t("keyFeatures", locale)}
             </p>
             <ul className="space-y-0.5">
               {detail.highlights.map((h) => (
@@ -439,6 +456,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
             notice={detail.buyBoxNotice}
             cartBusy={cartBusy}
             cartNote={cartNote}
+            locale={locale}
             onAddToCart={() => void addToCart()}
             onToggleOffers={() => {
               setOffersOpen(true)
@@ -452,13 +470,13 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
 
       {/* Trustbalk over volledige contentbreedte */}
       <section className="border-y border-wf-200 bg-wf-50/60 px-4 py-3 tablet:px-8">
-        <TrustStrip />
+        <TrustStrip locale={locale} />
       </section>
 
       {/* Alle aanbieders — direct onder trustbalk */}
       <section id="aanbieders" className="px-4 pt-4 pb-5 tablet:px-8 tablet:pt-4 tablet:pb-6">
         <h2 className="mb-2.5 border-b border-wf-200 pb-2 text-[17px] font-bold text-wf-900">
-          Alle aanbieders ({offers.length})
+          {tFormat("allSellersCount", locale, { count: offers.length })}
         </h2>
 
         {/* Desktop/tablet table */}
@@ -467,13 +485,13 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
             <thead>
               <tr>
                 {[
-                  "Aanbieder",
-                  "Prijs",
-                  "Levertijd",
-                  "Verzending",
-                  "Retour",
-                  "Beoordeling",
-                  "Voorraad",
+                  t("offerer", locale),
+                  t("price", locale),
+                  t("deliveryTime", locale),
+                  t("shipping", locale),
+                  t("returns", locale),
+                  t("rating", locale),
+                  t("stock", locale),
                   "",
                 ].map((h) => (
                   <th
@@ -502,7 +520,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                       </Link>
                       {o.selected ? (
                         <Badge variant="solid" className="ml-1 text-[10px]">
-                          Geselecteerd
+                          {t("selected", locale)}
                         </Badge>
                       ) : null}
                     </span>
@@ -514,7 +532,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                     {o.delivery}
                   </td>
                   <td className="border-b border-wf-200 px-3 py-3">
-                    {o.shipping}
+                    {formatOfferShipping(o.shipping, locale)}
                   </td>
                   <td className="border-b border-wf-200 px-3 py-3">
                     {o.returns}
@@ -530,7 +548,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                       size="sm"
                       onClick={() => selectOffer(o.id)}
                     >
-                      Deze aanbieder tonen
+                      {t("showThisSeller", locale)}
                     </Button>
                   </td>
                 </tr>
@@ -555,7 +573,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                 </span>
                 {o.selected ? (
                   <Badge variant="solid" className="text-[10px]">
-                    Geselecteerd
+                    {t("selected", locale)}
                   </Badge>
                 ) : null}
               </div>
@@ -564,7 +582,9 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <Badge variant="outline">{o.delivery}</Badge>
-                <Badge variant="outline">{o.shipping}</Badge>
+                <Badge variant="outline">
+                  {formatOfferShipping(o.shipping, locale)}
+                </Badge>
                 <Badge variant="outline">{o.returns}</Badge>
                 <Badge variant="outline">
                   ★ {o.rating.toFixed(1).replace(".", ",")}
@@ -577,7 +597,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                   className="mt-3 w-full"
                   onClick={() => selectOffer(o.id)}
                 >
-                  Deze aanbieder tonen
+                  {t("showThisSeller", locale)}
                 </Button>
               ) : null}
             </li>
@@ -591,22 +611,22 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
         <div
           className="mb-5 flex gap-0 overflow-x-auto border-b border-wf-300 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
-          aria-label="Productinformatie"
+          aria-label={t("productInfoAria", locale)}
         >
-          {tabs.map((t) => (
+          {tabs.map((tabItem) => (
             <button
-              key={t.id}
+              key={tabItem.id}
               type="button"
               role="tab"
-              aria-selected={tab === t.id}
+              aria-selected={tab === tabItem.id}
               className={`shrink-0 snap-start px-[18px] py-2.5 text-[13px] ${
-                tab === t.id
+                tab === tabItem.id
                   ? "border-b-2 border-wf-900 font-bold text-wf-900"
                   : "border-b-2 border-transparent text-wf-500"
               }`}
-              onClick={() => setTab(t.id)}
+              onClick={() => setTab(tabItem.id)}
             >
-              {t.label}
+              {tabItem.label}
             </button>
           ))}
         </div>
@@ -627,7 +647,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
               className="mt-3.5 rounded border border-wf-700 bg-white px-[18px] py-2 text-[12.5px] font-semibold text-wf-800"
               onClick={() => setDescExpanded((v) => !v)}
             >
-              {descExpanded ? "Minder tonen ▴" : "Meer tonen ▾"}
+              {descExpanded ? t("showLess", locale) : t("showMore", locale)}
             </button>
           </div>
         ) : null}
@@ -666,7 +686,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
               href="/klantenservice"
               className="mt-4 inline-block text-xs text-wf-700 underline decoration-dotted"
             >
-              ⚑ Onjuistheid in deze productinformatie melden
+              {t("reportProductInfo", locale)}
             </Link>
           </div>
         ) : null}
@@ -690,18 +710,22 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
         {tab === "product-reviews" ? (
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-3">
-              <h3 className="m-0 text-sm font-bold">Productreviews</h3>
+              <h3 className="m-0 text-sm font-bold">
+                {t("tabProductReviews", locale)}
+              </h3>
               <Link
                 href="/account/reviews/new"
                 className="rounded border border-wf-700 bg-white px-3.5 py-1.5 text-xs font-semibold text-wf-800"
               >
-                + Review toevoegen
+                {t("addReview", locale)}
               </Link>
             </div>
             <p className="mb-3 text-xs text-wf-600">
-              {starsForRating(detail.listing.rating)}{" "}
-              {detail.listing.rating.toFixed(1).replace(".", ",")} gemiddeld —{" "}
-              {detail.reviewCount} reviews, over het product zelf
+              {tFormat("productReviewsAvg", locale, {
+                stars: starsForRating(detail.listing.rating),
+                rating: detail.listing.rating.toFixed(1).replace(".", ","),
+                count: detail.reviewCount,
+              })}
             </p>
             <ul>
               {detail.productReviews.map((r, i) => (
@@ -718,7 +742,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                   </button>{" "}
                   {r.verified ? (
                     <span className="ml-1.5 inline-block rounded-lg border border-wf-400 bg-wf-100 px-1.5 py-0.5 text-[10px] font-semibold text-wf-700">
-                      ✓ Geverifieerde aankoop
+                      {t("verifiedPurchase", locale)}
                     </span>
                   ) : null}
                 </li>
@@ -731,25 +755,27 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-3">
               <h3 className="m-0 text-sm font-bold">
-                Verkopersreviews
+                {t("tabSellerReviews", locale)}
                 {selected ? ` — ${selected.retailer}` : ""}
               </h3>
               <Link
                 href="/account/reviews/new"
                 className="rounded border border-wf-700 bg-white px-3.5 py-1.5 text-xs font-semibold text-wf-800"
               >
-                + Review toevoegen
+                {t("addReview", locale)}
               </Link>
             </div>
             <p className="mb-3 text-xs text-wf-600">
               {selected
-                ? `Reviews voor ${selected.retailer} — wisselen automatisch bij aanbiederskeuze`
-                : "Nog geen aanbieder geselecteerd."}
+                ? tFormat("sellerReviewsFor", locale, {
+                    retailer: selected.retailer,
+                  })
+                : t("noSellerSelected", locale)}
             </p>
             <ul>
               {sellerReviewsForOffer.length === 0 ? (
                 <li className="border-t border-wf-200 py-2.5 text-xs text-wf-600">
-                  Nog geen verkopersreviews voor deze aanbieder.
+                  {t("noSellerReviews", locale)}
                 </li>
               ) : (
                 sellerReviewsForOffer.map((r, i) => (
@@ -760,7 +786,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
                     {starsForRating(r.stars)} &ldquo;{r.excerpt}&rdquo;{" "}
                     {r.verified ? (
                       <span className="ml-1.5 inline-block rounded-lg border border-wf-400 bg-wf-100 px-1.5 py-0.5 text-[10px] font-semibold text-wf-700">
-                        ✓ Geverifieerde aankoop
+                        {t("verifiedPurchase", locale)}
                       </span>
                     ) : null}
                   </li>
@@ -774,39 +800,43 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
       {/* Commerciële carrousels — direct onder productomschrijving */}
       <section className="px-4 pb-2 tablet:px-8">
         <ProductCarousel
-          title="Vergelijkbare producten"
-          subtitle="Vergelijk vergelijkbare Europese producten."
+          title={t("similarProducts", locale)}
+          subtitle={t("similarSubtitle", locale)}
           products={similar}
           loading={!railsReady}
           lazy={false}
+          locale={locale}
         />
         <ProductCarousel
-          title="Vaak samen gekocht"
-          subtitle="Klanten combineren deze producten regelmatig."
+          title={t("frequentlyBought", locale)}
+          subtitle={t("frequentlySubtitle", locale)}
           products={frequentlyTogether}
           loading={!railsReady}
           lazy={false}
+          locale={locale}
         />
         <ProductCarousel
-          title="Anderen bekeken ook"
-          subtitle="Populaire alternatieven die bezoekers bekeken."
+          title={t("othersAlsoViewed", locale)}
+          subtitle={t("othersSubtitle", locale)}
           products={othersViewed}
           loading={!railsReady}
           lazy={false}
+          locale={locale}
         />
         <ProductCarousel
-          title="Laatst bekeken"
+          title={t("recentlyViewed", locale)}
           products={recentProducts}
           loading={!railsReady}
           hideWhenEmpty
           lazy={false}
+          locale={locale}
         />
       </section>
 
       {/* FAQ */}
       <section className="px-4 pb-8 tablet:px-8 tablet:pb-10">
         <h2 className="mb-3.5 border-b border-wf-200 pb-2.5 text-[17px] font-bold text-wf-900">
-          Veelgestelde vragen
+          {t("faqHeading", locale)}
         </h2>
         <div className="max-w-[760px]">
           {detail.faqs.map((f) => (
@@ -831,7 +861,7 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
               </p>
             </>
           ) : (
-            <p className="text-[11px] text-wf-600">Geen aanbieding</p>
+            <p className="text-[11px] text-wf-600">{t("noOffer", locale)}</p>
           )}
         </div>
         <Button
@@ -841,33 +871,32 @@ export function ProductDetailPage({ detail }: { detail: PdpDetail }) {
           disabled={cartBusy || !selected}
           onClick={() => void addToCart()}
         >
-          {cartBusy ? "Bezig…" : "In winkelwagen"}
+          {cartBusy ? t("adding", locale) : t("addToCart", locale)}
         </Button>
       </div>
     </PublicStorefrontChrome>
   )
 }
 
-function shortDeliveryLabel(value: string) {
-  const v = value.trim()
-  if (!v || /levertijd via aanbieder/i.test(v)) return "2–4 werkdagen"
-  return v
+function shortDeliveryLabel(value: string, locale: StorefrontLocale) {
+  return localizeDeliveryLabelIfKnown(value, locale)
 }
 
-function shortStockLabel(value: string) {
+function shortStockLabel(value: string, locale: StorefrontLocale) {
   const v = value.trim()
-  if (!v) return "Op voorraad"
-  if (/beperkt|lage|nog \d+/i.test(v)) return v.length > 22 ? "Beperkte voorraad" : v
-  if (/niet op voorraad/i.test(v)) return "Niet op voorraad"
-  return "Op voorraad"
+  if (!v) return t("inStock", locale)
+  if (/beperkt|lage|low stock|stock faible|geringer|nog \d+|niet op voorraad|out of stock/i.test(v)) {
+    return v
+  }
+  return t("inStock", locale)
 }
 
-function shortReturnsLabel(value: string) {
+function shortReturnsLabel(value: string, locale: StorefrontLocale) {
   const v = value.trim().toLowerCase()
-  if (!v || /retourbeleid|via aanbieder/.test(v)) return "30 dagen retour"
-  if (/30/.test(v)) return "30 dagen retour"
-  if (/retour/.test(v) && v.length <= 22) return value.trim()
-  return "30 dagen retour"
+  if (!v || /retourbeleid|via aanbieder/.test(v)) return t("trust30DayReturn", locale)
+  if (/30/.test(v)) return t("trust30DayReturn", locale)
+  if (/retour|return/.test(v) && v.length <= 28) return value.trim()
+  return t("trust30DayReturn", locale)
 }
 
 function BuyBox({
@@ -876,6 +905,7 @@ function BuyBox({
   notice,
   cartBusy,
   cartNote,
+  locale,
   onAddToCart,
   onToggleOffers,
 }: {
@@ -884,6 +914,7 @@ function BuyBox({
   notice: string
   cartBusy: boolean
   cartNote: string | null
+  locale: StorefrontLocale
   onAddToCart: () => void
   onToggleOffers: () => void
 }) {
@@ -894,16 +925,15 @@ function BuyBox({
         aria-label="Buy Box"
       >
         <p className="text-sm font-semibold text-wf-900">
-          Geen actieve aanbieding
+          {t("noActiveOffer", locale)}
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-wf-700">
-          Dit product heeft momenteel geen Commerce Cloud-aanbieding. Je kunt
-          het nog niet in de winkelwagen zetten.
+          {t("noCommerceOfferBody", locale)}
         </p>
         <Notice variant="info" className="mt-3 text-[11px]">
-          ⓘ {notice}{" "}
+          ⓘ {notice || t("buyBoxNotice", locale)}{" "}
           <Link href="/buy-box" className="text-wf-800 underline">
-            Meer uitleg
+            {t("moreExplanation", locale)}
           </Link>
         </Notice>
       </aside>
@@ -917,11 +947,11 @@ function BuyBox({
     >
       <div className="flex items-center justify-between">
         <span className="text-[11px] uppercase tracking-wide text-wf-600">
-          Automatisch geselecteerde aanbieding
+          {t("autoSelectedOffer", locale)}
         </span>
         <span
           className="inline-flex h-[15px] w-[15px] items-center justify-center rounded-full border border-wf-500 text-[9.5px] text-wf-600"
-          title="Waarom deze aanbieder?"
+          title={t("whyThisSeller", locale)}
         >
           ⓘ
         </span>
@@ -943,18 +973,18 @@ function BuyBox({
       </p>
       <div className="my-2 grid grid-cols-2 gap-1.5">
         <Badge variant="solid" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {shortDeliveryLabel(selected.delivery)}
+          {shortDeliveryLabel(selected.delivery, locale)}
         </Badge>
         <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {selected.shipping === "Gratis"
-            ? "Gratis verzending"
-            : `Verzending ${selected.shipping}`}
+          {isFreeShippingValue(selected.shipping)
+            ? t("freeShipping", locale)
+            : `${t("shipping", locale)} ${selected.shipping}`}
         </Badge>
         <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {shortStockLabel(selected.stock)}
+          {shortStockLabel(selected.stock, locale)}
         </Badge>
         <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {shortReturnsLabel(selected.returns)}
+          {shortReturnsLabel(selected.returns, locale)}
         </Badge>
       </div>
       <Button
@@ -964,22 +994,22 @@ function BuyBox({
         disabled={cartBusy}
         onClick={onAddToCart}
       >
-        {cartBusy ? "Bezig…" : "In winkelwagen"}
+        {cartBusy ? t("adding", locale) : t("addToCart", locale)}
       </Button>
       {cartNote ? (
         <Notice variant="info" className="mt-2 text-[11px]">
           {cartNote}{" "}
-          {cartNote.includes("Toegevoegd") ? (
+          {/toegevoegd|added|hinzugefügt|ajout/i.test(cartNote) ? (
             <Link href="/cart" className="underline">
-              Naar winkelwagen
+              {t("goToCart", locale)}
             </Link>
           ) : null}
         </Notice>
       ) : null}
       <Notice variant="info" className="mt-2.5 text-[11px]">
-        ⓘ {notice}{" "}
+        ⓘ {notice || t("buyBoxNotice", locale)}{" "}
         <Link href="/buy-box" className="text-wf-800 underline">
-          Meer uitleg
+          {t("moreExplanation", locale)}
         </Link>
       </Notice>
       <button
@@ -987,7 +1017,7 @@ function BuyBox({
         className="mt-3 w-full border-t border-dashed border-wf-300 pt-2.5 text-center text-xs text-wf-700"
         onClick={onToggleOffers}
       >
-        Alle {offerCount} aanbieders bekijken ▾
+        {tFormat("viewAllSellers", locale, { count: offerCount })}
       </button>
     </aside>
   )

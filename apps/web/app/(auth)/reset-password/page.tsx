@@ -6,9 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
 import { updatePassword } from "../_lib/medusa-auth";
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
+import { t } from "../../_lib/i18n/messages";
 
 function ResetPasswordForm() {
   const router = useRouter();
+  const locale = useStorefrontLocale();
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
   const [password, setPassword] = useState("");
@@ -20,12 +23,12 @@ function ResetPasswordForm() {
   // vergeten", geen doodlopende pagina (wireframe-fix, screen 4).
   if (!token) {
     return (
-      <AuthCard title="Nieuw wachtwoord instellen">
+      <AuthCard title={t("authResetTitle", locale)}>
         <Notice variant="warning" className="mb-4">
-          Deze link is verlopen of al gebruikt.
+          {t("authResetLinkExpired", locale)}
         </Notice>
         <Link href="/forgot-password" className="text-xs text-wf-800 underline decoration-dotted">
-          ← Terug naar Wachtwoord vergeten
+          {t("authBackToForgot", locale)}
         </Link>
       </AuthCard>
     );
@@ -35,7 +38,7 @@ function ResetPasswordForm() {
     event.preventDefault();
     setError(null);
     if (password !== confirmPassword) {
-      setError("De wachtwoorden komen niet overeen.");
+      setError(t("authPasswordMismatch", locale));
       return;
     }
     setIsSubmitting(true);
@@ -43,14 +46,14 @@ function ResetPasswordForm() {
       await updatePassword(token, password);
       router.push("/login");
     } catch {
-      setError("Deze link is verlopen of al gebruikt.");
+      setError(t("authResetLinkExpired", locale));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <AuthCard title="Nieuw wachtwoord instellen" subtitle="Kies een nieuw wachtwoord voor je account">
+    <AuthCard title={t("authResetTitle", locale)} subtitle={t("authResetSubtitle", locale)}>
       <form onSubmit={handleSubmit}>
         {error && (
           <Notice variant="warning" className="mb-4">
@@ -58,9 +61,9 @@ function ResetPasswordForm() {
           </Notice>
         )}
         <Input
-          label="Nieuw wachtwoord"
+          label={t("authNewPassword", locale)}
           type="password"
-          placeholder="Minimaal 8 tekens"
+          placeholder={t("authPasswordHint", locale)}
           autoComplete="new-password"
           minLength={8}
           value={password}
@@ -68,9 +71,9 @@ function ResetPasswordForm() {
           required
         />
         <Input
-          label="Bevestig wachtwoord"
+          label={t("authConfirmPassword", locale)}
           type="password"
-          placeholder="Herhaal je nieuwe wachtwoord"
+          placeholder={t("authConfirmPasswordPlaceholder", locale)}
           autoComplete="new-password"
           minLength={8}
           value={confirmPassword}
@@ -78,7 +81,7 @@ function ResetPasswordForm() {
           required
         />
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Bezig…" : "Wachtwoord opslaan"}
+          {isSubmitting ? t("authCreatingAccount", locale) : t("authSavePassword", locale)}
         </Button>
       </form>
     </AuthCard>

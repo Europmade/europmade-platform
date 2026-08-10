@@ -9,12 +9,16 @@ import {
   PartnerOnboardingApiError,
   type OnboardingRecord,
 } from "../_lib/partner-onboarding-api";
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
+import { t } from "../../_lib/i18n/messages";
+import { statusLabel } from "../../_lib/i18n/status-labels";
 
 // Scherm #28: Statuspagina, met de vier bevroren varianten (In behandeling,
 // Goedgekeurd, Afgekeurd, Aanvullende informatie vereist —
 // `04-partner-onboarding-*.html`, schermen 7/7b/7c/7d).
 export default function PartnerOnboardingStatusPage() {
   const router = useRouter();
+  const locale = useStorefrontLocale();
   const [onboarding, setOnboarding] = useState<OnboardingRecord | null | "loading">("loading");
 
   useEffect(() => {
@@ -46,7 +50,7 @@ export default function PartnerOnboardingStatusPage() {
   if (onboarding === "loading") {
     return (
       <div className="border border-wf-400 bg-white px-6 py-16 text-center text-sm text-wf-600">
-        Laden…
+        {t("loading", locale)}
       </div>
     );
   }
@@ -65,11 +69,16 @@ export default function PartnerOnboardingStatusPage() {
     onboarding.onboarding_status === "In beoordeling"
   ) {
     return (
-      <StatusScreen icon="⏳" variant="pending" badge="In beoordeling" title="Je aanvraag wordt beoordeeld">
-        Dit duurt meestal minder dan één werkdag. Je ontvangt een e-mail zodra er een beslissing is.
+      <StatusScreen
+        icon="⏳"
+        variant="pending"
+        badge={statusLabel("In beoordeling", locale)}
+        title={t("partnerStatusPendingTitle", locale)}
+      >
+        {t("partnerStatusPendingBody", locale)}
         <div className="mt-5">
           <Button variant="ghost" onClick={() => router.push("/")}>
-            Naar mijn account
+            {t("authGoToAccount", locale)}
           </Button>
         </div>
       </StatusScreen>
@@ -81,16 +90,15 @@ export default function PartnerOnboardingStatusPage() {
       <StatusScreen
         icon="✓"
         variant="solid"
-        badge="Goedgekeurd"
-        title="Welkom als partner!"
+        badge={statusLabel("Goedgekeurd", locale)}
+        title={t("partnerStatusApprovedTitle", locale)}
         actions={
           <Button onClick={() => router.push("/account/two-factor-setup")}>
-            Tweestapsverificatie instellen
+            {t("partnerSetup2fa", locale)}
           </Button>
         }
       >
-        Voordat je naar je Dashboard kunt, stel je eerst tweestapsverificatie in — verplicht voor
-        Retailer- en Producent-accounts.
+        {t("partnerStatusApprovedBody", locale)}
       </StatusScreen>
     );
   }
@@ -100,18 +108,18 @@ export default function PartnerOnboardingStatusPage() {
       <StatusScreen
         icon="✕"
         variant="rejected"
-        badge="Afgekeurd"
-        title="Je aanvraag is (nog) niet goedgekeurd"
+        badge={statusLabel("Afgekeurd", locale)}
+        title={t("partnerStatusRejectedTitle", locale)}
         actions={
           <Button onClick={() => router.push("/partner-onboarding")}>
-            Aanpassen en opnieuw indienen
+            {t("partnerStatusRejectedCta", locale)}
           </Button>
         }
       >
         <div className="rounded-md border border-dashed border-wf-700 bg-wf-100 px-4 py-3 text-left text-xs text-wf-800">
           {onboarding.review_note?.trim()
             ? onboarding.review_note
-            : "Er is geen specifieke afkeurreden vastgelegd. Pas je gegevens aan en dien de aanvraag opnieuw in, of neem contact op met EuropMade."}
+            : t("partnerStatusRejectedFallback", locale)}
         </div>
       </StatusScreen>
     );
@@ -121,16 +129,18 @@ export default function PartnerOnboardingStatusPage() {
     <StatusScreen
       icon="?"
       variant="pending"
-      badge="Aanvullende informatie vereist"
-      title="We hebben nog iets van je nodig"
+      badge={statusLabel("Aanvullende informatie vereist", locale)}
+      title={t("partnerStatusAdditionTitle", locale)}
       actions={
-        <Button onClick={() => router.push("/partner-onboarding")}>Aanvulling versturen</Button>
+        <Button onClick={() => router.push("/partner-onboarding")}>
+          {t("partnerSubmitAddition", locale)}
+        </Button>
       }
     >
       <div className="rounded-md border border-dashed border-wf-700 bg-wf-100 px-4 py-3 text-left text-xs text-wf-800">
         {onboarding.review_note?.trim()
           ? onboarding.review_note
-          : "Controleer de gevraagde onderdelen in je aanvraag en dien opnieuw in."}
+          : t("partnerStatusAdditionFallback", locale)}
       </div>
     </StatusScreen>
   );

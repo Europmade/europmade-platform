@@ -7,6 +7,8 @@ import {
   getAffiliate,
   type AffiliateRecord,
 } from "../../_lib/affiliate-api"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t } from "../../_lib/i18n/messages"
 import { AffiliateShell } from "./affiliate-shell"
 
 export type AffiliateGateProps = {
@@ -26,6 +28,7 @@ export function AffiliateGate({
 }: AffiliateGateProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const locale = useStorefrontLocale()
   const [affiliate, setAffiliate] = useState<
     AffiliateRecord | null | "loading"
   >("loading")
@@ -75,7 +78,7 @@ export function AffiliateGate({
   if (affiliate === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-wf-100 text-sm text-wf-600">
-        Laden…
+        {t("loading", locale)}
       </div>
     )
   }

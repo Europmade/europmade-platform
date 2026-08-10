@@ -8,8 +8,19 @@ import {
   sendOrderMessage,
   type MessageView,
 } from "../_lib/order-service-api"
+import { useStorefrontLocale } from "../_lib/i18n/use-storefront-locale"
+import type { StorefrontLocale } from "../_lib/i18n/locales"
+import { t, tFormat } from "../_lib/i18n/messages"
+
+function dateTimeLocale(locale: StorefrontLocale): string {
+  if (locale === "en") return "en-GB"
+  if (locale === "de") return "de-DE"
+  if (locale === "fr") return "fr-FR"
+  return "nl-NL"
+}
 
 export function OrderMessageThread({ orderId }: { orderId: string }) {
+  const locale = useStorefrontLocale()
   const [messages, setMessages] = useState<MessageView[] | "loading">("loading")
   const [orderNumber, setOrderNumber] = useState<string>("")
   const [viewerId, setViewerId] = useState<string | null>(null)
@@ -28,11 +39,11 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
         setError(
           err instanceof OrderServiceApiError
             ? err.message
-            : "Thread laden mislukt."
+            : t("buyerThreadLoadFailed", locale)
         )
         setMessages([])
       })
-  }, [orderId])
+  }, [orderId, locale])
 
   useEffect(() => {
     load()
@@ -51,7 +62,7 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
       setError(
         err instanceof OrderServiceApiError
           ? err.message
-          : "Versturen mislukt."
+          : t("buyerSendFailed", locale)
       )
     } finally {
       setBusy(false)
@@ -62,7 +73,9 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
     <div>
       {orderNumber ? (
         <p className="mb-3 text-xs text-wf-600">
-          Conversatie bij bestelling #{orderNumber}
+          {tFormat("buyerConversationForOrder", locale, {
+            number: orderNumber,
+          })}
         </p>
       ) : null}
 
@@ -74,9 +87,11 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
 
       <div className="max-h-[420px] space-y-2 overflow-y-auto rounded-md border border-wf-300 bg-wf-50 p-3">
         {messages === "loading" ? (
-          <p className="text-xs text-wf-600">Laden…</p>
+          <p className="text-xs text-wf-600">{t("loading", locale)}</p>
         ) : messages.length === 0 ? (
-          <p className="text-xs text-wf-600">Nog geen berichten in deze thread.</p>
+          <p className="text-xs text-wf-600">
+            {t("buyerThreadEmpty", locale)}
+          </p>
         ) : (
           messages.map((m) => {
             const mine = viewerId != null && m.sender_customer_id === viewerId
@@ -95,7 +110,7 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
                     mine ? "text-wf-300" : "text-wf-500"
                   }`}
                 >
-                  {new Date(m.created_at).toLocaleString("nl-NL")}
+                  {new Date(m.created_at).toLocaleString(dateTimeLocale(locale))}
                 </div>
               </div>
             )
@@ -105,7 +120,7 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
 
       <form onSubmit={onSend} className="mt-4 space-y-3">
         <label className="block text-xs font-semibold text-wf-800">
-          Nieuw bericht
+          {t("buyerNewMessage", locale)}
           <textarea
             className="mt-1.5 w-full rounded-md border border-wf-400 px-3 py-2 text-sm text-wf-900"
             rows={3}
@@ -116,7 +131,7 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
           />
         </label>
         <Button type="submit" disabled={busy || body.trim().length < 1}>
-          {busy ? "Versturen…" : "Versturen"}
+          {busy ? t("buyerSubmitting", locale) : t("commonSubmit", locale)}
         </Button>
       </form>
     </div>

@@ -1,55 +1,88 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ContentPage } from "../_components/marketplace/content-page"
+import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
+import { t } from "../_lib/i18n/messages"
 
 export const metadata: Metadata = {
   title: "Klantenservice — EuropMade",
   description: "Hulp bij bestellingen, retouren, betalingen en je account.",
 }
 
-export default function KlantenservicePage() {
+export default async function KlantenservicePage() {
+  const locale = await getStorefrontLocaleFromCookies()
   return (
-    <ContentPage title="Klantenservice">
-      <p>
-        Heb je een vraag over een bestelling, retour of je account? Gebruik de
-        onderstaande routes — zo helpen we je sneller.
-      </p>
-      <ul className="list-disc space-y-2 pl-5">
-        <li>
-          <Link href="/account/orders" className="font-semibold underline">
-            Mijn bestellingen
-          </Link>{" "}
-          — status, tracking en berichten met de verkoper
-        </li>
-        <li>
-          <Link href="/account/returns" className="font-semibold underline">
-            Retouren
-          </Link>{" "}
-          — retour aanvragen of opvolgen
-        </li>
+    <ContentPage title={t("supportPageTitle", locale)}>
+      <p>{t("supportPageIntro", locale)}</p>
+
+      <section id="bestellen" className="scroll-mt-8">
+        <h2 className="text-sm font-bold text-wf-900">
+          {t("supportOrderingHeading", locale)}
+        </h2>
+        <ul className="mt-2 list-disc space-y-2 pl-5">
+          <li>
+            <Link href="/account/orders" className="font-semibold underline">
+              {t("supportMyOrders", locale)}
+            </Link>{" "}
+            — {t("supportMyOrdersHint", locale)}
+          </li>
+        </ul>
+      </section>
+
+      <section id="verzenden" className="mt-6 scroll-mt-8">
+        <h2 className="text-sm font-bold text-wf-900">
+          {t("supportShippingHeading", locale)}
+        </h2>
+        <ul className="mt-2 list-disc space-y-2 pl-5">
+          <li>
+            <Link
+              href="/juridisch/verzending"
+              className="font-semibold underline"
+            >
+              {t("supportShippingHeading", locale)}
+            </Link>
+          </li>
+        </ul>
+      </section>
+
+      <section id="retour" className="mt-6 scroll-mt-8">
+        <h2 className="text-sm font-bold text-wf-900">
+          {t("supportReturnsHeading", locale)}
+        </h2>
+        <ul className="mt-2 list-disc space-y-2 pl-5">
+          <li>
+            <Link href="/account/returns" className="font-semibold underline">
+              {t("supportReturns", locale)}
+            </Link>{" "}
+            — {t("supportReturnsHint", locale)}
+          </li>
+          <li>
+            <Link
+              href="/juridisch/retourneren"
+              className="font-semibold underline"
+            >
+              {t("supportReturnPolicy", locale)}
+            </Link>{" "}
+            — {t("supportReturnPolicyHint", locale)}
+          </li>
+        </ul>
+      </section>
+
+      <ul className="mt-6 list-disc space-y-2 pl-5">
         <li>
           <Link href="/account/messages" className="font-semibold underline">
-            Berichten
+            {t("supportMessages", locale)}
           </Link>{" "}
-          — conversatie met de verkoper over een order
-        </li>
-        <li>
-          <Link href="/juridisch/retourneren" className="font-semibold underline">
-            Retourbeleid
-          </Link>{" "}
-          — termijnen en voorwaarden
+          — {t("supportMessagesHint", locale)}
         </li>
         <li>
           <Link href="/juridisch/contact" className="font-semibold underline">
-            Contact
+            {t("supportContact", locale)}
           </Link>{" "}
-          — bereikbaarheid van EuropMade
+          — {t("supportContactHint", locale)}
         </li>
       </ul>
-      <p>
-        Voor productspecifieke vragen is de verkoper je eerste aanspreekpunt via
-        de berichtenfunctie bij je bestelling.
-      </p>
+      <p className="mt-4">{t("supportPageOutro", locale)}</p>
     </ContentPage>
   )
 }

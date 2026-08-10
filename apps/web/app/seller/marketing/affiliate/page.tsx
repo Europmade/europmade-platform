@@ -10,11 +10,15 @@ import {
   DEMO_AFFILIATES,
   DEMO_AFFILIATE_SETTINGS,
 } from "../../_lib/demo-data"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t, tFormat } from "../../../_lib/i18n/messages"
+import { statusLabel } from "../../../_lib/i18n/status-labels"
 
 /**
  * Affiliate Programma — volledige MVP-UI met demo-data.
  */
 export default function SellerAffiliateProgramPage() {
+  const locale = useStorefrontLocale()
   const [settings, setSettings] = useState(DEMO_AFFILIATE_SETTINGS)
   const [defaultInput, setDefaultInput] = useState(
     String(DEMO_AFFILIATE_SETTINGS.default_commission_percent)
@@ -70,41 +74,44 @@ export default function SellerAffiliateProgramPage() {
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Marketing", href: "/seller/marketing" },
-        { label: "Affiliate Programma" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavMarketing", locale), href: "/seller/marketing" },
+        { label: t("sellerMktAffiliateTitle", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Affiliate Programma</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("sellerMktAffiliateTitle", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Stel commissies in per product, categorie of algemeen. Beheer affiliates
-        en bekijk statistieken.
+        {t("sellerAffiliateIntro", locale)}
       </p>
 
       <section className="mt-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Affiliate statistieken
+          {t("sellerAffiliateStats", locale)}
         </h2>
         <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2 desktop:grid-cols-4">
           <KpiCard
             value={String(affiliates.length)}
-            label="Aantal affiliates"
+            label={t("sellerAffiliateCount", locale)}
             source="api"
-            note={`${activeCount} actief`}
+            note={tFormat("sellerAffiliateActiveNote", locale, {
+              count: activeCount,
+            })}
           />
           <KpiCard
             value={formatEuro(totalSales)}
-            label="Verkopen via affiliates"
+            label={t("sellerAffiliateSales", locale)}
             source="api"
           />
           <KpiCard
             value={formatEuro(totalPaid)}
-            label="Uitgekeerde commissies"
+            label={t("sellerAffiliatePaid", locale)}
             source="api"
           />
           <KpiCard
             value={formatEuro(totalOpen)}
-            label="Openstaande commissies"
+            label={t("sellerAffiliateOpen", locale)}
             source="api"
           />
         </div>
@@ -112,12 +119,12 @@ export default function SellerAffiliateProgramPage() {
 
       <section className="mt-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Affiliatebeheer
+          {t("sellerAffiliateManage", locale)}
         </h2>
         {affiliates.length === 0 ? (
           <EmptyState
-            title="Geen affiliates"
-            description="Affiliates die jouw producten promoten verschijnen hier."
+            title={t("sellerAffiliateEmptyTitle", locale)}
+            description={t("sellerAffiliateEmptyDesc", locale)}
           />
         ) : (
           <div className="overflow-hidden rounded-lg border border-wf-300 bg-white">
@@ -125,12 +132,12 @@ export default function SellerAffiliateProgramPage() {
               <thead>
                 <tr>
                   {[
-                    "Affiliate",
-                    "Status",
-                    "Verkopen",
-                    "Omzet",
-                    "Uitgekeerd",
-                    "Open",
+                    t("sellerAffiliateCol", locale),
+                    t("commonStatus", locale),
+                    t("sellerAffiliateSalesCount", locale),
+                    t("sellerRevenue", locale),
+                    t("sellerAffiliatePaidCol", locale),
+                    t("sellerAffiliateOpenCol", locale),
                   ].map((h) => (
                     <th
                       key={h}
@@ -149,7 +156,9 @@ export default function SellerAffiliateProgramPage() {
                   >
                     <td className="px-4 py-2.5 text-wf-800">{a.name}</td>
                     <td className="px-4 py-2.5">
-                      <Badge variant="outline">{a.status}</Badge>
+                      <Badge variant="outline">
+                        {statusLabel(a.status, locale)}
+                      </Badge>
                     </td>
                     <td className="px-4 py-2.5 text-wf-800">{a.sales_count}</td>
                     <td className="px-4 py-2.5 text-wf-800">
@@ -172,33 +181,32 @@ export default function SellerAffiliateProgramPage() {
       <section className="mt-8 rounded-lg border border-wf-300 bg-white px-5 py-4">
         <div className="mb-2 flex items-center gap-2">
           <h2 className="text-[12px] uppercase tracking-[0.04em] text-wf-500">
-            Commissieprioriteit
+            {t("sellerAffiliatePriority", locale)}
           </h2>
           <span
             className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-wf-500 text-[10px] font-semibold text-wf-700"
-            title="Bij een verkoop wordt eerst gekeken of er een productcommissie is. Zo niet, dan categoriecommissie. Anders geldt de algemene commissie."
+            title={t("sellerAffiliatePriorityTip", locale)}
           >
             ?
           </span>
         </div>
         <ol className="list-decimal space-y-1 pl-5 text-xs text-wf-800">
-          <li>Productcommissie</li>
-          <li>Categoriecommissie</li>
-          <li>Algemene commissie</li>
+          <li>{t("sellerAffiliatePriority1", locale)}</li>
+          <li>{t("sellerAffiliatePriority2", locale)}</li>
+          <li>{t("sellerAffiliatePriority3", locale)}</li>
         </ol>
         <p className="mt-2 text-[11.5px] text-wf-600">
-          De hoogste prioriteit die van toepassing is, bepaalt de effectieve
-          commissie voor een verkoop.
+          {t("sellerAffiliatePriorityNote", locale)}
         </p>
       </section>
 
       <section className="mt-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Algemene commissie
+          {t("sellerAffiliateDefault", locale)}
         </h2>
         <div className="max-w-sm rounded-lg border border-wf-300 bg-white px-5 py-4">
           <Input
-            label="Standaard commissie (%)"
+            label={t("sellerAffiliateDefaultPct", locale)}
             type="number"
             min={0}
             max={100}
@@ -212,24 +220,24 @@ export default function SellerAffiliateProgramPage() {
                 default_commission_percent: Number.isFinite(n) ? n : 0,
               }))
             }}
-            placeholder="bijv. 8"
+            placeholder={t("sellerAffiliateDefaultPlaceholder", locale)}
           />
         </div>
       </section>
 
       <section className="mt-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Commissie per categorie
+          {t("sellerAffiliatePerCategory", locale)}
         </h2>
         <div className="mb-3 grid grid-cols-1 gap-3 rounded-lg border border-wf-300 bg-white px-5 py-4 tablet:grid-cols-[1fr_140px_auto]">
           <Input
-            label="Categorie"
+            label={t("commonCategory", locale)}
             value={categoryName}
             onChange={(e) => setCategoryName(e.target.value)}
-            placeholder="Categorienaam"
+            placeholder={t("sellerAffiliateCategoryName", locale)}
           />
           <Input
-            label="Commissie %"
+            label={t("sellerAffiliateCommissionPct", locale)}
             type="number"
             min={0}
             max={100}
@@ -239,7 +247,7 @@ export default function SellerAffiliateProgramPage() {
           />
           <div className="flex items-end">
             <Button type="button" onClick={addCategory}>
-              Toevoegen
+              {t("commonAdd", locale)}
             </Button>
           </div>
         </div>
@@ -247,7 +255,10 @@ export default function SellerAffiliateProgramPage() {
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                {["Categorie", "Commissie %"].map((h) => (
+                {[
+                  t("commonCategory", locale),
+                  t("sellerAffiliateCommissionPct", locale),
+                ].map((h) => (
                   <th
                     key={h}
                     className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
@@ -274,17 +285,17 @@ export default function SellerAffiliateProgramPage() {
 
       <section className="mt-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Commissie per product
+          {t("sellerAffiliatePerProduct", locale)}
         </h2>
         <div className="mb-3 grid grid-cols-1 gap-3 rounded-lg border border-wf-300 bg-white px-5 py-4 tablet:grid-cols-[1fr_140px_auto]">
           <Input
-            label="Product"
+            label={t("commonProduct", locale)}
             value={productTitle}
             onChange={(e) => setProductTitle(e.target.value)}
-            placeholder="Producttitel"
+            placeholder={t("sellerAffiliateProductTitle", locale)}
           />
           <Input
-            label="Commissie %"
+            label={t("sellerAffiliateCommissionPct", locale)}
             type="number"
             min={0}
             max={100}
@@ -294,7 +305,7 @@ export default function SellerAffiliateProgramPage() {
           />
           <div className="flex items-end">
             <Button type="button" onClick={addProduct}>
-              Toevoegen
+              {t("commonAdd", locale)}
             </Button>
           </div>
         </div>
@@ -302,7 +313,10 @@ export default function SellerAffiliateProgramPage() {
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                {["Product", "Commissie %"].map((h) => (
+                {[
+                  t("commonProduct", locale),
+                  t("sellerAffiliateCommissionPct", locale),
+                ].map((h) => (
                   <th
                     key={h}
                     className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
@@ -334,11 +348,9 @@ export default function SellerAffiliateProgramPage() {
       <div className="mt-6">
         <Button
           type="button"
-          onClick={() =>
-            setSaveNote("Instellingen lokaal bijgewerkt (demo).")
-          }
+          onClick={() => setSaveNote(t("sellerAffiliateSaved", locale))}
         >
-          Opslaan
+          {t("commonSave", locale)}
         </Button>
       </div>
     </SellerGate>

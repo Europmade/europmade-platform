@@ -2,6 +2,11 @@
 
 import { useRouter } from "next/navigation"
 import { FormEvent, useId, useState } from "react"
+import {
+  DEFAULT_STOREFRONT_LOCALE,
+  type StorefrontLocale,
+} from "../../_lib/i18n/locales"
+import { t } from "../../_lib/i18n/messages"
 
 type SearchFormProps = {
   /** Hero-zoekbalk (vergroot) vs. header-zoekbalk. */
@@ -9,6 +14,7 @@ type SearchFormProps = {
   placeholder: string
   /** Optionele voorinvulling (bijv. huidige `/zoeken?q=`). */
   initialQuery?: string
+  locale?: StorefrontLocale
 }
 
 /**
@@ -19,6 +25,7 @@ export function SearchForm({
   variant,
   placeholder,
   initialQuery = "",
+  locale = DEFAULT_STOREFRONT_LOCALE,
 }: SearchFormProps) {
   const router = useRouter()
   const inputId = useId()
@@ -43,10 +50,10 @@ export function SearchForm({
       role="search"
       onSubmit={onSubmit}
       className={shell}
-      aria-label="Producten zoeken"
+      aria-label={t("searchAria", locale)}
     >
       <label htmlFor={inputId} className="sr-only">
-        Zoeken
+        {t("searchLabel", locale)}
       </label>
       <input
         id={inputId}

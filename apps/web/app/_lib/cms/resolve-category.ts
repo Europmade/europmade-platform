@@ -31,6 +31,12 @@ import {
 import { getAiContentDocument } from "../ai-content/store/content-store"
 import type { AiContentDocument } from "../ai-content/types"
 import { AI_CONTENT_PROMPT_VERSION } from "../ai-content/prompts/versions"
+import type { ProductCloudStoreCategory } from "../product-cloud-store"
+import {
+  parseOptionValues,
+  productCloudComparableAttributes,
+  productCloudFilterableAttributes,
+} from "../product-cloud-store"
 
 export type ResolvedCategoryFilterOption = {
   id: string
@@ -237,6 +243,14 @@ export type ResolvedCategoryPage = {
   discoveryCards: ResolvedCategoryDiscoveryCard[]
   discoveryRails: ResolvedCategoryDiscoveryRail[]
   productCloudInsights: ResolvedProductCloudInsight[]
+  /** Live Product Cloud category payload when store API returned data (ADR-0038). */
+  productCloudCategory: {
+    id: string
+    slug: string | null
+    name: string
+    filterableAttributeCodes: string[]
+    comparableAttributeCodes: string[]
+  } | null
   relatedBrands: ResolvedCategoryRelatedRef[]
   relatedProducers: ResolvedCategoryRelatedRef[]
   frequentlyCombined: ResolvedCategoryRelatedRef[]
@@ -367,7 +381,8 @@ export function resolveCategoryPage(
   products: ListingProduct[],
   localeInput?: string | null,
   document?: CategoryCmsDocument,
-  now: Date = new Date()
+  now: Date = new Date(),
+  productCloud?: ProductCloudStoreCategory | null
 ): ResolvedCategoryPage | null {
   const locale: StorefrontLocale = isStorefrontLocale(localeInput ?? "")
     ? (localeInput as StorefrontLocale)
@@ -398,6 +413,29 @@ export function resolveCategoryPage(
         value: o.value,
       })),
   }))
+
+  // Product Cloud filterable attributes enrich CMS filters when present (no UI redesign).
+  const pcFilters = productCloudFilterableAttributes(productCloud ?? null)
+  if (pcFilters.length > 0) {
+    const existingKeys = new Set(filterGroups.map((g) => g.attributeKey))
+    for (const attr of pcFilters) {
+      const key = attr.code ?? attr.id
+      if (existingKeys.has(key)) continue
+      const options = parseOptionValues(attr.option_values).map((value, i) => ({
+        id: `${key}-${i}`,
+        label: value,
+        value,
+      }))
+      filterGroups.push({
+        id: `pc-${attr.id}`,
+        attributeKey: key,
+        label: attr.name,
+        type: attr.data_type === "Numeriek" ? "range" : "checkbox",
+        options,
+      })
+      existingKeys.add(key)
+    }
+  }
 
   const countries = sortByCmsOrder(
     doc.countries.filter((c) => isCmsEntryLive(c, now))
@@ -444,7 +482,9 @@ export function resolveCategoryPage(
     products: resolveDynamicBlockProducts(b.key, products, b.countryCode),
   }))
 
-  const title = pickLocalized(doc.title, locale)
+  const title = productCloud?.name?.trim()
+    ? productCloud.name
+    : pickLocalized(doc.title, locale)
   const aiDoc: AiContentDocument | null = getAiContentDocument("category", slug)
   const ai =
     aiDoc && aiDoc.published && aiDoc.generationStatus === "ready"
@@ -453,7 +493,9 @@ export function resolveCategoryPage(
 
   const h1 = ai
     ? pickLocalized(ai.h1, locale)
-    : pickLocalized(doc.seo.h1, locale)
+    : productCloud?.name?.trim()
+      ? productCloud.name
+      : pickLocalized(doc.seo.h1, locale)
   const intro = ai
     ? pickLocalized(ai.intro, locale)
     : pickLocalized(doc.seo.intro, locale)
@@ -728,14 +770,40 @@ export function resolveCategoryPage(
         })),
       })) ?? [],
     productCloudInsights:
-      ai?.productCloudInsights?.map((ins) => ({
-        id: ins.id,
-        key: ins.key,
-        label: pickLocalized(ins.label, locale),
-        value: pickLocalized(ins.value, locale),
-        unit: ins.unit ? pickLocalized(ins.unit, locale) : null,
-        source: ins.source,
-      })) ?? [],
+      productCloud && productCloud.attributes.length > 0
+        ? productCloud.attributes.map((attr) => ({
+            id: attr.id,
+            key: attr.code ?? attr.id,
+            label: attr.name,
+            value: attr.unit ?? attr.data_type,
+            unit: attr.unit,
+            source: "product-cloud",
+          }))
+        : ai?.productCloudInsights?.map((ins) => ({
+            id: ins.id,
+            key: ins.key,
+            label: pickLocalized(ins.label, locale),
+            value: pickLocalized(ins.value, locale),
+            unit: ins.unit ? pickLocalized(ins.unit, locale) : null,
+            source: ins.source,
+          })) ?? [],
+    productCloudCategory: productCloud
+      ? {
+          id: productCloud.id,
+          slug: productCloud.slug,
+          name: productCloud.name,
+          filterableAttributeCodes: productCloudFilterableAttributes(
+            productCloud
+          )
+            .map((a) => a.code)
+            .filter((c): c is string => Boolean(c)),
+          comparableAttributeCodes: productCloudComparableAttributes(
+            productCloud
+          )
+            .map((a) => a.code)
+            .filter((c): c is string => Boolean(c)),
+        }
+      : null,
     relatedBrands:
       ai?.relatedBrands.map((r) => ({
         id: r.id,

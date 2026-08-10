@@ -4,14 +4,17 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@europmade/utils"
 import { BrandLogo } from "../../_components/marketplace/brand-logo"
+import { LocaleCurrencySwitcher } from "../../_components/marketplace/locale-currency-switcher"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t, type StorefrontMessageKey } from "../../_lib/i18n/messages"
 
-const NAV: Array<{ label: string; href: string | null }> = [
-  { label: "Dashboard", href: "/account" },
-  { label: "Mijn bestellingen", href: "/account/orders" },
-  { label: "Retouren", href: "/account/returns" },
-  { label: "Berichten", href: "/account/messages" },
-  { label: "Reviews", href: "/account/reviews" },
-  { label: "Instellingen", href: "/account/settings" },
+const NAV: Array<{ labelKey: StorefrontMessageKey; href: string | null }> = [
+  { labelKey: "buyerNavDashboard", href: "/account" },
+  { labelKey: "buyerNavOrders", href: "/account/orders" },
+  { labelKey: "buyerNavReturns", href: "/account/returns" },
+  { labelKey: "buyerNavMessages", href: "/account/messages" },
+  { labelKey: "buyerNavReviews", href: "/account/reviews" },
+  { labelKey: "buyerNavSettings", href: "/account/settings" },
 ]
 
 export type BuyerShellProps = {
@@ -24,6 +27,7 @@ export type BuyerShellProps = {
  */
 export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
   const pathname = usePathname()
+  const locale = useStorefrontLocale()
 
   return (
     <div className="min-h-screen bg-wf-100">
@@ -31,10 +35,11 @@ export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
         <aside className="hidden w-[220px] shrink-0 border-r border-wf-300 bg-wf-100 p-3.5 tablet:block">
           <BrandLogo size="md" />
           <p className="px-3 pb-1 text-[9.5px] font-semibold uppercase tracking-wide text-wf-500">
-            Mijn EuropMade
+            {t("buyerPortalTitle", locale)}
           </p>
-          <nav className="flex flex-col gap-0.5" aria-label="Buyer navigatie">
+          <nav className="flex flex-col gap-0.5" aria-label={t("buyerNavAria", locale)}>
             {NAV.map((item) => {
+              const label = t(item.labelKey, locale)
               const active =
                 item.href !== null &&
                 (pathname === item.href ||
@@ -56,19 +61,19 @@ export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
               if (!item.href) {
                 return (
                   <span
-                    key={item.label}
+                    key={item.labelKey}
                     className={cn(className, "cursor-not-allowed opacity-50")}
-                    title="Nog niet beschikbaar"
+                    title={t("notAvailableYet", locale)}
                   >
                     {icon}
-                    <span>{item.label}</span>
+                    <span>{label}</span>
                   </span>
                 )
               }
               return (
-                <Link key={item.label} href={item.href} className={className}>
+                <Link key={item.labelKey} href={item.href} className={className}>
                   {icon}
-                  <span>{item.label}</span>
+                  <span>{label}</span>
                 </Link>
               )
             })}
@@ -84,9 +89,10 @@ export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <LocaleCurrencySwitcher />
               <span
                 className="relative flex h-[26px] w-[26px] items-center justify-center rounded-full border border-wf-400 text-xs text-wf-600"
-                aria-label="Notificaties"
+                aria-label={t("notifications", locale)}
               >
                 🔔
               </span>
@@ -125,7 +131,7 @@ export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
             <div className="flex gap-2 overflow-x-auto text-xs">
               {NAV.filter((n) => n.href).map((item) => (
                 <Link
-                  key={item.label}
+                  key={item.labelKey}
                   href={item.href!}
                   className={cn(
                     "whitespace-nowrap rounded-md border border-wf-400 px-3 py-1.5 text-wf-700",
@@ -135,7 +141,7 @@ export function BuyerShell({ breadcrumb, children }: BuyerShellProps) {
                       "border-wf-900 bg-wf-900 text-white"
                   )}
                 >
-                  {item.label}
+                  {t(item.labelKey, locale)}
                 </Link>
               ))}
             </div>

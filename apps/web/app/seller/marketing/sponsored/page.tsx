@@ -10,11 +10,15 @@ import { formatEuro } from "../../../_components/storefront-shell"
 import { DEMO_PRODUCTS } from "../../_lib/demo-data"
 import { useDemoSponsored } from "../../_lib/demo-store"
 import type { DemoSponsoredCampaign } from "../../_lib/demo-data-details"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { t, tFormat } from "../../../_lib/i18n/messages"
+import { statusLabel } from "../../../_lib/i18n/status-labels"
 
 /**
  * Sponsored Products — volledige MVP-demo.
  */
 export default function SellerSponsoredProductsPage() {
+  const locale = useStorefrontLocale()
   const [campaigns, setCampaigns] = useDemoSponsored()
   const [name, setName] = useState("")
   const [productId, setProductId] = useState(DEMO_PRODUCTS[0]?.id ?? "")
@@ -35,7 +39,7 @@ export default function SellerSponsoredProductsPage() {
     e.preventDefault()
     const product = DEMO_PRODUCTS.find((p) => p.id === productId)
     if (!name.trim() || !product || !startsAt || !endsAt) {
-      setNote("Vul alle verplichte velden in.")
+      setNote(t("sellerSponsoredNeedFields", locale))
       return
     }
     const campaign: DemoSponsoredCampaign = {
@@ -54,7 +58,7 @@ export default function SellerSponsoredProductsPage() {
     }
     setCampaigns((prev) => [campaign, ...prev])
     setName("")
-    setNote("Campagne aangemaakt en gestart.")
+    setNote(t("sellerSponsoredCreated", locale))
   }
 
   function setStatus(
@@ -71,14 +75,16 @@ export default function SellerSponsoredProductsPage() {
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Marketing", href: "/seller/marketing" },
-        { label: "Sponsored Products" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavMarketing", locale), href: "/seller/marketing" },
+        { label: t("sellerMktSponsoredTitle", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Sponsored Products</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("sellerMktSponsoredTitle", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Campagnes aanmaken, budgetteren, pauzeren en beëindigen.
+        {t("sellerSponsoredIntro", locale)}
       </p>
 
       {note ? (
@@ -87,25 +93,32 @@ export default function SellerSponsoredProductsPage() {
         </Notice>
       ) : null}
 
-      <DashboardSection title="Statistieken" wrapChildren={false}>
+      <DashboardSection
+        title={t("sellerSponsoredStats", locale)}
+        wrapChildren={false}
+      >
         <div className="mt-2 grid grid-cols-1 gap-4 tablet:grid-cols-3">
           <KpiCard
             value={String(stats.active)}
-            label="Actieve campagnes"
+            label={t("sellerSponsoredActive", locale)}
             source="api"
           />
           <KpiCard
             value={formatEuro(stats.spend)}
-            label="Besteed totaal"
+            label={t("sellerSponsoredSpend", locale)}
             source="api"
           />
-          <KpiCard value={String(stats.clicks)} label="Klikken" source="api" />
+          <KpiCard
+            value={String(stats.clicks)}
+            label={t("sellerSponsoredClicks", locale)}
+            source="api"
+          />
         </div>
       </DashboardSection>
 
       <section className="mb-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Campagne aanmaken
+          {t("sellerSponsoredCreate", locale)}
         </h2>
         <form
           onSubmit={createCampaign}
@@ -113,14 +126,14 @@ export default function SellerSponsoredProductsPage() {
         >
           <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2">
             <Input
-              label="Campagnenaam"
+              label={t("sellerSponsoredName", locale)}
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
             />
             <div>
               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-                Product
+                {t("commonProduct", locale)}
               </label>
               <select
                 className="h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs"
@@ -135,7 +148,7 @@ export default function SellerSponsoredProductsPage() {
               </select>
             </div>
             <Input
-              label="CPC (€)"
+              label={t("sellerSponsoredCpc", locale)}
               type="number"
               step="0.01"
               min={0}
@@ -144,7 +157,7 @@ export default function SellerSponsoredProductsPage() {
               required
             />
             <Input
-              label="Dagelijks budget (€)"
+              label={t("sellerSponsoredBudget", locale)}
               type="number"
               min={0}
               value={budget}
@@ -152,14 +165,14 @@ export default function SellerSponsoredProductsPage() {
               required
             />
             <Input
-              label="Startdatum"
+              label={t("commonStartDate", locale)}
               type="date"
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
               required
             />
             <Input
-              label="Einddatum"
+              label={t("commonEndDate", locale)}
               type="date"
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}
@@ -167,15 +180,15 @@ export default function SellerSponsoredProductsPage() {
             />
           </div>
           <div className="mt-5">
-            <Button type="submit">Campagne starten</Button>
+            <Button type="submit">{t("sellerBannerStart", locale)}</Button>
           </div>
         </form>
       </section>
 
       {campaigns.length === 0 ? (
         <EmptyState
-          title="Geen sponsored campagnes"
-          description="Maak hierboven een campagne aan om producten in gesponsorde slots te tonen."
+          title={t("sellerSponsoredEmptyTitle", locale)}
+          description={t("sellerSponsoredEmptyDesc", locale)}
         />
       ) : (
         <section className="mb-8 overflow-x-auto rounded-lg border border-wf-300 bg-white">
@@ -183,14 +196,14 @@ export default function SellerSponsoredProductsPage() {
             <thead>
               <tr>
                 {[
-                  "Campagne",
-                  "Producten",
-                  "CPC",
-                  "Budget",
-                  "Looptijd",
-                  "Stats",
-                  "Status",
-                  "Acties",
+                  t("sellerSponsoredCampaign", locale),
+                  t("sellerNavProducts", locale),
+                  t("sellerSponsoredCpc", locale),
+                  t("sellerSponsoredBudget", locale),
+                  t("sellerSponsoredDuration", locale),
+                  t("sellerSponsoredStatsCol", locale),
+                  t("commonStatus", locale),
+                  t("commonActions", locale),
                 ].map((h) => (
                   <th
                     key={h}
@@ -207,16 +220,24 @@ export default function SellerSponsoredProductsPage() {
                   <td className="px-4 py-2.5 font-medium">{c.name}</td>
                   <td className="px-4 py-2.5">{c.product_titles.join(", ")}</td>
                   <td className="px-4 py-2.5">{formatEuro(c.cpc)}</td>
-                  <td className="px-4 py-2.5">{formatEuro(c.daily_budget)}/dag</td>
+                  <td className="px-4 py-2.5">
+                    {formatEuro(c.daily_budget)}
+                    {t("commonPerDay", locale)}
+                  </td>
                   <td className="px-4 py-2.5">
                     {c.starts_at} → {c.ends_at}
                   </td>
                   <td className="px-4 py-2.5">
-                    {c.clicks} klikken · {formatEuro(c.spend)} · {c.conversions}{" "}
-                    conv.
+                    {tFormat("sellerSponsoredStatsLine", locale, {
+                      clicks: c.clicks,
+                      spend: formatEuro(c.spend),
+                      conversions: c.conversions,
+                    })}
                   </td>
                   <td className="px-4 py-2.5">
-                    <Badge variant="outline">{c.status}</Badge>
+                    <Badge variant="outline">
+                      {statusLabel(c.status, locale)}
+                    </Badge>
                   </td>
                   <td className="px-4 py-2.5">
                     <div className="flex flex-col gap-1">
@@ -225,10 +246,14 @@ export default function SellerSponsoredProductsPage() {
                           type="button"
                           className="text-left underline"
                           onClick={() =>
-                            setStatus(c.id, "Actief", "Campagne gestart.")
+                            setStatus(
+                              c.id,
+                              "Actief",
+                              t("sellerSponsoredStarted", locale)
+                            )
                           }
                         >
-                          Starten
+                          {t("commonStart", locale)}
                         </button>
                       ) : null}
                       {c.status === "Actief" ? (
@@ -236,10 +261,14 @@ export default function SellerSponsoredProductsPage() {
                           type="button"
                           className="text-left underline"
                           onClick={() =>
-                            setStatus(c.id, "Gepauzeerd", "Campagne gepauzeerd.")
+                            setStatus(
+                              c.id,
+                              "Gepauzeerd",
+                              t("sellerSponsoredPaused", locale)
+                            )
                           }
                         >
-                          Pauzeren
+                          {t("commonPause", locale)}
                         </button>
                       ) : null}
                       {c.status !== "Beëindigd" ? (
@@ -247,10 +276,14 @@ export default function SellerSponsoredProductsPage() {
                           type="button"
                           className="text-left underline"
                           onClick={() =>
-                            setStatus(c.id, "Beëindigd", "Campagne beëindigd.")
+                            setStatus(
+                              c.id,
+                              "Beëindigd",
+                              t("sellerSponsoredEnded", locale)
+                            )
                           }
                         >
-                          Beëindigen
+                          {t("commonEnd", locale)}
                         </button>
                       ) : null}
                     </div>

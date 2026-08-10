@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { MarketplaceListing } from "../_components/marketplace/marketplace-listing"
+import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
 import { resolveListingProducts } from "../_lib/storefront-catalog"
 
 type SearchPageProps = {
@@ -34,7 +35,8 @@ export async function generateMetadata({
  */
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const q = readQuery((await searchParams).q)
-  const { products } = await resolveListingProducts({ query: q })
+  const locale = await getStorefrontLocaleFromCookies()
+  const { products } = await resolveListingProducts({ query: q, locale })
   const title = q ? `Zoekresultaten voor “${q}”` : "Zoekresultaten"
   const meta = q
     ? `${products.length} producten voor “${q}”`
@@ -49,6 +51,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       searchQuery={q || undefined}
       showCategoryAdSlot={false}
       products={products}
+      locale={locale}
     />
   )
 }

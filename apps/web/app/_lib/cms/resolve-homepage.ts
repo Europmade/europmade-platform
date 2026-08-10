@@ -2,6 +2,7 @@
  * Resolve Homepage CMS mock → localized view models for UI components.
  */
 
+import { resolveStorefrontLocale } from "../i18n/detect-locale"
 import {
   DEFAULT_STOREFRONT_LOCALE,
   isStorefrontLocale,
@@ -267,9 +268,17 @@ export function resolveHomepageCms(
   }
 }
 
+/**
+ * Resolve storefront locale from cookie, then Accept-Language, then NL.
+ * Prefer `getStorefrontLocaleFromCookies` / `resolveStorefrontLocale` for new code.
+ * Does not persist auto-detected locales.
+ */
 export function resolveStorefrontLocaleFromCookie(
-  cookieValue: string | undefined
+  cookieValue: string | undefined,
+  acceptLanguage?: string | null
 ): StorefrontLocale {
-  if (cookieValue && isStorefrontLocale(cookieValue)) return cookieValue
-  return DEFAULT_STOREFRONT_LOCALE
+  return resolveStorefrontLocale({
+    cookieValue,
+    acceptLanguage,
+  })
 }

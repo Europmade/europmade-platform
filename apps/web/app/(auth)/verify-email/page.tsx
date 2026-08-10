@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@europmade/ui";
 import { StatusScreen } from "../_components/status-screen";
 import { confirmEmailVerification } from "../_lib/medusa-auth";
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
+import { t } from "../../_lib/i18n/messages";
 
 // Dubbele klik op dezelfde verificatielink toont dit scherm gewoon opnieuw —
 // geen foutmelding voor een account dat al geverifieerd is (wireframe-fix,
@@ -15,6 +17,7 @@ import { confirmEmailVerification } from "../_lib/medusa-auth";
 // geen doodlopende pagina").
 function VerifyEmailContent() {
   const router = useRouter();
+  const locale = useStorefrontLocale();
   const searchParams = useSearchParams();
   const code = searchParams.get("code");
   const codeProvider = searchParams.get("code_provider") ?? "local";
@@ -29,8 +32,8 @@ function VerifyEmailContent() {
 
   if (status === "pending") {
     return (
-      <StatusScreen icon="…" title="Bezig met bevestigen">
-        Een moment geduld terwijl we je e-mailadres bevestigen.
+      <StatusScreen icon="…" title={t("authVerifyPending", locale)}>
+        {t("authVerifyPendingBody", locale)}
       </StatusScreen>
     );
   }
@@ -39,14 +42,14 @@ function VerifyEmailContent() {
     return (
       <StatusScreen
         icon="!"
-        title="Deze link is niet (meer) geldig"
+        title={t("authVerifyError", locale)}
         actions={
           <Link href="/login" className="text-xs text-wf-800 underline decoration-dotted">
-            Naar inloggen
+            {t("authGoToLogin", locale)}
           </Link>
         }
       >
-        E-mailverificatie blokkeert het winkelen niet — je kunt gewoon inloggen en verdergaan.
+        {t("authVerifyErrorBody", locale)}
       </StatusScreen>
     );
   }
@@ -54,10 +57,12 @@ function VerifyEmailContent() {
   return (
     <StatusScreen
       icon="✓"
-      title="E-mailadres bevestigd!"
-      actions={<Button onClick={() => router.push("/")}>Naar mijn account</Button>}
+      title={t("authVerifySuccess", locale)}
+      actions={
+        <Button onClick={() => router.push("/")}>{t("authGoToAccount", locale)}</Button>
+      }
     >
-      Je account is helemaal klaar. Je kunt nu inloggen en beginnen met winkelen op EuropMade.
+      {t("authVerifySuccessBody", locale)}
     </StatusScreen>
   );
 }

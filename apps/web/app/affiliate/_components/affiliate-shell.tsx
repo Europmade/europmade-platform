@@ -3,14 +3,17 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@europmade/utils"
+import { LocaleCurrencySwitcher } from "../../_components/marketplace/locale-currency-switcher"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t, type StorefrontMessageKey } from "../../_lib/i18n/messages"
 
-const NAV: Array<{ label: string; href: string | null }> = [
-  { label: "Dashboard", href: "/affiliate" },
-  { label: "Statistieken", href: "/affiliate/stats" },
-  { label: "Commissies", href: "/affiliate/commissions" },
-  { label: "Links & Coupons", href: "/affiliate/links" },
-  { label: "Uitbetalingen", href: null },
-  { label: "Account", href: null },
+const NAV: Array<{ labelKey: StorefrontMessageKey; href: string | null }> = [
+  { labelKey: "affiliateNavDashboard", href: "/affiliate" },
+  { labelKey: "affiliateNavStats", href: "/affiliate/stats" },
+  { labelKey: "affiliateNavCommissions", href: "/affiliate/commissions" },
+  { labelKey: "affiliateNavLinks", href: "/affiliate/links" },
+  { labelKey: "affiliateNavPayouts", href: null },
+  { labelKey: "affiliateNavAccount", href: null },
 ]
 
 export type AffiliateShellProps = {
@@ -23,6 +26,7 @@ export type AffiliateShellProps = {
  */
 export function AffiliateShell({ breadcrumb, children }: AffiliateShellProps) {
   const pathname = usePathname()
+  const locale = useStorefrontLocale()
 
   return (
     <div className="min-h-screen bg-wf-100">
@@ -30,10 +34,14 @@ export function AffiliateShell({ breadcrumb, children }: AffiliateShellProps) {
         <aside className="hidden w-[220px] shrink-0 border-r border-wf-300 bg-wf-100 p-3.5 tablet:block">
           <div className="mb-5 h-5 w-[110px] rounded-sm bg-wf-300" aria-hidden />
           <p className="px-3 pb-1 text-[9.5px] font-semibold uppercase tracking-wide text-wf-500">
-            Affiliate Dashboard
+            {t("affiliateDashboardTitle", locale)}
           </p>
-          <nav className="flex flex-col gap-0.5" aria-label="Affiliate navigatie">
+          <nav
+            className="flex flex-col gap-0.5"
+            aria-label={t("affiliateNavAria", locale)}
+          >
             {NAV.map((item) => {
+              const label = t(item.labelKey, locale)
               const active =
                 item.href !== null &&
                 (pathname === item.href ||
@@ -55,19 +63,19 @@ export function AffiliateShell({ breadcrumb, children }: AffiliateShellProps) {
               if (!item.href) {
                 return (
                   <span
-                    key={item.label}
+                    key={item.labelKey}
                     className={cn(className, "cursor-not-allowed opacity-50")}
-                    title="Nog niet beschikbaar"
+                    title={t("notAvailableYet", locale)}
                   >
                     {icon}
-                    <span>{item.label}</span>
+                    <span>{label}</span>
                   </span>
                 )
               }
               return (
-                <Link key={item.label} href={item.href} className={className}>
+                <Link key={item.labelKey} href={item.href} className={className}>
                   {icon}
-                  <span>{item.label}</span>
+                  <span>{label}</span>
                 </Link>
               )
             })}
@@ -86,9 +94,10 @@ export function AffiliateShell({ breadcrumb, children }: AffiliateShellProps) {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <LocaleCurrencySwitcher />
               <span
                 className="relative flex h-[26px] w-[26px] items-center justify-center rounded-full border border-wf-400 text-xs text-wf-600"
-                aria-label="Notificaties"
+                aria-label={t("notifications", locale)}
               >
                 🔔
               </span>
@@ -127,7 +136,7 @@ export function AffiliateShell({ breadcrumb, children }: AffiliateShellProps) {
             <div className="flex gap-2 overflow-x-auto text-xs">
               {NAV.filter((n) => n.href).map((item) => (
                 <Link
-                  key={item.label}
+                  key={item.labelKey}
                   href={item.href!}
                   className={cn(
                     "whitespace-nowrap rounded-md border border-wf-400 px-3 py-1.5 text-wf-700",
@@ -137,7 +146,7 @@ export function AffiliateShell({ breadcrumb, children }: AffiliateShellProps) {
                       "border-wf-900 bg-wf-900 text-white"
                   )}
                 >
-                  {item.label}
+                  {t(item.labelKey, locale)}
                 </Link>
               ))}
             </div>

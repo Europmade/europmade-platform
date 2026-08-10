@@ -9,6 +9,10 @@ import {
 import { ListingEmptyState } from "./listing-empty-state"
 import { ListingPagination } from "./listing-pagination"
 import { ProductCard } from "./product-card"
+import {
+  DEFAULT_STOREFRONT_LOCALE,
+  type StorefrontLocale,
+} from "../../_lib/i18n/locales"
 
 type SortKey = "popularity" | "price-asc" | "price-desc" | "rating"
 
@@ -40,6 +44,7 @@ type ListingResultsProps = {
   emptyVariant: "search" | "category" | "catalog-pending"
   searchQuery?: string
   categoryLabel?: string
+  locale?: StorefrontLocale
 }
 
 function matchesFilters(
@@ -100,6 +105,7 @@ export function ListingResults({
   emptyVariant,
   searchQuery,
   categoryLabel,
+  locale = DEFAULT_STOREFRONT_LOCALE,
 }: ListingResultsProps) {
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
   const [sort, setSort] = useState<SortKey>("popularity")
@@ -246,14 +252,14 @@ export function ListingResults({
               <ul className="flex flex-col gap-2.5 tablet:hidden">
                 {pageItems.map((product) => (
                   <li key={product.slug}>
-                    <ProductCard product={product} layout="list" />
+                    <ProductCard product={product} layout="list" locale={locale} />
                   </li>
                 ))}
               </ul>
               <ul className="hidden grid-cols-3 items-stretch gap-3 tablet:grid desktop:grid-cols-4 desktop:gap-3.5">
                 {pageItems.map((product) => (
                   <li key={product.slug} className="h-full min-h-[400px]">
-                    <ProductCard product={product} layout="grid" />
+                    <ProductCard product={product} layout="grid" locale={locale} />
                   </li>
                 ))}
               </ul>

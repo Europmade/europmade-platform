@@ -7,11 +7,17 @@ import { SellerGate } from "../_components/seller-gate"
 import { EmptyState } from "../_components/empty-state"
 import { formatEuro } from "../../_components/storefront-shell"
 import { DEMO_ORDERS, type DemoOrder } from "../_lib/demo-data"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { storefrontIntlLocale } from "../../_lib/i18n/locales"
+import { t, tFormat } from "../../_lib/i18n/messages"
+import { statusLabel } from "../../_lib/i18n/status-labels"
 
 type PaymentFilter = "all" | "Betaald" | "Betaling wordt verwerkt"
 const PAGE_SIZE = 25
 
 export default function SellerOrdersPage() {
+  const locale = useStorefrontLocale()
+  const intl = storefrontIntlLocale(locale)
   const [rows] = useState<DemoOrder[]>(DEMO_ORDERS)
   const [query, setQuery] = useState("")
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all")
@@ -37,36 +43,47 @@ export default function SellerOrdersPage() {
     currentPage * PAGE_SIZE
   )
 
+  const headers = [
+    t("commonOrder", locale),
+    t("commonDate", locale),
+    t("commonCustomer", locale),
+    t("commonAmount", locale),
+    t("commonStatus", locale),
+    "",
+  ]
+
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Orders" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavOrders", locale) },
       ]}
     >
       <div className="mb-5">
-        <h1 className="text-[19px] font-bold text-wf-900">Orders</h1>
+        <h1 className="text-[19px] font-bold text-wf-900">
+          {t("sellerNavOrders", locale)}
+        </h1>
         <p className="mt-1.5 text-xs text-wf-600">
-          Bestellingen van klanten bij jouw verkopersaccount.
+          {t("sellerOrdersIntro", locale)}
         </p>
       </div>
 
       <div className="mb-4 grid grid-cols-1 items-end gap-2.5 tablet:grid-cols-[1fr_200px]">
         <Input
-          label="Zoeken"
+          label={t("commonSearch", locale)}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value)
             setPage(1)
           }}
-          placeholder="Zoek op ordernummer of klant…"
+          placeholder={t("sellerOrdersSearchPlaceholder", locale)}
         />
         <div>
           <label
             htmlFor="payment-filter"
             className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500"
           >
-            Status
+            {t("commonStatus", locale)}
           </label>
           <select
             id="payment-filter"
@@ -77,10 +94,10 @@ export default function SellerOrdersPage() {
               setPage(1)
             }}
           >
-            <option value="all">Alle</option>
-            <option value="Betaald">Betaald</option>
+            <option value="all">{t("commonAll", locale)}</option>
+            <option value="Betaald">{statusLabel("Betaald", locale)}</option>
             <option value="Betaling wordt verwerkt">
-              Betaling wordt verwerkt
+              {statusLabel("Betaling wordt verwerkt", locale)}
             </option>
           </select>
         </div>
@@ -88,13 +105,13 @@ export default function SellerOrdersPage() {
 
       {rows.length === 0 ? (
         <EmptyState
-          title="Geen orders"
-          description="Zodra klanten bestellen bij jouw winkel, verschijnen orders hier."
+          title={t("sellerOrdersEmptyTitle", locale)}
+          description={t("sellerOrdersEmptyDesc", locale)}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Geen resultaten"
-          description="Pas je zoekopdracht of statusfilter aan."
+          title={t("commonEmptyFilter", locale)}
+          description={t("sellerOrdersEmptyFilterHint", locale)}
         />
       ) : (
         <>
@@ -102,16 +119,14 @@ export default function SellerOrdersPage() {
             <table className="w-full min-w-[760px] border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  {["Order", "Datum", "Klant", "Bedrag", "Status", ""].map(
-                    (h) => (
-                      <th
-                        key={h || "actie"}
-                        className="border-b border-wf-400 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
-                      >
-                        {h}
-                      </th>
-                    )
-                  )}
+                  {headers.map((h) => (
+                    <th
+                      key={h || "actie"}
+                      className="border-b border-wf-400 px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -124,19 +139,21 @@ export default function SellerOrdersPage() {
                       #{item.order_number}
                     </td>
                     <td className="px-4 py-2.5 text-wf-600">
-                      {new Date(item.created_at).toLocaleDateString("nl-NL")}
+                      {new Date(item.created_at).toLocaleDateString(intl)}
                     </td>
                     <td className="px-4 py-2.5">{item.customer_name}</td>
                     <td className="px-4 py-2.5">{formatEuro(item.total)}</td>
                     <td className="px-4 py-2.5">
-                      <Badge variant="outline">{item.payment_status}</Badge>
+                      <Badge variant="outline">
+                        {statusLabel(item.payment_status, locale)}
+                      </Badge>
                     </td>
                     <td className="px-4 py-2.5">
                       <Link
                         href={`/seller/orders/${item.id}`}
                         className="font-semibold underline"
                       >
-                        Openen
+                        {t("commonOpen", locale)}
                       </Link>
                     </td>
                   </tr>
@@ -146,9 +163,11 @@ export default function SellerOrdersPage() {
           </div>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-[11px] text-wf-600">
             <span>
-              {(currentPage - 1) * PAGE_SIZE + 1}–
-              {Math.min(currentPage * PAGE_SIZE, filtered.length)} van{" "}
-              {filtered.length} orders
+              {tFormat("sellerOrdersCount", locale, {
+                from: (currentPage - 1) * PAGE_SIZE + 1,
+                to: Math.min(currentPage * PAGE_SIZE, filtered.length),
+                total: filtered.length,
+              })}
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -157,10 +176,13 @@ export default function SellerOrdersPage() {
                 disabled={currentPage <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
-                Vorige
+                {t("sellerOrdersPrev", locale)}
               </button>
               <span>
-                Pagina {currentPage} / {pageCount}
+                {tFormat("commonPageOf", locale, {
+                  current: currentPage,
+                  total: pageCount,
+                })}
               </span>
               <button
                 type="button"
@@ -168,7 +190,7 @@ export default function SellerOrdersPage() {
                 disabled={currentPage >= pageCount}
                 onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
               >
-                Volgende
+                {t("commonNext", locale)}
               </button>
             </div>
           </div>

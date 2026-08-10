@@ -26,6 +26,10 @@ import {
   uploadOnboardingDocument,
   type OnboardingRecord,
 } from "../_lib/partner-onboarding-api";
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
+import { t, tFormat, type StorefrontMessageKey } from "../../_lib/i18n/messages";
+import { statusLabel } from "../../_lib/i18n/status-labels";
+import type { StorefrontLocale } from "../../_lib/i18n/locales";
 
 /**
  * Partner Onboarding — schermen #26-28 (`04-partner-onboarding-*.html`,
@@ -36,30 +40,34 @@ import {
 
 type RoleKey = "is_retailer" | "is_producer_or_brand_owner" | "is_distributor";
 
-const ROLE_OPTIONS: { key: RoleKey; title: string; description: string }[] = [
+const ROLE_OPTION_KEYS: {
+  key: RoleKey;
+  titleKey: StorefrontMessageKey;
+  descriptionKey: StorefrontMessageKey;
+}[] = [
   {
     key: "is_retailer",
-    title: "Retailer",
-    description: "Ik verkoop producten, van eigen of andermans merk",
+    titleKey: "partnerRoleRetailer",
+    descriptionKey: "partnerRoleRetailerDesc",
   },
   {
     key: "is_producer_or_brand_owner",
-    title: "Producent / Merkhouder",
-    description: "Ik produceer en/of bezit een eigen merk",
+    titleKey: "partnerRoleProducer",
+    descriptionKey: "partnerRoleProducerDesc",
   },
   {
     key: "is_distributor",
-    title: "Distributeur",
-    description: "Ik verkoop namens een ander merk, met autorisatie",
+    titleKey: "partnerRoleDistributor",
+    descriptionKey: "partnerRoleDistributorDesc",
   },
 ];
 
-const STEP_LABELS = [
-  "Partner kiezen",
-  "Bedrijfsgegevens",
-  "Verificatie",
-  "Documenten",
-  "Samenvatting",
+const STEP_LABEL_KEYS: StorefrontMessageKey[] = [
+  "partnerStepChoose",
+  "partnerStepCompany",
+  "partnerStepVerification",
+  "partnerStepDocuments",
+  "partnerStepSummary",
 ];
 
 interface CompanyFormState {
@@ -130,8 +138,13 @@ const EMPTY_DOCUMENTS: DocumentsState = {
 
 type Phase = { name: "loading" } | { name: "welcome" } | { name: "wizard"; step: number };
 
+function stepLabels(locale: StorefrontLocale): string[] {
+  return STEP_LABEL_KEYS.map((key) => t(key, locale));
+}
+
 export function OnboardingWizard() {
   const router = useRouter();
+  const locale = useStorefrontLocale();
 
   const [phase, setPhase] = useState<Phase>({ name: "loading" });
   const [onboarding, setOnboarding] = useState<OnboardingRecord | null>(null);
@@ -251,7 +264,7 @@ export function OnboardingWizard() {
   async function handleRolesNext() {
     setError(null);
     if (!anyRoleSelected) {
-      setError("Kies ten minste één rol (Retailer, Producent/Merkhouder en/of Distributeur).");
+      setError(t("partnerSelectRoleError", locale));
       return;
     }
     setIsBusy(true);
@@ -274,7 +287,7 @@ export function OnboardingWizard() {
         setPhase({ name: "welcome" });
         return;
       }
-      setError(err instanceof Error ? err.message : "Opslaan is niet gelukt.");
+      setError(err instanceof Error ? err.message : t("partnerSaveFailed", locale));
     } finally {
       setIsBusy(false);
     }
@@ -296,7 +309,7 @@ export function OnboardingWizard() {
       setOnboarding(updated);
       goToStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Opslaan is niet gelukt.");
+      setError(err instanceof Error ? err.message : t("partnerSaveFailed", locale));
     } finally {
       setIsBusy(false);
     }
@@ -316,7 +329,7 @@ export function OnboardingWizard() {
   async function handleDocumentsNext() {
     setError(null);
     if (!requiredDocumentsPresent) {
-      setError("Upload alle voor je gekozen rol(len) verplichte documenten voordat je verdergaat.");
+      setError(t("partnerDocumentsRequiredError", locale));
       return;
     }
     setIsBusy(true);
@@ -348,9 +361,7 @@ export function OnboardingWizard() {
       }
       goToStep(4);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Documentupload is niet gelukt.",
-      );
+      setError(err instanceof Error ? err.message : t("partnerUploadFailed", locale));
     } finally {
       setIsBusy(false);
     }
@@ -361,7 +372,7 @@ export function OnboardingWizard() {
   async function handleSubmit() {
     setError(null);
     if (!isAddition && !acceptedTerms) {
-      setError("Je moet akkoord gaan met de Partnervoorwaarden en het verwerkersaddendum.");
+      setError(t("partnerTermsRequiredError", locale));
       return;
     }
     setIsBusy(true);
@@ -373,37 +384,44 @@ export function OnboardingWizard() {
       }
       router.push("/partner-onboarding/status");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Indienen is niet gelukt.");
+      setError(err instanceof Error ? err.message : t("partnerSubmitFailed", locale));
     } finally {
       setIsBusy(false);
     }
   }
 
   if (phase.name === "loading") {
-    return <div className="border border-wf-400 bg-white px-6 py-16 text-center text-sm text-wf-600">Laden…</div>;
+    return (
+      <div className="border border-wf-400 bg-white px-6 py-16 text-center text-sm text-wf-600">
+        {t("loading", locale)}
+      </div>
+    );
   }
 
   if (phase.name === "welcome") {
     return (
       <div className="border border-wf-400 bg-white px-6 py-9 text-center sm:px-10">
-        <h1 className="mb-2 text-xl font-bold text-wf-900">Word partner op EuropMade</h1>
+        <h1 className="mb-2 text-xl font-bold text-wf-900">
+          {t("partnerWelcomeTitle", locale)}
+        </h1>
         <p className="mb-6 text-[12.5px] text-wf-600">
-          Verkoop je producten aan miljoenen Europese consumenten — meestal binnen één werkdag live.
+          {t("partnerWelcomeSubtitle", locale)}
         </p>
         <Notice className="mb-5 text-left">
-          Je hebt nodig: bedrijfsgegevens, een geldig identiteitsbewijs, een KvK-uittreksel, en — als je
-          zelf producten produceert of een merk vertegenwoordigt — bewijs van Europese productie.
+          {t("partnerWelcomeNeeds", locale)}
         </Notice>
         {verificationGateError && (
           <Notice variant="warning" className="mb-5 text-left">
-            Bevestig eerst je e-mailadres om partner te worden.{" "}
+            {t("partnerVerifyEmailGate", locale)}{" "}
             <button
               type="button"
               onClick={handleResendVerification}
               disabled={verificationResent}
               className="underline decoration-dotted"
             >
-              {verificationResent ? "Verificatiemail opnieuw verstuurd" : "Verstuur de verificatiemail opnieuw"}
+              {verificationResent
+                ? t("partnerVerificationResent", locale)
+                : t("partnerResendVerification", locale)}
             </button>
           </Notice>
         )}
@@ -413,7 +431,7 @@ export function OnboardingWizard() {
           </Notice>
         )}
         <Button onClick={handleStartAanmelding} disabled={isBusy}>
-          {isBusy ? "Bezig…" : "Start aanmelding"}
+          {isBusy ? t("authCreatingAccount", locale) : t("partnerStart", locale)}
         </Button>
       </div>
     );
@@ -423,7 +441,7 @@ export function OnboardingWizard() {
 
   return (
     <div className="border border-wf-400 bg-white">
-      <Stepper steps={STEP_LABELS} currentStep={stepIndex} />
+      <Stepper steps={stepLabels(locale)} currentStep={stepIndex} />
       <div className="p-6 tablet:p-8">
         {error && (
           <Notice variant="warning" className="mb-5">
@@ -433,16 +451,16 @@ export function OnboardingWizard() {
 
         {stepIndex === 0 && (
           <div>
-            <h1 className="mb-1.5 text-lg font-bold text-wf-900">Hoe wil je verkopen op EuropMade?</h1>
-            <p className="mb-5 text-xs text-wf-600">
-              Kies één of meerdere rollen — je kunt bijvoorbeeld tegelijk Producent én Retailer zijn.
-            </p>
-            <ChoiceCardGroup label="Rol(len) selecteren" className="mb-6">
-              {ROLE_OPTIONS.map((option) => (
+            <h1 className="mb-1.5 text-lg font-bold text-wf-900">
+              {t("partnerRoleQuestion", locale)}
+            </h1>
+            <p className="mb-5 text-xs text-wf-600">{t("partnerRoleHint", locale)}</p>
+            <ChoiceCardGroup label={t("partnerSelectRoles", locale)} className="mb-6">
+              {ROLE_OPTION_KEYS.map((option) => (
                 <ChoiceCard
                   key={option.key}
-                  title={option.title}
-                  description={option.description}
+                  title={t(option.titleKey, locale)}
+                  description={t(option.descriptionKey, locale)}
                   selected={roles[option.key]}
                   onClick={() => toggleRole(option.key)}
                 />
@@ -450,7 +468,7 @@ export function OnboardingWizard() {
             </ChoiceCardGroup>
             <div className="flex justify-end">
               <Button onClick={handleRolesNext} disabled={isBusy}>
-                {isBusy ? "Bezig…" : "Volgende"}
+                {isBusy ? t("authCreatingAccount", locale) : t("commonNext", locale)}
               </Button>
             </div>
           </div>
@@ -458,23 +476,25 @@ export function OnboardingWizard() {
 
         {stepIndex === 1 && (
           <div>
-            <h1 className="mb-5 text-lg font-bold text-wf-900">Bedrijfsgegevens</h1>
+            <h1 className="mb-5 text-lg font-bold text-wf-900">
+              {t("partnerStepCompany", locale)}
+            </h1>
             <Input
-              label="Bedrijfsnaam"
-              placeholder="Merknaam BV"
+              label={t("partnerCompanyName", locale)}
+              placeholder={t("partnerCompanyNamePlaceholder", locale)}
               value={company.legal_name}
               onChange={(e) => setCompany((c) => ({ ...c, legal_name: e.target.value }))}
               required
             />
             <div className="grid grid-cols-1 gap-3.5 tablet:grid-cols-2">
               <Input
-                label="Rechtsvorm"
-                placeholder="BV"
+                label={t("partnerLegalForm", locale)}
+                placeholder={t("partnerLegalFormPlaceholder", locale)}
                 value={company.legal_form}
                 onChange={(e) => setCompany((c) => ({ ...c, legal_form: e.target.value }))}
               />
               <Input
-                label="KvK-/bedrijfsregistratienummer"
+                label={t("partnerChamberNumber", locale)}
                 placeholder="12345678"
                 value={company.chamber_of_commerce_number}
                 onChange={(e) =>
@@ -484,16 +504,16 @@ export function OnboardingWizard() {
               />
             </div>
             <Input
-              label="Bedrijfsadres"
-              placeholder="Straat, huisnummer, postcode, plaats"
+              label={t("partnerCompanyAddress", locale)}
+              placeholder={t("partnerCompanyAddressPlaceholder", locale)}
               value={company.company_address}
               onChange={(e) => setCompany((c) => ({ ...c, company_address: e.target.value }))}
             />
             <Input
-              label="Land (ISO-landcode)"
-              placeholder="bv. NL, DE, FR"
+              label={t("partnerCountryCode", locale)}
+              placeholder={t("partnerCountryCodePlaceholder", locale)}
               maxLength={2}
-              hint="Twee letters, conform ISO 3166-1 — bepaalt het vestigingsland van je bedrijf."
+              hint={t("partnerCountryCodeHint", locale)}
               value={company.country_code}
               onChange={(e) =>
                 setCompany((c) => ({ ...c, country_code: e.target.value.toUpperCase() }))
@@ -501,45 +521,45 @@ export function OnboardingWizard() {
               required
             />
             <Input
-              label="BTW-nummer"
-              placeholder="NL123456789B01"
+              label={t("partnerVatNumber", locale)}
+              placeholder={t("partnerVatPlaceholder", locale)}
               value={company.vat_number}
               onChange={(e) => setCompany((c) => ({ ...c, vat_number: e.target.value }))}
               required
             />
             <div className="grid grid-cols-1 gap-3.5 tablet:grid-cols-2">
               <Input
-                label="Contactpersoon — naam"
-                placeholder="Voor- en achternaam"
+                label={t("partnerContactName", locale)}
+                placeholder={t("authFullNamePlaceholder", locale)}
                 value={company.contact_name}
                 onChange={(e) => setCompany((c) => ({ ...c, contact_name: e.target.value }))}
               />
               <Input
-                label="Contactpersoon — telefoonnummer"
-                placeholder="+31 6 12345678"
+                label={t("partnerContactPhone", locale)}
+                placeholder={t("partnerContactPhonePlaceholder", locale)}
                 value={company.contact_phone}
                 onChange={(e) => setCompany((c) => ({ ...c, contact_phone: e.target.value }))}
               />
             </div>
             <Input
-              label="Contactpersoon — e-mailadres"
-              placeholder="contact@merknaam.nl"
-              hint="Mag afwijken van je inlog-e-mailadres."
+              label={t("partnerContactEmail", locale)}
+              placeholder={t("partnerContactEmailPlaceholder", locale)}
+              hint={t("partnerContactEmailHint", locale)}
               value={company.contact_email}
               onChange={(e) => setCompany((c) => ({ ...c, contact_email: e.target.value }))}
             />
             <div className="grid grid-cols-1 gap-3.5 tablet:grid-cols-2">
               <Input
-                label="IBAN (uitbetalingsgegevens)"
-                placeholder="NL91 ABNA 0417 1643 00"
+                label={t("partnerIban", locale)}
+                placeholder={t("partnerIbanPlaceholder", locale)}
                 value={company.iban}
                 onChange={(e) => setCompany((c) => ({ ...c, iban: e.target.value }))}
                 required
               />
               <Input
-                label="Rekeninghouder"
-                placeholder="Merknaam BV"
-                hint="Moet overeenkomen met de bedrijfsnaam."
+                label={t("partnerAccountHolder", locale)}
+                placeholder={t("partnerCompanyNamePlaceholder", locale)}
+                hint={t("partnerAccountHolderHint", locale)}
                 value={company.account_holder_name}
                 onChange={(e) =>
                   setCompany((c) => ({ ...c, account_holder_name: e.target.value }))
@@ -548,10 +568,10 @@ export function OnboardingWizard() {
             </div>
             <div className="mt-6 flex justify-between">
               <Button variant="ghost" onClick={() => goToStep(0)}>
-                ← Terug
+                {t("commonPrevious", locale)}
               </Button>
               <Button onClick={handleCompanyNext} disabled={isBusy}>
-                {isBusy ? "Bezig…" : "Volgende"}
+                {isBusy ? t("authCreatingAccount", locale) : t("commonNext", locale)}
               </Button>
             </div>
           </div>
@@ -559,20 +579,24 @@ export function OnboardingWizard() {
 
         {stepIndex === 2 && (
           <div>
-            <h1 className="mb-1.5 text-lg font-bold text-wf-900">Verificatie</h1>
-            <p className="mb-4 text-xs font-semibold text-wf-700">Identiteitscontrole</p>
+            <h1 className="mb-1.5 text-lg font-bold text-wf-900">
+              {t("partnerStepVerification", locale)}
+            </h1>
+            <p className="mb-4 text-xs font-semibold text-wf-700">
+              {t("partnerIdentityCheck", locale)}
+            </p>
             <div className="grid grid-cols-1 gap-3.5 tablet:grid-cols-2">
               <Input
-                label="Naam bevoegde vertegenwoordiger"
-                placeholder="Voor- en achternaam"
+                label={t("partnerRepName", locale)}
+                placeholder={t("authFullNamePlaceholder", locale)}
                 value={verification.representative_name}
                 onChange={(e) =>
                   setVerification((v) => ({ ...v, representative_name: e.target.value }))
                 }
               />
               <Input
-                label="Functie"
-                placeholder="Directeur / Eigenaar"
+                label={t("partnerRepRole", locale)}
+                placeholder={t("partnerRepRolePlaceholder", locale)}
                 value={verification.representative_role}
                 onChange={(e) =>
                   setVerification((v) => ({ ...v, representative_role: e.target.value }))
@@ -583,23 +607,23 @@ export function OnboardingWizard() {
             {needsProductionVerification && (
               <>
                 <p className="mb-4 mt-6 text-xs font-semibold text-wf-700">
-                  Europese productieverificatie{" "}
+                  {t("partnerEuProductionTitle", locale)}{" "}
                   <span className="font-normal text-wf-500">
-                    — getoond omdat Producent/Merkhouder en/of Distributeur is gekozen
+                    {t("partnerEuProductionReason", locale)}
                   </span>
                 </p>
                 <div className="grid grid-cols-1 gap-3.5 tablet:grid-cols-2">
                   <Input
-                    label="Land van productie (hoofdlocatie)"
-                    placeholder="Nederland"
+                    label={t("partnerProductionCountry", locale)}
+                    placeholder={t("countryNL", locale)}
                     value={verification.production_country}
                     onChange={(e) =>
                       setVerification((v) => ({ ...v, production_country: e.target.value }))
                     }
                   />
                   <Input
-                    label="Fabrikant"
-                    placeholder="Merknaam BV — eigen fabriek"
+                    label={t("partnerManufacturer", locale)}
+                    placeholder={t("partnerManufacturerPlaceholder", locale)}
                     value={verification.manufacturer_name}
                     onChange={(e) =>
                       setVerification((v) => ({ ...v, manufacturer_name: e.target.value }))
@@ -607,25 +631,25 @@ export function OnboardingWizard() {
                   />
                 </div>
                 <Input
-                  label="Productielocatie(s)"
-                  placeholder="Straat, huisnummer, postcode, plaats"
-                  hint="Minimaal één verplicht, meerdere locaties toegestaan."
+                  label={t("partnerProductionLocations", locale)}
+                  placeholder={t("partnerCompanyAddressPlaceholder", locale)}
+                  hint={t("partnerProductionLocationsHint", locale)}
                   value={verification.production_locations}
                   onChange={(e) =>
                     setVerification((v) => ({ ...v, production_locations: e.target.value }))
                   }
                 />
                 <Input
-                  label="Eigendom van het merk"
-                  placeholder="Eigen merk"
+                  label={t("partnerBrandOwnership", locale)}
+                  placeholder={t("partnerBrandOwnershipPlaceholder", locale)}
                   value={verification.brand_ownership}
                   onChange={(e) =>
                     setVerification((v) => ({ ...v, brand_ownership: e.target.value }))
                   }
                 />
                 <Input
-                  label="Eigendom van de fabrikant (optioneel)"
-                  placeholder="Eigen faciliteit / externe contractfabrikant"
+                  label={t("partnerManufacturerOwnership", locale)}
+                  placeholder={t("partnerManufacturerOwnershipPlaceholder", locale)}
                   value={verification.manufacturer_ownership}
                   onChange={(e) =>
                     setVerification((v) => ({ ...v, manufacturer_ownership: e.target.value }))
@@ -633,9 +657,9 @@ export function OnboardingWizard() {
                 />
                 {roles.is_distributor && (
                   <Input
-                    label="Vertegenwoordigde merk(en)"
-                    placeholder="Naam van het/de merk(en) waarvoor je verkoopt"
-                    hint="Verplicht voor Distributeur — samen met het autorisatiebewijs bij Documenten."
+                    label={t("partnerRepresentedBrands", locale)}
+                    placeholder={t("partnerRepresentedBrandsPlaceholder", locale)}
+                    hint={t("partnerRepresentedBrandsHint", locale)}
                     value={verification.represented_brands}
                     onChange={(e) =>
                       setVerification((v) => ({ ...v, represented_brands: e.target.value }))
@@ -647,29 +671,29 @@ export function OnboardingWizard() {
 
             <div className="mt-6 flex justify-between">
               <Button variant="ghost" onClick={() => goToStep(1)}>
-                ← Terug
+                {t("commonPrevious", locale)}
               </Button>
-              <Button onClick={handleVerificationNext}>Volgende</Button>
+              <Button onClick={handleVerificationNext}>{t("commonNext", locale)}</Button>
             </div>
           </div>
         )}
 
         {stepIndex === 3 && (
           <div>
-            <h1 className="mb-1.5 text-lg font-bold text-wf-900">Upload documenten</h1>
-            <p className="mb-5 text-xs text-wf-600">
-              Op basis van je gekozen rol(len) is het volgende nodig:
-            </p>
+            <h1 className="mb-1.5 text-lg font-bold text-wf-900">
+              {t("partnerUploadDocuments", locale)}
+            </h1>
+            <p className="mb-5 text-xs text-wf-600">{t("partnerUploadDocumentsHint", locale)}</p>
 
             <FileUpload
-              label="Identiteitsbewijs (bevoegde vertegenwoordiger)"
-              requirementLabel="Verplicht — alle rollen"
+              label={t("partnerDocIdentity", locale)}
+              requirementLabel={t("partnerReqAllRoles", locale)}
               value={documents.identity_document}
               onChange={(file) => setDocuments((d) => ({ ...d, identity_document: file }))}
             />
             <FileUpload
-              label="KvK-/bedrijfsregistratie-uittreksel"
-              requirementLabel="Verplicht — alle rollen"
+              label={t("partnerDocChamber", locale)}
+              requirementLabel={t("partnerReqAllRoles", locale)}
               value={documents.chamber_of_commerce_extract}
               onChange={(file) =>
                 setDocuments((d) => ({ ...d, chamber_of_commerce_extract: file }))
@@ -677,23 +701,23 @@ export function OnboardingWizard() {
             />
             {roles.is_producer_or_brand_owner && (
               <FileUpload
-                label="Productiebewijsstuk"
-                requirementLabel="Verplicht — Producent/Merkhouder"
+                label={t("partnerDocProduction", locale)}
+                requirementLabel={t("partnerReqProducer", locale)}
                 value={documents.production_proof}
                 onChange={(file) => setDocuments((d) => ({ ...d, production_proof: file }))}
               />
             )}
             {roles.is_distributor && (
               <FileUpload
-                label="Autorisatiebewijs (distributieovereenkomst)"
-                requirementLabel="Verplicht — Distributeur"
+                label={t("partnerDocAuthorization", locale)}
+                requirementLabel={t("partnerReqDistributor", locale)}
                 value={documents.authorization_proof}
                 onChange={(file) => setDocuments((d) => ({ ...d, authorization_proof: file }))}
               />
             )}
             <FileUpload
-              label="Aanvullende certificeringen (optioneel)"
-              requirementLabel="Optioneel — alle rollen"
+              label={t("partnerDocCertifications", locale)}
+              requirementLabel={t("partnerReqOptional", locale)}
               value={documents.additional_certifications}
               onChange={(file) =>
                 setDocuments((d) => ({ ...d, additional_certifications: file }))
@@ -702,10 +726,10 @@ export function OnboardingWizard() {
 
             <div className="mt-6 flex justify-between">
               <Button variant="ghost" onClick={() => goToStep(2)}>
-                ← Terug
+                {t("commonPrevious", locale)}
               </Button>
               <Button onClick={handleDocumentsNext} disabled={isBusy}>
-                {isBusy ? "Bezig…" : "Volgende"}
+                {isBusy ? t("authCreatingAccount", locale) : t("commonNext", locale)}
               </Button>
             </div>
           </div>
@@ -713,42 +737,56 @@ export function OnboardingWizard() {
 
         {stepIndex === 4 && (
           <div>
-            <h1 className="mb-3 text-lg font-bold text-wf-900">Controleer je aanvraag</h1>
+            <h1 className="mb-3 text-lg font-bold text-wf-900">
+              {t("partnerReviewTitle", locale)}
+            </h1>
 
-            <ReviewBlock title="Gekozen rollen" onEdit={() => goToStep(0)}>
+            <ReviewBlock title={t("partnerReviewRoles", locale)} onEdit={() => goToStep(0)}>
               <p>
-                {ROLE_OPTIONS.filter((option) => roles[option.key])
-                  .map((option) => option.title)
-                  .join(", ") || "Geen rol gekozen"}
+                {ROLE_OPTION_KEYS.filter((option) => roles[option.key])
+                  .map((option) => t(option.titleKey, locale))
+                  .join(", ") || t("partnerReviewNoRole", locale)}
               </p>
             </ReviewBlock>
 
-            <ReviewBlock title="Bedrijfsgegevens" onEdit={() => goToStep(1)}>
+            <ReviewBlock title={t("partnerStepCompany", locale)} onEdit={() => goToStep(1)}>
               <p>
-                {company.legal_name || "—"} · KvK {company.chamber_of_commerce_number || "—"} ·{" "}
-                {company.vat_number || "—"}
+                {tFormat("partnerReviewCompanyLine", locale, {
+                  name: company.legal_name || "—",
+                  chamber: company.chamber_of_commerce_number || "—",
+                  vat: company.vat_number || "—",
+                })}
               </p>
-              <p>IBAN {company.iban || "—"}</p>
+              <p>
+                {tFormat("partnerReviewIbanLine", locale, {
+                  iban: company.iban || "—",
+                })}
+              </p>
             </ReviewBlock>
 
-            <ReviewBlock title="Verificatie" onEdit={() => goToStep(2)}>
+            <ReviewBlock title={t("partnerStepVerification", locale)} onEdit={() => goToStep(2)}>
               <p>
                 {needsProductionVerification
-                  ? `Productie: ${verification.production_country || "—"} · ${verification.manufacturer_name || "—"}`
-                  : "Niet van toepassing (uitsluitend Retailer gekozen)"}
+                  ? tFormat("partnerReviewProduction", locale, {
+                      country: verification.production_country || "—",
+                      manufacturer: verification.manufacturer_name || "—",
+                    })
+                  : t("partnerReviewRetailerOnly", locale)}
               </p>
             </ReviewBlock>
 
-            <ReviewBlock title="Documenten" onEdit={() => goToStep(3)}>
+            <ReviewBlock title={t("partnerStepDocuments", locale)} onEdit={() => goToStep(3)}>
               <p>
-                {Object.values(documents).filter(Boolean).length} document(en) geüpload
+                {tFormat("partnerReviewDocumentsCount", locale, {
+                  count: Object.values(documents).filter(Boolean).length,
+                })}
               </p>
             </ReviewBlock>
 
             {!isAddition && (
               <div className="my-5">
                 <Checkbox
-                  label="Ik ga akkoord met de Partnervoorwaarden en het verwerkersaddendum"
+                  label={t("partnerAcceptPartnerTerms", locale)}
                   checked={acceptedTerms}
                   onChange={(e) => setAcceptedTerms(e.target.checked)}
                   required
@@ -758,10 +796,14 @@ export function OnboardingWizard() {
 
             <div className="mt-6 flex justify-between">
               <Button variant="ghost" onClick={() => goToStep(3)}>
-                ← Terug
+                {t("commonPrevious", locale)}
               </Button>
               <Button onClick={handleSubmit} disabled={isBusy}>
-                {isBusy ? "Bezig…" : isAddition ? "Aanvulling versturen" : "Aanvraag indienen"}
+                {isBusy
+                  ? t("authCreatingAccount", locale)
+                  : isAddition
+                    ? t("partnerSubmitAddition", locale)
+                    : t("partnerSubmit", locale)}
               </Button>
             </div>
           </div>
@@ -769,7 +811,10 @@ export function OnboardingWizard() {
 
         {onboarding && (
           <p className="mt-6 text-center text-[10.5px] text-wf-500">
-            Huidige status: <Badge variant="outline">{onboarding.onboarding_status}</Badge>
+            {t("partnerCurrentStatus", locale)}{" "}
+            <Badge variant="outline">
+              {statusLabel(onboarding.onboarding_status, locale)}
+            </Badge>
           </p>
         )}
       </div>

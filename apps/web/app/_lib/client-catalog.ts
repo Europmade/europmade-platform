@@ -6,6 +6,13 @@ import type { ListingProduct } from "./listing-products"
 import type { CartLineMeta } from "./cart-line-meta"
 import { hashHue, rememberCartLineMeta } from "./cart-line-meta"
 import { resolveOfferDeliveryLabel } from "./offer-delivery"
+import type { StorefrontLocale } from "./i18n/locales"
+import { readLocaleFromBrowser } from "./i18n/use-storefront-locale"
+import { t } from "./i18n/messages"
+
+function browserStorefrontLocale(): StorefrontLocale {
+  return readLocaleFromBrowser()
+}
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
@@ -98,25 +105,29 @@ export async function enrichOfferMetaFromCatalog(
       }>(`/store/catalog/products/${encodeURIComponent(item.id)}?region_code=NL`)
       const offer = detail.offers.find((o) => o.offer_id === offerId)
       if (!offer) continue
+      const locale = browserStorefrontLocale()
       const meta: CartLineMeta = {
         offer_id: offerId,
         product_id: detail.product.id,
         slug: detail.product.id,
         title: detail.product.title,
         seller_id: offer.seller_id || sellerId,
-        seller_name: offer.seller_name || `Verkoper ${sellerId.slice(-6)}`,
+        seller_name: offer.seller_name || `Seller ${sellerId.slice(-6)}`,
         verified: true,
-        delivery: resolveOfferDeliveryLabel({
-          shipping_cost: Number(offer.shipping_cost) || 0,
-          quantity_available: Number(offer.quantity_available) || 0,
-        }),
+        delivery: resolveOfferDeliveryLabel(
+          {
+            shipping_cost: Number(offer.shipping_cost) || 0,
+            quantity_available: Number(offer.quantity_available) || 0,
+          },
+          locale
+        ),
         stock:
           offer.quantity_available > 5
-            ? "Op voorraad"
+            ? t("inStock", locale)
             : offer.quantity_available > 0
-              ? `Nog ${offer.quantity_available} op voorraad`
-              : "Beperkte voorraad",
-        returns: "30 dagen retour",
+              ? t("lowStock", locale)
+              : t("outOfStock", locale),
+        returns: t("trust30DayReturn", locale),
         image_hue: hashHue(offerId),
       }
       rememberCartLineMeta(meta)

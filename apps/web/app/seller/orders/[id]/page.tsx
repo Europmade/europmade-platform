@@ -8,8 +8,14 @@ import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
 import { getOrderDetail } from "../../_lib/demo-data-details"
+import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
+import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
+import { t, tFormat } from "../../../_lib/i18n/messages"
+import { statusLabel } from "../../../_lib/i18n/status-labels"
 
 export default function SellerOrderDetailPage() {
+  const locale = useStorefrontLocale()
+  const intl = storefrontIntlLocale(locale)
   const params = useParams<{ id: string }>()
   const order = useMemo(() => getOrderDetail(params.id), [params.id])
   const [note, setNote] = useState<string | null>(null)
@@ -18,51 +24,64 @@ export default function SellerOrderDetailPage() {
     return (
       <SellerGate
         breadcrumb={[
-          { label: "Seller Dashboard", href: "/seller" },
-          { label: "Orders", href: "/seller/orders" },
-          { label: "Onbekend" },
+          { label: t("sellerDashboardTitle", locale), href: "/seller" },
+          { label: t("sellerNavOrders", locale), href: "/seller/orders" },
+          { label: t("commonUnknown", locale) },
         ]}
       >
         <EmptyState
-          title="Order niet gevonden"
-          description="Deze order bestaat niet of is niet meer beschikbaar."
-          primaryAction={{ label: "Terug naar orders", href: "/seller/orders" }}
+          title={t("sellerOrderNotFoundTitle", locale)}
+          description={t("sellerOrderNotFoundDesc", locale)}
+          primaryAction={{
+            label: t("sellerOrderBackToOrders", locale),
+            href: "/seller/orders",
+          }}
         />
       </SellerGate>
     )
   }
 
-  function download(label: string) {
-    setNote(`${label} gedownload (demo).`)
+  function download(labelKey: "sellerOrderInvoiceLabel" | "sellerOrderPackingLabel") {
+    setNote(
+      tFormat("sellerOrderDownloaded", locale, {
+        label: t(labelKey, locale),
+      })
+    )
   }
 
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Orders", href: "/seller/orders" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavOrders", locale), href: "/seller/orders" },
         { label: order.order_number },
       ]}
     >
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[19px] font-bold text-wf-900">
-            Order #{order.order_number}
+            {tFormat("sellerOrderTitle", locale, {
+              number: order.order_number,
+            })}
           </h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            {new Date(order.created_at).toLocaleString("nl-NL")}
+            {new Date(order.created_at).toLocaleString(intl)}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" onClick={() => download("Factuur")}>
-            Download factuur
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => download("sellerOrderInvoiceLabel")}
+          >
+            {t("sellerOrderDownloadInvoice", locale)}
           </Button>
           <Button
             type="button"
             variant="secondary"
-            onClick={() => download("Pakbon")}
+            onClick={() => download("sellerOrderPackingLabel")}
           >
-            Download pakbon
+            {t("sellerOrderDownloadPacking", locale)}
           </Button>
         </div>
       </div>
@@ -76,33 +95,43 @@ export default function SellerOrderDetailPage() {
       <div className="mb-5 grid grid-cols-1 gap-4 tablet:grid-cols-2">
         <section className="rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-            Order
+            {t("commonOrder", locale)}
           </h2>
           <dl className="grid gap-2 text-xs text-wf-800">
             <div className="flex justify-between gap-3">
-              <dt className="text-wf-500">Ordernummer</dt>
+              <dt className="text-wf-500">{t("sellerReturnsOrderNumber", locale)}</dt>
               <dd>{order.order_number}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-wf-500">Orderdatum</dt>
-              <dd>{new Date(order.created_at).toLocaleDateString("nl-NL")}</dd>
+              <dt className="text-wf-500">{t("sellerOrderDate", locale)}</dt>
+              <dd>{new Date(order.created_at).toLocaleDateString(intl)}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-wf-500">Status</dt>
+              <dt className="text-wf-500">{t("commonStatus", locale)}</dt>
               <dd>
-                <Badge variant="outline">{order.status}</Badge>
+                <Badge variant="outline">
+                  {statusLabel(order.status, locale)}
+                </Badge>
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-wf-500">Betaalstatus</dt>
+              <dt className="text-wf-500">
+                {t("sellerOrderPaymentStatus", locale)}
+              </dt>
               <dd>
-                <Badge variant="outline">{order.payment_status}</Badge>
+                <Badge variant="outline">
+                  {statusLabel(order.payment_status, locale)}
+                </Badge>
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-wf-500">Verzendstatus</dt>
+              <dt className="text-wf-500">
+                {t("sellerOrderShippingStatus", locale)}
+              </dt>
               <dd>
-                <Badge variant="outline">{order.shipping_status}</Badge>
+                <Badge variant="outline">
+                  {statusLabel(order.shipping_status, locale)}
+                </Badge>
               </dd>
             </div>
           </dl>
@@ -110,19 +139,25 @@ export default function SellerOrderDetailPage() {
 
         <section className="rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-            Klant
+            {t("commonCustomer", locale)}
           </h2>
           <dl className="grid gap-2 text-xs text-wf-800">
             <div>
-              <dt className="text-[10.5px] uppercase text-wf-500">Naam</dt>
+              <dt className="text-[10.5px] uppercase text-wf-500">
+                {t("commonName", locale)}
+              </dt>
               <dd>{order.customer.name}</dd>
             </div>
             <div>
-              <dt className="text-[10.5px] uppercase text-wf-500">E-mailadres</dt>
+              <dt className="text-[10.5px] uppercase text-wf-500">
+                {t("commonEmail", locale)}
+              </dt>
               <dd>{order.customer.email}</dd>
             </div>
             <div>
-              <dt className="text-[10.5px] uppercase text-wf-500">Telefoonnummer</dt>
+              <dt className="text-[10.5px] uppercase text-wf-500">
+                {t("commonPhone", locale)}
+              </dt>
               <dd>{order.customer.phone}</dd>
             </div>
           </dl>
@@ -132,7 +167,7 @@ export default function SellerOrderDetailPage() {
       <div className="mb-5 grid grid-cols-1 gap-4 tablet:grid-cols-2">
         <section className="rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-            Factuuradres
+            {t("sellerOrderBillingAddress", locale)}
           </h2>
           <p className="whitespace-pre-line text-xs text-wf-800">
             {order.billing_address}
@@ -140,7 +175,7 @@ export default function SellerOrderDetailPage() {
         </section>
         <section className="rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-            Verzendadres
+            {t("sellerSettingsShippingAddress", locale)}
           </h2>
           <p className="whitespace-pre-line text-xs text-wf-800">
             {order.shipping_address}
@@ -150,12 +185,19 @@ export default function SellerOrderDetailPage() {
 
       <section className="mb-5 overflow-hidden rounded-lg border border-wf-300 bg-white">
         <h2 className="border-b border-wf-300 px-5 py-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Producten
+          {t("sellerNavProducts", locale)}
         </h2>
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
-              {["", "Product", "SKU", "Aantal", "Prijs", "Totaal"].map((h) => (
+              {[
+                "",
+                t("commonProduct", locale),
+                t("commonSku", locale),
+                t("commonQuantity", locale),
+                t("commonPrice", locale),
+                t("commonTotal", locale),
+              ].map((h) => (
                 <th
                   key={h || "img"}
                   className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
@@ -191,46 +233,50 @@ export default function SellerOrderDetailPage() {
       <div className="mb-5 grid grid-cols-1 gap-4 tablet:grid-cols-2">
         <section className="rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-            Financieel
+            {t("sellerOrderFinancial", locale)}
           </h2>
           <dl className="grid gap-2 text-xs text-wf-800">
             <div className="flex justify-between">
-              <dt>Subtotaal</dt>
+              <dt>{t("sellerOrderSubtotal", locale)}</dt>
               <dd>{formatEuro(order.subtotal)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>Verzendkosten</dt>
+              <dt>{t("sellerOrderShippingCost", locale)}</dt>
               <dd>{formatEuro(order.shipping_cost)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt>BTW</dt>
+              <dt>{t("sellerFinanceVatLabel", locale)}</dt>
               <dd>{formatEuro(order.vat)}</dd>
             </div>
             <div className="flex justify-between border-t border-wf-200 pt-2 font-semibold">
-              <dt>Totaalbedrag</dt>
+              <dt>{t("sellerOrderGrandTotal", locale)}</dt>
               <dd>{formatEuro(order.total)}</dd>
             </div>
           </dl>
         </section>
         <section className="rounded-lg border border-wf-300 bg-white px-5 py-4">
           <h2 className="mb-3 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-            Verzending
+            {t("sellerOrderShipping", locale)}
           </h2>
           <dl className="grid gap-2 text-xs text-wf-800">
             <div className="flex justify-between">
-              <dt className="text-wf-500">Vervoerder</dt>
+              <dt className="text-wf-500">{t("sellerOrderCarrier", locale)}</dt>
               <dd>{order.carrier}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-wf-500">Track &amp; trace</dt>
-              <dd>{order.tracking_code ?? "Nog niet beschikbaar"}</dd>
+              <dt className="text-wf-500">{t("sellerOrderTracking", locale)}</dt>
+              <dd>
+                {order.tracking_code ?? t("commonNotAvailableYet", locale)}
+              </dd>
             </div>
           </dl>
           <div className="mt-4 space-y-2 text-xs">
             <div>
-              <span className="text-wf-500">Berichten: </span>
+              <span className="text-wf-500">
+                {t("sellerOrderMessages", locale)}{" "}
+              </span>
               {order.message_ids.length === 0 ? (
-                "geen"
+                t("commonNone", locale)
               ) : (
                 order.message_ids.map((id) => (
                   <Link
@@ -244,9 +290,11 @@ export default function SellerOrderDetailPage() {
               )}
             </div>
             <div>
-              <span className="text-wf-500">Retouren: </span>
+              <span className="text-wf-500">
+                {t("sellerOrderReturns", locale)}{" "}
+              </span>
               {order.return_ids.length === 0 ? (
-                "geen"
+                t("commonNone", locale)
               ) : (
                 order.return_ids.map((id) => (
                   <Link

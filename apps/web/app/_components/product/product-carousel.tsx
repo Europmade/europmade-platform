@@ -20,6 +20,11 @@ import {
 import { hashHue } from "../../_lib/cart-line-meta"
 import { isFavorite, toggleFavorite } from "../../_lib/favorites"
 import { productMockupSrc } from "../../_lib/product-mockup"
+import {
+  DEFAULT_STOREFRONT_LOCALE,
+  type StorefrontLocale,
+} from "../../_lib/i18n/locales"
+import { t, tFormat } from "../../_lib/i18n/messages"
 
 export type ProductCarouselVariant = "default" | "compact"
 
@@ -41,6 +46,7 @@ export type ProductCarouselProps = {
   className?: string
   /** IntersectionObserver lazy mount — default true. */
   lazy?: boolean
+  locale?: StorefrontLocale
 }
 
 /**
@@ -93,17 +99,23 @@ function CarouselArrow({
   direction,
   onClick,
   visible,
+  locale,
 }: {
   direction: "left" | "right"
   onClick: () => void
   visible: boolean
+  locale: StorefrontLocale
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={!visible}
-      aria-label={direction === "left" ? "Vorige producten" : "Volgende producten"}
+      aria-label={
+        direction === "left"
+          ? t("prevProducts", locale)
+          : t("nextProducts", locale)
+      }
       className={`absolute top-[42%] z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-wf-200/90 bg-white/90 text-wf-900 shadow-[0_4px_14px_rgba(15,23,42,0.12)] backdrop-blur-sm transition duration-200 hover:bg-white hover:shadow-[0_6px_18px_rgba(15,23,42,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wf-900 disabled:pointer-events-none disabled:opacity-0 ${
         direction === "left" ? "left-1.5 tablet:left-0" : "right-1.5 tablet:right-0"
       } ${
@@ -177,6 +189,7 @@ export function ProductCarouselCard({
   variant = "default",
   layout = "carousel",
   onNavigate,
+  locale = DEFAULT_STOREFRONT_LOCALE,
 }: {
   product: ListingProduct
   variant?: ProductCarouselVariant
@@ -185,6 +198,7 @@ export function ProductCarouselCard({
   showAddToCart?: boolean
   onAddToCart?: (product: ListingProduct) => void
   onNavigate?: () => void
+  locale?: StorefrontLocale
 }) {
   const compact = variant === "compact"
   const href = `/product/${product.slug}`
@@ -248,7 +262,7 @@ export function ProductCarouselCard({
             >
               {showFrom ? (
                 <span className="mr-0.5 align-baseline text-[10px] font-semibold text-wf-600">
-                  vanaf
+                  {t("fromPrice", locale)}
                 </span>
               ) : null}
               {formatEuroFromCents(product.priceCents)}
@@ -260,7 +274,7 @@ export function ProductCarouselCard({
           href={href}
           onClick={onNavigate}
           className="absolute inset-0 z-[1] rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wf-900"
-          aria-label={`${product.title} bekijken`}
+          aria-label={tFormat("viewProduct", locale, { title: product.title })}
         />
 
         <div className="absolute right-2 top-2 z-[2]">
@@ -288,6 +302,7 @@ export function ProductCarousel({
   hideWhenEmpty = false,
   className = "",
   lazy = true,
+  locale = DEFAULT_STOREFRONT_LOCALE,
 }: ProductCarouselProps) {
   const rootRef = useRef<HTMLElement>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -427,11 +442,13 @@ export function ProductCarousel({
           direction="left"
           visible={canLeft && !showSkeletons}
           onClick={() => scrollByDir(-1)}
+          locale={locale}
         />
         <CarouselArrow
           direction="right"
           visible={canRight && !showSkeletons}
           onClick={() => scrollByDir(1)}
+          locale={locale}
         />
 
         {canLeft && !showSkeletons ? (
@@ -474,6 +491,7 @@ export function ProductCarousel({
                   showAddToCart={showAddToCart}
                   onAddToCart={onAddToCart}
                   onNavigate={onNavigate}
+                  locale={locale}
                 />
               ))}
         </div>

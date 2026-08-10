@@ -4,6 +4,8 @@ import { useEffect, useId, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { endSession } from "../../(auth)/_lib/medusa-auth"
+import type { StorefrontLocale } from "../../_lib/i18n/locales"
+import { t } from "../../_lib/i18n/messages"
 
 type CustomerMe = {
   id: string
@@ -37,7 +39,11 @@ async function fetchCustomer(): Promise<CustomerMe | null> {
 /**
  * Account-icoon + menu — Medusa customer session (`/store/customers/me` + `DELETE /auth/session`).
  */
-export function AccountMenu() {
+export function AccountMenu({
+  locale = "nl" as StorefrontLocale,
+}: {
+  locale?: StorefrontLocale
+}) {
   const router = useRouter()
   const menuId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
@@ -100,8 +106,8 @@ export function AccountMenu() {
       <Link
         href="/login"
         className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-wf-400 text-wf-700 hover:border-wf-700"
-        aria-label="Inloggen"
-        title="Inloggen"
+        aria-label={t("login", locale)}
+        title={t("login", locale)}
       >
         <UserIcon />
       </Link>
@@ -117,7 +123,7 @@ export function AccountMenu() {
       <button
         type="button"
         className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-wf-400 text-wf-700 hover:border-wf-700"
-        aria-label={`Accountmenu (${label})`}
+        aria-label={`${t("myAccount", locale)} (${label})`}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((v) => !v)}
@@ -134,13 +140,13 @@ export function AccountMenu() {
             {label}
           </p>
           <MenuLink href="/account" onNavigate={() => setOpen(false)}>
-            Mijn account
+            {t("myAccount", locale)}
           </MenuLink>
           <MenuLink href="/account/orders" onNavigate={() => setOpen(false)}>
-            Bestellingen
+            {t("orders", locale)}
           </MenuLink>
           <MenuLink href="/account/settings" onNavigate={() => setOpen(false)}>
-            Instellingen
+            {t("settings", locale)}
           </MenuLink>
           <button
             type="button"
@@ -148,7 +154,7 @@ export function AccountMenu() {
             className="block w-full px-3 py-2 text-left text-xs text-wf-800 hover:bg-wf-100"
             onClick={() => void logout()}
           >
-            Uitloggen
+            {t("logout", locale)}
           </button>
         </div>
       ) : null}

@@ -3,34 +3,39 @@ import {
   ContentNav,
   ContentPage,
 } from "../_components/marketplace/content-page"
+import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
+import { t, type StorefrontMessageKey } from "../_lib/i18n/messages"
 
 export const metadata: Metadata = {
   title: "Juridisch — EuropMade",
-  description: "Voorwaarden, privacy, retouren, betalingen en overige juridische informatie.",
+  description:
+    "Voorwaarden, privacy, retouren, betalingen en overige juridische informatie.",
 }
 
-const LINKS = [
-  { href: "/juridisch/algemene-voorwaarden", label: "Algemene voorwaarden" },
-  { href: "/juridisch/verzending", label: "Verzending" },
-  { href: "/juridisch/retourneren", label: "Retourneren" },
-  { href: "/juridisch/betaalmethoden", label: "Betaalmethoden" },
-  { href: "/juridisch/disclaimer", label: "Disclaimer" },
-  { href: "/juridisch/privacybeleid", label: "Privacybeleid" },
-  { href: "/juridisch/copyright", label: "Copyright" },
-  { href: "/juridisch/garanties", label: "Garanties" },
-  { href: "/juridisch/terugbetalingsbeleid", label: "Terugbetalingsbeleid" },
-  { href: "/juridisch/contact", label: "Contact" },
+const LINKS: Array<{ href: string; labelKey: StorefrontMessageKey }> = [
+  { href: "/juridisch/algemene-voorwaarden", labelKey: "legalTerms" },
+  { href: "/juridisch/verzending", labelKey: "legalShipping" },
+  { href: "/juridisch/retourneren", labelKey: "legalReturns" },
+  { href: "/juridisch/betaalmethoden", labelKey: "legalPayments" },
+  { href: "/juridisch/disclaimer", labelKey: "legalDisclaimer" },
+  { href: "/juridisch/privacybeleid", labelKey: "legalPrivacy" },
+  { href: "/juridisch/copyright", labelKey: "legalCopyright" },
+  { href: "/juridisch/garanties", labelKey: "legalWarranty" },
+  { href: "/juridisch/terugbetalingsbeleid", labelKey: "legalRefund" },
+  { href: "/juridisch/contact", labelKey: "legalContact" },
 ]
 
-export default function JuridischIndexPage() {
+export default async function JuridischIndexPage() {
+  const locale = await getStorefrontLocaleFromCookies()
+  const items = LINKS.map((link) => ({
+    href: link.href,
+    label: t(link.labelKey, locale),
+  }))
+
   return (
-    <ContentPage title="Juridisch">
-      <p>
-        Hier vind je de juridische informatie van EuropMade. EuropMade is een
-        marketplace: de koopovereenkomst komt tot stand tussen jou en de
-        verkoper. EuropMade faciliteert het platform.
-      </p>
-      <ContentNav items={LINKS} />
+    <ContentPage title={t("legalIndexTitle", locale)}>
+      <p>{t("legalIndexIntro", locale)}</p>
+      <ContentNav items={items} ariaLabel={t("onThisPage", locale)} />
     </ContentPage>
   )
 }

@@ -7,6 +7,10 @@ import { EmptyState } from "../_components/empty-state"
 import { KpiCard } from "../_components/kpi-card"
 import { DashboardSection } from "../_components/dashboard-section"
 import { DEMO_REVIEWS, type DemoReview } from "../_lib/demo-data"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { storefrontIntlLocale } from "../../_lib/i18n/locales"
+import { t, tFormat } from "../../_lib/i18n/messages"
+import { statusLabel } from "../../_lib/i18n/status-labels"
 
 type ReviewFilter =
   | "all"
@@ -18,6 +22,8 @@ type ReviewFilter =
   | "5"
 
 export default function SellerReviewsPage() {
+  const locale = useStorefrontLocale()
+  const intl = storefrontIntlLocale(locale)
   const [reviews] = useState<DemoReview[]>(DEMO_REVIEWS)
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<ReviewFilter>("all")
@@ -51,27 +57,40 @@ export default function SellerReviewsPage() {
   }, [reviews, query, filter])
 
   const filterButtons: Array<{ key: ReviewFilter; label: string }> = [
-    { key: "all", label: "Alle" },
-    { key: "unanswered", label: "Onbeantwoord" },
-    { key: "1", label: "1 ster" },
-    { key: "2", label: "2 sterren" },
-    { key: "3", label: "3 sterren" },
-    { key: "4", label: "4 sterren" },
-    { key: "5", label: "5 sterren" },
+    { key: "all", label: t("commonAll", locale) },
+    { key: "unanswered", label: statusLabel("Onbeantwoord", locale) },
+    { key: "1", label: t("sellerReviewsStar", locale) },
+    {
+      key: "2",
+      label: tFormat("sellerReviewsStars", locale, { count: 2 }),
+    },
+    {
+      key: "3",
+      label: tFormat("sellerReviewsStars", locale, { count: 3 }),
+    },
+    {
+      key: "4",
+      label: tFormat("sellerReviewsStars", locale, { count: 4 }),
+    },
+    {
+      key: "5",
+      label: tFormat("sellerReviewsStars", locale, { count: 5 }),
+    },
   ]
 
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Reviews" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavReviews", locale) },
       ]}
     >
       <div className="mb-5">
-        <h1 className="text-[19px] font-bold text-wf-900">Reviews</h1>
+        <h1 className="text-[19px] font-bold text-wf-900">
+          {t("sellerNavReviews", locale)}
+        </h1>
         <p className="mt-1.5 text-xs text-wf-600">
-          Filter op onbeantwoord en sterren. Beantwoord reviews vanuit dit
-          overzicht.
+          {t("sellerReviewsIntro", locale)}
         </p>
       </div>
 
@@ -79,21 +98,21 @@ export default function SellerReviewsPage() {
         <p className="mb-4 text-xs text-wf-600">{replyNote}</p>
       ) : null}
 
-      <DashboardSection title="Samenvatting" wrapChildren={false}>
+      <DashboardSection title={t("commonSummary", locale)} wrapChildren={false}>
         <div className="mt-2 grid grid-cols-1 gap-4 tablet:grid-cols-3">
           <KpiCard
             value={String(reviews.length)}
-            label="Totaal reviews"
+            label={t("sellerReviewsTotal", locale)}
             source="api"
           />
           <KpiCard
             value={average == null ? "—" : String(average)}
-            label="Gemiddelde score"
+            label={t("sellerReviewsAverage", locale)}
             source="api"
           />
           <KpiCard
             value={String(unanswered)}
-            label="Wachten op reactie"
+            label={t("sellerReviewsAwaitingReply", locale)}
             source="api"
           />
         </div>
@@ -101,10 +120,10 @@ export default function SellerReviewsPage() {
 
       <div className="mb-4">
         <Input
-          label="Zoeken"
+          label={t("commonSearch", locale)}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Zoek in tekst of product…"
+          placeholder={t("sellerReviewsSearchPlaceholder", locale)}
         />
       </div>
 
@@ -127,13 +146,13 @@ export default function SellerReviewsPage() {
 
       {reviews.length === 0 ? (
         <EmptyState
-          title="Geen reviews"
-          description="Zodra klanten reviews achterlaten, verschijnen ze hier."
+          title={t("sellerReviewsEmptyTitle", locale)}
+          description={t("sellerReviewsEmptyDesc", locale)}
         />
       ) : filtered.length === 0 ? (
         <EmptyState
-          title="Geen resultaten"
-          description="Pas je filters of zoekopdracht aan."
+          title={t("commonEmptyFilter", locale)}
+          description={t("commonEmptyFilterHint", locale)}
         />
       ) : (
         <div className="space-y-4">
@@ -147,9 +166,14 @@ export default function SellerReviewsPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="outline">{r.score}/5</Badge>
                   <span className="text-[11px] text-wf-500">
-                    {created.toLocaleDateString("nl-NL")}
+                    {created.toLocaleDateString(intl)}
                   </span>
-                  <Badge>{r.answered ? "Beantwoord" : "Onbeantwoord"}</Badge>
+                  <Badge>
+                    {statusLabel(
+                      r.answered ? "Beantwoord" : "Onbeantwoord",
+                      locale
+                    )}
+                  </Badge>
                 </div>
                 <p className="mt-2 text-[11.5px] font-semibold text-wf-700">
                   {r.product_title}
@@ -159,12 +183,14 @@ export default function SellerReviewsPage() {
                 </p>
                 {r.answered && r.reply ? (
                   <p className="mt-3 border-l-2 border-wf-300 pl-3 text-[11.5px] leading-relaxed text-wf-600">
-                    Jouw reactie: {r.reply}
+                    {tFormat("sellerReviewsYourReply", locale, {
+                      reply: r.reply,
+                    })}
                   </p>
                 ) : (
                   <div className="mt-4 grid gap-3 tablet:grid-cols-[1fr_auto] tablet:items-end">
                     <Input
-                      label="Jouw reactie"
+                      label={t("sellerReviewsReplyLabel", locale)}
                       value={replyDrafts[r.id] ?? ""}
                       onChange={(e) =>
                         setReplyDrafts((prev) => ({
@@ -172,15 +198,15 @@ export default function SellerReviewsPage() {
                           [r.id]: e.target.value,
                         }))
                       }
-                      placeholder="Schrijf een reactie…"
+                      placeholder={t("sellerReviewsReplyPlaceholder", locale)}
                     />
                     <Button
                       type="button"
                       onClick={() =>
-                        setReplyNote("Reactie opgeslagen (demo).")
+                        setReplyNote(t("sellerReviewsReplySaved", locale))
                       }
                     >
-                      Beantwoorden
+                      {t("sellerReviewsReplyAction", locale)}
                     </Button>
                   </div>
                 )}

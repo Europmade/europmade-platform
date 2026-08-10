@@ -1,6 +1,7 @@
 /**
  * Redactionele hoofdcategorieën (Blueprint H14.8 ≈ 30).
- * Wordt later vervangen door Product Cloud category-API — geen publieke list-API nu.
+ * Storefront koppelt waar mogelijk aan Product Cloud via slug
+ * (`GET /store/product-cloud/categories`) — deze lijst blijft navigatie-/fallback-taxonomie.
  */
 
 export type MarketplaceCategory = {

@@ -9,6 +9,9 @@ import {
   listReturns,
   type ReturnView,
 } from "../../_lib/order-service-api"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t } from "../../_lib/i18n/messages"
+import { statusLabel } from "../../_lib/i18n/status-labels"
 
 type ListedReturn = ReturnView & {
   order_id: string
@@ -18,6 +21,7 @@ type ListedReturn = ReturnView & {
 }
 
 export default function BuyerReturnsPage() {
+  const locale = useStorefrontLocale()
   const [returns, setReturns] = useState<ListedReturn[] | "loading" | "error">(
     "loading"
   )
@@ -35,24 +39,26 @@ export default function BuyerReturnsPage() {
         setError(
           err instanceof OrderServiceApiError
             ? err.message
-            : "Retouren laden mislukt."
+            : t("buyerReturnsLoadError", locale)
         )
       })
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [locale])
 
   return (
     <BuyerGate
       breadcrumb={[
-        { label: "Mijn EuropMade", href: "/account" },
-        { label: "Retouren" },
+        { label: t("buyerPortalTitle", locale), href: "/account" },
+        { label: t("buyerNavReturns", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Retouren</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("buyerNavReturns", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Status van je retouraanvragen. Nieuwe retour start vanuit een orderdetail.
+        {t("buyerReturnsIntro", locale)}
       </p>
 
       {error ? (
@@ -62,12 +68,12 @@ export default function BuyerReturnsPage() {
       ) : null}
 
       {returns === "loading" ? (
-        <p className="mt-6 text-xs text-wf-600">Laden…</p>
+        <p className="mt-6 text-xs text-wf-600">{t("loading", locale)}</p>
       ) : returns === "error" || returns.length === 0 ? (
         <p className="mt-6 text-xs text-wf-600">
-          Geen retouren.{" "}
+          {t("buyerReturnsEmpty", locale)}{" "}
           <Link href="/account/orders" className="font-semibold underline">
-            Ga naar bestellingen
+            {t("buyerGoToOrders", locale)}
           </Link>
         </p>
       ) : (
@@ -79,14 +85,17 @@ export default function BuyerReturnsPage() {
             >
               <div>
                 <div className="font-medium text-wf-900">
-                  Order #{ret.order_number}
+                  {t("commonOrder", locale)} #{ret.order_number}
                 </div>
                 <div className="mt-0.5 text-wf-600">{ret.reason}</div>
                 <div className="mt-1">
-                  <Badge variant="outline">{ret.status}</Badge>
+                  <Badge variant="outline">
+                    {statusLabel(ret.status, locale)}
+                  </Badge>
                   {ret.refund_status ? (
                     <span className="ml-2 text-wf-600">
-                      Refund: {ret.refund_status}
+                      {t("buyerRefund", locale)}:{" "}
+                      {statusLabel(ret.refund_status, locale)}
                     </span>
                   ) : null}
                 </div>
@@ -95,7 +104,7 @@ export default function BuyerReturnsPage() {
                 href={`/account/returns/${ret.id}`}
                 className="font-semibold text-wf-900 hover:underline"
               >
-                Bekijken
+                {t("commonView", locale)}
               </Link>
             </li>
           ))}

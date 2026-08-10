@@ -7,21 +7,35 @@ import {
   starsForRating,
   type ListingProduct,
 } from "../../_lib/listing-products"
+import {
+  DEFAULT_STOREFRONT_LOCALE,
+  type StorefrontLocale,
+} from "../../_lib/i18n/locales"
+import { t, tFormat } from "../../_lib/i18n/messages"
 
 type ProductCardProps = {
   product: ListingProduct
   /** Mobiel listing = horizontale kaart; desktop/tablet = gridkaart. */
   layout?: "grid" | "list"
+  locale?: StorefrontLocale
 }
 
 /**
  * CMP-017 Product Card — vaste rasterhoogte voor pixelstrakke grids.
  */
-export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
+export function ProductCard({
+  product,
+  layout = "grid",
+  locale = DEFAULT_STOREFRONT_LOCALE,
+}: ProductCardProps) {
   const pct = discountPercent(product)
   const discountLabel = discountBadgeLabel(product)
   const href = `/product/${product.slug}`
   const isList = layout === "list"
+  const sellersLabel =
+    product.offerCount === 1
+      ? t("sellersOne", locale)
+      : tFormat("sellersMany", locale, { count: product.offerCount })
 
   if (isList) {
     return (
@@ -29,13 +43,13 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         <Link
           href={href}
           className="block w-[38%] shrink-0 self-stretch"
-          aria-label={`${product.title} bekijken`}
+          aria-label={tFormat("viewProduct", locale, { title: product.title })}
         >
           <div
             className="h-full w-full overflow-hidden rounded-md bg-wf-100"
             style={{ aspectRatio: "1 / 1", maxHeight: "100%" }}
             role="img"
-            aria-label={`Productafbeelding ${product.title}`}
+            aria-label={product.title}
           />
         </Link>
         <div className="flex min-w-0 flex-1 flex-col">
@@ -77,10 +91,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               ) : null}
             </div>
             <p className="mt-0.5 truncate text-[10.5px] font-semibold text-wf-700">
-              {product.offerCount === 1
-                ? "1 aanbieder"
-                : `${product.offerCount} aanbieders`}{" "}
-              · {product.seller}
+              {sellersLabel}
             </p>
             <p className="mt-0.5 flex h-[16px] items-center gap-1 text-[10.5px] text-wf-600">
               <span className="tracking-tighter text-wf-800" aria-hidden>
@@ -93,7 +104,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
             </p>
             <Link href={href} className="mt-2 block">
               <Button type="button" variant="primary" className="h-9 w-full text-xs">
-                Bekijk product
+                {t("viewProductCta", locale)}
               </Button>
             </Link>
           </div>
@@ -107,12 +118,12 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       <Link
         href={href}
         className="mb-2 block w-full shrink-0"
-        aria-label={`${product.title} bekijken`}
+        aria-label={tFormat("viewProduct", locale, { title: product.title })}
       >
         <div
           className="aspect-square w-full overflow-hidden rounded-md bg-wf-100"
           role="img"
-          aria-label={`Productafbeelding ${product.title}`}
+          aria-label={product.title}
         />
       </Link>
 
@@ -162,10 +173,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         </div>
 
         <p className="mt-0.5 h-[16px] truncate text-[10.5px] font-semibold text-wf-700">
-          {product.offerCount === 1
-            ? "1 aanbieder"
-            : `${product.offerCount} aanbieders`}{" "}
-          · {product.seller}
+          {sellersLabel}
         </p>
 
         <p className="mt-0.5 flex h-[16px] items-center gap-1 text-[10.5px] text-wf-600">
@@ -180,7 +188,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
 
         <Link href={href} className="mt-2.5 block">
           <Button type="button" variant="primary" className="h-9 w-full text-xs">
-            Bekijk product
+            {t("viewProductCta", locale)}
           </Button>
         </Link>
       </div>

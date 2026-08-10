@@ -5,6 +5,7 @@ import { Badge } from "@europmade/ui"
 import { PublicStorefrontChrome } from "../../_components/marketplace/public-storefront-chrome"
 import { ProductCard } from "../../_components/marketplace/product-card"
 import { ProductRails } from "../../_components/cart/product-rails"
+import { getStorefrontLocaleFromCookies } from "../../_lib/i18n/get-storefront-locale"
 import {
   findPartnerProfile,
   listPartnerProfiles,
@@ -41,7 +42,8 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
   const partner = findPartnerProfile(slug)
   if (!partner) notFound()
 
-  const { products: catalog } = await resolveListingProducts()
+  const locale = await getStorefrontLocaleFromCookies()
+  const { products: catalog } = await resolveListingProducts({ locale })
   let products = productsForPartner(partner, catalog)
   if (products.length === 0) {
     products = catalog.slice(0, 12)
@@ -56,7 +58,7 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
     .slice(0, 8)
 
   return (
-    <PublicStorefrontChrome>
+    <PublicStorefrontChrome locale={locale}>
       <div className="relative">
         <div
           className="h-40 w-full tablet:h-52 desktop:h-60"
@@ -173,7 +175,7 @@ export default async function PartnerPage({ params }: PartnerPageProps) {
               <ul className="grid grid-cols-2 gap-3 tablet:grid-cols-3 desktop:grid-cols-4 desktop:gap-4">
                 {products.map((p) => (
                   <li key={p.slug} className="min-h-0">
-                    <ProductCard product={p} layout="grid" />
+                    <ProductCard product={p} layout="grid" locale={locale} />
                   </li>
                 ))}
               </ul>

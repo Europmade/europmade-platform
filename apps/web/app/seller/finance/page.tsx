@@ -10,70 +10,83 @@ import {
   DEMO_PAYOUTS,
   DEMO_REVENUE_HISTORY,
 } from "../_lib/demo-data"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t, tFormat } from "../../_lib/i18n/messages"
+import { statusLabel } from "../../_lib/i18n/status-labels"
 
 /**
  * Financiën — KPI's bovenaan met demo-data + omzethistorie.
  */
 export default function SellerFinanceDashboardPage() {
+  const locale = useStorefrontLocale()
   return (
     <SellerGate
       breadcrumb={[
-        { label: "Seller Dashboard", href: "/seller" },
-        { label: "Financiën", href: "/seller/finance" },
-        { label: "Finance Dashboard" },
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavFinance", locale), href: "/seller/finance" },
+        { label: t("sellerNavFinance", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Financiën</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("sellerNavFinance", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Saldo, uitbetalingen, commissies en marketingkosten.
+        {t("sellerFinanceIntro", locale)}
       </p>
 
-      <DashboardSection title="Overzicht" wrapChildren={false}>
+      <DashboardSection title={t("commonOverview", locale)} wrapChildren={false}>
         <div className="mt-2 grid grid-cols-1 gap-4 tablet:grid-cols-2 desktop:grid-cols-4">
           <KpiCard
             emphasis="primary"
             value={formatEuro(DEMO_FINANCE.available_balance)}
-            label="Beschikbaar saldo"
+            label={t("sellerFinanceAvailableBalance", locale)}
             source="api"
           />
           <KpiCard
             value={formatEuro(DEMO_FINANCE.next_payout_amount)}
-            label="Volgende uitbetaling"
+            label={t("sellerFinanceNextPayout", locale)}
             source="api"
-            note={`Op ${DEMO_FINANCE.next_payout_date}`}
+            note={tFormat("sellerFinanceOnDate", locale, {
+              date: DEMO_FINANCE.next_payout_date,
+            })}
             href="/seller/finance/uitbetalingen"
-            linkLabel="Uitbetalingen"
+            linkLabel={t("sellerFinancePayouts", locale)}
           />
           <KpiCard
             value={formatEuro(DEMO_FINANCE.open_commissions)}
-            label="Open commissies"
+            label={t("sellerFinanceOpenCommissions", locale)}
             source="api"
             href="/seller/finance/commissie"
-            linkLabel="Commissie"
+            linkLabel={t("sellerFinanceCommission", locale)}
           />
           <KpiCard
             value={formatEuro(DEMO_FINANCE.marketing_costs)}
-            label="Marketingkosten"
+            label={t("sellerFinanceMarketingCosts", locale)}
             source="api"
             href="/seller/marketing/billing"
-            linkLabel="Marketing facturen"
+            linkLabel={t("sellerFinanceMarketingInvoices", locale)}
           />
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Omzethistorie" wrapChildren={false}>
+      <DashboardSection
+        title={t("sellerFinanceRevenueHistory", locale)}
+        wrapChildren={false}
+      >
         <div className="mt-2 overflow-hidden rounded-lg border border-wf-300 bg-white">
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                {["Maand", "Omzet"].map((h) => (
-                  <th
-                    key={h}
-                    className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
-                  >
-                    {h}
-                  </th>
-                ))}
+                {[t("sellerMonth", locale), t("sellerRevenue", locale)].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                    >
+                      {h}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
@@ -93,12 +106,19 @@ export default function SellerFinanceDashboardPage() {
         </div>
       </DashboardSection>
 
-      <DashboardSection title="Open uitbetalingen" wrapChildren={false}>
+      <DashboardSection
+        title={t("sellerFinanceOpenPayouts", locale)}
+        wrapChildren={false}
+      >
         <div className="mt-2 overflow-hidden rounded-lg border border-wf-300 bg-white">
           <table className="w-full border-collapse text-xs">
             <thead>
               <tr>
-                {["Status", "Bedrag", "Datum"].map((h) => (
+                {[
+                  t("commonStatus", locale),
+                  t("commonAmount", locale),
+                  t("commonDate", locale),
+                ].map((h) => (
                   <th
                     key={h}
                     className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
@@ -114,7 +134,9 @@ export default function SellerFinanceDashboardPage() {
                   key={p.id}
                   className="border-b border-wf-200 last:border-b-0"
                 >
-                  <td className="px-4 py-2.5 text-wf-800">{p.status}</td>
+                  <td className="px-4 py-2.5 text-wf-800">
+                    {statusLabel(p.status, locale)}
+                  </td>
                   <td className="px-4 py-2.5 text-wf-800">
                     {formatEuro(p.amount)}
                   </td>
@@ -128,24 +150,24 @@ export default function SellerFinanceDashboardPage() {
 
       <section className="mb-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
-          Snelkoppelingen
+          {t("commonShortcuts", locale)}
         </h2>
         <div className="overflow-hidden rounded-lg border border-wf-300 bg-white">
           {[
             {
-              label: "Commissie-overzicht",
+              label: t("sellerFinanceCommissionOverview", locale),
               href: "/seller/finance/commissie",
             },
             {
-              label: "Facturen downloaden",
+              label: t("sellerFinanceDownloadInvoices", locale),
               href: "/seller/finance/facturen",
             },
             {
-              label: "Uitbetalingen",
+              label: t("sellerFinancePayouts", locale),
               href: "/seller/finance/uitbetalingen",
             },
             {
-              label: "BTW-overzicht (OSS)",
+              label: t("sellerFinanceVatOss", locale),
               href: "/seller/finance/btw",
             },
           ].map((item, index, arr) => (
@@ -160,7 +182,7 @@ export default function SellerFinanceDashboardPage() {
                 href={item.href}
                 className="text-[11px] text-wf-800 underline"
               >
-                Bekijken →
+                {t("commonViewArrow", locale)}
               </Link>
             </div>
           ))}

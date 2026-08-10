@@ -9,6 +9,7 @@ import {
   type CartView,
 } from "../../_lib/order-service-api"
 import {
+  fallbackCartLineMeta,
   rememberCartLineMeta,
   type CartLineMeta,
 } from "../../_lib/cart-line-meta"
@@ -103,18 +104,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             unit_price: line.total_unit_price,
             meta:
               meta ??
-              ({
-                offer_id: line.offer_id,
-                product_id: "",
-                slug: "",
-                title: `Product ${line.offer_id.slice(-8)}`,
-                seller_id: line.seller_id,
-                seller_name: `Verkoper ${line.seller_id.slice(-6)}`,
-                verified: true,
-                delivery: "2–4 werkdagen",
-                stock: "Op voorraad",
-                returns: "30 dagen retour",
-              } satisfies CartLineMeta),
+              fallbackCartLineMeta(line.offer_id, line.seller_id),
           })
           setDrawerOpen(true)
         }

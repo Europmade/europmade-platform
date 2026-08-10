@@ -7,19 +7,25 @@ import {
   PartnerOnboardingApiError,
   type OnboardingRecord,
 } from "../../partner-onboarding/_lib/partner-onboarding-api"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t } from "../../_lib/i18n/messages"
+import type { StorefrontLocale } from "../../_lib/i18n/locales"
 import { SellerShell } from "./seller-shell"
 
-function roleLabel(onboarding: OnboardingRecord): string {
+function roleLabel(
+  onboarding: OnboardingRecord,
+  locale: StorefrontLocale
+): string {
   if (onboarding.is_retailer && onboarding.is_producer_or_brand_owner) {
-    return "Retailer + Producent"
+    return t("sellerRoleRetailerProducer", locale)
   }
   if (onboarding.is_producer_or_brand_owner) {
-    return "Producent/Merkhouder"
+    return t("sellerRoleProducerBrand", locale)
   }
   if (onboarding.is_retailer) {
-    return "Retailer"
+    return t("partnerRoleRetailer", locale)
   }
-  return "Partner"
+  return t("sellerRolePartner", locale)
 }
 
 export type SellerGateProps = {
@@ -33,6 +39,7 @@ export type SellerGateProps = {
 export function SellerGate({ breadcrumb, children }: SellerGateProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const locale = useStorefrontLocale()
   const [onboarding, setOnboarding] = useState<
     OnboardingRecord | null | "loading"
   >("loading")
@@ -70,13 +77,16 @@ export function SellerGate({ breadcrumb, children }: SellerGateProps) {
   if (onboarding === "loading" || !onboarding) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-wf-100 text-sm text-wf-600">
-        Laden…
+        {t("loading", locale)}
       </div>
     )
   }
 
   return (
-    <SellerShell roleLabel={roleLabel(onboarding)} breadcrumb={breadcrumb}>
+    <SellerShell
+      roleLabel={roleLabel(onboarding, locale)}
+      breadcrumb={breadcrumb}
+    >
       {children}
     </SellerShell>
   )

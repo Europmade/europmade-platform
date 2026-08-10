@@ -35,3 +35,17 @@ export function L(
 ): LocalizedString {
   return { nl, en, de, fr }
 }
+
+/** BCP 47 tag for `Intl` / `toLocaleDateString`. */
+export function storefrontIntlLocale(locale: StorefrontLocale): string {
+  switch (locale) {
+    case "en":
+      return "en-GB"
+    case "de":
+      return "de-DE"
+    case "fr":
+      return "fr-FR"
+    default:
+      return "nl-NL"
+  }
+}

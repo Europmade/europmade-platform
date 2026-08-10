@@ -11,7 +11,7 @@
 - [`Sprint-3-Epics.md`](./Sprint-3-Epics.md) — 14 Epics, direct afgeleid van de Bouwvolgorde (`09-implementation-blueprint/01-implementation-strategy.md` sectie 4/Bijlage B), elk met doel, fase, afhankelijkheden en Blueprint-bronnen.
 - [`Sprint-3-Tickets.md`](./Sprint-3-Tickets.md) — 67 tickets, elk met uniek ID, titel, beschrijving, afhankelijkheden, verwachte oplevering, acceptatiecriteria en Blueprint-verwijzing.
 - [`Sprint-3-Backlog.md`](./Sprint-3-Backlog.md) — alle 67 tickets in afhankelijkheidsvolgorde, één geprioriteerde lijst.
-- [`Sprint-3-Progress.md`](./Sprint-3-Progress.md) — voortgangsregistratie per ticket; bij aanvang van Sprint 3 staat alles op "Niet gestart."
+- [`Sprint-3-Progress.md`](./Sprint-3-Progress.md) — voortgangsregistratie per ticket; bij aanvang van Sprint 3 staat alles op "Niet gestart." Bevat ook afgeronde sprintonderdelen buiten de losse S3-ticketlijst (o.a. storefront i18n & automatische taaldetectie — **AFGEROND**).
 - [`Sprint-3-Change-Requests.md`](./Sprint-3-Change-Requests.md) — proces en log voor wijzigingen die tijdens Sprint 3 aan het licht komen; een Blueprint-document wordt nooit stilzwijgend gewijzigd.
 
 ## Structuur van de planning

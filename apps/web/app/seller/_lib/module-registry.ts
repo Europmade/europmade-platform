@@ -3,9 +3,13 @@
  * Volgorde is vastgelegd voor Seller Dashboard MVP.
  */
 
+import type { StorefrontMessageKey } from "../../_lib/i18n/messages"
+
 export type SellerNavItem = {
   id: string
+  /** NL fallback for any code that still reads `naam`. */
   naam: string
+  labelKey: StorefrontMessageKey
   route: string | null
   navigatiepositie: number
   primary: boolean
@@ -17,6 +21,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "dashboard",
     naam: "Dashboard",
+    labelKey: "sellerNavDashboard",
     route: "/seller",
     navigatiepositie: 10,
     primary: true,
@@ -25,6 +30,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "products",
     naam: "Producten",
+    labelKey: "sellerNavProducts",
     route: "/seller/products",
     navigatiepositie: 20,
     primary: true,
@@ -33,6 +39,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "orders",
     naam: "Orders",
+    labelKey: "sellerNavOrders",
     route: "/seller/orders",
     navigatiepositie: 30,
     primary: true,
@@ -41,6 +48,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "messages",
     naam: "Berichten",
+    labelKey: "sellerNavMessages",
     route: "/seller/messages",
     navigatiepositie: 40,
     primary: true,
@@ -49,6 +57,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "returns",
     naam: "Retouren",
+    labelKey: "sellerNavReturns",
     route: "/seller/returns",
     navigatiepositie: 50,
     primary: true,
@@ -57,6 +66,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "marketing",
     naam: "Marketing",
+    labelKey: "sellerNavMarketing",
     route: "/seller/marketing",
     navigatiepositie: 60,
     primary: true,
@@ -65,6 +75,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "finance",
     naam: "Financiën",
+    labelKey: "sellerNavFinance",
     route: "/seller/finance",
     navigatiepositie: 70,
     primary: true,
@@ -73,6 +84,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "reviews",
     naam: "Reviews",
+    labelKey: "sellerNavReviews",
     route: "/seller/reviews",
     navigatiepositie: 80,
     primary: true,
@@ -81,6 +93,7 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
   {
     id: "settings",
     naam: "Instellingen",
+    labelKey: "sellerNavSettings",
     route: "/seller/settings",
     navigatiepositie: 90,
     primary: true,

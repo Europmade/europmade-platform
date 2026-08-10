@@ -3,12 +3,14 @@
  * Actieve MVP-modules + uitbreidpunten voor latere kanalen.
  */
 
+import type { StorefrontMessageKey } from "../../../_lib/i18n/messages"
+
 export type MarketingModuleStatus = "available" | "prepared" | "unavailable"
 
 export type MarketingModuleDefinition = {
   id: string
-  title: string
-  description: string
+  titleKey: StorefrontMessageKey
+  descriptionKey: StorefrontMessageKey
   href: string | null
   status: MarketingModuleStatus
   /** MVP = zichtbaar in hub; extension = alleen registry-slot. */
@@ -19,8 +21,8 @@ export type MarketingModuleDefinition = {
 export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   {
     id: "banner_campaigns",
-    title: "Banner Campagnes",
-    description: "Beheer banners voor homepage, categorie, zoek en product.",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: "/seller/marketing/banners",
     status: "available",
     kind: "mvp",
@@ -28,8 +30,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "sponsored_products",
-    title: "Sponsored Products",
-    description: "Campagnes met CPC, budget en looptijd.",
+    titleKey: "sellerMktSponsoredTitle",
+    descriptionKey: "sellerMktSponsoredDesc",
     href: "/seller/marketing/sponsored",
     status: "available",
     kind: "mvp",
@@ -37,8 +39,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "affiliate_program",
-    title: "Affiliate Programma",
-    description: "Stel commissies in op standaard-, categorie- en productniveau.",
+    titleKey: "sellerMktAffiliateTitle",
+    descriptionKey: "sellerMktAffiliateDesc",
     href: "/seller/marketing/affiliate",
     status: "available",
     kind: "mvp",
@@ -46,18 +48,18 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "monthly_billing",
-    title: "Marketing Facturen",
-    description: "Openstaande en betaalde marketingkosten.",
+    titleKey: "sellerMktBillingTitle",
+    descriptionKey: "sellerMktBillingDesc",
     href: "/seller/marketing/billing",
     status: "available",
     kind: "mvp",
     navigatiepositie: 40,
   },
-  // Uitbreidpunten — nog geen UI-routes.
+  // Uitbreidpunten — nog geen UI-routes (titles kept for registry slots only).
   {
     id: "ai_marketing",
-    title: "AI Marketing",
-    description: "AI-ondersteunde campagnes (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -65,8 +67,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "coupons",
-    title: "Coupons",
-    description: "Kortingscoupons (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -74,8 +76,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "promotions",
-    title: "Kortingsacties",
-    description: "Tijdelijke kortingsacties (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -83,8 +85,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "newsletters",
-    title: "Nieuwsbrieven",
-    description: "E-mailcampagnes (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -92,8 +94,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "social_campaigns",
-    title: "Social campagnes",
-    description: "Sociale mediocampagnes (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -101,8 +103,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "google_ads",
-    title: "Google Ads",
-    description: "Google Ads-integratie (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -110,8 +112,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "meta_ads",
-    title: "Meta Ads",
-    description: "Meta Ads-integratie (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -119,8 +121,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "tiktok_ads",
-    title: "TikTok Ads",
-    description: "TikTok Ads-integratie (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -128,8 +130,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "pinterest_ads",
-    title: "Pinterest Ads",
-    description: "Pinterest Ads-integratie (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -137,8 +139,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "influencers",
-    title: "Influencers",
-    description: "Influencer-campagnes (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",
@@ -146,8 +148,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
   },
   {
     id: "affiliate_campaigns",
-    title: "Affiliate campagnes",
-    description: "Gerichte affiliate-campagnes (toekomst).",
+    titleKey: "sellerMktBannerTitle",
+    descriptionKey: "sellerMktBannerDesc",
     href: null,
     status: "prepared",
     kind: "extension",

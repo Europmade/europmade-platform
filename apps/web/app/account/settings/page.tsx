@@ -5,6 +5,8 @@ import Link from "next/link"
 import { Button, Notice } from "@europmade/ui"
 import { BuyerGate } from "../_components/buyer-gate"
 import { endSession } from "../../(auth)/_lib/medusa-auth"
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
+import { t } from "../../_lib/i18n/messages"
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
@@ -20,6 +22,7 @@ type CustomerMe = {
  * Accountinstellingen — Medusa customer + sessie-logout.
  */
 export default function AccountSettingsPage() {
+  const locale = useStorefrontLocale()
   const [customer, setCustomer] = useState<CustomerMe | "loading" | "error">(
     "loading"
   )
@@ -59,29 +62,31 @@ export default function AccountSettingsPage() {
   return (
     <BuyerGate
       breadcrumb={[
-        { label: "Mijn EuropMade", href: "/account" },
-        { label: "Instellingen" },
+        { label: t("buyerPortalTitle", locale), href: "/account" },
+        { label: t("buyerNavSettings", locale) },
       ]}
     >
-      <h1 className="text-[19px] font-bold text-wf-900">Instellingen</h1>
+      <h1 className="text-[19px] font-bold text-wf-900">
+        {t("buyerNavSettings", locale)}
+      </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        Profiel en sessie — via standaard Medusa Customer Auth.
+        {t("buyerSettingsIntro", locale)}
       </p>
 
       {customer === "loading" ? (
-        <p className="mt-4 text-xs text-wf-600">Laden…</p>
+        <p className="mt-4 text-xs text-wf-600">{t("loading", locale)}</p>
       ) : customer === "error" ? (
         <Notice variant="warning" className="mt-4">
-          Kon je profiel niet laden.{" "}
+          {t("buyerProfileLoadError", locale)}{" "}
           <Link href="/login" className="underline">
-            Opnieuw inloggen
+            {t("buyerLoginAgain", locale)}
           </Link>
         </Notice>
       ) : (
         <div className="mt-5 max-w-md space-y-3 rounded-md border border-wf-300 p-4 text-sm">
           <div>
             <p className="text-[11px] font-semibold uppercase text-wf-500">
-              Naam
+              {t("commonName", locale)}
             </p>
             <p className="text-wf-800">
               {[customer.first_name, customer.last_name]
@@ -91,18 +96,18 @@ export default function AccountSettingsPage() {
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase text-wf-500">
-              E-mail
+              {t("commonEmail", locale)}
             </p>
             <p className="text-wf-800">{customer.email}</p>
           </div>
           <div className="flex flex-wrap gap-2 pt-2">
             <Link href="/account/orders">
               <Button type="button" variant="secondary">
-                Bestellingen
+                {t("buyerNavOrders", locale)}
               </Button>
             </Link>
             <Button type="button" variant="secondary" onClick={() => void logout()}>
-              Uitloggen
+              {t("buyerLogout", locale)}
             </Button>
           </div>
         </div>

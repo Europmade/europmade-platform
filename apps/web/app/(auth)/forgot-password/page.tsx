@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { Button, Input } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
 import { requestPasswordReset } from "../_lib/medusa-auth";
+import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
+import { t } from "../../_lib/i18n/messages";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const locale = useStorefrontLocale();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,27 +31,26 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthCard
-      title="Wachtwoord vergeten"
-      subtitle="Vul je e-mailadres in, we sturen je een link om een nieuw wachtwoord in te stellen"
+      title={t("authForgotTitle", locale)}
+      subtitle={t("authForgotSubtitle", locale)}
     >
       <form onSubmit={handleSubmit}>
         <Input
-          label="E-mailadres"
+          label={t("authEmail", locale)}
           type="email"
-          placeholder="naam@voorbeeld.nl"
+          placeholder={t("authEmailPlaceholder", locale)}
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Bezig…" : "Verstuur resetlink"}
+          {isSubmitting ? t("authCreatingAccount", locale) : t("authSendResetLink", locale)}
         </Button>
       </form>
       <p className="mt-[18px] text-center text-xs text-wf-600">
-        ← Terug naar{" "}
         <Link href="/login" className="text-wf-800 underline decoration-dotted">
-          Inloggen
+          {t("authBackToLogin", locale)}
         </Link>
       </p>
     </AuthCard>

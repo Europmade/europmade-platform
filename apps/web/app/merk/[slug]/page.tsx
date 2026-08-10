@@ -6,6 +6,7 @@ import {
   listBrandProfiles,
 } from "../../_lib/brand-profiles"
 import { slugifyForBrand } from "../../_lib/brand-slug"
+import { getStorefrontLocaleFromCookies } from "../../_lib/i18n/get-storefront-locale"
 import { resolveListingProducts } from "../../_lib/storefront-catalog"
 
 type MerkPageProps = {
@@ -35,7 +36,8 @@ export async function generateMetadata({
 export default async function MerkPage({ params }: MerkPageProps) {
   const { slug } = await params
   const brand = findBrandProfile(slug)
-  const { products: allProducts } = await resolveListingProducts()
+  const locale = await getStorefrontLocaleFromCookies()
+  const { products: allProducts } = await resolveListingProducts({ locale })
   const products = allProducts.filter((p) => slugifyForBrand(p.brand) === slug)
   if (!brand && products.length === 0) notFound()
 
@@ -50,6 +52,7 @@ export default async function MerkPage({ params }: MerkPageProps) {
       breadcrumbLabel={title}
       emptyVariant="category"
       products={products}
+      locale={locale}
     />
   )
 }
