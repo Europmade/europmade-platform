@@ -26,6 +26,7 @@ export type CreateProductCloudInput = {
   title: string
   description: string
   category_name: string
+  category_names?: string[]
   identifier_type: "GTIN" | "MPN"
   identifier_value: string
   country_scope?: string | null
@@ -119,6 +120,7 @@ export const createProductCloudStep = createStep(
       title: input.title,
       description: input.description,
       category_name: input.category_name,
+      category_names: input.category_names,
       identifier_type: input.identifier_type,
       identifier_value: input.identifier_value,
       country_scope: input.country_scope,

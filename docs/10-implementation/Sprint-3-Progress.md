@@ -92,6 +92,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | Storefront internationalization & automatic language detection | **AFGEROND** | 2026-08-10 | UI-locales `nl`/`en`/`de`/`fr`; prioriteit handmatig → cookie/localStorage → Accept-Language/`navigator.language` → NL; auto-detect schrijft geen cookie; `messages.ts` + `em_storefront_locale` + `StorefrontLocaleProvider` + `detect-locale.ts`; cookiebanner + voorkeuren locale-aware; geen tweede i18n-systeem. Niet opnieuw openzetten tenzij bug of nieuwe taal. |
 | Sprint 5 — Publieke producentpagina | **AFGEROND** | 2026-08-12 | `/producent/[slug]`; `GET /store/catalog/manufacturers/:slug`; hergebruik ProductCard/ListingResults/PublicStorefrontChrome; producent ≠ merk/seller; geen migratie; DeepL uit. |
 | Sprint 6 — Merkpagina + productiefaciliteiten + rechten | **AFGEROND** | 2026-08-12 | `/merk/[slug]` API-backed; productiefaciliteiten; landcontent; seller `/store/brands`; `/producent` → redirect; migratie `Migration20260812100000`. |
+| Sprint 7 — Zoekfunctie + Product Finder | **AFGEROND** | 2026-08-12 | `/zoeken` URL-gedreven (q, categorie, merk, manufacturer, country, price, verified, sort, page); backend filters/sort/paginering; `/product-finder` stapsgewijs naar `/zoeken`; multi-category via `pc_product_category`; i18n NL/EN/DE/FR. |
 
 ## Samenvatting
 

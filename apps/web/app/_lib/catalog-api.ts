@@ -177,15 +177,38 @@ export type CatalogProductDetail = {
 
 export function listCatalogProducts(params?: {
   category?: string
+  brand?: string
+  manufacturer?: string
+  country?: string
   q?: string
+  price_min?: number
+  price_max?: number
+  verified?: boolean
+  sort?: string
+  offset?: number
+  limit?: number
   region_code?: string
 }) {
   const qs = new URLSearchParams()
   if (params?.category) qs.set("category", params.category)
+  if (params?.brand) qs.set("brand", params.brand)
+  if (params?.manufacturer) qs.set("manufacturer", params.manufacturer)
+  if (params?.country) qs.set("country", params.country)
   if (params?.q) qs.set("q", params.q)
+  if (params?.price_min != null) qs.set("price_min", String(params.price_min))
+  if (params?.price_max != null) qs.set("price_max", String(params.price_max))
+  if (params?.verified != null) qs.set("verified", String(params.verified))
+  if (params?.sort) qs.set("sort", params.sort)
+  if (params?.offset != null) qs.set("offset", String(params.offset))
+  if (params?.limit != null) qs.set("limit", String(params.limit))
   if (params?.region_code) qs.set("region_code", params.region_code)
   const query = qs.toString()
-  return request<{ products: CatalogListProduct[]; count: number }>(
+  return request<{
+    products: CatalogListProduct[]
+    count: number
+    offset: number
+    limit: number
+  }>(
     `/store/catalog/products${query ? `?${query}` : ""}`
   )
 }

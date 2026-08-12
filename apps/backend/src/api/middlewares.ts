@@ -29,6 +29,7 @@ import {
   StoreSubmitClaimBody,
   StoreSubmitChangeProposalBody,
   StoreDecideChangeProposalBody,
+  StorePatchProductCategoriesBody,
 } from "./store/product-cloud/validators"
 import { StoreUpsertOfferBody, StorePatchOfferBody } from "./store/commerce-cloud/validators"
 import {
@@ -141,6 +142,14 @@ export default defineMiddlewares({
       matcher: "/store/product-cloud/products/:id",
       methods: ["GET"],
       middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id",
+      methods: ["PATCH"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StorePatchProductCategoriesBody),
+      ],
     },
     {
       matcher: "/store/product-cloud/products/:id/versions",

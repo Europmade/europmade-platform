@@ -61,6 +61,7 @@ export type CreateProductGraphInput = {
   title: string
   description: string
   category_name: string
+  category_names?: string[]
   identifier_type: "GTIN" | "MPN"
   identifier_value: string
   country_scope?: string | null
@@ -211,40 +212,50 @@ class ProductCloudModuleService extends MedusaService({
       sharedContext
     )
 
-    let category = (
-      await this.listCategories(
-        { name: input.category_name },
-        {},
-        sharedContext
-      )
-    )[0]
-    if (!category) {
-      const slug = slugifyCategoryName(input.category_name)
-      category = await this.createCategories(
-        { name: input.category_name, slug },
-        sharedContext
-      )
-      await this.ensureCategoryAttributeCatalog_(
-        category.id,
-        slug,
-        sharedContext
-      )
-    } else if (!category.slug) {
-      await this.updateCategories(
+    const categoryNames = [
+      ...(input.category_names ?? []),
+      input.category_name,
+    ]
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .filter((name, index, arr) => arr.indexOf(name) === index)
+
+    for (const categoryName of categoryNames) {
+      let category = (
+        await this.listCategories(
+          { name: categoryName },
+          {},
+          sharedContext
+        )
+      )[0]
+      if (!category) {
+        const slug = slugifyCategoryName(categoryName)
+        category = await this.createCategories(
+          { name: categoryName, slug },
+          sharedContext
+        )
+        await this.ensureCategoryAttributeCatalog_(
+          category.id,
+          slug,
+          sharedContext
+        )
+      } else if (!category.slug) {
+        await this.updateCategories(
+          {
+            id: category.id,
+            slug: slugifyCategoryName(categoryName),
+          },
+          sharedContext
+        )
+      }
+      await this.createProductCategories(
         {
-          id: category.id,
-          slug: slugifyCategoryName(input.category_name),
+          product_id: product.id,
+          category_id: category.id,
         },
         sharedContext
       )
     }
-    await this.createProductCategories(
-      {
-        product_id: product.id,
-        category_id: category.id,
-      },
-      sharedContext
-    )
 
     return {
       product_id: product.id,

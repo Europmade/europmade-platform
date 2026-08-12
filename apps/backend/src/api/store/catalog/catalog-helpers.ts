@@ -9,6 +9,7 @@ import { REVIEW_MODULE } from "../../../modules/review"
 import type ReviewModuleService from "../../../modules/review/service"
 import { buildProductCloudPreview } from "../product-cloud/product-preview"
 import { loadBuyBoxForIdentifier } from "../commerce-cloud/buy-box-helpers"
+import { slugifyCategoryName } from "../../../modules/product-cloud/category-attributes"
 
 type PublishedVersion = {
   id: string
@@ -81,8 +82,21 @@ export async function listPublishedCatalogProducts(
     q?: string
     region_code?: string
     take?: number
+    offset?: number
+    limit?: number
     manufacturer_id?: string
     brand_id?: string
+    country_code?: string
+    price_min?: number
+    price_max?: number
+    verified?: boolean
+    sort?:
+      | "popularity"
+      | "price_asc"
+      | "price_desc"
+      | "rating_desc"
+      | "name_asc"
+      | "name_desc"
   } = {}
 ): Promise<CatalogListItem[]> {
   const productCloud = scope.resolve(
@@ -95,7 +109,7 @@ export async function listPublishedCatalogProducts(
   const reviews = scope.resolve(REVIEW_MODULE) as ReviewModuleService
 
   const region = (opts.region_code ?? "NL").toUpperCase()
-  const take = opts.take ?? 100
+  const take = Math.max(opts.take ?? 400, (opts.offset ?? 0) + (opts.limit ?? 24))
 
   const versions = (await productCloud.listProductVersions(
     { publication_status: "Gepubliceerd" },
@@ -113,30 +127,12 @@ export async function listPublishedCatalogProducts(
 
   const categoryFilter = opts.category?.trim().toLowerCase() ?? ""
   const q = opts.q?.trim().toLowerCase() ?? ""
+  const brandFilter = opts.brand_id?.trim().toLowerCase() ?? ""
+  const manufacturerFilter = opts.manufacturer_id?.trim().toLowerCase() ?? ""
 
   const items: CatalogListItem[] = []
+  const seenProductIds = new Set<string>()
   for (const version of published) {
-    if (opts.manufacturer_id || opts.brand_id) {
-      let productRow: {
-        manufacturer_id?: string
-        brand_id?: string
-        lifecycle_status?: string
-      }
-      try {
-        productRow = await productCloud.retrieveProduct(version.product_id)
-      } catch {
-        continue
-      }
-      if (productRow.lifecycle_status === "Gearchiveerd") continue
-      if (
-        opts.manufacturer_id &&
-        productRow.manufacturer_id !== opts.manufacturer_id
-      ) {
-        continue
-      }
-      if (opts.brand_id && productRow.brand_id !== opts.brand_id) continue
-    }
-
     const preview = await buildProductCloudPreview(
       productCloud,
       version.product_id
@@ -144,25 +140,37 @@ export async function listPublishedCatalogProducts(
     // Alleen actieve producten in de publieke catalogus (lifecycle ≠ gearchiveerd).
     if (preview.lifecycle_status === "Gearchiveerd") continue
 
-    if (
-      opts.manufacturer_id &&
-      preview.manufacturer_id !== opts.manufacturer_id
-    ) {
-      continue
-    }
-    if (opts.brand_id && preview.brand_id !== opts.brand_id) continue
-
     const brand = await resolveBrandName(partner, preview.brand_id)
     const manufacturer_name = await resolveManufacturerName(
       partner,
       preview.manufacturer_id
     )
     const country_code = await resolveBrandCountry(partner, preview.brand_id)
+    const brandHay = [preview.brand_id, brand, slugifyCatalogEntityName(brand ?? "")]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+    const manufacturerHay = [
+      preview.manufacturer_id,
+      manufacturer_name,
+      slugifyCatalogEntityName(manufacturer_name ?? ""),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+    if (brandFilter && !brandHay.includes(brandFilter)) continue
+    if (manufacturerFilter && !manufacturerHay.includes(manufacturerFilter)) continue
 
     if (categoryFilter) {
       const match = preview.category_names.some((name) => {
         const n = name.toLowerCase()
-        return n === categoryFilter || n.includes(categoryFilter)
+        const slug = slugifyCategoryName(name)
+        return (
+          n === categoryFilter ||
+          n.includes(categoryFilter) ||
+          slug === categoryFilter ||
+          slug.includes(categoryFilter)
+        )
       })
       if (!match) continue
     }
@@ -178,6 +186,15 @@ export async function listPublishedCatalogProducts(
         .join(" ")
         .toLowerCase()
       if (!hay.includes(q)) continue
+    }
+
+    if (opts.country_code) {
+      const wantedCountry = opts.country_code.trim().toUpperCase()
+      if ((country_code ?? "").toUpperCase() !== wantedCountry) continue
+    }
+
+    if (opts.verified && preview.lifecycle_status !== "Verified™") {
+      continue
     }
 
     let offer_count = 0
@@ -202,6 +219,16 @@ export async function listPublishedCatalogProducts(
         ? productReviews.reduce((s, r) => s + Number(r.score), 0) / review_count
         : null
 
+    if (opts.price_min != null && (from_price == null || from_price < opts.price_min)) {
+      continue
+    }
+    if (opts.price_max != null && (from_price == null || from_price > opts.price_max)) {
+      continue
+    }
+
+    if (seenProductIds.has(version.product_id)) continue
+    seenProductIds.add(version.product_id)
+
     items.push({
       id: version.product_id,
       title: preview.title ?? version.title,
@@ -222,7 +249,28 @@ export async function listPublishedCatalogProducts(
     })
   }
 
-  return items
+  const sort = opts.sort ?? "popularity"
+  items.sort((a, b) => {
+    switch (sort) {
+      case "price_asc":
+        return (a.from_price ?? Number.MAX_SAFE_INTEGER) - (b.from_price ?? Number.MAX_SAFE_INTEGER)
+      case "price_desc":
+        return (b.from_price ?? 0) - (a.from_price ?? 0)
+      case "rating_desc":
+        return (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
+      case "name_asc":
+        return (a.title ?? "").localeCompare(b.title ?? "", "nl")
+      case "name_desc":
+        return (b.title ?? "").localeCompare(a.title ?? "", "nl")
+      case "popularity":
+      default:
+        return b.offer_count - a.offer_count || (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
+    }
+  })
+
+  const offset = Math.max(0, opts.offset ?? 0)
+  const limit = Math.max(1, opts.limit ?? 24)
+  return items.slice(offset, offset + limit)
 }
 
 /**

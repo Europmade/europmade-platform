@@ -183,8 +183,17 @@ async function toStorefrontProducts(
 export async function resolveListingProducts(opts?: {
   categorySlug?: string
   query?: string
+  brand?: string
+  manufacturer?: string
+  country?: string
+  priceMin?: number
+  priceMax?: number
+  verified?: boolean
+  sort?: "popularity" | "price_asc" | "price_desc" | "rating_desc" | "name_asc" | "name_desc"
+  offset?: number
+  limit?: number
   locale?: StorefrontLocale
-}): Promise<{ products: ListingProduct[]; source: DataSource }> {
+}): Promise<{ products: ListingProduct[]; count: number; source: DataSource }> {
   const locale = opts?.locale ?? DEFAULT_STOREFRONT_LOCALE
   try {
     const categoryLabel = opts?.categorySlug
@@ -193,18 +202,28 @@ export async function resolveListingProducts(opts?: {
     const res = await listCatalogProducts({
       category: categoryLabel,
       q: opts?.query,
+      brand: opts?.brand,
+      manufacturer: opts?.manufacturer,
+      country: opts?.country,
+      price_min: opts?.priceMin,
+      price_max: opts?.priceMax,
+      verified: opts?.verified,
+      sort: opts?.sort,
+      offset: opts?.offset,
+      limit: opts?.limit,
     })
     return {
       products: res.products
         .filter(hasValidCommerceOffer)
         .map((item) => mapListItem(item, locale)),
+      count: res.count,
       source: "api",
     }
   } catch (err) {
     if (!(err instanceof CatalogApiError) && !(err instanceof TypeError)) {
       console.error("[storefront-catalog] list failed", err)
     }
-    return { products: [], source: "api" }
+    return { products: [], count: 0, source: "api" }
   }
 }
 

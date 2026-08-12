@@ -8,15 +8,66 @@ import { listPublishedCatalogProducts } from "../catalog-helpers"
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const category =
     typeof req.query.category === "string" ? req.query.category : undefined
+  const brand = typeof req.query.brand === "string" ? req.query.brand : undefined
+  const manufacturer =
+    typeof req.query.manufacturer === "string"
+      ? req.query.manufacturer
+      : undefined
+  const country =
+    typeof req.query.country === "string" ? req.query.country : undefined
   const q = typeof req.query.q === "string" ? req.query.q : undefined
+  const verified =
+    typeof req.query.verified === "string"
+      ? req.query.verified === "true"
+      : undefined
+  const sort =
+    typeof req.query.sort === "string" ? req.query.sort : undefined
+  const price_min =
+    typeof req.query.price_min === "string" ? Number(req.query.price_min) : undefined
+  const price_max =
+    typeof req.query.price_max === "string" ? Number(req.query.price_max) : undefined
+  const offset =
+    typeof req.query.offset === "string" ? Number(req.query.offset) : 0
+  const limit =
+    typeof req.query.limit === "string" ? Number(req.query.limit) : 24
   const region_code =
     typeof req.query.region_code === "string" ? req.query.region_code : "NL"
 
-  const products = await listPublishedCatalogProducts(req.scope, {
+  const baseOpts = {
     category,
     q,
     region_code,
+    brand_id: brand,
+    manufacturer_id: manufacturer,
+    country_code: country,
+    verified,
+    sort: sort as
+      | "popularity"
+      | "price_asc"
+      | "price_desc"
+      | "rating_desc"
+      | "name_asc"
+      | "name_desc"
+      | undefined,
+    price_min: Number.isFinite(price_min) ? price_min : undefined,
+    price_max: Number.isFinite(price_max) ? price_max : undefined,
+  }
+
+  const products = await listPublishedCatalogProducts(req.scope, {
+    ...baseOpts,
+    offset: Number.isFinite(offset) ? offset : 0,
+    limit: Number.isFinite(limit) ? limit : 24,
+  })
+  const allMatching = await listPublishedCatalogProducts(req.scope, {
+    ...baseOpts,
+    offset: 0,
+    limit: 5000,
   })
 
-  res.status(200).json({ products, count: products.length })
+  res.status(200).json({
+    products,
+    count: allMatching.length,
+    offset: Number.isFinite(offset) ? offset : 0,
+    limit: Number.isFinite(limit) ? limit : 24,
+  })
 }

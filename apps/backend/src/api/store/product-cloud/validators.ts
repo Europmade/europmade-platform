@@ -20,6 +20,7 @@ export const StoreCreateProductBody = z.object({
   title: z.string().trim().min(1),
   description: z.string().trim().min(1),
   category_name: z.string().trim().min(1).optional().default("Algemeen"),
+  category_names: z.array(z.string().trim().min(1)).optional(),
   identifier_type: z.enum(["GTIN", "MPN"]).optional().default("GTIN"),
   identifier_value: z.string().trim().min(1),
   country_scope: z.string().trim().min(1).nullable().optional(),
@@ -40,6 +41,13 @@ export const StoreCreateProductBody = z.object({
   media: z.array(MediaInput).optional(),
 })
 export type StoreCreateProductBodyInput = z.infer<typeof StoreCreateProductBody>
+
+export const StorePatchProductCategoriesBody = z.object({
+  category_names: z.array(z.string().trim().min(1)).min(1),
+})
+export type StorePatchProductCategoriesBodyInput = z.infer<
+  typeof StorePatchProductCategoriesBody
+>
 
 export const StoreUpsertConceptBody = z.object({
   title: z.string().trim().min(1).optional(),

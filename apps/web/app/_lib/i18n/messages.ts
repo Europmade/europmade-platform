@@ -104,6 +104,208 @@ const M = {
     "Prix : haut → bas"
   ),
   sortRating: L("Beoordeling", "Rating", "Bewertung", "Notes"),
+  searchSortNameAsc: L(
+    "Naam: A → Z",
+    "Name: A → Z",
+    "Name: A → Z",
+    "Nom : A → Z"
+  ),
+  searchSortNameDesc: L(
+    "Naam: Z → A",
+    "Name: Z → A",
+    "Name: Z → A",
+    "Nom : Z → A"
+  ),
+  searchFilterCategory: L("Categorie", "Category", "Kategorie", "Catégorie"),
+  searchFilterBrand: L("Merk", "Brand", "Marke", "Marque"),
+  searchFilterManufacturer: L(
+    "Producent",
+    "Manufacturer",
+    "Hersteller",
+    "Fabricant"
+  ),
+  searchFilterCountry: L(
+    "Land van productie",
+    "Country of production",
+    "Produktionsland",
+    "Pays de production"
+  ),
+  searchPriceMin: L("Min. prijs", "Min. price", "Min. Preis", "Prix min."),
+  searchPriceMax: L("Max. prijs", "Max. price", "Max. Preis", "Prix max."),
+  searchResultsCount: L(
+    "{count} producten gevonden",
+    "{count} products found",
+    "{count} Produkte gefunden",
+    "{count} produits trouvés"
+  ),
+  searchResultsForCount: L(
+    "{count} producten voor \"{query}\"",
+    "{count} products for \"{query}\"",
+    "{count} Produkte für \"{query}\"",
+    "{count} produits pour \"{query}\""
+  ),
+  searchResultsTitle: L(
+    "Zoekresultaten",
+    "Search results",
+    "Suchergebnisse",
+    "Résultats de recherche"
+  ),
+  searchResultsTitleFor: L(
+    "Zoekresultaten voor \"{query}\"",
+    "Search results for \"{query}\"",
+    "Suchergebnisse für \"{query}\"",
+    "Résultats de recherche pour \"{query}\""
+  ),
+  productFinderTitle: L(
+    "Product Finder",
+    "Product Finder",
+    "Produktfinder",
+    "Product Finder"
+  ),
+  productFinderIntro: L(
+    "Doorloop een paar stappen en vind passende producten in de catalogus.",
+    "Answer a few steps to find matching products in the catalog.",
+    "Beantworten Sie einige Schritte und finden Sie passende Produkte im Katalog.",
+    "Répondez à quelques étapes pour trouver des produits adaptés dans le catalogue."
+  ),
+  productFinderAnyCategory: L(
+    "Alle categorieën",
+    "All categories",
+    "Alle Kategorien",
+    "Toutes les catégories"
+  ),
+  productFinderShowResults: L(
+    "Toon resultaten",
+    "Show results",
+    "Ergebnisse anzeigen",
+    "Afficher les résultats"
+  ),
+  productFinderRestart: L(
+    "Opnieuw beginnen",
+    "Start over",
+    "Neu beginnen",
+    "Recommencer"
+  ),
+  productFinderCountryPlaceholder: L(
+    "Bijv. NL, DE of FR",
+    "E.g. NL, DE or FR",
+    "Z. B. NL, DE oder FR",
+    "P. ex. NL, DE ou FR"
+  ),
+  productFinderMetaDescription: L(
+    "Vind het juiste product via enkele eenvoudige stappen.",
+    "Find the right product in a few simple steps.",
+    "Finden Sie das passende Produkt in wenigen Schritten.",
+    "Trouvez le bon produit en quelques étapes simples."
+  ),
+  productFinderQuestion_usage_area: L(
+    "Waar ga je het product vooral gebruiken?",
+    "Where will you mainly use the product?",
+    "Wo werden Sie das Produkt hauptsächlich verwenden?",
+    "Où utiliserez-vous principalement le produit ?"
+  ),
+  productFinderQuestion_search_term: L(
+    "Waar ben je naar op zoek?",
+    "What are you looking for?",
+    "Wonach suchen Sie?",
+    "Que recherchez-vous ?"
+  ),
+  productFinderQuestion_preferences: L(
+    "Heb je voorkeuren voor herkomst of kwaliteit?",
+    "Do you have preferences for origin or quality?",
+    "Haben Sie Präferenzen für Herkunft oder Qualität?",
+    "Avez-vous des préférences pour l'origine ou la qualité ?"
+  ),
+  productFinderOption_any_category: L(
+    "Alle categorieën",
+    "All categories",
+    "Alle Kategorien",
+    "Toutes les catégories"
+  ),
+  productFinderOption_category_tuin: L(
+    "Tuin & buiten",
+    "Garden & outdoor",
+    "Garten & Outdoor",
+    "Jardin & extérieur"
+  ),
+  productFinderOption_category_wonen: L(
+    "Wonen & interieur",
+    "Home & interior",
+    "Wohnen & Interieur",
+    "Maison & intérieur"
+  ),
+  productFinderOption_category_elektronica: L(
+    "Elektronica",
+    "Electronics",
+    "Elektronik",
+    "Électronique"
+  ),
+  productFinderOption_category_mode: L(
+    "Mode & kleding",
+    "Fashion & clothing",
+    "Mode & Bekleidung",
+    "Mode & vêtements"
+  ),
+  productFinderOption_category_sport: L(
+    "Sport & fitness",
+    "Sports & fitness",
+    "Sport & Fitness",
+    "Sport & fitness"
+  ),
+  productFinderOption_country_any: L(
+    "Alle landen",
+    "All countries",
+    "Alle Länder",
+    "Tous les pays"
+  ),
+  productFinderOption_country_nl: L(
+    "Nederland",
+    "Netherlands",
+    "Niederlande",
+    "Pays-Bas"
+  ),
+  productFinderOption_country_de: L(
+    "Duitsland",
+    "Germany",
+    "Deutschland",
+    "Allemagne"
+  ),
+  productFinderOption_country_fr: L(
+    "Frankrijk",
+    "France",
+    "Frankreich",
+    "France"
+  ),
+  productFinderStepProgress: L(
+    "Stap {current} van {total}",
+    "Step {current} of {total}",
+    "Schritt {current} von {total}",
+    "Étape {current} sur {total}"
+  ),
+  searchEmptyForQuery: L(
+    "Geen resultaten voor \"{query}\"",
+    "No results for \"{query}\"",
+    "Keine Ergebnisse für \"{query}\"",
+    "Aucun résultat pour \"{query}\""
+  ),
+  listingPendingTitle: L(
+    "Binnenkort beschikbaar",
+    "Available soon",
+    "Bald verfügbar",
+    "Bientôt disponible"
+  ),
+  listingPendingBody: L(
+    "De productcatalogus wordt nog opgeleverd. Filters, sortering en productkaarten volgen zodra de listing live is.",
+    "The product catalog is still being rolled out. Filters, sorting and product cards will appear when listing goes live.",
+    "Der Produktkatalog wird noch ausgerollt. Filter, Sortierung und Produktkarten folgen, sobald das Listing live ist.",
+    "Le catalogue produit est en cours de déploiement. Les filtres, le tri et les cartes produit suivront dès la mise en ligne."
+  ),
+  categoryEmptyForLabel: L(
+    "Nog geen producten in {category}",
+    "No products in {category} yet",
+    "Noch keine Produkte in {category}",
+    "Pas encore de produits dans {category}"
+  ),
   productsFound: L(
     "{count} producten gevonden",
     "{count} products found",

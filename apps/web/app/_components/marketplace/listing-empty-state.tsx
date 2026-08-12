@@ -1,5 +1,10 @@
 import Link from "next/link"
 import { Button } from "@europmade/ui"
+import {
+  DEFAULT_STOREFRONT_LOCALE,
+  type StorefrontLocale,
+} from "../../_lib/i18n/locales"
+import { t, tFormat } from "../../_lib/i18n/messages"
 
 export type EmptyStateVariant = "search" | "category" | "catalog-pending"
 
@@ -7,6 +12,7 @@ type ListingEmptyStateProps = {
   variant: EmptyStateVariant
   query?: string
   categoryLabel?: string
+  locale?: StorefrontLocale
 }
 
 /**
@@ -16,26 +22,24 @@ export function ListingEmptyState({
   variant,
   query,
   categoryLabel,
+  locale = DEFAULT_STOREFRONT_LOCALE,
 }: ListingEmptyStateProps) {
   let title: string
   let body: string
 
   if (variant === "catalog-pending") {
-    title = "Binnenkort beschikbaar"
-    body =
-      "De productcatalogus wordt nog opgeleverd. Filters, sortering en productkaarten volgen zodra listing live is — je kunt al wel alle categorieën bekijken."
+    title = t("listingPendingTitle", locale)
+    body = t("listingPendingBody", locale)
   } else if (variant === "search") {
     title = query
-      ? `Geen resultaten voor “${query}”`
-      : "Geen zoekresultaten"
-    body =
-      "Probeer een andere zoekterm, of bekijk een categorie. De volledige zoekindex volgt met de productlisting."
+      ? tFormat("searchEmptyForQuery", locale, { query })
+      : t("commonEmptyFilter", locale)
+    body = t("commonEmptyFilterHint", locale)
   } else {
     title = categoryLabel
-      ? `Nog geen producten in ${categoryLabel}`
-      : "Nog geen producten in deze categorie"
-    body =
-      "Deze categorie is klaar voor producten. Zodra partners aanbod publiceren, verschijnt het hier."
+      ? tFormat("categoryEmptyForLabel", locale, { category: categoryLabel })
+      : t("emptyCategoryTitle", locale)
+    body = t("emptyCategoryBody", locale)
   }
 
   return (
@@ -50,12 +54,12 @@ export function ListingEmptyState({
       <div className="mt-5 flex flex-wrap justify-center gap-2.5">
         <Link href="/categorie">
           <Button type="button" variant="secondary">
-            Bekijk categorieën
+            {t("ctaBrowseCategories", locale)}
           </Button>
         </Link>
         <Link href="/">
           <Button type="button" variant="primary">
-            Naar homepage
+            {t("ctaHome", locale)}
           </Button>
         </Link>
       </div>
