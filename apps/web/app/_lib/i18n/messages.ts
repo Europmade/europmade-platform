@@ -823,6 +823,463 @@ const M = {
     "Verknüpfen Sie eine Produktionsstätte/ein Profil mit mehreren Produkten. Der Score wird automatisch berechnet — Sie geben nie selbst einen Prozentsatz ein.",
     "Liez un site/profil de production à plusieurs produits. Le score est calculé automatiquement — vous ne saisissez jamais un pourcentage."
   ),
+  // —— Sprint 9: Waarom verkopen ——
+  footerWhySell: L(
+    "Waarom verkopen",
+    "Why sell",
+    "Warum verkaufen",
+    "Pourquoi vendre"
+  ),
+  whySellTitle: L(
+    "Waarom verkopen via EuropMade?",
+    "Why sell on EuropMade?",
+    "Warum über EuropMade verkaufen?",
+    "Pourquoi vendre via EuropMade ?"
+  ),
+  whySellMetaDesc: L(
+    "EuropMade verbindt Europese producenten, merken en verkopers met consumenten op één Europese marketplace — met transparante herkomst, Made in Europe en één productcatalogus.",
+    "EuropMade connects European producers, brands and sellers with consumers on one European marketplace — with transparent origin, Made in Europe and one product catalogue.",
+    "EuropMade verbindet europäische Produzenten, Marken und Verkäufer mit Verbrauchern auf einem europäischen Marketplace — mit transparenter Herkunft, Made in Europe und einem Produktkatalog.",
+    "EuropMade relie producteurs, marques et vendeurs européens aux consommateurs sur une marketplace européenne — avec origine transparente, Made in Europe et un catalogue produit unique."
+  ),
+  whySellHero: L(
+    "Verkoop Europese producten in heel Europa.",
+    "Sell European products across Europe.",
+    "Verkaufen Sie europäische Produkte in ganz Europa.",
+    "Vendez des produits européens dans toute l'Europe."
+  ),
+  whySellLead: L(
+    "EuropMade brengt Europese producenten, merken en consumenten samen op één marketplace — met duidelijke herkomst, één productcatalogus en ruimte om te groeien naar meerdere EU-markten.",
+    "EuropMade brings European producers, brands and consumers together on one marketplace — with clear origin, one product catalogue and room to grow into multiple EU markets.",
+    "EuropMade bringt europäische Produzenten, Marken und Verbraucher auf einem Marketplace zusammen — mit klarer Herkunft, einem Produktkatalog und Raum zum Wachsen in mehrere EU-Märkte.",
+    "EuropMade réunit producteurs, marques et consommateurs européens sur une marketplace — avec une origine claire, un catalogue produit unique et de la place pour grandir vers plusieurs marchés de l'UE."
+  ),
+  whySellCtaStart: L(
+    "Start verkopen",
+    "Start selling",
+    "Verkauf starten",
+    "Commencer à vendre"
+  ),
+  whySellCtaDiscover: L(
+    "Ontdek EuropMade",
+    "Discover EuropMade",
+    "EuropMade entdecken",
+    "Découvrir EuropMade"
+  ),
+  whySellCtaPartner: L(
+    "Word partner",
+    "Become a partner",
+    "Partner werden",
+    "Devenir partenaire"
+  ),
+  whySellCtaHow: L(
+    "Ontdek hoe het werkt",
+    "See how it works",
+    "So funktioniert es",
+    "Voir comment ça marche"
+  ),
+  whySellCtaMie: L(
+    "Bekijk Made in Europe",
+    "View Made in Europe",
+    "Made in Europe ansehen",
+    "Voir Made in Europe"
+  ),
+  whySellCtaProducer: L(
+    "Meld je aan als producent",
+    "Register as a producer",
+    "Als Produzent anmelden",
+    "S'inscrire comme producteur"
+  ),
+  whySellProblemTitle: L(
+    "Europa is één markt. Verkoop is dat vaak nog niet.",
+    "Europe is one market. Selling often is not.",
+    "Europa ist ein Markt. Verkauf oft noch nicht.",
+    "L'Europe est un marché. La vente, souvent pas encore."
+  ),
+  whySellProblemBody: L(
+    "Veel producenten en merken moeten vandaag nog per land of per kanaal opnieuw beginnen: andere marketplaces, andere talen, andere productfeeds en andere commerciële processen. Dat versnippert tijd, content en bereik.",
+    "Many producers and brands still start over for each country or channel: other marketplaces, other languages, other product feeds and other commercial processes. That fragments time, content and reach.",
+    "Viele Produzenten und Marken beginnen heute noch pro Land oder Kanal neu: andere Marktplätze, andere Sprachen, andere Produktfeeds und andere kommerzielle Prozesse. Das zersplittert Zeit, Inhalte und Reichweite.",
+    "Beaucoup de producteurs et marques recommencent encore par pays ou canal : autres marketplaces, autres langues, autres flux produits et autres processus commerciaux. Cela fragmente temps, contenu et portée."
+  ),
+  whySellProblemClose: L(
+    "EuropMade brengt dit samen op één platform — zodat je toe kunt bouwen naar Europese zichtbaarheid zonder voor ieder land een volledig aparte marketplace-strategie te moeten opzetten.",
+    "EuropMade brings this together on one platform — so you can build toward European visibility without a fully separate marketplace strategy for every country.",
+    "EuropMade bündelt das auf einer Plattform — damit Sie europäische Sichtbarkeit aufbauen können, ohne für jedes Land eine komplett eigene Marketplace-Strategie zu brauchen.",
+    "EuropMade regroupe cela sur une plateforme — pour construire une visibilité européenne sans stratégie marketplace entièrement séparée pour chaque pays."
+  ),
+  whySellOnePlatformTitle: L(
+    "Een Europese markt. Eén platform.",
+    "One European market. One platform.",
+    "Ein europäischer Markt. Eine Plattform.",
+    "Un marché européen. Une plateforme."
+  ),
+  whySellOnePlatformLead: L(
+    "Met EuropMade bouw je toe naar één platform waarmee je Europese consumenten in meerdere EU-landen kunt bereiken — één account, één productaanbod, één centrale plek voor productinformatie.",
+    "With EuropMade you build toward one platform to reach European consumers in multiple EU countries — one account, one product range, one central place for product information.",
+    "Mit EuropMade bauen Sie auf eine Plattform hin, mit der Sie europäische Verbraucher in mehreren EU-Ländern erreichen — ein Konto, ein Sortiment, ein zentraler Ort für Produktinformationen.",
+    "Avec EuropMade, vous construisez une plateforme pour atteindre des consommateurs européens dans plusieurs pays de l'UE — un compte, une offre, un lieu central pour l'information produit."
+  ),
+  whySellOnePlatformProducer: L(
+    "Producent / merk / verkoper",
+    "Producer / brand / seller",
+    "Produzent / Marke / Verkäufer",
+    "Producteur / marque / vendeur"
+  ),
+  whySellOnePlatformHub: L(
+    "EuropMade — één productcatalogus & koppeling",
+    "EuropMade — one catalogue & connection",
+    "EuropMade — ein Katalog & eine Anbindung",
+    "EuropMade — un catalogue & une connexion"
+  ),
+  whySellOnePlatformMarkets: L(
+    "Europese markten",
+    "European markets",
+    "Europäische Märkte",
+    "Marchés européens"
+  ),
+  whySellOnePlatformBullet1: L(
+    "Eén EuropMade-account voor je partnerschap",
+    "One EuropMade account for your partnership",
+    "Ein EuropMade-Konto für Ihre Partnerschaft",
+    "Un compte EuropMade pour votre partenariat"
+  ),
+  whySellOnePlatformBullet2: L(
+    "Eén centrale productinformatiebron (Product Cloud)",
+    "One central product-information source (Product Cloud)",
+    "Eine zentrale Produktinformationsquelle (Product Cloud)",
+    "Une source centrale d'information produit (Product Cloud)"
+  ),
+  whySellOnePlatformBullet3: L(
+    "Eén productaanbod dat je kunt publiceren voor Europese zichtbaarheid",
+    "One product range you can publish for European visibility",
+    "Ein Sortiment, das Sie für europäische Sichtbarkeit veröffentlichen können",
+    "Une offre produits à publier pour une visibilité européenne"
+  ),
+  whySellOnePlatformBullet4: L(
+    "Automatische vertalingen voor actieve storefront-talen (NL, EN, DE, FR)",
+    "Automatic translations for active storefront languages (NL, EN, DE, FR)",
+    "Automatische Übersetzungen für aktive Storefront-Sprachen (NL, EN, DE, FR)",
+    "Traductions automatiques pour les langues storefront actives (NL, EN, DE, FR)"
+  ),
+  whySellOnePlatformNuance: L(
+    "Welke landen, talen, logistieke opties en verkoopvoorwaarden beschikbaar zijn, hangt af van de betreffende product-, seller- en marktconfiguratie. EuropMade is de Europese groeivisie: één marketplace in plaats van een versnipperde land-per-land aanpak.",
+    "Which countries, languages, logistics options and selling terms are available depends on the relevant product, seller and market configuration. EuropMade is the European growth vision: one marketplace instead of a fragmented country-by-country approach.",
+    "Welche Länder, Sprachen, Logistikoptionen und Verkaufsbedingungen verfügbar sind, hängt von der jeweiligen Produkt-, Seller- und Marktkonfiguration ab. EuropMade ist die europäische Wachstumsvision: ein Marketplace statt eines fragmentierten Land-für-Land-Ansatzes.",
+    "Les pays, langues, options logistiques et conditions de vente disponibles dépendent de la configuration produit, vendeur et marché. EuropMade est la vision de croissance européenne : une marketplace plutôt qu'une approche pays par pays fragmentée."
+  ),
+  whySellAudienceTitle: L(
+    "Een doelgroep die bewust Europees zoekt",
+    "An audience that consciously looks for European",
+    "Eine Zielgruppe, die bewusst europäisch sucht",
+    "Une audience qui cherche consciemment l'européen"
+  ),
+  whySellAudienceBody: L(
+    "EuropMade richt zich op consumenten die meer willen weten dan alleen de laagste prijs — mensen die zoeken naar Europese producten, merken, traceerbare herkomst en verantwoord geproduceerde keuzes.",
+    "EuropMade focuses on consumers who want more than the lowest price alone — people looking for European products, brands, traceable origin and responsibly produced choices.",
+    "EuropMade richtet sich an Verbraucher, die mehr wollen als nur den niedrigsten Preis — Menschen, die europäische Produkte, Marken, nachvollziehbare Herkunft und verantwortungsvoll hergestellte Optionen suchen.",
+    "EuropMade s'adresse aux consommateurs qui veulent plus que le seul prix le plus bas — des personnes qui cherchent des produits européens, des marques, une origine traçable et des choix produits de façon responsable."
+  ),
+  whySellAudienceItem1: L(
+    "Europese producten en merken",
+    "European products and brands",
+    "Europäische Produkte und Marken",
+    "Produits et marques européens"
+  ),
+  whySellAudienceItem2: L(
+    "Transparante herkomst",
+    "Transparent origin",
+    "Transparente Herkunft",
+    "Origine transparente"
+  ),
+  whySellAudienceItem3: L(
+    "Kwaliteit en productinformatie",
+    "Quality and product information",
+    "Qualität und Produktinformationen",
+    "Qualité et information produit"
+  ),
+  whySellAudienceItem4: L(
+    "Verantwoord produceren",
+    "Responsible production",
+    "Verantwortungsvolle Produktion",
+    "Production responsable"
+  ),
+  whySellMieTitle: L(
+    "Made in Europe — geen vlaggetje, maar een beoordeling",
+    "Made in Europe — not a flag, an assessment",
+    "Made in Europe — kein Fähnchen, sondern eine Bewertung",
+    "Made in Europe — pas un drapeau, une évaluation"
+  ),
+  whySellMieBody: L(
+    "EuropMade gebruikt Made in Europe niet alleen als marketingtekst. Er is een transparant beoordelingsmodel voor assemblage, onderdelen en materialen. De score is een beoordelingsscore — geen percentage van de verkoopprijs.",
+    "EuropMade does not use Made in Europe as marketing copy alone. There is a transparent assessment model for assembly, parts and materials. The score is an assessment score — not a share of the selling price.",
+    "EuropMade nutzt Made in Europe nicht nur als Marketingtext. Es gibt ein transparentes Bewertungsmodell für Montage, Teile und Materialien. Der Score ist ein Bewertungsscore — kein Anteil am Verkaufspreis.",
+    "EuropMade n'utilise pas Made in Europe comme seul texte marketing. Il existe un modèle d'évaluation transparent pour l'assemblage, les composants et les matériaux. Le score est un score d'évaluation — pas un pourcentage du prix de vente."
+  ),
+  whySellBrandTitle: L(
+    "Meer dan een productkaart: merk en productie zichtbaar",
+    "More than a product card: brand and production visible",
+    "Mehr als eine Produktkarte: Marke und Produktion sichtbar",
+    "Plus qu'une fiche produit : marque et production visibles"
+  ),
+  whySellBrandBody: L(
+    "Op EuropMade krijgt een merk ruimte voor merkverhaal, productielocaties en Europese identiteit — naast de productcatalogus. Consumenten zien wie maakt, waar wordt geproduceerd en welke producten daarbij horen.",
+    "On EuropMade a brand gets space for brand story, production sites and European identity — alongside the product catalogue. Consumers see who makes it, where it is produced and which products belong together.",
+    "Auf EuropMade erhält eine Marke Raum für Markengeschichte, Produktionsstätten und europäische Identität — neben dem Produktkatalog. Verbraucher sehen, wer herstellt, wo produziert wird und welche Produkte dazugehören.",
+    "Sur EuropMade, une marque a de l'espace pour son histoire, ses sites de production et son identité européenne — à côté du catalogue. Les consommateurs voient qui fabrique, où l'on produit et quels produits s'y rattachent."
+  ),
+  whySellGrowthTitle: L(
+    "Meer zichtbaarheid en verkoopmogelijkheden",
+    "More visibility and selling opportunities",
+    "Mehr Sichtbarkeit und Verkaufsmöglichkeiten",
+    "Plus de visibilité et d'opportunités de vente"
+  ),
+  whySellGrowthBody: L(
+    "Naast organische zichtbaarheid in catalogus en zoeken ondersteunt EuropMade commerciële tools die sellers al kunnen inzetten of verder kunnen uitbouwen.",
+    "Alongside organic visibility in catalogue and search, EuropMade supports commercial tools sellers can already use or continue to expand.",
+    "Neben organischer Sichtbarkeit in Katalog und Suche unterstützt EuropMade kommerzielle Tools, die Seller bereits nutzen oder weiter ausbauen können.",
+    "Au-delà de la visibilité organique dans le catalogue et la recherche, EuropMade propose des outils commerciaux que les vendeurs peuvent déjà utiliser ou développer."
+  ),
+  whySellGrowthItem1: L(
+    "Organische zichtbaarheid via catalogus, categorieën en zoeken",
+    "Organic visibility via catalogue, categories and search",
+    "Organische Sichtbarkeit über Katalog, Kategorien und Suche",
+    "Visibilité organique via catalogue, catégories et recherche"
+  ),
+  whySellGrowthItem2: L(
+    "Sponsored products",
+    "Sponsored products",
+    "Sponsored Products",
+    "Produits sponsorisés"
+  ),
+  whySellGrowthItem3: L(
+    "Banneradvertenties op storefront-posities",
+    "Banner ads on storefront placements",
+    "Bannerwerbung auf Storefront-Platzierungen",
+    "Bannières publicitaires sur emplacements storefront"
+  ),
+  whySellGrowthItem4: L(
+    "Affiliate-programma voor bereik via partners",
+    "Affiliate programme for reach via partners",
+    "Affiliate-Programm für Reichweite über Partner",
+    "Programme d'affiliation pour la portée via des partenaires"
+  ),
+  whySellGrowthItem5: L(
+    "Marketing- en campagnemogelijkheden (inclusief landgerichte of externe campagnes waar beschikbaar)",
+    "Marketing and campaign options (including country-targeted or external campaigns where available)",
+    "Marketing- und Kampagnenmöglichkeiten (inkl. landesbezogener oder externer Kampagnen, wo verfügbar)",
+    "Options marketing et campagnes (y compris campagnes ciblées par pays ou externes, selon disponibilité)"
+  ),
+  whySellPositionTitle: L(
+    "Concurreren op meer dan prijs",
+    "Compete on more than price",
+    "Auf mehr als den Preis konkurrieren",
+    "Concourir sur plus que le prix"
+  ),
+  whySellPositionBody1: L(
+    "EuropMade is niet zomaar een marketplace met producten uit de hele wereld. Het platform kiest bewust voor Europese productie, duidelijke productherkomst en transparantie over hoe iets wordt gemaakt.",
+    "EuropMade is not just a marketplace with products from everywhere. The platform deliberately chooses European production, clear product origin and transparency about how something is made.",
+    "EuropMade ist nicht einfach ein Marketplace mit Produkten aus der ganzen Welt. Die Plattform setzt bewusst auf europäische Produktion, klare Produktherkunft und Transparenz darüber, wie etwas hergestellt wird.",
+    "EuropMade n'est pas une marketplace avec des produits du monde entier. La plateforme choisit délibérément la production européenne, une origine claire et la transparence sur la façon dont un produit est fabriqué."
+  ),
+  whySellPositionBody2: L(
+    "EuropMade kiest bewust voor een model waarin prijs niet het enige criterium is. Europese producenten concurreren binnen een omgeving waarin herkomst, transparantie en verantwoord produceren zichtbaar onderdeel zijn van de waarde van een product.",
+    "EuropMade deliberately chooses a model where price is not the only criterion. European producers compete in an environment where origin, transparency and responsible production are a visible part of a product’s value.",
+    "EuropMade wählt bewusst ein Modell, in dem Preis nicht das einzige Kriterium ist. Europäische Produzenten konkurrieren in einem Umfeld, in dem Herkunft, Transparenz und verantwortungsvolle Produktion sichtbarer Teil des Produktwerts sind.",
+    "EuropMade choisit un modèle où le prix n'est pas le seul critère. Les producteurs européens concurrencent dans un environnement où l'origine, la transparence et la production responsable font partie visible de la valeur d'un produit."
+  ),
+  whySellPositionBody3: L(
+    "Door Europese productie centraal te stellen, wil EuropMade ruimte creëren voor producenten die investeren in werknemers, kwaliteit, milieu en langdurige productontwikkeling. Europese producenten concurreren steeds vaker in markten waarin prijs een belangrijk voordeel kan zijn — EuropMade wil juist een omgeving bieden waarin die investeringen zichtbaar meewegen.",
+    "By putting European production at the centre, EuropMade aims to create space for producers who invest in people, quality, the environment and long-term product development. European producers increasingly compete in markets where price can be a key advantage — EuropMade wants an environment where those investments visibly count.",
+    "Indem europäische Produktion im Zentrum steht, will EuropMade Raum für Produzenten schaffen, die in Mitarbeiter, Qualität, Umwelt und langfristige Produktentwicklung investieren. Europäische Produzenten konkurrieren zunehmend in Märkten, in denen Preis ein wichtiger Vorteil sein kann — EuropMade will eine Umgebung, in der diese Investitionen sichtbar zählen.",
+    "En plaçant la production européenne au centre, EuropMade veut créer de l'espace pour les producteurs qui investissent dans les personnes, la qualité, l'environnement et le développement produit durable. Les producteurs européens concurrencent de plus en plus sur des marchés où le prix peut être un avantage clé — EuropMade veut un environnement où ces investissements comptent de façon visible."
+  ),
+  whySellIntroTitle: L(
+    "Start als één van de eerste Europese partners",
+    "Start as one of the first European partners",
+    "Starten Sie als einer der ersten europäischen Partner",
+    "Démarrez comme l'un des premiers partenaires européens"
+  ),
+  whySellIntroLead: L(
+    "EuropMade werkt met een duidelijk commercieel model: 10% verkoopcommissie, plus optionele advertentie- en marketingmogelijkheden zoals banners, sponsored products en affiliate.",
+    "EuropMade works with a clear commercial model: 10% sales commission, plus optional advertising and marketing options such as banners, sponsored products and affiliate.",
+    "EuropMade arbeitet mit einem klaren kommerziellen Modell: 10 % Verkaufsprovision plus optionale Werbe- und Marketingmöglichkeiten wie Banner, Sponsored Products und Affiliate.",
+    "EuropMade fonctionne avec un modèle commercial clair : 10 % de commission sur les ventes, plus des options publicitaires et marketing optionnelles (bannières, produits sponsorisés, affiliation)."
+  ),
+  whySellIntroOffer: L(
+    "De eerste 50 actieve partners ontvangen €500 advertentietegoed.",
+    "The first 50 active partners receive €500 in advertising credit.",
+    "Die ersten 50 aktiven Partner erhalten 500 € Werbeguthaben.",
+    "Les 50 premiers partenaires actifs reçoivent 500 € de crédit publicitaire."
+  ),
+  whySellIntroTerms: L(
+    "Dit is een introductieprogramma, geen onbeperkte permanente belofte. Toekenning gebeurt onder de voorwaarden van het introductieprogramma (onder meer actief account, complete bedrijfsgegevens en verdere deelnamecriteria).",
+    "This is an introduction programme, not an unlimited permanent promise. Allocation follows the introduction-programme terms (including an active account, complete company details and further participation criteria).",
+    "Dies ist ein Einführungsprogramm, kein unbegrenztes Dauerversprechen. Die Vergabe erfolgt unter den Bedingungen des Einführungsprogramms (u. a. aktives Konto, vollständige Firmendaten und weitere Teilnahmekriterien).",
+    "Il s'agit d'un programme d'introduction, pas d'une promesse permanente illimitée. L'attribution suit les conditions du programme d'introduction (notamment compte actif, données d'entreprise complètes et autres critères de participation)."
+  ),
+  whySellHowTitle: L(
+    "Hoe het werkt",
+    "How it works",
+    "So funktioniert es",
+    "Comment ça marche"
+  ),
+  whySellHowStep1: L(
+    "Aanmelden als partner via partner-onboarding",
+    "Register as a partner via partner onboarding",
+    "Als Partner über das Partner-Onboarding anmelden",
+    "S'inscrire comme partenaire via l'onboarding partenaire"
+  ),
+  whySellHowStep2: L(
+    "Producten toevoegen in de Product Cloud",
+    "Add products in the Product Cloud",
+    "Produkte in der Product Cloud hinzufügen",
+    "Ajouter des produits dans le Product Cloud"
+  ),
+  whySellHowStep3: L(
+    "Productinformatie controleren en aanvullen",
+    "Review and complete product information",
+    "Produktinformationen prüfen und ergänzen",
+    "Contrôler et compléter l'information produit"
+  ),
+  whySellHowStep4: L(
+    "Made in Europe-informatie invullen (score wordt automatisch berekend)",
+    "Enter Made in Europe information (score is calculated automatically)",
+    "Made-in-Europe-Angaben erfassen (Score wird automatisch berechnet)",
+    "Renseigner Made in Europe (le score est calculé automatiquement)"
+  ),
+  whySellHowStep5: L(
+    "Producten publiceren voor de storefront",
+    "Publish products to the storefront",
+    "Produkte für die Storefront veröffentlichen",
+    "Publier les produits sur la storefront"
+  ),
+  whySellHowStep6: L(
+    "Europese klanten bereiken — organisch en via marketingtools",
+    "Reach European customers — organically and via marketing tools",
+    "Europäische Kunden erreichen — organisch und über Marketing-Tools",
+    "Atteindre des clients européens — en organique et via les outils marketing"
+  ),
+  whySellFaqTitle: L(
+    "Veelgestelde vragen",
+    "Frequently asked questions",
+    "Häufig gestellte Fragen",
+    "Questions fréquentes"
+  ),
+  whySellFaq1Q: L(
+    "Voor wie is EuropMade?",
+    "Who is EuropMade for?",
+    "Für wen ist EuropMade?",
+    "Pour qui est EuropMade ?"
+  ),
+  whySellFaq1A: L(
+    "Voor Europese producenten, merkeigenaren en verkopers die producten met Europese productie en transparante herkomst willen aanbieden aan consumenten.",
+    "For European producers, brand owners and sellers who want to offer products with European production and transparent origin to consumers.",
+    "Für europäische Produzenten, Markeninhaber und Verkäufer, die Produkte mit europäischer Produktion und transparenter Herkunft an Verbraucher anbieten wollen.",
+    "Pour les producteurs, propriétaires de marques et vendeurs européens qui veulent proposer aux consommateurs des produits à production européenne et origine transparente."
+  ),
+  whySellFaq2Q: L(
+    "Kan ik vanuit één account in meerdere Europese landen verkopen?",
+    "Can I sell in multiple European countries from one account?",
+    "Kann ich von einem Konto aus in mehreren europäischen Ländern verkaufen?",
+    "Puis-je vendre dans plusieurs pays européens depuis un seul compte ?"
+  ),
+  whySellFaq2A: L(
+    "Ja, dat is de kernvisie: één EuropMade-partnerschap en één productcatalogus om toe te bouwen naar bereik in meerdere EU-markten. Beschikbaarheid per land hangt af van product-, seller- en marktconfiguratie.",
+    "Yes — that is the core vision: one EuropMade partnership and one product catalogue to build toward reach in multiple EU markets. Availability per country depends on product, seller and market configuration.",
+    "Ja — das ist die Kernvision: eine EuropMade-Partnerschaft und ein Produktkatalog, um Reichweite in mehreren EU-Märkten aufzubauen. Die Verfügbarkeit pro Land hängt von Produkt-, Seller- und Marktkonfiguration ab.",
+    "Oui — c'est la vision centrale : un partenariat EuropMade et un catalogue pour construire une portée sur plusieurs marchés de l'UE. La disponibilité par pays dépend de la configuration produit, vendeur et marché."
+  ),
+  whySellFaq3Q: L(
+    "Kan ik mijn bestaande productcatalogus importeren?",
+    "Can I import my existing product catalogue?",
+    "Kann ich meinen bestehenden Produktkatalog importieren?",
+    "Puis-je importer mon catalogue produits existant ?"
+  ),
+  whySellFaq3A: L(
+    "Je beheert producten via de Product Cloud en seller-flows. Voor Made in Europe-gegevens is er bulk- en CSV-ondersteuning. Brede catalogusimport hangt af van de beschikbare seller-tools in je account.",
+    "You manage products via the Product Cloud and seller flows. Made in Europe data supports bulk and CSV. Broader catalogue import depends on the seller tools available in your account.",
+    "Sie verwalten Produkte über die Product Cloud und Seller-Flows. Für Made-in-Europe-Daten gibt es Bulk- und CSV-Unterstützung. Breitere Katalogimporte hängen von den Seller-Tools in Ihrem Konto ab.",
+    "Vous gérez les produits via le Product Cloud et les parcours vendeur. Les données Made in Europe prennent en charge le bulk et le CSV. Un import catalogue plus large dépend des outils vendeur disponibles sur votre compte."
+  ),
+  whySellFaq4Q: L(
+    "Hoe werkt Made in Europe?",
+    "How does Made in Europe work?",
+    "Wie funktioniert Made in Europe?",
+    "Comment fonctionne Made in Europe ?"
+  ),
+  whySellFaq4A: L(
+    "Je vult stabiele keuzes in voor assemblage, onderdelen en materialen (en optioneel een productiefaciliteit). EuropMade berekent de score automatisch. Details staan op de pagina Made in Europe.",
+    "You enter stable choices for assembly, parts and materials (and optionally a production facility). EuropMade calculates the score automatically. Details are on the Made in Europe page.",
+    "Sie geben stabile Angaben zu Montage, Teilen und Materialien ein (optional eine Produktionsstätte). EuropMade berechnet den Score automatisch. Details stehen auf der Made-in-Europe-Seite.",
+    "Vous saisissez des choix stables pour assemblage, composants et matériaux (et optionnellement un site de production). EuropMade calcule le score automatiquement. Les détails sont sur la page Made in Europe."
+  ),
+  whySellFaq5Q: L(
+    "Kan ik mijn merkverhaal tonen?",
+    "Can I show my brand story?",
+    "Kann ich meine Markengeschichte zeigen?",
+    "Puis-je montrer l'histoire de ma marque ?"
+  ),
+  whySellFaq5A: L(
+    "Ja. Merkpagina’s kunnen merkverhaal, marktcontent en productiefaciliteiten tonen naast je producten.",
+    "Yes. Brand pages can show brand story, market content and production facilities alongside your products.",
+    "Ja. Markenseiten können Markengeschichte, Marktinhalt und Produktionsstätten neben Ihren Produkten zeigen.",
+    "Oui. Les pages marque peuvent afficher l'histoire de marque, le contenu marché et les sites de production à côté de vos produits."
+  ),
+  whySellFaq6Q: L(
+    "Hoe worden producten vertaald?",
+    "How are products translated?",
+    "Wie werden Produkte übersetzt?",
+    "Comment les produits sont-ils traduits ?"
+  ),
+  whySellFaq6A: L(
+    "Productcontent kan via de bestaande Product Cloud-vertaallaag worden voorbereid voor de actieve talen Nederlands, Engels, Duits en Frans. Extra talen zijn architecturaal voorbereid, maar niet als beschikbaar claimen zolang ze niet actief zijn.",
+    "Product content can be prepared via the existing Product Cloud translation layer for the active languages Dutch, English, German and French. Additional languages are architecturally prepared, but are not claimed as available until active.",
+    "Produktinhalte können über die bestehende Product-Cloud-Übersetzungsschicht für die aktiven Sprachen Niederländisch, Englisch, Deutsch und Französisch vorbereitet werden. Weitere Sprachen sind architektonisch vorbereitet, werden aber nicht als verfügbar behauptet, solange sie nicht aktiv sind.",
+    "Le contenu produit peut être préparé via la couche de traduction Product Cloud existante pour les langues actives néerlandais, anglais, allemand et français. D'autres langues sont préparées architecturalement, mais ne sont pas présentées comme disponibles tant qu'elles ne sont pas actives."
+  ),
+  whySellFaq7Q: L(
+    "Wat kost verkopen via EuropMade?",
+    "What does selling on EuropMade cost?",
+    "Was kostet der Verkauf über EuropMade?",
+    "Que coûte la vente via EuropMade ?"
+  ),
+  whySellFaq7A: L(
+    "Er geldt een vaste verkoopcommissie van 10%. Daarnaast kun je optioneel investeren in zichtbaarheid via banners, sponsored products en gerelateerde marketing. Er is geen MVP-abonnement verplicht volgens het financiële model.",
+    "There is a fixed sales commission of 10%. You can optionally invest in visibility via banners, sponsored products and related marketing. No MVP subscription is required under the financial model.",
+    "Es gilt eine feste Verkaufsprovision von 10 %. Optional können Sie in Sichtbarkeit über Banner, Sponsored Products und verwandtes Marketing investieren. Laut Finanzmodell ist kein MVP-Abo erforderlich.",
+    "Il y a une commission de vente fixe de 10 %. Vous pouvez investir optionnellement dans la visibilité via bannières, produits sponsorisés et marketing associé. Aucun abonnement MVP n'est requis selon le modèle financier."
+  ),
+  whySellFaq8Q: L(
+    "Hoe werkt advertentiepromotie?",
+    "How does advertising promotion work?",
+    "Wie funktioniert Werbe-Promotion?",
+    "Comment fonctionne la promotion publicitaire ?"
+  ),
+  whySellFaq8A: L(
+    "In het seller-marketinggedeelte kun je onder meer banners en sponsored products beheren. Affiliate werkt via een apart partnerprogramma. Het introductieprogramma met advertentietegoed geldt onder de voorwaarden van dat programma.",
+    "In the seller marketing area you can manage banners and sponsored products, among other things. Affiliate runs via a separate partner programme. The introduction programme with advertising credit applies under that programme’s terms.",
+    "Im Seller-Marketingbereich können Sie u. a. Banner und Sponsored Products verwalten. Affiliate läuft über ein separates Partnerprogramm. Das Einführungsprogramm mit Werbeguthaben gilt unter den Bedingungen dieses Programms.",
+    "Dans l'espace marketing vendeur, vous pouvez notamment gérer bannières et produits sponsorisés. L'affiliation passe par un programme partenaire séparé. Le programme d'introduction avec crédit publicitaire s'applique selon ses conditions."
+  ),
+  whySellFinalTitle: L(
+    "Europa heeft duizenden sterke producenten. Wij bouwen het platform om ze samen te brengen.",
+    "Europe has thousands of strong producers. We are building the platform to bring them together.",
+    "Europa hat Tausende starker Produzenten. Wir bauen die Plattform, um sie zusammenzubringen.",
+    "L'Europe compte des milliers de producteurs solides. Nous construisons la plateforme pour les réunir."
+  ),
+  whySellFinalLead: L(
+    "Sluit je aan als Europese producent, merk of verkoper — en bouw mee aan één marketplace waarop herkomst en kwaliteit zichtbaar meetellen.",
+    "Join as a European producer, brand or seller — and help build one marketplace where origin and quality visibly count.",
+    "Werden Sie europäischer Produzent, Marke oder Verkäufer — und bauen Sie mit an einem Marketplace, auf dem Herkunft und Qualität sichtbar zählen.",
+    "Rejoignez-nous comme producteur, marque ou vendeur européen — et construisez une marketplace où l'origine et la qualité comptent de façon visible."
+  ),
+  whySellFinalCta: L(
+    "Start verkopen via EuropMade",
+    "Start selling on EuropMade",
+    "Verkauf über EuropMade starten",
+    "Commencer à vendre via EuropMade"
+  ),
   madeInLabel: L("Gemaakt in", "Made in", "Hergestellt in", "Fabriqué en"),
   euOwnership: L("EU-eigendom", "EU ownership", "EU-Eigentum", "Propriété UE"),
   euVerified: L("EU Verified", "EU Verified", "EU Verified", "EU Verified"),

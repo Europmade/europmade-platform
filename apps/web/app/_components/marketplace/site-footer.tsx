@@ -33,6 +33,7 @@ const FOOTER_COLUMNS: FooterCol[] = [
     titleKey: "footerColPartners",
     links: [
       { labelKey: "footerSell", href: "/partner-onboarding" },
+      { labelKey: "footerWhySell", href: "/waarom-verkopen" },
       { labelKey: "footerAffiliate", href: "/affiliate" },
     ],
   },
