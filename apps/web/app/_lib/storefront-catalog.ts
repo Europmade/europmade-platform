@@ -4,11 +4,16 @@
 
 import {
   CatalogApiError,
+  getCatalogBrand,
+  getCatalogManufacturer,
   getCatalogProduct,
   listCatalogProducts,
+  type CatalogBrandPage,
   type CatalogListProduct,
+  type CatalogManufacturerPage,
   type CatalogProductDetail,
 } from "./catalog-api"
+import { slugifyForManufacturer } from "./manufacturer-slug"
 import { type ListingProduct } from "./listing-products"
 import {
   findMarketplaceCategory,
@@ -106,10 +111,15 @@ function mapListItem(
 ): ListingProduct {
   const countryCode = (item.country_code ?? "EU").toUpperCase()
   const priceEuros = item.from_price ?? 0
+  const manufacturerName = item.manufacturer_name?.trim()
   return {
     slug: item.id,
     title: item.title,
     brand: item.brand_name ?? t("brand", locale),
+    manufacturer: manufacturerName || undefined,
+    manufacturerSlug: manufacturerName
+      ? slugifyForManufacturer(manufacturerName)
+      : undefined,
     seller:
       item.offer_count > 0
         ? item.offer_count === 1
@@ -122,11 +132,12 @@ function mapListItem(
     rating: item.average_review_score ?? 0,
     countryCode,
     countryLabel: countryDisplayLabel(countryCode, locale),
-    verified: false,
+    verified: item.lifecycle_status === "Verified™",
     features: item.category_names.slice(0, 2),
     keywords: [
       item.title,
       item.brand_name ?? "",
+      manufacturerName ?? "",
       ...item.category_names,
       item.identifier_value ?? "",
     ].filter(Boolean),
@@ -205,6 +216,61 @@ export async function resolveFeaturedProducts(
   return [...products]
     .sort((a, b) => b.offerCount - a.offerCount || b.rating - a.rating)
     .slice(0, limit)
+}
+
+export type ProducerPageData = {
+  manufacturer: CatalogManufacturerPage["manufacturer"]
+  products: ListingProduct[]
+}
+
+export type BrandPageData = {
+  brand: CatalogBrandPage["brand"]
+  products: ListingProduct[]
+}
+
+export async function resolveBrandPage(
+  slug: string,
+  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
+): Promise<BrandPageData | null> {
+  try {
+    const page = await getCatalogBrand(slug, {
+      region_code: "NL",
+      locale,
+    })
+    return {
+      brand: page.brand,
+      products: page.products
+        .filter(hasValidCommerceOffer)
+        .map((item) => mapListItem(item, locale)),
+    }
+  } catch (err) {
+    if (err instanceof CatalogApiError && err.status === 404) return null
+    if (!(err instanceof CatalogApiError) && !(err instanceof TypeError)) {
+      console.error("[storefront-catalog] brand page failed", err)
+    }
+    return null
+  }
+}
+
+export async function resolveProducerPage(
+  slug: string,
+  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
+): Promise<ProducerPageData | null> {
+  try {
+    const page = await getCatalogManufacturer(slug)
+    return {
+      manufacturer: page.manufacturer,
+      products: page.products
+        .filter(hasValidCommerceOffer)
+        .map((item) => mapListItem(item, locale)),
+    }
+  } catch (err) {
+    if (err instanceof CatalogApiError && err.status === 404) return null
+    if (!(err instanceof CatalogApiError) && !(err instanceof TypeError)) {
+      console.error("[storefront-catalog] producer page failed", err)
+    }
+    return null
+  }
 }
 
 function localizeCategoryNames(
@@ -316,6 +382,8 @@ async function mapApiDetail(
       description: p.description,
       lifecycle_status: p.lifecycle_status,
       brand_name: p.brand_name,
+      manufacturer_id: null,
+      manufacturer_name: p.manufacturer_name,
       category_names: p.category_names,
       identifier_id: p.identifier_id,
       identifier_type: p.identifier_type,

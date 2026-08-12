@@ -345,7 +345,7 @@ export function ProductDetailPage({
               {t("madeInLabel", locale)} {detail.listing.countryLabel}
             </span>
             <Link
-              href={`/merk/${brandSlug}`}
+              href={`/merk/${brandSlug}#productie`}
               className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
             >
               {t("producerLabel", locale)} {detail.manufacturer} ›

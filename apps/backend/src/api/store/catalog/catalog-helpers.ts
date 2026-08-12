@@ -25,6 +25,8 @@ export type CatalogListItem = {
   description: string | null
   lifecycle_status: string
   brand_name: string | null
+  manufacturer_id: string | null
+  manufacturer_name: string | null
   category_names: string[]
   identifier_id: string | null
   identifier_type: string | null
@@ -34,6 +36,25 @@ export type CatalogListItem = {
   from_price: number | null
   average_review_score: number | null
   review_count: number
+}
+
+export type CatalogManufacturerProfile = {
+  id: string
+  name: string
+  slug: string
+  country_code: string | null
+  product_count: number
+  verified_product_count: number
+}
+
+/** Gedeelde slug-normalisatie (merk, producent, partner). */
+export function slugifyCatalogEntityName(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
 }
 
 export type CatalogOfferView = {
@@ -55,7 +76,14 @@ export type CatalogOfferView = {
  */
 export async function listPublishedCatalogProducts(
   scope: MedusaContainer,
-  opts: { category?: string; q?: string; region_code?: string; take?: number } = {}
+  opts: {
+    category?: string
+    q?: string
+    region_code?: string
+    take?: number
+    manufacturer_id?: string
+    brand_id?: string
+  } = {}
 ): Promise<CatalogListItem[]> {
   const productCloud = scope.resolve(
     PRODUCT_CLOUD_MODULE
@@ -88,6 +116,27 @@ export async function listPublishedCatalogProducts(
 
   const items: CatalogListItem[] = []
   for (const version of published) {
+    if (opts.manufacturer_id || opts.brand_id) {
+      let productRow: {
+        manufacturer_id?: string
+        brand_id?: string
+        lifecycle_status?: string
+      }
+      try {
+        productRow = await productCloud.retrieveProduct(version.product_id)
+      } catch {
+        continue
+      }
+      if (productRow.lifecycle_status === "Gearchiveerd") continue
+      if (
+        opts.manufacturer_id &&
+        productRow.manufacturer_id !== opts.manufacturer_id
+      ) {
+        continue
+      }
+      if (opts.brand_id && productRow.brand_id !== opts.brand_id) continue
+    }
+
     const preview = await buildProductCloudPreview(
       productCloud,
       version.product_id
@@ -95,7 +144,19 @@ export async function listPublishedCatalogProducts(
     // Alleen actieve producten in de publieke catalogus (lifecycle ≠ gearchiveerd).
     if (preview.lifecycle_status === "Gearchiveerd") continue
 
+    if (
+      opts.manufacturer_id &&
+      preview.manufacturer_id !== opts.manufacturer_id
+    ) {
+      continue
+    }
+    if (opts.brand_id && preview.brand_id !== opts.brand_id) continue
+
     const brand = await resolveBrandName(partner, preview.brand_id)
+    const manufacturer_name = await resolveManufacturerName(
+      partner,
+      preview.manufacturer_id
+    )
     const country_code = await resolveBrandCountry(partner, preview.brand_id)
 
     if (categoryFilter) {
@@ -110,6 +171,7 @@ export async function listPublishedCatalogProducts(
       const hay = [
         preview.title ?? "",
         brand ?? "",
+        manufacturer_name ?? "",
         ...preview.category_names,
         preview.identifier_value ?? "",
       ]
@@ -146,6 +208,8 @@ export async function listPublishedCatalogProducts(
       description: version.description || null,
       lifecycle_status: preview.lifecycle_status,
       brand_name: brand,
+      manufacturer_id: preview.manufacturer_id || null,
+      manufacturer_name,
       category_names: preview.category_names,
       identifier_id: preview.identifier_id,
       identifier_type: preview.identifier_type,
@@ -159,6 +223,94 @@ export async function listPublishedCatalogProducts(
   }
 
   return items
+}
+
+/**
+ * Publieke producentpagina: Manufacturer (Partner-module) + gepubliceerde producten.
+ */
+export async function loadManufacturerCatalogPage(
+  scope: MedusaContainer,
+  slug: string,
+  region_code = "NL"
+): Promise<{
+  manufacturer: CatalogManufacturerProfile
+  products: CatalogListItem[]
+} | null> {
+  const partner = scope.resolve(PARTNER_MODULE) as PartnerModuleService
+  const normalizedSlug = slug.trim().toLowerCase()
+  if (!normalizedSlug) return null
+
+  const manufacturers = (await partner.listManufacturers(
+    {},
+    { take: 500 }
+  )) as Array<{ id: string; name?: string }>
+
+  let match: { id: string; name: string } | null = null
+  for (const row of manufacturers) {
+    const name = row.name?.trim()
+    if (!name) continue
+    if (slugifyCatalogEntityName(name) === normalizedSlug) {
+      match = { id: row.id, name }
+      break
+    }
+  }
+
+  if (!match) {
+    const productCloud = scope.resolve(
+      PRODUCT_CLOUD_MODULE
+    ) as ProductCloudModuleService
+    const versions = (await productCloud.listProductVersions(
+      { publication_status: "Gepubliceerd" },
+      { order: { version_number: "DESC" }, take: 500 }
+    )) as PublishedVersion[]
+    const seenProduct = new Set<string>()
+    const seenManufacturer = new Set<string>()
+    for (const version of versions) {
+      if (seenProduct.has(version.product_id)) continue
+      seenProduct.add(version.product_id)
+      let product: { manufacturer_id?: string; lifecycle_status?: string }
+      try {
+        product = await productCloud.retrieveProduct(version.product_id)
+      } catch {
+        continue
+      }
+      if (product.lifecycle_status === "Gearchiveerd") continue
+      const manufacturerId = product.manufacturer_id?.trim()
+      if (!manufacturerId || seenManufacturer.has(manufacturerId)) continue
+      seenManufacturer.add(manufacturerId)
+      const name = await resolveManufacturerName(partner, manufacturerId)
+      if (!name) continue
+      if (slugifyCatalogEntityName(name) === normalizedSlug) {
+        match = { id: manufacturerId, name }
+        break
+      }
+    }
+  }
+  if (!match) return null
+
+  const products = await listPublishedCatalogProducts(scope, {
+    manufacturer_id: match.id,
+    region_code,
+    take: 200,
+  })
+  if (products.length === 0) return null
+
+  const country_code = await resolveManufacturerCountry(partner, match.id)
+  const verified_product_count = products.filter(
+    (p) => p.lifecycle_status === "Verified™"
+  ).length
+
+  return {
+    manufacturer: {
+      id: match.id,
+      name: match.name,
+      slug: slugifyCatalogEntityName(match.name),
+      country_code,
+      product_count: products.length,
+      verified_product_count,
+    },
+    products,
+  }
 }
 
 /**
@@ -293,11 +445,12 @@ async function resolveBrandName(
     const brand = await partner.retrieveBrand(brandId)
     return brand.name ?? null
   } catch {
-    return null
+    if (brandId.startsWith("brand_")) return null
+    return brandId
   }
 }
 
-async function resolveManufacturerName(
+export async function resolveManufacturerName(
   partner: PartnerModuleService,
   manufacturerId: string
 ): Promise<string | null> {
@@ -306,7 +459,14 @@ async function resolveManufacturerName(
     const m = await partner.retrieveManufacturer(manufacturerId)
     return (m as { name?: string }).name ?? null
   } catch {
-    return null
+    // Legacy/test Product Cloud-rijen gebruiken soms vrije tekst i.p.v. manu_*-FK.
+    if (
+      manufacturerId.startsWith("manu_") ||
+      manufacturerId.startsWith("mfr_")
+    ) {
+      return null
+    }
+    return manufacturerId
   }
 }
 
@@ -322,6 +482,26 @@ async function resolveBrandCountry(
     const company = (
       brand as { owner_company?: { country_code?: string } | null }
     ).owner_company
+    return company?.country_code ?? null
+  } catch {
+    return null
+  }
+}
+
+async function resolveManufacturerCountry(
+  partner: PartnerModuleService,
+  manufacturerId: string
+): Promise<string | null> {
+  if (!manufacturerId) return null
+  try {
+    const manufacturer = await partner.retrieveManufacturer(manufacturerId, {
+      relations: ["represented_by_company"],
+    })
+    const company = (
+      manufacturer as {
+        represented_by_company?: { country_code?: string } | null
+      }
+    ).represented_by_company
     return company?.country_code ?? null
   } catch {
     return null

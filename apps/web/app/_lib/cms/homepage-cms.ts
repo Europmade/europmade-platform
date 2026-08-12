@@ -390,7 +390,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Assortiment EU Verified d’un producteur néerlandais — découvrez leur collection."
       ),
       ctaLabel: L("Bekijk partner", "View partner", "Partner ansehen", "Voir le partenaire"),
-      destinationUrl: "/partner/verdetech",
+      destinationUrl: "/merk/verdetech",
       linkType: "partner",
       image: null,
       imageAlt: L(
@@ -454,10 +454,10 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
       visible: true,
       sortOrder: 40,
       title: L(
-        "Populaire Europese producenten",
-        "Popular European producers",
-        "Beliebte europäische Produzenten",
-        "Producteurs européens populaires"
+        "Populaire Europese merken",
+        "Popular European brands",
+        "Beliebte europäische Marken",
+        "Marques européennes populaires"
       ),
       subtitle: L(
         "Ontdek makers en merken met geverifieerde herkomst.",

@@ -62,7 +62,7 @@ export function PartnerCard({
           </span>
         </p>
         <Link
-          href={`/partner/${slug}`}
+          href={`/merk/${slug}`}
           className="mt-2 inline-flex h-7 items-center justify-center rounded-lg border border-wf-300 bg-white px-2 text-[11.5px] font-semibold text-wf-800 transition group-hover:border-wf-900 group-hover:bg-wf-900 group-hover:text-white"
         >
           {viewLabel}

@@ -66,7 +66,7 @@ const PUBLISHED_ADS: StorefrontAdCreative[] = [
     description:
       "EU Verified assortiment van een Nederlandse producent — ontdek hun collectie.",
     ctaLabel: "Bekijk partner",
-    href: "/partner/verdetech",
+    href: "/merk/verdetech",
     linkType: "partner",
     imageSrc: "",
     imageAlt: "Advertentie: Partner VerdeTech",

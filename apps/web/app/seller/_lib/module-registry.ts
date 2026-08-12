@@ -37,6 +37,15 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
     available: true,
   },
   {
+    id: "brands",
+    naam: "Merken",
+    labelKey: "sellerNavBrands",
+    route: "/seller/brands",
+    navigatiepositie: 25,
+    primary: true,
+    available: true,
+  },
+  {
     id: "orders",
     naam: "Orders",
     labelKey: "sellerNavOrders",

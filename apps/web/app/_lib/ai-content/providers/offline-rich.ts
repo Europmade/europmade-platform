@@ -59,7 +59,7 @@ function producerRefs(
       id: `producer_${slug}`,
       slug,
       label: LS(p, p, p, p),
-      href: `/partner/${slug}`,
+      href: `/merk/${slug}`,
       logoKey: slug.includes("verde") || slug.includes("tuin") ? "verdetech" : "atelier",
       countryLabel: LS(country, country, country, country),
       productCount: 8 + (slug.length % 30),

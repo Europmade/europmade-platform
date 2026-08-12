@@ -7,6 +7,8 @@ export type ListingProduct = {
   slug: string
   title: string
   brand: string
+  manufacturer?: string
+  manufacturerSlug?: string
   seller: string
   categorySlugs: string[]
   priceCents: number

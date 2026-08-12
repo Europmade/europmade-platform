@@ -2,7 +2,9 @@ import { MedusaService } from "@medusajs/framework/utils"
 import Company from "./models/company"
 import Seller from "./models/seller"
 import Brand from "./models/brand"
+import BrandMarketContent from "./models/brand-market-content"
 import Manufacturer from "./models/manufacturer"
+import ProductionFacility from "./models/production-facility"
 
 /**
  * Partner-module — Blueprint `11-medusa-architecture.md` §3:
@@ -15,7 +17,9 @@ class PartnerModuleService extends MedusaService({
   Company,
   Seller,
   Brand,
+  BrandMarketContent,
   Manufacturer,
+  ProductionFacility,
 }) {}
 
 export default PartnerModuleService

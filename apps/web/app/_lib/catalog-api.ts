@@ -16,9 +16,9 @@ export class CatalogApiError extends Error {
   }
 }
 
-async function request<T>(path: string): Promise<T> {
+async function request<T>(path: string, timeoutMs = 4_000): Promise<T> {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), 4_000)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
     const response = await fetch(`${BACKEND_URL}${path}`, {
       headers: {
@@ -62,6 +62,8 @@ export type CatalogListProduct = {
   description: string | null
   lifecycle_status: string
   brand_name: string | null
+  manufacturer_id: string | null
+  manufacturer_name: string | null
   category_names: string[]
   identifier_id: string | null
   identifier_type: string | null
@@ -92,6 +94,53 @@ export type CatalogReview = {
   text: string | null
   created_at: string
   review_type?: string
+}
+
+export type CatalogProductionFacility = {
+  id: string
+  name: string
+  country_code: string
+  region: string | null
+  description: string | null
+  manufacturer_id: string | null
+  source: "facility" | "product_origin"
+}
+
+export type CatalogBrandProfile = {
+  id: string
+  name: string
+  slug: string
+  intro: string | null
+  story: string | null
+  website_url: string | null
+  logo_url: string | null
+  country_code: string | null
+  product_count: number
+  verified_product_count: number
+  market_country: string
+  market_intro: string | null
+  market_story: string | null
+  market_contact: string | null
+  facilities: CatalogProductionFacility[]
+}
+
+export type CatalogBrandPage = {
+  brand: CatalogBrandProfile
+  products: CatalogListProduct[]
+}
+
+export type CatalogManufacturerProfile = {
+  id: string
+  name: string
+  slug: string
+  country_code: string | null
+  product_count: number
+  verified_product_count: number
+}
+
+export type CatalogManufacturerPage = {
+  manufacturer: CatalogManufacturerProfile
+  products: CatalogListProduct[]
 }
 
 export type CatalogProductDetail = {
@@ -138,6 +187,28 @@ export function listCatalogProducts(params?: {
   const query = qs.toString()
   return request<{ products: CatalogListProduct[]; count: number }>(
     `/store/catalog/products${query ? `?${query}` : ""}`
+  )
+}
+
+export function getCatalogBrand(
+  slug: string,
+  opts?: { region_code?: string; locale?: string }
+) {
+  const qs = new URLSearchParams()
+  if (opts?.region_code) qs.set("region_code", opts.region_code)
+  if (opts?.locale) qs.set("locale", opts.locale)
+  const query = qs.toString()
+  return request<CatalogBrandPage>(
+    `/store/catalog/brands/${encodeURIComponent(slug)}${query ? `?${query}` : ""}`,
+    60_000
+  )
+}
+
+export function getCatalogManufacturer(slug: string, region_code = "NL") {
+  const qs = new URLSearchParams({ region_code })
+  return request<CatalogManufacturerPage>(
+    `/store/catalog/manufacturers/${encodeURIComponent(slug)}?${qs}`,
+    60_000
   )
 }
 

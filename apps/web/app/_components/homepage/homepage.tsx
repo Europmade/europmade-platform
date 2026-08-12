@@ -117,7 +117,7 @@ export async function Homepage() {
             ) : null}
             <HomepageProducerGrid
               partners={cms.partners.items}
-              viewLabel={t("viewProducer", locale)}
+              viewLabel={t("viewBrand", locale)}
               productsSuffix={t("productsSuffix", locale)}
             />
           </section>

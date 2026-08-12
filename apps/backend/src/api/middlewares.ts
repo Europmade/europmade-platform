@@ -32,6 +32,11 @@ import {
 } from "./store/product-cloud/validators"
 import { StoreUpsertOfferBody, StorePatchOfferBody } from "./store/commerce-cloud/validators"
 import {
+  StorePatchBrandBody,
+  StorePatchBrandMarketBody,
+  StoreUpsertProductionFacilityBody,
+} from "./store/brands/validators"
+import {
   StoreCheckoutRevalidateBody,
   StoreCheckoutPlaceBody,
   AdminResolveExceptionBody,
@@ -638,6 +643,47 @@ export default defineMiddlewares({
       matcher: "/store/catalog/products/:id",
       methods: ["GET"],
       middlewares: [],
+    },
+    {
+      matcher: "/store/catalog/manufacturers/:slug",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/catalog/brands/:slug",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/brands",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/brands/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/brands/:id",
+      methods: ["PATCH"],
+      middlewares: [customerAuth, validateAndTransformBody(StorePatchBrandBody)],
+    },
+    {
+      matcher: "/store/brands/:id/markets/:countryCode",
+      methods: ["PATCH"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StorePatchBrandMarketBody),
+      ],
+    },
+    {
+      matcher: "/store/brands/:id/facilities",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreUpsertProductionFacilityBody),
+      ],
     },
     {
       matcher: "/store/affiliate",

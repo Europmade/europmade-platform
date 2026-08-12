@@ -13,6 +13,11 @@ const Brand = model
   .define("brand", {
     id: model.id({ prefix: "brand" }).primaryKey(),
     name: model.text(),
+    slug: model.text().nullable(),
+    intro: model.text().nullable(),
+    story: model.text().nullable(),
+    website_url: model.text().nullable(),
+    logo_url: model.text().nullable(),
     owner_company: model
       .belongsTo(() => Company, {
         mappedBy: "brands",
@@ -20,6 +25,10 @@ const Brand = model
       })
       .nullable(),
   })
-  .indexes([{ on: ["name"] }, { on: ["owner_company_id"] }])
+  .indexes([
+    { on: ["name"] },
+    { on: ["slug"] },
+    { on: ["owner_company_id"] },
+  ])
 
 export default Brand

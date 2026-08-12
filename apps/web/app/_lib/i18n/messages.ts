@@ -38,6 +38,12 @@ const M = {
     "Produzent ansehen",
     "Voir le producteur"
   ),
+  viewBrand: L(
+    "Bekijk merk",
+    "View brand",
+    "Marke ansehen",
+    "Voir la marque"
+  ),
   position: L("Positie", "Position", "Position", "Position"),
   prevCampaigns: L(
     "Vorige campagnes",
@@ -321,6 +327,98 @@ const M = {
     "Producer:",
     "Produzent:",
     "Producteur :"
+  ),
+  producerPageNotFound: L(
+    "Producent niet gevonden — EuropMade",
+    "Producer not found — EuropMade",
+    "Produzent nicht gefunden — EuropMade",
+    "Producteur introuvable — EuropMade"
+  ),
+  producerPageMeta: L(
+    "{count} producten · Producentpagina",
+    "{count} products · Producer page",
+    "{count} Produkte · Produzentenseite",
+    "{count} produits · Page producteur"
+  ),
+  producerProductsHeading: L(
+    "Producten van deze producent",
+    "Products from this producer",
+    "Produkte dieses Produzenten",
+    "Produits de ce producteur"
+  ),
+  producerCountryLabel: L(
+    "Productieland",
+    "Country of production",
+    "Produktionsland",
+    "Pays de production"
+  ),
+  producerVerifiedProducts: L(
+    "{count} Verified™ producten",
+    "{count} Verified™ products",
+    "{count} Verified™-Produkte",
+    "{count} produits Verified™"
+  ),
+  breadcrumbProducer: L("Producent", "Producer", "Produzent", "Producteur"),
+  breadcrumbBrand: L("Merk", "Brand", "Marke", "Marque"),
+  brandPageNotFound: L(
+    "Merk niet gevonden — EuropMade",
+    "Brand not found — EuropMade",
+    "Marke nicht gefunden — EuropMade",
+    "Marque introuvable — EuropMade"
+  ),
+  brandPageMeta: L(
+    "{count} producten · Merkpagina",
+    "{count} products · Brand page",
+    "{count} Produkte · Markenseite",
+    "{count} produits · Page marque"
+  ),
+  brandAboutHeading: L(
+    "Over {name}",
+    "About {name}",
+    "Über {name}",
+    "À propos de {name}"
+  ),
+  brandProductionHeading: L(
+    "Waar worden onze producten gemaakt?",
+    "Where are our products made?",
+    "Wo werden unsere Produkte hergestellt?",
+    "Où nos produits sont-ils fabriqués ?"
+  ),
+  brandProductsHeading: L(
+    "Producten van {name}",
+    "Products from {name}",
+    "Produkte von {name}",
+    "Produits de {name}"
+  ),
+  brandVerifiedProducts: L(
+    "{count} Verified™ producten",
+    "{count} Verified™ products",
+    "{count} Verified™-Produkte",
+    "{count} produits Verified™"
+  ),
+  brandWebsiteLabel: L(
+    "Website",
+    "Website",
+    "Website",
+    "Site web"
+  ),
+  sellerNavBrands: L(
+    "Merken",
+    "Brands",
+    "Marken",
+    "Marques"
+  ),
+  sellerBrandsTitle: L(
+    "Mijn merken",
+    "My brands",
+    "Meine Marken",
+    "Mes marques"
+  ),
+  sellerBrandsEmpty: L(
+    "Nog geen merken om te beheren.",
+    "No brands to manage yet.",
+    "Noch keine Marken zu verwalten.",
+    "Pas encore de marques à gérer."
   ),
   madeInEurope: L(
     "Gemaakt in Europa",
