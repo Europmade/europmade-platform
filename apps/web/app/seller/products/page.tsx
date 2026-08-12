@@ -300,6 +300,12 @@ export default function SellerProductsPage() {
             {t("sellerProductsBulkPublish", locale)}
           </Button>
           <Link
+            href="/seller/made-in-europe"
+            className="inline-flex items-center justify-center rounded-wf border border-wf-300 bg-white px-[18px] py-[9px] text-sm font-semibold text-wf-900 hover:bg-wf-50"
+          >
+            {t("sellerMieTitle", locale)}
+          </Link>
+          <Link
             href="/seller/products/add"
             className="inline-flex items-center justify-center rounded-wf border border-transparent bg-wf-900 px-[18px] py-[9px] text-sm font-semibold text-white hover:bg-wf-800"
           >

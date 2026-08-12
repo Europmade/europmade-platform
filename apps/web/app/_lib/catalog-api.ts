@@ -104,6 +104,12 @@ export type CatalogProductionFacility = {
   description: string | null
   manufacturer_id: string | null
   source: "facility" | "product_origin"
+  assembly_eu_band?: string | null
+  parts_eu_level?: string | null
+  materials_eu_level?: string | null
+  primary_assembly_country?: string | null
+  made_in_europe_score?: number | null
+  is_made_in_europe?: boolean
 }
 
 export type CatalogBrandProfile = {
@@ -143,6 +149,27 @@ export type CatalogManufacturerPage = {
   products: CatalogListProduct[]
 }
 
+export type CatalogMadeInEurope = {
+  is_made_in_europe: boolean
+  score: number | null
+  assembly_points: number
+  parts_points: number
+  materials_points: number
+  max_assembly: number
+  max_parts: number
+  max_materials: number
+  assembly_eu_band: string
+  parts_eu_level: string
+  materials_eu_level: string
+  primary_assembly_country: string | null
+  facility: {
+    id: string
+    name: string
+    country_code: string
+    region: string | null
+  } | null
+}
+
 export type CatalogProductDetail = {
   product: {
     id: string
@@ -157,6 +184,7 @@ export type CatalogProductDetail = {
     identifier_value: string | null
     country_code: string | null
   }
+  made_in_europe?: CatalogMadeInEurope | null
   buy_box: {
     source: string
     identifier_id: string

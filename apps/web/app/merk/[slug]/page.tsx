@@ -196,6 +196,18 @@ export default async function MerkPage({ params }: MerkPageProps) {
                       {facility.description}
                     </p>
                   ) : null}
+                  {facility.is_made_in_europe &&
+                  facility.made_in_europe_score != null ? (
+                    <p className="mt-2 text-[12px] font-semibold text-emerald-900">
+                      {t("madeInEurope", locale)} — {facility.made_in_europe_score}%
+                    </p>
+                  ) : null}
+                  <Link
+                    href="/made-in-europe"
+                    className="mt-2 inline-block text-[11px] font-semibold text-wf-800 underline"
+                  >
+                    {t("mieHowDetermined", locale)}
+                  </Link>
                 </article>
               ))}
             </div>

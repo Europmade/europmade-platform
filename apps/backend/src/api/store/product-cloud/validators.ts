@@ -91,3 +91,59 @@ export const StoreDecideChangeProposalBody = z.object({
 export type StoreDecideChangeProposalBodyInput = z.infer<
   typeof StoreDecideChangeProposalBody
 >
+
+const AssemblyEuBand = z.enum(["eu_100", "eu_75_99", "eu_50_74", "eu_below_50"])
+const PartsEuLevel = z.enum(["eu_majority", "eu_partial", "eu_none"])
+const MaterialsEuLevel = z.enum(["eu_majority", "eu_partial", "eu_none"])
+
+/** Single-product Made in Europe assign (score always computed server-side). */
+export const StoreAssignMadeInEuropeBody = z.object({
+  production_facility_id: z.string().trim().min(1).optional().nullable(),
+  assembly_eu_band: AssemblyEuBand.optional(),
+  parts_eu_level: PartsEuLevel.optional(),
+  materials_eu_level: MaterialsEuLevel.optional(),
+  primary_assembly_country: z.string().trim().length(2).optional().nullable(),
+})
+export type StoreAssignMadeInEuropeBodyInput = z.infer<
+  typeof StoreAssignMadeInEuropeBody
+>
+
+/** Bulk assign same facility/profile to many owned products. */
+export const StoreBulkMadeInEuropeBody = z.object({
+  product_ids: z.array(z.string().trim().min(1)).min(1).max(500),
+  production_facility_id: z.string().trim().min(1).optional().nullable(),
+  assembly_eu_band: AssemblyEuBand.optional(),
+  parts_eu_level: PartsEuLevel.optional(),
+  materials_eu_level: MaterialsEuLevel.optional(),
+  primary_assembly_country: z.string().trim().length(2).optional().nullable(),
+})
+export type StoreBulkMadeInEuropeBodyInput = z.infer<
+  typeof StoreBulkMadeInEuropeBody
+>
+
+/** CSV-style bulk rows (stable IDs only). */
+export const StoreCsvMadeInEuropeBody = z.object({
+  rows: z
+    .array(
+      z.object({
+        product_id: z.string().trim().min(1).optional(),
+        sku: z.string().trim().min(1).optional(),
+        ean: z.string().trim().min(1).optional(),
+        production_facility_id: z.string().trim().min(1).optional().nullable(),
+        assembly_eu_band: AssemblyEuBand.optional(),
+        parts_eu_level: PartsEuLevel.optional(),
+        materials_eu_level: MaterialsEuLevel.optional(),
+        primary_assembly_country: z
+          .string()
+          .trim()
+          .length(2)
+          .optional()
+          .nullable(),
+      })
+    )
+    .min(1)
+    .max(500),
+})
+export type StoreCsvMadeInEuropeBodyInput = z.infer<
+  typeof StoreCsvMadeInEuropeBody
+>

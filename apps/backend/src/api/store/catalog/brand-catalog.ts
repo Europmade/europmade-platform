@@ -6,6 +6,12 @@ import type ProductCloudModuleService from "../../../modules/product-cloud/servi
 import { VERIFICATION_MODULE } from "../../../modules/verification"
 import type VerificationModuleService from "../../../modules/verification/service"
 import {
+  computeMadeInEuropeScore,
+  isAssemblyEuBand,
+  isMaterialsEuLevel,
+  isPartsEuLevel,
+} from "../../../modules/verification/made-in-europe"
+import {
   listPublishedCatalogProducts,
   resolveManufacturerName,
   slugifyCatalogEntityName,
@@ -26,6 +32,12 @@ export type CatalogProductionFacility = {
   description: string | null
   manufacturer_id: string | null
   source: "facility" | "product_origin"
+  assembly_eu_band?: string | null
+  parts_eu_level?: string | null
+  materials_eu_level?: string | null
+  primary_assembly_country?: string | null
+  made_in_europe_score?: number | null
+  is_made_in_europe?: boolean
 }
 
 export type CatalogBrandProfile = {
@@ -185,12 +197,36 @@ async function loadFacilitiesForBrand(
     region?: string | null
     description?: string | null
     manufacturer_id?: string | null
+    assembly_eu_band?: string | null
+    parts_eu_level?: string | null
+    materials_eu_level?: string | null
+    primary_assembly_country?: string | null
   }>
 
   for (const row of stored) {
     const key = `f:${row.id}`
     if (seen.has(key)) continue
     seen.add(key)
+    let made_in_europe_score: number | null = null
+    let is_made_in_europe = false
+    if (
+      row.assembly_eu_band &&
+      row.parts_eu_level &&
+      row.materials_eu_level &&
+      isAssemblyEuBand(row.assembly_eu_band) &&
+      isPartsEuLevel(row.parts_eu_level) &&
+      isMaterialsEuLevel(row.materials_eu_level)
+    ) {
+      const scored = computeMadeInEuropeScore({
+        assembly_eu_band: row.assembly_eu_band,
+        parts_eu_level: row.parts_eu_level,
+        materials_eu_level: row.materials_eu_level,
+        primary_assembly_country:
+          row.primary_assembly_country ?? row.country_code ?? null,
+      })
+      made_in_europe_score = scored.score
+      is_made_in_europe = scored.is_made_in_europe
+    }
     facilities.push({
       id: row.id,
       name: row.name ?? "Productielocatie",
@@ -199,6 +235,12 @@ async function loadFacilitiesForBrand(
       description: row.description ?? null,
       manufacturer_id: row.manufacturer_id ?? null,
       source: "facility",
+      assembly_eu_band: row.assembly_eu_band ?? null,
+      parts_eu_level: row.parts_eu_level ?? null,
+      materials_eu_level: row.materials_eu_level ?? null,
+      primary_assembly_country: row.primary_assembly_country ?? null,
+      made_in_europe_score,
+      is_made_in_europe,
     })
   }
 

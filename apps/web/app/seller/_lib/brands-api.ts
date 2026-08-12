@@ -110,6 +110,10 @@ export function upsertSellerBrandFacility(
     description?: string | null
     manufacturer_id?: string | null
     is_active?: boolean
+    assembly_eu_band?: string | null
+    parts_eu_level?: string | null
+    materials_eu_level?: string | null
+    primary_assembly_country?: string | null
   }
 ) {
   return request(`/store/brands/${encodeURIComponent(id)}/facilities`, {

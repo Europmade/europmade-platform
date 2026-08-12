@@ -30,6 +30,9 @@ import {
   StoreSubmitChangeProposalBody,
   StoreDecideChangeProposalBody,
   StorePatchProductCategoriesBody,
+  StoreAssignMadeInEuropeBody,
+  StoreBulkMadeInEuropeBody,
+  StoreCsvMadeInEuropeBody,
 } from "./store/product-cloud/validators"
 import { StoreUpsertOfferBody, StorePatchOfferBody } from "./store/commerce-cloud/validators"
 import {
@@ -180,6 +183,35 @@ export default defineMiddlewares({
       middlewares: [
         customerAuth,
         validateAndTransformBody(StoreOwnerLifecycleBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/made-in-europe",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/made-in-europe",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreAssignMadeInEuropeBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/made-in-europe/bulk",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreBulkMadeInEuropeBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/made-in-europe/csv",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreCsvMadeInEuropeBody),
       ],
     },
     {

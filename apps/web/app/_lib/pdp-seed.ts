@@ -30,6 +30,27 @@ export type PdpReview = {
   retailer?: string
 }
 
+export type PdpMadeInEurope = {
+  is_made_in_europe: boolean
+  score: number | null
+  assembly_points: number
+  parts_points: number
+  materials_points: number
+  max_assembly: number
+  max_parts: number
+  max_materials: number
+  assembly_eu_band: string
+  parts_eu_level: string
+  materials_eu_level: string
+  primary_assembly_country: string | null
+  facility: {
+    id: string
+    name: string
+    country_code: string
+    region: string | null
+  } | null
+}
+
 export type PdpDetail = {
   slug: string
   listing: ListingProduct
@@ -38,6 +59,7 @@ export type PdpDetail = {
   reviewCount: number
   manufacturer: string
   euOwnershipPercent: number
+  madeInEurope?: PdpMadeInEurope | null
   intro: string
   highlights: string[]
   suitableFor: string[]

@@ -15,6 +15,8 @@ const FOOTER_COLUMNS: FooterCol[] = [
     titleKey: "footerColEuropMade",
     links: [
       { labelKey: "footerAbout", href: "/over" },
+      { labelKey: "footerWhyBuy", href: "/waarom-kopen" },
+      { labelKey: "footerMadeInEurope", href: "/made-in-europe" },
       { labelKey: "footerContact", href: "/klantenservice" },
       { labelKey: "footerCareers", href: "/werken-bij" },
     ],

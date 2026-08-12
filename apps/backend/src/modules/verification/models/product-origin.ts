@@ -1,9 +1,8 @@
 import { model } from "@medusajs/framework/utils"
 
 /**
- * ProductOrigin — Blueprint `02-database-model.md` Deel B.14.
- * Verification-module (11-medusa-architecture.md §3). Koppelt aan
- * product_version, nooit aan product in algemene zin.
+ * ProductOrigin — Blueprint `02-database-model.md` Deel B.14 + Sprint 8 Made in Europe.
+ * Koppelt aan product_version; optioneel aan production_facility (geen tweede facility-systeem).
  */
 const ProductOrigin = model
   .define("product_origin", {
@@ -25,11 +24,21 @@ const ProductOrigin = model
     ]),
     ai_metadata_id: model.text().nullable(),
     next_recheck_due_at: model.dateTime().nullable(),
+    /** FK naar partner.production_facility (pfac_*). */
+    production_facility_id: model.text().nullable(),
+    assembly_eu_band: model.text().nullable(),
+    parts_eu_level: model.text().nullable(),
+    materials_eu_level: model.text().nullable(),
+    primary_assembly_country: model.text().nullable(),
   })
   .indexes([
     {
       on: ["product_version_id"],
       unique: true,
+      where: "deleted_at IS NULL",
+    },
+    {
+      on: ["production_facility_id"],
       where: "deleted_at IS NULL",
     },
   ])

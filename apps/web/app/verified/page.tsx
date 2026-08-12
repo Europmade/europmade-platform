@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { ContentPage } from "../_components/marketplace/content-page"
 
 export const metadata: Metadata = {
@@ -17,6 +18,13 @@ export default function VerifiedPage() {
       <p>
         Verified™ zegt iets over de productinformatie — niet over welke
         aanbieder de Buy Box wint.
+      </p>
+      <p>
+        Voor de Made in Europe-beoordelingsscore zie{" "}
+        <Link href="/made-in-europe" className="font-semibold underline">
+          Hoe bepalen wij Made in Europe?
+        </Link>
+        .
       </p>
     </ContentPage>
   )

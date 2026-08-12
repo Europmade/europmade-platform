@@ -23,6 +23,15 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const body = StoreUpsertProductionFacilityBody.parse(req.body)
   const partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
 
+  const mieFields = {
+    assembly_eu_band: body.assembly_eu_band ?? null,
+    parts_eu_level: body.parts_eu_level ?? null,
+    materials_eu_level: body.materials_eu_level ?? null,
+    primary_assembly_country: body.primary_assembly_country
+      ? body.primary_assembly_country.toUpperCase()
+      : body.country_code.toUpperCase(),
+  }
+
   let facility
   if (body.id) {
     facility = await partner.updateProductionFacilities({
@@ -34,6 +43,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       description: body.description ?? null,
       manufacturer_id: body.manufacturer_id ?? null,
       is_active: body.is_active ?? true,
+      ...mieFields,
     })
   } else {
     facility = await partner.createProductionFacilities({
@@ -44,6 +54,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       description: body.description ?? null,
       manufacturer_id: body.manufacturer_id ?? null,
       is_active: body.is_active ?? true,
+      ...mieFields,
     })
   }
 

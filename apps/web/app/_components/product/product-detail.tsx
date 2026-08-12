@@ -32,6 +32,7 @@ import { fetchStorefrontListings } from "../../_lib/client-catalog"
 import { ProductGallery } from "./product-gallery"
 import { TrustStrip } from "./trust-strip"
 import { ProductCarousel } from "./product-carousel"
+import { MadeInEuropeScoreCard } from "./made-in-europe-score-card"
 import { partnerHref } from "../../_lib/partner-profiles"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -352,15 +353,17 @@ export function ProductDetailPage({
             </Link>
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <Badge variant="outline">
-              {t("euOwnership", locale)}: {detail.euOwnershipPercent}%
-            </Badge>
             <Link href={`/merk/${brandSlug}`}>
               <Badge variant="outline">
                 {t("brandLabel", locale)} {detail.listing.brand}
               </Badge>
             </Link>
           </div>
+          {detail.madeInEurope ? (
+            <div className="mt-3 max-w-md">
+              <MadeInEuropeScoreCard data={detail.madeInEurope} locale={locale} />
+            </div>
+          ) : null}
 
           {detail.colorVariants.length > 0 || detail.sizeVariants.length > 0 ? (
             <div

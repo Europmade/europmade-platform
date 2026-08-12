@@ -10,6 +10,7 @@ import type ReviewModuleService from "../../../modules/review/service"
 import { buildProductCloudPreview } from "../product-cloud/product-preview"
 import { loadBuyBoxForIdentifier } from "../commerce-cloud/buy-box-helpers"
 import { slugifyCategoryName } from "../../../modules/product-cloud/category-attributes"
+import { loadMadeInEuropeForProduct } from "../product-cloud/made-in-europe-helpers"
 
 type PublishedVersion = {
   id: string
@@ -446,6 +447,32 @@ export async function loadCatalogProductDetail(
     }
   }
 
+  const mie = await loadMadeInEuropeForProduct(scope, productId)
+  const made_in_europe = mie?.score
+    ? {
+        is_made_in_europe: mie.score.is_made_in_europe,
+        score: mie.score.score,
+        assembly_points: mie.score.assembly_points,
+        parts_points: mie.score.parts_points,
+        materials_points: mie.score.materials_points,
+        max_assembly: mie.score.max_assembly,
+        max_parts: mie.score.max_parts,
+        max_materials: mie.score.max_materials,
+        assembly_eu_band: mie.score.assembly_eu_band,
+        parts_eu_level: mie.score.parts_eu_level,
+        materials_eu_level: mie.score.materials_eu_level,
+        primary_assembly_country: mie.score.primary_assembly_country,
+        facility: mie.facility
+          ? {
+              id: mie.facility.id,
+              name: mie.facility.name,
+              country_code: mie.facility.country_code,
+              region: mie.facility.region ?? null,
+            }
+          : null,
+      }
+    : null
+
   return {
     product: {
       id: product.id,
@@ -458,8 +485,9 @@ export async function loadCatalogProductDetail(
       identifier_id: preview.identifier_id,
       identifier_type: preview.identifier_type,
       identifier_value: preview.identifier_value,
-      country_code,
+      country_code: made_in_europe?.primary_assembly_country ?? country_code,
     },
+    made_in_europe,
     buy_box: buy_box
       ? {
           source: "recompute" as const,

@@ -475,6 +475,18 @@ const M = {
   footerColPartners: L("Partners", "Partners", "Partner", "Partenaires"),
   footerColLegal: L("Juridisch", "Legal", "Rechtliches", "Mentions légales"),
   footerAbout: L("Over ons", "About us", "Über uns", "À propos"),
+  footerWhyBuy: L(
+    "Waarom kopen",
+    "Why buy",
+    "Warum kaufen",
+    "Pourquoi acheter"
+  ),
+  footerMadeInEurope: L(
+    "Made in Europe uitgelegd",
+    "Made in Europe explained",
+    "Made in Europe erklärt",
+    "Made in Europe expliqué"
+  ),
   footerContact: L("Contact", "Contact", "Kontakt", "Contact"),
   footerCareers: L("Werken bij", "Careers", "Karriere", "Carrières"),
   footerOrdering: L("Bestellen", "Ordering", "Bestellen", "Commander"),
@@ -627,6 +639,189 @@ const M = {
     "Made in Europe",
     "Hergestellt in Europa",
     "Fabriqué en Europe"
+  ),
+  mieBandEu100: L(
+    "100% assemblage in EU",
+    "100% assembly in the EU",
+    "100 % Montage in der EU",
+    "100 % d'assemblage dans l'UE"
+  ),
+  mieBandEu7599: L(
+    "75–99% assemblage in EU",
+    "75–99% assembly in the EU",
+    "75–99 % Montage in der EU",
+    "75–99 % d'assemblage dans l'UE"
+  ),
+  mieBandEu5074: L(
+    "50–74% assemblage in EU",
+    "50–74% assembly in the EU",
+    "50–74 % Montage in der EU",
+    "50–74 % d'assemblage dans l'UE"
+  ),
+  mieBandBelow50: L(
+    "Minder dan 50% assemblage in EU",
+    "Less than 50% assembly in the EU",
+    "Weniger als 50 % Montage in der EU",
+    "Moins de 50 % d'assemblage dans l'UE"
+  ),
+  mieLevelMajority: L(
+    "Overwegend EU",
+    "Predominantly EU",
+    "Überwiegend EU",
+    "Majoritairement UE"
+  ),
+  mieLevelPartial: L(
+    "Gedeeltelijk EU",
+    "Partially EU",
+    "Teilweise EU",
+    "Partiellement UE"
+  ),
+  mieLevelNone: L(
+    "Niet of nauwelijks EU",
+    "Little or no EU",
+    "Kaum oder nicht EU",
+    "Peu ou pas d'UE"
+  ),
+  mieAssembly: L("Assemblage", "Assembly", "Montage", "Assemblage"),
+  mieParts: L("Onderdelen", "Parts", "Teile", "Composants"),
+  mieMaterials: L("Materialen", "Materials", "Materialien", "Matériaux"),
+  mieFacility: L(
+    "Productiefaciliteit",
+    "Production facility",
+    "Produktionsstätte",
+    "Site de production"
+  ),
+  mieAssemblyCountry: L(
+    "Assemblageland",
+    "Assembly country",
+    "Montageland",
+    "Pays d'assemblage"
+  ),
+  mieHowDetermined: L(
+    "Hoe wordt deze score bepaald?",
+    "How is this score determined?",
+    "Wie wird dieser Score bestimmt?",
+    "Comment ce score est-il déterminé ?"
+  ),
+  mieScoreMeaning: L(
+    "De EuropMade-score laat zien in hoeverre een product volgens vaste criteria in Europa wordt geproduceerd (assemblage, onderdelen, materialen). Dit is geen percentage van de verkoopprijs en geen exacte berekening van Europese grondstoffen.",
+    "The EuropMade score shows how far a product is produced in Europe by fixed criteria (assembly, parts, materials). It is not a share of the selling price and not an exact European raw-materials percentage.",
+    "Der EuropMade-Score zeigt, inwieweit ein Produkt nach festen Kriterien in Europa hergestellt wird (Montage, Teile, Materialien). Es ist kein Anteil am Verkaufspreis und keine exakte EU-Rohstoffquote.",
+    "Le score EuropMade indique dans quelle mesure un produit est fabriqué en Europe selon des critères fixes (assemblage, composants, matériaux). Ce n'est pas un pourcentage du prix de vente ni un calcul exact de matières premières européennes."
+  ),
+  mieNotEligibleTitle: L(
+    "Nog niet als Made in Europe gekwalificeerd",
+    "Not yet qualified as Made in Europe",
+    "Noch nicht als Made in Europe qualifiziert",
+    "Pas encore qualifié Made in Europe"
+  ),
+  mieNotEligibleBody: L(
+    "Minimaal 50% van de substantiële assemblagehandelingen moet in de EU plaatsvinden. Alleen verpakken of etiketteren telt niet.",
+    "At least 50% of substantial assembly steps must take place in the EU. Packaging or labelling alone does not count.",
+    "Mindestens 50 % der wesentlichen Montageschritte müssen in der EU stattfinden. Nur Verpacken oder Etikettieren zählt nicht.",
+    "Au moins 50 % des étapes d'assemblage substantielles doivent avoir lieu dans l'UE. L'emballage ou l'étiquetage seuls ne comptent pas."
+  ),
+  miePageTitle: L(
+    "Hoe bepaalt EuropMade Made in Europe?",
+    "How does EuropMade determine Made in Europe?",
+    "Wie bestimmt EuropMade Made in Europe?",
+    "Comment EuropMade détermine-t-il Made in Europe ?"
+  ),
+  miePageIntro: L(
+    "Transparante, vaste criteria — zodat je niet zelf hoeft te gissen of een ‘European brand’-claim klopt.",
+    "Transparent, fixed criteria — so you do not have to guess whether a “European brand” claim is real.",
+    "Transparente, feste Kriterien — damit Sie nicht raten müssen, ob eine „European brand“-Behauptung stimmt.",
+    "Des critères fixes et transparents — pour ne plus devoir deviner si une promesse de marque européenne est réelle."
+  ),
+  whyBuyTitle: L(
+    "Waarom kopen bij EuropMade?",
+    "Why buy on EuropMade?",
+    "Warum bei EuropMade kaufen?",
+    "Pourquoi acheter sur EuropMade ?"
+  ),
+  whyBuyHero: L(
+    "Je weet eindelijk waar je product vandaan komt.",
+    "You finally know where your product comes from.",
+    "Sie wissen endlich, woher Ihr Produkt kommt.",
+    "Vous savez enfin d'où vient votre produit."
+  ),
+  whyBuyLead: L(
+    "EuropMade is de plek voor producten die aantoonbaar in Europa worden gemaakt — met een duidelijke Made in Europe-score, echte productinformatie en meerdere aanbieders.",
+    "EuropMade is the place for products that are demonstrably made in Europe — with a clear Made in Europe score, real product information and multiple sellers.",
+    "EuropMade ist der Ort für Produkte, die nachweislich in Europa hergestellt werden — mit klarem Made-in-Europe-Score, echten Produktinformationen und mehreren Anbietern.",
+    "EuropMade est l'endroit pour des produits démontrablement fabriqués en Europe — avec un score Made in Europe clair, de vraies fiches produit et plusieurs vendeurs."
+  ),
+  whyBuyCtaBrowse: L(
+    "Ontdek Europese producten",
+    "Discover European products",
+    "Europäische Produkte entdecken",
+    "Découvrir des produits européens"
+  ),
+  whyBuyCtaMie: L(
+    "Lees hoe Made in Europe werkt",
+    "Read how Made in Europe works",
+    "Lesen Sie, wie Made in Europe funktioniert",
+    "Lire comment fonctionne Made in Europe"
+  ),
+  whyBuyPoint1Title: L(
+    "Europese productie, geen vage claims",
+    "European production, not vague claims",
+    "Europäische Produktion, keine vagen Claims",
+    "Production européenne, pas de promesses floues"
+  ),
+  whyBuyPoint1Body: L(
+    "Alleen producten die voldoen aan onze vaste assemblage-eis (minimaal 50% substantiële assemblage in de EU) kunnen als Made in Europe verschijnen.",
+    "Only products that meet our fixed assembly rule (at least 50% substantial assembly in the EU) can appear as Made in Europe.",
+    "Nur Produkte, die unsere feste Montageregel erfüllen (mindestens 50 % wesentliche Montage in der EU), können als Made in Europe erscheinen.",
+    "Seuls les produits qui respectent notre règle d'assemblage fixe (au moins 50 % d'assemblage substantiel dans l'UE) peuvent apparaître comme Made in Europe."
+  ),
+  whyBuyPoint2Title: L(
+    "Een score die je kunt begrijpen",
+    "A score you can understand",
+    "Ein Score, den Sie verstehen",
+    "Un score que vous comprenez"
+  ),
+  whyBuyPoint2Body: L(
+    "Assemblage, onderdelen en materialen tellen mee. Geen verkoopprijs-trucjes en geen verborgen herkomst.",
+    "Assembly, parts and materials count. No selling-price tricks and no hidden origin.",
+    "Montage, Teile und Materialien zählen. Keine Verkaufspreis-Tricks und keine versteckte Herkunft.",
+    "Assemblage, composants et matériaux comptent. Pas de tours de prix de vente ni d'origine cachée."
+  ),
+  whyBuyPoint3Title: L(
+    "Europese merken ontdekken",
+    "Discover European brands",
+    "Europäische Marken entdecken",
+    "Découvrir des marques européennes"
+  ),
+  whyBuyPoint3Body: L(
+    "Bekijk waar producten worden gemaakt, wie de maker is, en vergelijk aanbiedingen van meerdere retailers.",
+    "See where products are made, who the maker is, and compare offers from multiple retailers.",
+    "Sehen Sie, wo Produkte hergestellt werden, wer der Hersteller ist, und vergleichen Sie Angebote mehrerer Händler.",
+    "Voyez où les produits sont fabriqués, qui est le fabricant, et comparez les offres de plusieurs détaillants."
+  ),
+  whyBuyPoint4Title: L(
+    "Transparantie voor de consument",
+    "Transparency for the consumer",
+    "Transparenz für Verbraucher",
+    "Transparence pour le consommateur"
+  ),
+  whyBuyPoint4Body: L(
+    "Producenten leveren de productiegegevens aan. EuropMade kan informatie en bewijs controleren. Jij ziet de uitkomst — niet de marketingpraat.",
+    "Producers provide production data. EuropMade can review information and evidence. You see the outcome — not the marketing spin.",
+    "Hersteller liefern Produktionsdaten. EuropMade kann Informationen und Nachweise prüfen. Sie sehen das Ergebnis — nicht das Marketing.",
+    "Les producteurs fournissent les données de production. EuropMade peut contrôler informations et preuves. Vous voyez le résultat — pas le discours marketing."
+  ),
+  sellerMieTitle: L(
+    "Made in Europe — bulkbeheer",
+    "Made in Europe — bulk management",
+    "Made in Europe — Massenverwaltung",
+    "Made in Europe — gestion en masse"
+  ),
+  sellerMieIntro: L(
+    "Koppel een productiefaciliteit/profiel aan meerdere producten. De score wordt automatisch berekend — je vult nooit zelf een percentage in.",
+    "Attach a production facility/profile to multiple products. The score is calculated automatically — you never enter a percentage yourself.",
+    "Verknüpfen Sie eine Produktionsstätte/ein Profil mit mehreren Produkten. Der Score wird automatisch berechnet — Sie geben nie selbst einen Prozentsatz ein.",
+    "Liez un site/profil de production à plusieurs produits. Le score est calculé automatiquement — vous ne saisissez jamais un pourcentage."
   ),
   madeInLabel: L("Gemaakt in", "Made in", "Hergestellt in", "Fabriqué en"),
   euOwnership: L("EU-eigendom", "EU ownership", "EU-Eigentum", "Propriété UE"),
