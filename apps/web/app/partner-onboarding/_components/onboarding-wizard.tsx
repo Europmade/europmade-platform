@@ -174,7 +174,7 @@ export function OnboardingWizard() {
         if (cancelled) return;
         setCustomerEmail(customer.email);
       } catch {
-        router.replace("/login?redirect=/partner-onboarding");
+        router.replace("/register?redirect=/partner-onboarding");
         return;
       }
 

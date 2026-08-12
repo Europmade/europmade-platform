@@ -23,6 +23,9 @@ function RegisterPageContent() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect")?.trim() || "";
   const claimPaymentReference = searchParams.get("payment_reference")?.trim() || "";
+  const isPartnerSignup =
+    redirectTo.includes("/partner-onboarding") ||
+    searchParams.get("intent")?.trim() === "partner";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,8 +85,16 @@ function RegisterPageContent() {
 
   return (
     <AuthCard
-      title={t("authRegisterTitle", locale)}
-      subtitle={t("authRegisterSubtitle", locale)}
+      title={
+        isPartnerSignup
+          ? t("authRegisterPartnerTitle", locale)
+          : t("authRegisterTitle", locale)
+      }
+      subtitle={
+        isPartnerSignup
+          ? t("authRegisterPartnerSubtitle", locale)
+          : t("authRegisterSubtitle", locale)
+      }
     >
       <form onSubmit={handleSubmit}>
         {existingAccount && (

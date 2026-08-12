@@ -95,6 +95,7 @@ Dit document wordt tijdens Sprint 3 bijgewerkt — de Blueprint-documenten zelf 
 | Sprint 7 — Zoekfunctie + Product Finder | **AFGEROND** | 2026-08-12 | `/zoeken` URL-gedreven (q, categorie, merk, manufacturer, country, price, verified, sort, page); backend filters/sort/paginering; `/product-finder` stapsgewijs naar `/zoeken`; multi-category via `pc_product_category`; i18n NL/EN/DE/FR. |
 | Sprint 8 — Waarom kopen + Made in Europe | **AFGEROND** | 2026-08-12 | Score-engine; facility/origin-extensie; seller single/bulk/CSV; `/made-in-europe`; PDP + merk; `/waarom-kopen`; i18n NL/EN/DE/FR; geen handmatige score, geen DeepL/zoekmachine/checkout. |
 | Sprint 9 — Waarom verkopen (B2B) | **AFGEROND** | 2026-08-12 | `/waarom-verkopen` B2B-landingspagina; één-platform-Europa; Mie/merk/marketing; intro €500/50 onder voorwaarden; FAQ+SEO; i18n NL/EN/DE/FR; geen DB. |
+| Sprint 9 UX — visuals + conversion | **AFGEROND** | 2026-08-12 | Visuele Mie/kopen/verkopen; FAQ productdata; CTA register vs login; homepage/footer → `/waarom-verkopen`. |
 
 ## Samenvatting
 

@@ -36,7 +36,7 @@ export const DEFAULT_HOMEPAGE_HERO: HomepageHeroContent = {
   },
   secondaryCta: {
     label: "Word verkoper",
-    href: "/partner-onboarding",
+    href: "/waarom-verkopen",
   },
   image: {
     alt: "Europese producten, verpakking en Verified™ marketplace",

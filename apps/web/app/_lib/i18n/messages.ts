@@ -1280,6 +1280,385 @@ const M = {
     "Verkauf über EuropMade starten",
     "Commencer à vendre via EuropMade"
   ),
+  whySellCtaExisting: L(
+    "Ik ben al partner — inloggen",
+    "I'm already a partner — sign in",
+    "Ich bin bereits Partner — anmelden",
+    "Je suis déjà partenaire — connexion"
+  ),
+  whySellQuickStartTitle: L(
+    "Van aanmelden naar je eerste producten: eenvoudig en snel",
+    "From sign-up to your first products: simple and fast",
+    "Von der Anmeldung zu Ihren ersten Produkten: einfach und schnell",
+    "De l'inscription à vos premiers produits : simple et rapide"
+  ),
+  whySellQuickStartBody: L(
+    "Je start met een account, vult partnergegevens in en voegt producten toe via de Product Cloud. Exacte doorlooptijd hangt af van je catalogus en documenten.",
+    "You start with an account, enter partner details and add products via the Product Cloud. Exact timing depends on your catalogue and documents.",
+    "Sie starten mit einem Konto, geben Partnerdaten ein und fügen Produkte über die Product Cloud hinzu. Die genaue Dauer hängt von Katalog und Dokumenten ab.",
+    "Vous commencez avec un compte, renseignez les données partenaire et ajoutez des produits via le Product Cloud. Le délai exact dépend de votre catalogue et documents."
+  ),
+  whySellNoCostTitle: L(
+    "Geen verkoop = geen kosten",
+    "No sales = no fees",
+    "Kein Verkauf = keine Kosten",
+    "Pas de vente = pas de frais"
+  ),
+  whySellNoCostBody: L(
+    "Je betaalt alleen wanneer je verkoopt: een vaste verkoopcommissie van 10%. Er is geen verplichte maandelijkse seller fee in het MVP-model.",
+    "You only pay when you sell: a fixed 10% sales commission. There is no mandatory monthly seller fee in the MVP model.",
+    "Sie zahlen nur bei Verkauf: eine feste Verkaufsprovision von 10 %. Im MVP-Modell gibt es keine verpflichtende monatliche Seller-Gebühr.",
+    "Vous ne payez que lorsque vous vendez : une commission fixe de 10 %. Pas de frais vendeur mensuels obligatoires dans le modèle MVP."
+  ),
+  whySellNoCostZero: L(
+    "€0 bij geen verkoop",
+    "€0 when you don't sell",
+    "0 € ohne Verkauf",
+    "0 € sans vente"
+  ),
+  whySellNoCostCommission: L(
+    "10% commissie bij verkoop",
+    "10% commission when you sell",
+    "10 % Provision bei Verkauf",
+    "10 % de commission à la vente"
+  ),
+  whySellNoCostNote: L(
+    "Optionele kosten (banners, sponsored products, campagnes) kies je zelf — die zijn geen vaste abonnementskosten.",
+    "Optional costs (banners, sponsored products, campaigns) are your choice — not a fixed subscription fee.",
+    "Optionale Kosten (Banner, Sponsored Products, Kampagnen) wählen Sie selbst — keine feste Abo-Gebühr.",
+    "Les coûts optionnels (bannières, produits sponsorisés, campagnes) sont à votre choix — pas d'abonnement fixe."
+  ),
+  whySellHeroVisualProduct: L(
+    "Jouw product",
+    "Your product",
+    "Ihr Produkt",
+    "Votre produit"
+  ),
+  whySellHeroVisualCustomers: L(
+    "Europese klanten",
+    "European customers",
+    "Europäische Kunden",
+    "Clients européens"
+  ),
+  whySellHeroVisualTagline: L(
+    "Één platform. Europese klanten.",
+    "One platform. European customers.",
+    "Eine Plattform. Europäische Kunden.",
+    "Une plateforme. Des clients européens."
+  ),
+  whySellTranslateTitle: L(
+    "Automatische vertalingen voor Europese talen",
+    "Automatic translations for European languages",
+    "Automatische Übersetzungen für europäische Sprachen",
+    "Traductions automatiques pour les langues européennes"
+  ),
+  whySellTranslateLead: L(
+    "Je hoeft niet voor ieder land zelf alle productteksten opnieuw te schrijven. Productinformatie kan via de Product Cloud-vertaallaag worden voorbereid voor de actieve talen.",
+    "You do not have to rewrite all product texts yourself for every country. Product information can be prepared via the Product Cloud translation layer for the active languages.",
+    "Sie müssen nicht für jedes Land alle Produkttexte selbst neu schreiben. Produktinformationen können über die Product-Cloud-Übersetzungsschicht für die aktiven Sprachen vorbereitet werden.",
+    "Vous n'avez pas à réécrire tous les textes produit pour chaque pays. L'information produit peut être préparée via la couche de traduction Product Cloud pour les langues actives."
+  ),
+  whySellTranslateSource: L(
+    "Productinformatie",
+    "Product information",
+    "Produktinformationen",
+    "Information produit"
+  ),
+  whySellTranslateEngine: L(
+    "EuropMade vertaallaag",
+    "EuropMade translation layer",
+    "EuropMade-Übersetzungsschicht",
+    "Couche de traduction EuropMade"
+  ),
+  whySellDataTitle: L(
+    "Hoe komt je productdata online?",
+    "How does your product data go online?",
+    "Wie kommen Ihre Produktdaten online?",
+    "Comment vos données produit passent-elles en ligne ?"
+  ),
+  whySellDataLead: L(
+    "Je beheert producten in de Product Cloud. Made in Europe-gegevens kun je per product of in bulk/CSV koppelen. Handmatig toevoegen is beschikbaar; bredere cataloguskoppelingen volgen de tools in je seller-account.",
+    "You manage products in the Product Cloud. Made in Europe data can be linked per product or via bulk/CSV. Manual add is available; broader catalogue connectors follow the tools in your seller account.",
+    "Sie verwalten Produkte in der Product Cloud. Made-in-Europe-Daten können pro Produkt oder per Bulk/CSV verknüpft werden. Manuelles Hinzufügen ist verfügbar; breitere Kataloganbindungen folgen den Tools in Ihrem Seller-Konto.",
+    "Vous gérez les produits dans le Product Cloud. Les données Made in Europe se lient par produit ou en bulk/CSV. L'ajout manuel est disponible ; les connecteurs catalogue plus larges suivent les outils de votre compte vendeur."
+  ),
+  whySellDataManual: L(
+    "Handmatig toevoegen",
+    "Add manually",
+    "Manuell hinzufügen",
+    "Ajout manuel"
+  ),
+  whySellDataCsv: L(
+    "CSV / bulk (Made in Europe)",
+    "CSV / bulk (Made in Europe)",
+    "CSV / Bulk (Made in Europe)",
+    "CSV / bulk (Made in Europe)"
+  ),
+  whySellDataExisting: L(
+    "Bestaande productdata in Product Cloud",
+    "Existing product data in Product Cloud",
+    "Bestehende Produktdaten in der Product Cloud",
+    "Données produit existantes dans le Product Cloud"
+  ),
+  whySellDataApi: L(
+    "API / koppeling (toekomstige uitbreiding)",
+    "API / connector (future expansion)",
+    "API / Anbindung (künftige Erweiterung)",
+    "API / connecteur (extension future)"
+  ),
+  whySellDataOnline: L(
+    "Producten online op EuropMade",
+    "Products live on EuropMade",
+    "Produkte online auf EuropMade",
+    "Produits en ligne sur EuropMade"
+  ),
+  whySellBulkTitle: L(
+    "Veel producten? Eén productieprofiel volstaat",
+    "Many products? One production profile is enough",
+    "Viele Produkte? Ein Produktionsprofil reicht",
+    "Beaucoup de produits ? Un profil de production suffit"
+  ),
+  whySellBulkLead: L(
+    "Koppel dezelfde productiefaciliteit of Made in Europe-keuzes aan meerdere producten tegelijk — via bulk of CSV. Je hoeft niet elk product één voor één opnieuw in te stellen.",
+    "Attach the same production facility or Made in Europe choices to many products at once — via bulk or CSV. You do not have to set every product one by one again.",
+    "Verknüpfen Sie dieselbe Produktionsstätte oder Made-in-Europe-Angaben mit vielen Produkten gleichzeitig — per Bulk oder CSV. Sie müssen nicht jedes Produkt einzeln neu setzen.",
+    "Liez le même site de production ou les choix Made in Europe à plusieurs produits à la fois — via bulk ou CSV. Pas besoin de tout refaire produit par produit."
+  ),
+  whySellBulkFactory: L(
+    "1 productiefaciliteit / profiel",
+    "1 production facility / profile",
+    "1 Produktionsstätte / Profil",
+    "1 site / profil de production"
+  ),
+  whySellBulkProducts: L(
+    "Veel producten gekoppeld",
+    "Many products linked",
+    "Viele Produkte verknüpft",
+    "De nombreux produits liés"
+  ),
+  whySellRolesTitle: L(
+    "Producent, merkeigenaar of verkoper",
+    "Producer, brand owner or seller",
+    "Produzent, Markeninhaber oder Verkäufer",
+    "Producteur, propriétaire de marque ou vendeur"
+  ),
+  whySellRoleProducerTitle: L(
+    "Producent",
+    "Producer",
+    "Produzent",
+    "Producteur"
+  ),
+  whySellRoleProducerBody: L(
+    "Eigen productie, productiefaciliteit, Made in Europe en merkpresentatie.",
+    "Own production, facility, Made in Europe and brand presentation.",
+    "Eigene Produktion, Produktionsstätte, Made in Europe und Markenauftritt.",
+    "Production propre, site, Made in Europe et présentation de marque."
+  ),
+  whySellRoleBrandTitle: L(
+    "Merkeigenaar",
+    "Brand owner",
+    "Markeninhaber",
+    "Propriétaire de marque"
+  ),
+  whySellRoleBrandBody: L(
+    "Merkbeheer, producten, merkverhaal en landgebonden content waar toegestaan.",
+    "Brand management, products, brand story and market content where allowed.",
+    "Markenverwaltung, Produkte, Markengeschichte und landesspezifische Inhalte wo erlaubt.",
+    "Gestion de marque, produits, histoire de marque et contenu marché selon les droits."
+  ),
+  whySellRoleSellerTitle: L(
+    "Verkoper",
+    "Seller",
+    "Verkäufer",
+    "Vendeur"
+  ),
+  whySellRoleSellerBody: L(
+    "Producten aanbieden, productdata beheren en verkopen via EuropMade.",
+    "Offer products, manage product data and sell on EuropMade.",
+    "Produkte anbieten, Produktdaten verwalten und über EuropMade verkaufen.",
+    "Proposer des produits, gérer les données et vendre via EuropMade."
+  ),
+  whySellDesignedFor: L(
+    "Ontworpen om vanuit één platform meerdere Europese markten te bedienen.",
+    "Designed to serve multiple European markets from one platform.",
+    "Darauf ausgelegt, mehrere europäische Märkte von einer Plattform aus zu bedienen.",
+    "Conçu pour servir plusieurs marchés européens depuis une seule plateforme."
+  ),
+  // Extended FAQ (product data / costs / markets)
+  whySellFaq9Q: L(
+    "Hoe voeg ik mijn producten toe?",
+    "How do I add my products?",
+    "Wie füge ich meine Produkte hinzu?",
+    "Comment ajouter mes produits ?"
+  ),
+  whySellFaq9A: L(
+    "Na goedkeuring als partner voeg je producten toe in de Product Cloud via de seller-productflows (handmatig). Daarna kun je Made in Europe-gegevens koppelen.",
+    "After partner approval you add products in the Product Cloud via seller product flows (manual). Then you can attach Made in Europe data.",
+    "Nach Partnerfreigabe fügen Sie Produkte in der Product Cloud über Seller-Produktflows hinzu (manuell). Danach können Sie Made-in-Europe-Daten verknüpfen.",
+    "Après validation partenaire, vous ajoutez des produits dans le Product Cloud via les parcours vendeur (manuel). Ensuite vous liez les données Made in Europe."
+  ),
+  whySellFaq10Q: L(
+    "Kan ik meerdere producten tegelijk beheren?",
+    "Can I manage multiple products at once?",
+    "Kann ich mehrere Produkte gleichzeitig verwalten?",
+    "Puis-je gérer plusieurs produits à la fois ?"
+  ),
+  whySellFaq10A: L(
+    "Ja. Voor Made in Europe kun je hetzelfde profiel/faciliteit in bulk of via CSV op meerdere eigen producten toepassen.",
+    "Yes. For Made in Europe you can apply the same profile/facility in bulk or via CSV to multiple owned products.",
+    "Ja. Für Made in Europe können Sie dasselbe Profil/dieselbe Stätte per Bulk oder CSV auf mehrere eigene Produkte anwenden.",
+    "Oui. Pour Made in Europe, vous pouvez appliquer le même profil/site en bulk ou CSV à plusieurs produits dont vous êtes propriétaire."
+  ),
+  whySellFaq11Q: L(
+    "Wat als ik honderden producten heb?",
+    "What if I have hundreds of products?",
+    "Was ist, wenn ich Hunderte Produkte habe?",
+    "Et si j'ai des centaines de produits ?"
+  ),
+  whySellFaq11A: L(
+    "Gebruik één productieprofiel of faciliteit en koppel die in bulk aan veel producten. Zo voorkom je herhaalde handmatige invoer van dezelfde assemblage-/onderdelen-/materiaalkeuzes.",
+    "Use one production profile or facility and link it in bulk to many products. That avoids repeating the same assembly/parts/materials choices by hand.",
+    "Nutzen Sie ein Produktionsprofil oder eine Stätte und verknüpfen Sie diese per Bulk mit vielen Produkten. So vermeiden Sie wiederholte manuelle Eingaben derselben Montage-/Teile-/Materialangaben.",
+    "Utilisez un profil ou site de production et liez-le en masse à de nombreux produits. Cela évite de ressaisir les mêmes choix d'assemblage/composants/matériaux."
+  ),
+  whySellFaq12Q: L(
+    "Moet ik ieder product afzonderlijk vertalen?",
+    "Do I have to translate every product myself?",
+    "Muss ich jedes Produkt selbst übersetzen?",
+    "Dois-je traduire chaque produit moi-même ?"
+  ),
+  whySellFaq12A: L(
+    "Nee. De Product Cloud-vertaallaag kan content voorbereiden voor NL, EN, DE en FR. Je beheert brontekst en status; je hoeft niet per land alles handmatig te herschrijven.",
+    "No. The Product Cloud translation layer can prepare content for NL, EN, DE and FR. You manage source text and status; you do not rewrite everything per country by hand.",
+    "Nein. Die Product-Cloud-Übersetzungsschicht kann Inhalte für NL, EN, DE und FR vorbereiten. Sie steuern Quelltext und Status; Sie müssen nicht alles landesweise manuell neu schreiben.",
+    "Non. La couche de traduction Product Cloud peut préparer le contenu pour NL, EN, DE et FR. Vous gérez le texte source et le statut ; pas besoin de tout réécrire à la main par pays."
+  ),
+  whySellFaq13Q: L(
+    "Kan ik productinformatie later wijzigen?",
+    "Can I change product information later?",
+    "Kann ich Produktinformationen später ändern?",
+    "Puis-je modifier l'information produit plus tard ?"
+  ),
+  whySellFaq13A: L(
+    "Ja. Product Cloud-content, merkgegevens en Made in Europe-koppelingen kun je later bijwerken volgens de bestaande seller-/eigenaarflows.",
+    "Yes. Product Cloud content, brand data and Made in Europe links can be updated later via the existing seller/owner flows.",
+    "Ja. Product-Cloud-Inhalte, Markendaten und Made-in-Europe-Verknüpfungen können Sie später über die bestehenden Seller-/Eigentümer-Flows aktualisieren.",
+    "Oui. Le contenu Product Cloud, les données de marque et les liens Made in Europe peuvent être mis à jour plus tard via les parcours vendeur/propriétaire existants."
+  ),
+  whySellFaq14Q: L(
+    "Wat gebeurt er als ik niets verkoop?",
+    "What happens if I don't sell anything?",
+    "Was passiert, wenn ich nichts verkaufe?",
+    "Que se passe-t-il si je ne vends rien ?"
+  ),
+  whySellFaq14A: L(
+    "Zonder verkoop betaal je geen verkoopcommissie. Optionele advertenties (banners/sponsored) zijn apart en alleen van toepassing als je die inzet.",
+    "Without sales you pay no sales commission. Optional ads (banners/sponsored) are separate and only apply if you use them.",
+    "Ohne Verkauf zahlen Sie keine Verkaufsprovision. Optionale Werbung (Banner/Sponsored) ist separat und gilt nur, wenn Sie sie nutzen.",
+    "Sans vente, vous ne payez pas de commission. Les pubs optionnelles (bannières/sponsorisé) sont séparées et ne s'appliquent que si vous les utilisez."
+  ),
+  mieVisualTotal: L(
+    "Made in Europe-score",
+    "Made in Europe score",
+    "Made-in-Europe-Score",
+    "Score Made in Europe"
+  ),
+  mieVisualMax: L(
+    "max. 100",
+    "max. 100",
+    "max. 100",
+    "max. 100"
+  ),
+  mieThresholdTitle: L(
+    "Minimale toelatingsgrens: 50% substantiële assemblage in de EU",
+    "Minimum threshold: 50% substantial assembly in the EU",
+    "Mindestschwelle: 50 % wesentliche Montage in der EU",
+    "Seuil minimum : 50 % d'assemblage substantiel dans l'UE"
+  ),
+  mieThresholdFail: L(
+    "Onder 50% — geen Made in Europe",
+    "Below 50% — not Made in Europe",
+    "Unter 50 % — kein Made in Europe",
+    "Moins de 50 % — pas Made in Europe"
+  ),
+  mieThresholdPass: L(
+    "50% of meer — kan Made in Europe zijn",
+    "50% or more — can be Made in Europe",
+    "50 % oder mehr — kann Made in Europe sein",
+    "50 % ou plus — peut être Made in Europe"
+  ),
+  mieDoesNotCountTitle: L(
+    "Dit telt niet als substantiële assemblage",
+    "This does not count as substantial assembly",
+    "Das zählt nicht als wesentliche Montage",
+    "Ceci ne compte pas comme assemblage substantiel"
+  ),
+  mieDoesNotCount1: L(
+    "Alleen verpakken",
+    "Packaging only",
+    "Nur Verpacken",
+    "Emballage seul"
+  ),
+  mieDoesNotCount2: L(
+    "Alleen sticker of logo aanbrengen",
+    "Applying a sticker or logo only",
+    "Nur Aufkleber oder Logo anbringen",
+    "Pose d'autocollant ou logo seule"
+  ),
+  mieDoesNotCount3: L(
+    "Minimale of symbolische assemblage",
+    "Minimal or symbolic assembly",
+    "Minimale oder symbolische Montage",
+    "Assemblage minimal ou symbolique"
+  ),
+  whyBuyFlowTitle: L(
+    "Van herkomst tot aankoop — in één oogopslag",
+    "From origin to purchase — at a glance",
+    "Von Herkunft bis Kauf — auf einen Blick",
+    "De l'origine à l'achat — en un coup d'œil"
+  ),
+  whyBuyFlow1: L(
+    "Europese productie",
+    "European production",
+    "Europäische Produktion",
+    "Production européenne"
+  ),
+  whyBuyFlow2: L(
+    "Transparante herkomst",
+    "Transparent origin",
+    "Transparente Herkunft",
+    "Origine transparente"
+  ),
+  whyBuyFlow3: L(
+    "Productie zichtbaar",
+    "Production visible",
+    "Produktion sichtbar",
+    "Production visible"
+  ),
+  whyBuyFlow4: L(
+    "Made in Europe-score",
+    "Made in Europe score",
+    "Made-in-Europe-Score",
+    "Score Made in Europe"
+  ),
+  whyBuyFlow5: L(
+    "Product kopen",
+    "Buy the product",
+    "Produkt kaufen",
+    "Acheter le produit"
+  ),
+  authRegisterPartnerTitle: L(
+    "Maak je EuropMade-partneraccount",
+    "Create your EuropMade partner account",
+    "Erstellen Sie Ihr EuropMade-Partnerkonto",
+    "Créez votre compte partenaire EuropMade"
+  ),
+  authRegisterPartnerSubtitle: L(
+    "Registreer je om te starten met verkopen. Daarna vul je de partner-onboarding in.",
+    "Register to start selling. Next you complete partner onboarding.",
+    "Registrieren Sie sich, um mit dem Verkauf zu starten. Danach folgt das Partner-Onboarding.",
+    "Inscrivez-vous pour commencer à vendre. Ensuite, complétez l'onboarding partenaire."
+  ),
   madeInLabel: L("Gemaakt in", "Made in", "Hergestellt in", "Fabriqué en"),
   euOwnership: L("EU-eigendom", "EU ownership", "EU-Eigentum", "Propriété UE"),
   euVerified: L("EU Verified", "EU Verified", "EU Verified", "EU Verified"),

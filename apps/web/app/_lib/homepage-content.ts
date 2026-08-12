@@ -120,7 +120,7 @@ export const HOMEPAGE_FOOTER_COLUMNS = [
   {
     title: "Partners",
     links: [
-      { label: "Verkopen via EuropMade", href: "/partner-onboarding" },
+      { label: "Verkopen via EuropMade", href: "/waarom-verkopen" },
       { label: "Affiliateprogramma", href: "/affiliate" },
     ],
   },
@@ -138,7 +138,7 @@ export const HOMEPAGE_FOOTER_COLUMNS = [
 export const HOMEPAGE_FOOTER_LINKS = [
   { label: "Over EuropMade", href: "/over" },
   { label: "Klantenservice", href: "/klantenservice" },
-  { label: "Verkopen op EuropMade", href: "/partner-onboarding" },
+  { label: "Verkopen op EuropMade", href: "/waarom-verkopen" },
   { label: "Juridisch", href: "/juridisch" },
 ] as const
 

@@ -153,7 +153,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Verkäufer werden",
         "Devenir vendeur"
       ),
-      href: "/partner-onboarding",
+      href: "/waarom-verkopen",
     },
     heroImage: null,
     heroImageAlt: L(

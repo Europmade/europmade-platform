@@ -222,7 +222,7 @@ export function resolveHomepageCms(
           headline: "",
           subtitle: "",
           primaryCta: { label: "", href: "/categorie" },
-          secondaryCta: { label: "", href: "/partner-onboarding" },
+          secondaryCta: { label: "", href: "/waarom-verkopen" },
           image: { alt: "" },
           trustItems: [],
           backgroundGradient: heroRaw.backgroundGradient,
