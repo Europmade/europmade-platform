@@ -204,3 +204,51 @@ export function trackAffiliateClick(
     false
   )
 }
+
+export type CommissionSettings = {
+  percentage: number
+  percentage_display: string
+  attribution_days: number
+}
+
+/** Active platform default from affiliate_commission_setting (ADR-0030). */
+export function getAffiliateCommissionSettings() {
+  return request<CommissionSettings>("/store/affiliate/commission-settings")
+}
+
+/** Build shareable affiliate URL from target + tracking_param. */
+export function buildAffiliateShareUrl(
+  targetUrl: string,
+  trackingParam: string,
+  origin?: string
+): string {
+  const base =
+    origin ||
+    (typeof window !== "undefined" ? window.location.origin : "")
+  let path = targetUrl.trim()
+  if (/^https?:\/\//i.test(path)) {
+    try {
+      const u = new URL(path)
+      u.searchParams.set("ref", trackingParam)
+      return u.toString()
+    } catch {
+      /* fall through */
+    }
+  }
+  if (!path.startsWith("/")) path = `/${path}`
+  const joiner = path.includes("?") ? "&" : "?"
+  return `${base}${path}${joiner}ref=${encodeURIComponent(trackingParam)}`
+}
+
+export function productAffiliateTargetPath(productId: string): string {
+  return `/product/${encodeURIComponent(productId)}`
+}
+
+/** ADR-0030: 5% of unit price (excl. shipping). Uses live commission-setting percentage. */
+export function estimateAffiliateCommission(
+  unitPrice: number,
+  percentage: number
+): number {
+  if (!Number.isFinite(unitPrice) || !Number.isFinite(percentage)) return 0
+  return Math.round(unitPrice * percentage * 100) / 100
+}

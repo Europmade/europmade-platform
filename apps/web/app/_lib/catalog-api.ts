@@ -16,7 +16,7 @@ export class CatalogApiError extends Error {
   }
 }
 
-async function request<T>(path: string, timeoutMs = 4_000): Promise<T> {
+async function request<T>(path: string, timeoutMs = 4_000, cache: RequestCache = "force-cache"): Promise<T> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
@@ -27,7 +27,8 @@ async function request<T>(path: string, timeoutMs = 4_000): Promise<T> {
           ? { "x-publishable-api-key": PUBLISHABLE_KEY }
           : {}),
       },
-      next: { revalidate: 30 },
+      cache: cache === "no-store" ? "no-store" : undefined,
+      next: cache === "no-store" ? { revalidate: 0 } : { revalidate: 30 },
       signal: controller.signal,
     })
     const body: unknown = await response.json().catch(() => undefined)
@@ -73,6 +74,7 @@ export type CatalogListProduct = {
   from_price: number | null
   average_review_score: number | null
   review_count: number
+  image_url?: string | null
 }
 
 export type CatalogOffer = {
@@ -183,6 +185,7 @@ export type CatalogProductDetail = {
     identifier_type: string | null
     identifier_value: string | null
     country_code: string | null
+    image_url?: string | null
   }
   made_in_europe?: CatalogMadeInEurope | null
   buy_box: {
@@ -237,7 +240,9 @@ export function listCatalogProducts(params?: {
     offset: number
     limit: number
   }>(
-    `/store/catalog/products${query ? `?${query}` : ""}`
+    `/store/catalog/products${query ? `?${query}` : ""}`,
+    params?.q ? 15_000 : 4_000,
+    params?.q ? "no-store" : "force-cache"
   )
 }
 
