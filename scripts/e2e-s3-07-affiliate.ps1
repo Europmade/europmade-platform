@@ -4,7 +4,7 @@ $backend = "http://localhost:9000"
 $web = "http://localhost:3000"
 $pubKey = (Select-String -Path "$PSScriptRoot/../apps/web/.env.local" -Pattern "PUBLISHABLE_KEY=(.*)").Matches[0].Groups[1].Value.Trim()
 $ts = Get-Date -Format "yyyyMMddHHmmss"
-$pass = "TestPass123!"
+$pass = "REDACTED_E2E_PASSWORD"
 
 function Invoke-Json($uri, $method, $headers, $jsonBody) {
   try {
@@ -15,15 +15,26 @@ function Invoke-Json($uri, $method, $headers, $jsonBody) {
     }
     return @{ status = [int]$r.StatusCode; json = ($r.Content | ConvertFrom-Json); raw = $r.Content }
   } catch {
+    # PS 5.1 reads the HTTP body into ErrorDetails and leaves GetResponseStream() empty.
+    $raw = $null
+    if ($_.ErrorDetails -and $_.ErrorDetails.Message) {
+      $raw = $_.ErrorDetails.Message
+    }
+    $status = 0
     $resp = $_.Exception.Response
     if ($resp) {
-      $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
-      $raw = $reader.ReadToEnd()
-      $json = $null
-      try { $json = $raw | ConvertFrom-Json } catch {}
-      return @{ status = [int]$resp.StatusCode; json = $json; raw = $raw }
+      try { $status = [int]$resp.StatusCode } catch {}
+      if (-not $raw) {
+        try {
+          $reader = New-Object System.IO.StreamReader($resp.GetResponseStream())
+          $raw = $reader.ReadToEnd()
+        } catch {}
+      }
     }
-    throw
+    if (-not $raw) { $raw = $_.Exception.Message }
+    $json = $null
+    try { if ($raw) { $json = $raw | ConvertFrom-Json } } catch {}
+    return @{ status = $status; json = $json; raw = $raw }
   }
 }
 
@@ -51,7 +62,7 @@ $wh = curl.exe -s -o NUL -w "%{http_code}" "$web"
 if ($bh -ne "200") { throw "backend $bh" }
 if ($wh -ne "200") { throw "web $wh" }
 
-$adminAuth = Invoke-Json "$backend/auth/user/emailpass" "POST" @{ "Content-Type"="application/json" } (@{ email="admin-e2e@example.com"; password="AdminTest123!" } | ConvertTo-Json -Compress)
+$adminAuth = Invoke-Json "$backend/auth/user/emailpass" "POST" @{ "Content-Type"="application/json" } (@{ email="admin-e2e@example.com"; password="REDACTED_ADMIN_PASSWORD" } | ConvertTo-Json -Compress)
 if ($adminAuth.status -ne 200) { throw "admin $($adminAuth.raw)" }
 $adminH = @{ "Authorization"="Bearer $($adminAuth.json.token)"; "Content-Type"="application/json" }
 
@@ -203,14 +214,32 @@ if ([int]$afterMod -le [int]$beforeMod) { throw "expected Fraude-signaal moderat
 Write-Host "OK self-attribution blocked"
 
 Write-Host "=== Reverse on refund ==="
-$lineId = $placeClick.json.orders[0].line_ids[0]
-$ret = Invoke-Json "$backend/store/order-service/returns" "POST" $bH (@{ order_line_id=$lineId; reason="Affiliate e2e return" } | ConvertTo-Json -Compress)
-if ($ret.status -notin 200,201) { throw "return $($ret.raw)" }
+$orderClickObj = @($placeClick.json.orders)[0]
+$orderClickId = $orderClickObj.order_id
+$lineId = @($orderClickObj.line_ids)[0]
+if (-not $lineId) { throw "missing line_ids in place response $($placeClick.raw)" }
+# ADR-0040: buyer return is only allowed after shipment delivered_at.
+$ship = Invoke-Json "$backend/store/order-service/seller/orders/$orderClickId/shipment" "POST" $rH (@{
+  carrier="PostNL"; tracking_code="AFF$ts"; status="delivered"
+} | ConvertTo-Json -Compress)
+if ($ship.status -notin 200,201) {
+  throw "shipment delivered status=$($ship.status) body=$($ship.raw)"
+}
+if (-not $ship.json.order.delivered_at) {
+  throw "shipment did not set delivered_at status=$($ship.status) body=$($ship.raw)"
+}
+$retBody = @{ order_line_id = "$lineId"; reason = "Affiliate e2e return" } | ConvertTo-Json -Compress
+$ret = Invoke-Json "$backend/store/order-service/returns" "POST" $bH $retBody
+if ($ret.status -notin 200,201) {
+  throw "return status=$($ret.status) body=$($ret.raw) line_id=$lineId order_id=$orderClickId"
+}
 $retId = $ret.json.return.id
-Invoke-Json "$backend/store/order-service/seller/returns/$retId/confirm" "POST" $rH "{}" | Out-Null
-Invoke-Json "$backend/store/order-service/seller/returns/$retId/receive" "POST" $rH "{}" | Out-Null
+$c1 = Invoke-Json "$backend/store/order-service/seller/returns/$retId/confirm" "POST" $rH "{}"
+if ($c1.status -ne 200) { throw "confirm return status=$($c1.status) body=$($c1.raw)" }
+$recv1 = Invoke-Json "$backend/store/order-service/seller/returns/$retId/receive" "POST" $rH "{}"
+if ($recv1.status -ne 200) { throw "receive return status=$($recv1.status) body=$($recv1.raw)" }
 $ap = Invoke-Json "$backend/store/order-service/seller/returns/$retId/approve" "POST" $rH "{}"
-if ($ap.status -ne 200) { throw "approve return $($ap.raw)" }
+if ($ap.status -ne 200) { throw "approve return status=$($ap.status) body=$($ap.raw)" }
 Start-Sleep -Seconds 2
 $rev = docker exec europmade-postgres psql -U europmade -d europmade -t -A -c "select reversed_at is not null from aff_conversion where order_id='$orderClick';"
 if ($rev -ne "t") { throw "conversion not reversed: $rev" }
