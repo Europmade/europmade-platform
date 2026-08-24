@@ -6,6 +6,7 @@ import { AFFILIATE_MODULE } from "../../../modules/affiliate"
 import type AffiliateModuleService from "../../../modules/affiliate/service"
 import { executeRegisterAffiliate } from "../../../workflows/affiliate/workflows"
 import type { StoreRegisterAffiliateBodyInput } from "./validators"
+import { toAdminAffiliate } from "../../admin/affiliates/serialize"
 
 export async function GET(
   req: AuthenticatedMedusaRequest,
@@ -16,7 +17,14 @@ export async function GET(
     { customer_id: req.auth_context.actor_id },
     { take: 1 }
   )
-  res.status(200).json({ affiliate: rows[0] ?? null })
+  const row = rows[0]
+  if (!row) {
+    res.status(200).json({ affiliate: null })
+    return
+  }
+  res.status(200).json({
+    affiliate: await toAdminAffiliate(req.scope, row),
+  })
 }
 
 export async function POST(

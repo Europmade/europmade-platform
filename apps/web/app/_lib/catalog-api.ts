@@ -16,9 +16,21 @@ export class CatalogApiError extends Error {
   }
 }
 
-async function request<T>(path: string, timeoutMs = 4_000, cache: RequestCache = "force-cache"): Promise<T> {
+async function request<T>(
+  path: string,
+  timeoutMs = 4_000,
+  cache: RequestCache = "force-cache",
+  externalSignal?: AbortSignal
+): Promise<T> {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  let timedOut = false
+  const timer = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, timeoutMs)
+  const onExternalAbort = () => controller.abort()
+  if (externalSignal?.aborted) controller.abort()
+  else externalSignal?.addEventListener("abort", onExternalAbort)
   try {
     const response = await fetch(`${BACKEND_URL}${path}`, {
       headers: {
@@ -45,15 +57,17 @@ async function request<T>(path: string, timeoutMs = 4_000, cache: RequestCache =
     return body as T
   } catch (err) {
     if (err instanceof CatalogApiError) throw err
-    if (
-      err instanceof Error &&
-      (err.name === "AbortError" || err.name === "TimeoutError")
-    ) {
+    if (err instanceof Error && err.name === "AbortError") {
+      if (!timedOut) throw err
+      throw new CatalogApiError("Catalogus timeout.", 408)
+    }
+    if (err instanceof Error && err.name === "TimeoutError") {
       throw new CatalogApiError("Catalogus timeout.", 408)
     }
     throw err
   } finally {
     clearTimeout(timer)
+    externalSignal?.removeEventListener("abort", onExternalAbort)
   }
 }
 
@@ -219,6 +233,7 @@ export function listCatalogProducts(params?: {
   offset?: number
   limit?: number
   region_code?: string
+  signal?: AbortSignal
 }) {
   const qs = new URLSearchParams()
   if (params?.category) qs.set("category", params.category)
@@ -241,8 +256,9 @@ export function listCatalogProducts(params?: {
     limit: number
   }>(
     `/store/catalog/products${query ? `?${query}` : ""}`,
-    params?.q ? 15_000 : 4_000,
-    params?.q ? "no-store" : "force-cache"
+    params?.q ? 15_000 : 12_000,
+    params?.q ? "no-store" : "force-cache",
+    params?.signal
   )
 }
 

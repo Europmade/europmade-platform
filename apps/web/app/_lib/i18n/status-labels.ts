@@ -40,6 +40,8 @@ const STATUS_KEYS: Record<string, StorefrontMessageKey> = {
   "Niet gekoppeld": "statusNotLinked",
   // Finance
   Gepland: "statusScheduled",
+  Voltooid: "statusPaidOut",
+  Geannuleerd: "statusCancelled",
   Uitbetaald: "statusPaidOut",
   "Nog te factureren": "statusToInvoice",
   Gefactureerd: "statusInvoiced",
@@ -52,6 +54,9 @@ const STATUS_KEYS: Record<string, StorefrontMessageKey> = {
   Ingediend: "statusSubmitted",
   Goedgekeurd: "statusApproved",
   Afgekeurd: "statusApplicationRejected",
+  Inactief: "statusInactive",
+  Teruggedraaid: "statusReversed",
+  "Teruggedraaid (retour)": "affCommReversedReturn",
   "Aanvullende informatie vereist": "statusAdditionalInfoRequired",
   // Reviews UI
   Beantwoord: "statusAnswered",

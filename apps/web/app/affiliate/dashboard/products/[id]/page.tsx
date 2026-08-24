@@ -22,6 +22,7 @@ import {
 } from "../../../../_lib/catalog-api"
 import { formatEuro } from "../../../../_components/storefront-shell"
 import { useStorefrontLocale } from "../../../../_lib/i18n/use-storefront-locale"
+import { localizeCategoryNames } from "../../../../_lib/localize-category-names"
 import { t, tFormat } from "../../../../_lib/i18n/messages"
 
 function AffiliateProductDetailInner() {
@@ -188,7 +189,7 @@ function AffiliateProductDetailInner() {
             ) : null}
             {p.category_names?.length ? (
               <p className="mt-0.5 text-xs text-wf-500">
-                {p.category_names.join(", ")}
+                {localizeCategoryNames(p.category_names, locale)}
               </p>
             ) : null}
             <p className="mt-2 font-mono text-[11px] text-wf-400">
@@ -300,15 +301,18 @@ function AffiliateProductDetailInner() {
   )
 }
 
+function AffiliateProductDetailFallback() {
+  const locale = useStorefrontLocale()
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-wf-100 text-sm text-wf-600">
+      {t("loading", locale)}
+    </div>
+  )
+}
+
 export default function AffiliateProductDetailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center bg-wf-100 text-sm text-wf-600">
-          Laden…
-        </div>
-      }
-    >
+    <Suspense fallback={<AffiliateProductDetailFallback />}>
       <AffiliateProductDetailInner />
     </Suspense>
   )

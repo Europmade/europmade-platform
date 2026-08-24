@@ -4,7 +4,7 @@ $backend = "http://localhost:9000"
 $web = "http://localhost:3000"
 $pubKey = (Select-String -Path "$PSScriptRoot/../apps/web/.env.local" -Pattern "PUBLISHABLE_KEY=(.*)").Matches[0].Groups[1].Value.Trim()
 $ts = Get-Date -Format "yyyyMMddHHmmss"
-$pass = "TestPass123!"
+$pass = "REDACTED_E2E_PASSWORD"
 
 function Invoke-Json($uri, $method, $headers, $jsonBody) {
   try {
@@ -41,11 +41,15 @@ $bh = curl.exe -s -o NUL -w "%{http_code}" "$backend/health"
 $wh = curl.exe -s -o NUL -w "%{http_code}" "$web"
 if ($bh -ne "200") { throw "backend $bh" }
 if ($wh -ne "200") { throw "web $wh" }
-foreach ($p in @("/login","/register","/forgot-password","/cookie-preferences","/affiliate/register","/affiliate","/affiliate/stats","/affiliate/commissions","/affiliate/links")) {
+foreach ($p in @("/login","/register","/forgot-password","/cookie-preferences","/affiliate/register","/affiliate","/affiliate/dashboard","/affiliate/dashboard/stats","/affiliate/dashboard/commissions","/affiliate/dashboard/links","/affiliate/dashboard/products")) {
   $c = curl.exe -s -o NUL -w "%{http_code}" "$web$p"
-  if ($c -ne "200") { throw "UI $p -> $c" }
-  Write-Host "OK UI $p"
+  # Public marketing + register = 200; dashboard routes may 200 (shell) or redirect unauthenticated.
+  if ($c -notin @("200","307","308")) { throw "UI $p -> $c" }
+  Write-Host "OK UI $p ($c)"
 }
+$landing = curl.exe -s "$web/affiliate"
+if ($landing -notmatch "Word affiliate|Become an affiliate") { throw "public /affiliate must be marketing page" }
+Write-Host "OK public /affiliate marketing"
 
 Write-Host "=== Register + login regression ==="
 $probeEmail = "auth-ui-$ts@example.com"
@@ -55,7 +59,7 @@ $login = Invoke-Json "$backend/auth/customer/emailpass" "POST" @{ "Content-Type"
 if ($login.status -ne 200 -or -not $login.json.token) { throw "auth login $($login.raw)" }
 Write-Host "OK register/login"
 
-$adminAuth = Invoke-Json "$backend/auth/user/emailpass" "POST" @{ "Content-Type"="application/json" } (@{ email="admin-e2e@example.com"; password="AdminTest123!" } | ConvertTo-Json -Compress)
+$adminAuth = Invoke-Json "$backend/auth/user/emailpass" "POST" @{ "Content-Type"="application/json" } (@{ email="admin-e2e@example.com"; password="REDACTED_ADMIN_PASSWORD" } | ConvertTo-Json -Compress)
 if ($adminAuth.status -ne 200) { throw "admin $($adminAuth.raw)" }
 $adminH = @{ "Authorization"="Bearer $($adminAuth.json.token)"; "Content-Type"="application/json" }
 

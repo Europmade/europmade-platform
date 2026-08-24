@@ -19,7 +19,7 @@ export type AffiliateGateProps = {
 }
 
 /**
- * Sessie + affiliate-status voor Affiliate Dashboard (S3-07-04/05).
+ * Sessie + affiliate-status voor Affiliate Dashboard.
  */
 export function AffiliateGate({
   breadcrumb,
@@ -39,7 +39,7 @@ export function AffiliateGate({
       .then(({ affiliate: current }) => {
         if (cancelled) return
         if (!current) {
-          if (allowRegistration || pathname === "/affiliate/register") {
+          if (allowRegistration || pathname.startsWith("/affiliate/register")) {
             setAffiliate(null)
             return
           }
@@ -49,7 +49,7 @@ export function AffiliateGate({
         if (
           current.onboarding_status !== "Goedgekeurd" &&
           !allowRegistration &&
-          pathname !== "/affiliate/register"
+          !pathname.startsWith("/affiliate/register")
         ) {
           router.replace("/affiliate/register")
           return
@@ -60,7 +60,7 @@ export function AffiliateGate({
         if (cancelled) return
         if (err instanceof AffiliateApiError && err.status === 401) {
           router.replace(
-            `/login?redirect=${encodeURIComponent(pathname || "/affiliate")}`
+            `/login?redirect=${encodeURIComponent(pathname || "/affiliate/dashboard")}`
           )
           return
         }

@@ -2400,6 +2400,8 @@ const M = {
     "Affiliate-Dashboard",
     "Tableau de bord affilié"
   ),
+  affiliateNavOverview: L("Overzicht", "Overview", "Übersicht", "Aperçu"),
+  affiliateNavProducts: L("Producten", "Products", "Produkte", "Produits"),
   affiliateNavDashboard: L("Dashboard", "Dashboard", "Dashboard", "Tableau de bord"),
   affiliateNavStats: L(
     "Statistieken",
@@ -2414,10 +2416,10 @@ const M = {
     "Commissions"
   ),
   affiliateNavLinks: L(
-    "Links & Coupons",
-    "Links & Coupons",
-    "Links & Coupons",
-    "Liens & coupons"
+    "Mijn links",
+    "My links",
+    "Meine Links",
+    "Mes liens"
   ),
   affiliateNavPayouts: L(
     "Uitbetalingen",
@@ -2431,6 +2433,724 @@ const M = {
     "Affiliate navigation",
     "Affiliate-Navigation",
     "Navigation affilié"
+  ),
+  affLandingTitle: L(
+    "Affiliateprogramma",
+    "Affiliate programme",
+    "Affiliate-Programm",
+    "Programme d'affiliation"
+  ),
+  affLandingMetaDesc: L(
+    "Promoot Europese producten op EuropMade en verdien 5% platformcommissie met 30 dagen attributie.",
+    "Promote European products on EuropMade and earn 5% platform commission with 30-day attribution.",
+    "Bewerben Sie europäische Produkte auf EuropMade und verdienen Sie 5% Plattformprovision mit 30 Tagen Attribution.",
+    "Promouvez des produits européens sur EuropMade et gagnez 5% de commission plateforme avec 30 jours d'attribution."
+  ),
+  affLandingHero: L(
+    "Verdien mee aan Europese producten",
+    "Earn with European products",
+    "Mit europäischen Produkten verdienen",
+    "Gagnez avec des produits européens"
+  ),
+  affLandingLead: L(
+    "Word EuropMade-affiliate: deel productlinks, bereik kopers die Europese kwaliteit zoeken, en ontvang commissie op toegeschreven bestellingen.",
+    "Become a EuropMade affiliate: share product links, reach shoppers looking for European quality, and earn commission on attributed orders.",
+    "Werden Sie EuropMade-Affiliate: teilen Sie Produktlinks, erreichen Sie Käufer europäischer Qualität und erhalten Sie Provision auf zugeschriebene Bestellungen.",
+    "Devenez affilié EuropMade : partagez des liens produits, touchez des acheteurs de qualité européenne et percevez une commission sur les commandes attribuées."
+  ),
+  affLandingCtaRegister: L(
+    "Word affiliate",
+    "Become an affiliate",
+    "Affiliate werden",
+    "Devenir affilié"
+  ),
+  affLandingCtaLogin: L(
+    "Inloggen (bestaande affiliates)",
+    "Log in (existing affiliates)",
+    "Anmelden (bestehende Affiliates)",
+    "Connexion (affiliés existants)"
+  ),
+  affLandingCtaHow: L(
+    "Hoe het werkt",
+    "How it works",
+    "So funktioniert's",
+    "Comment ça marche"
+  ),
+  affLandingExplainTitle: L(
+    "Het programma in het kort",
+    "The programme at a glance",
+    "Das Programm kurz erklärt",
+    "Le programme en bref"
+  ),
+  affLandingExplainWhatTitle: L(
+    "Wat is EuropMade?",
+    "What is EuropMade?",
+    "Was ist EuropMade?",
+    "Qu'est-ce qu'EuropMade ?"
+  ),
+  affLandingExplainWhat: L(
+    "EuropMade is een marketplace voor producten met een Europese herkomst. EuropMade verkoopt zelf geen producten; verkopers bieden aan en affiliates helpen die producten te ontdekken.",
+    "EuropMade is a marketplace for products with European origin. EuropMade never sells products itself; sellers offer and affiliates help shoppers discover them.",
+    "EuropMade ist ein Marketplace für Produkte europäischer Herkunft. EuropMade verkauft selbst keine Produkte; Verkäufer bieten an und Affiliates helfen bei der Entdeckung.",
+    "EuropMade est une marketplace de produits d'origine européenne. EuropMade ne vend jamais lui-même ; les vendeurs proposent et les affiliés aident à la découverte."
+  ),
+  affLandingExplainRoleTitle: L(
+    "Wat doet een affiliate?",
+    "What does an affiliate do?",
+    "Was macht ein Affiliate?",
+    "Que fait un affilié ?"
+  ),
+  affLandingExplainRole: L(
+    "Je zoekt producten in de catalogus, maakt een trackinglink, deelt die via je kanaal, en verdient commissie wanneer een bezoeker met toestemming binnen het attributievenster bestelt.",
+    "You search the catalogue, create a tracking link, share it on your channel, and earn commission when a consented visitor orders within the attribution window.",
+    "Sie suchen Produkte, erstellen einen Tracking-Link, teilen ihn und verdienen Provision, wenn ein Besucher mit Zustimmung im Attributionsfenster bestellt.",
+    "Vous cherchez des produits, créez un lien de suivi, le partagez, et gagnez une commission quand un visiteur consentant commande dans la fenêtre d'attribution."
+  ),
+  affLandingExplainCommissionTitle: L(
+    "Hoe werkt commissie?",
+    "How does commission work?",
+    "Wie funktioniert die Provision?",
+    "Comment marche la commission ?"
+  ),
+  affLandingExplainCommission: L(
+    "De platformdefault is 5% over de toegeschreven orderwaarde (ADR-0030). Attributie loopt 30 dagen na een geldige click met cookie-toestemming. Er zijn geen aparte commissies per product of seller.",
+    "The platform default is 5% of attributed order value (ADR-0030). Attribution lasts 30 days after a valid click with cookie consent. There are no per-product or per-seller commission rates.",
+    "Die Plattform-Default ist 5% auf den zugeschriebenen Bestellwert (ADR-0030). Attribution gilt 30 Tage nach gültigem Click mit Cookie-Zustimmung. Keine produkt- oder seller-spezifischen Sätze.",
+    "Le défaut plateforme est 5% de la valeur de commande attribuée (ADR-0030). L'attribution dure 30 jours après un clic valide avec consentement cookies. Pas de taux par produit ou vendeur."
+  ),
+  affLandingHowTitle: L(
+    "Hoe het werkt",
+    "How it works",
+    "So funktioniert's",
+    "Comment ça marche"
+  ),
+  affLandingHow1: L(
+    "Aanmelden — dien een affiliate-aanvraag in (status Ingediend tot handmatige goedkeuring).",
+    "Sign up — submit an affiliate application (status Submitted until manual approval).",
+    "Anmelden — Affiliate-Antrag einreichen (Status Eingereicht bis zur manuellen Freigabe).",
+    "S'inscrire — soumettre une demande d'affilié (statut Soumis jusqu'à validation manuelle)."
+  ),
+  affLandingHow2: L(
+    "Producten zoeken — vind verkoopbare producten in het affiliate-portaal.",
+    "Search products — find sellable products in the affiliate portal.",
+    "Produkte suchen — verkaufbare Produkte im Affiliate-Portal finden.",
+    "Chercher des produits — trouvez des produits vendables dans le portail affilié."
+  ),
+  affLandingHow3: L(
+    "Affiliate-link maken — met één klik Promoten genereer je een unieke trackingparameter.",
+    "Create an affiliate link — one click Promote generates a unique tracking parameter.",
+    "Affiliate-Link erstellen — ein Klick auf Bewerben erzeugt einen Tracking-Parameter.",
+    "Créer un lien affilié — un clic Promouvoir génère un paramètre de suivi unique."
+  ),
+  affLandingHow4: L(
+    "Link delen — kopieer je link en deel hem via je kanaal.",
+    "Share the link — copy your link and share it on your channel.",
+    "Link teilen — Link kopieren und über Ihren Kanal teilen.",
+    "Partager le lien — copiez et partagez-le via votre canal."
+  ),
+  affLandingHow5: L(
+    "Commissie verdienen — bij een toegeschreven bestelling ontvang je 5% platformcommissie.",
+    "Earn commission — on an attributed order you receive 5% platform commission.",
+    "Provision verdienen — bei zugeschriebener Bestellung erhalten Sie 5% Plattformprovision.",
+    "Gagner une commission — sur une commande attribuée vous recevez 5% de commission plateforme."
+  ),
+  affLandingBenefitsTitle: L(
+    "Voordelen",
+    "Benefits",
+    "Vorteile",
+    "Avantages"
+  ),
+  affLandingBenefit1: L(
+    "Europese producten — focus op Made in Europe / Europese herkomst.",
+    "European products — focus on Made in Europe / European origin.",
+    "Europäische Produkte — Fokus auf Made in Europe / europäische Herkunft.",
+    "Produits européens — focus Made in Europe / origine européenne."
+  ),
+  affLandingBenefit2: L(
+    "5% platformcommissie volgens de bestaande businessregel (ADR-0030).",
+    "5% platform commission per the existing business rule (ADR-0030).",
+    "5% Plattformprovision gemäß bestehender Geschäftsregel (ADR-0030).",
+    "5% de commission plateforme selon la règle métier existante (ADR-0030)."
+  ),
+  affLandingBenefit3: L(
+    "30 dagen attributie na een geldige click met toestemming.",
+    "30-day attribution after a valid consented click.",
+    "30 Tage Attribution nach gültigem Click mit Zustimmung.",
+    "30 jours d'attribution après un clic consenti valide."
+  ),
+  affLandingBenefit4: L(
+    "Eenvoudig producten promoten via zoeken + Promoten in het portaal.",
+    "Easily promote products via search + Promote in the portal.",
+    "Produkte einfach bewerben über Suche + Bewerben im Portal.",
+    "Promouvoir facilement via recherche + Promouvoir dans le portail."
+  ),
+  affLandingBenefit5: L(
+    "Inzicht in resultaten: klikken, conversies en commissies in je dashboard.",
+    "Result insights: clicks, conversions and commissions in your dashboard.",
+    "Ergebnis-Einblick: Klicks, Conversions und Provisionen im Dashboard.",
+    "Visibilité des résultats : clics, conversions et commissions dans le tableau de bord."
+  ),
+  affProductBack: L(
+    "← Terug naar producten",
+    "← Back to products",
+    "← Zurück zu Produkten",
+    "← Retour aux produits"
+  ),
+  affProductFallbackTitle: L("Product", "Product", "Produkt", "Produit"),
+  affProductLoadFailed: L(
+    "Product laden mislukt.",
+    "Failed to load product.",
+    "Produkt konnte nicht geladen werden.",
+    "Échec du chargement du produit."
+  ),
+  affProductLinkCreated: L(
+    "Affiliate-link aangemaakt.",
+    "Affiliate link created.",
+    "Affiliate-Link erstellt.",
+    "Lien affilié créé."
+  ),
+  affProductLinkFailed: L(
+    "Link aanmaken mislukt.",
+    "Failed to create link.",
+    "Link konnte nicht erstellt werden.",
+    "Échec de la création du lien."
+  ),
+  affProductCopyFailed: L(
+    "Kopiëren mislukt. Selecteer de link handmatig.",
+    "Copy failed. Select the link manually.",
+    "Kopieren fehlgeschlagen. Link manuell markieren.",
+    "Échec de la copie. Sélectionnez le lien manuellement."
+  ),
+  affProductSellable: L("Verkoopbaar", "For sale", "Verkaufbar", "Vendable"),
+  affProductUnavailable: L(
+    "Niet beschikbaar",
+    "Unavailable",
+    "Nicht verfügbar",
+    "Indisponible"
+  ),
+  affProductBrand: L("Merk", "Brand", "Marke", "Marque"),
+  affProductSeller: L("Verkoper", "Seller", "Verkäufer", "Vendeur"),
+  affProductId: L("Product-ID", "Product ID", "Produkt-ID", "ID produit"),
+  affProductPriceLabel: L(
+    "Productprijs",
+    "Product price",
+    "Produktpreis",
+    "Prix du produit"
+  ),
+  affProductCommissionLabel: L(
+    "Affiliate commissie",
+    "Affiliate commission",
+    "Affiliate-Provision",
+    "Commission affilié"
+  ),
+  affProductYouEarn: L("Je verdient", "You earn", "Sie verdienen", "Vous gagnez"),
+  affProductAttributionDays: L(
+    "Attributieduur: {days} dagen",
+    "Attribution window: {days} days",
+    "Attributionsdauer: {days} Tage",
+    "Durée d'attribution : {days} jours"
+  ),
+  affProductPromote: L(
+    "Promoot dit product",
+    "Promote this product",
+    "Dieses Produkt bewerben",
+    "Promouvoir ce produit"
+  ),
+  affProductPromoting: L("Bezig…", "Working…", "Bitte warten…", "En cours…"),
+  affProductShareHeading: L(
+    "Jouw affiliate-link",
+    "Your affiliate link",
+    "Ihr Affiliate-Link",
+    "Votre lien affilié"
+  ),
+  affProductCopy: L("Kopieer link", "Copy link", "Link kopieren", "Copier le lien"),
+  affProductCopied: L(
+    "Link gekopieerd",
+    "Link copied",
+    "Link kopiert",
+    "Lien copié"
+  ),
+  affiliateBrand: L("Affiliate", "Affiliate", "Affiliate", "Affilié"),
+  affiliateShellHome: L(
+    "EuropMade Affiliate",
+    "EuropMade Affiliate",
+    "EuropMade Affiliate",
+    "EuropMade Affilié"
+  ),
+  affBreadcrumbAria: L(
+    "Broodkruimel",
+    "Breadcrumb",
+    "Brotkrumen",
+    "Fil d'Ariane"
+  ),
+  affRegisterNav: L(
+    "Registratie",
+    "Registration",
+    "Registrierung",
+    "Inscription"
+  ),
+  affDetails: L("Details", "Details", "Details", "Détails"),
+  affActions: L("Acties", "Actions", "Aktionen", "Actions"),
+  affProductCol: L("Product", "Product", "Produkt", "Produit"),
+  affPrice: L("Prijs", "Price", "Preis", "Prix"),
+  affAll: L("Alle", "All", "Alle", "Tous"),
+  affCreated: L("Aangemaakt", "Created", "Erstellt", "Créé"),
+  affUnknownProduct: L(
+    "Onbekend product",
+    "Unknown product",
+    "Unbekanntes Produkt",
+    "Produit inconnu"
+  ),
+  affNoPhoto: L("Geen foto", "No photo", "Kein Foto", "Pas de photo"),
+  affCopyLink: L(
+    "Link kopiëren",
+    "Copy link",
+    "Link kopieren",
+    "Copier le lien"
+  ),
+  affEarnPerSale: L(
+    "Verdienste per verkoop",
+    "Earnings per sale",
+    "Verdienst pro Verkauf",
+    "Gain par vente"
+  ),
+  affDashLoadFailed: L(
+    "Dashboard laden mislukt.",
+    "Failed to load dashboard.",
+    "Dashboard konnte nicht geladen werden.",
+    "Échec du chargement du tableau de bord."
+  ),
+  affDashClicksPeriod: L(
+    "Klikken ({days} dagen)",
+    "Clicks ({days} days)",
+    "Klicks ({days} Tage)",
+    "Clics ({days} jours)"
+  ),
+  affDashConversionsPeriod: L(
+    "Conversies ({days} dagen)",
+    "Conversions ({days} days)",
+    "Conversions ({days} Tage)",
+    "Conversions ({days} jours)"
+  ),
+  affDashCommissionPeriod: L(
+    "Commissie deze periode",
+    "Commission this period",
+    "Provision in diesem Zeitraum",
+    "Commission de cette période"
+  ),
+  affDashViewPayouts: L(
+    "Bekijk uitbetalingen",
+    "View payouts",
+    "Auszahlungen ansehen",
+    "Voir les paiements"
+  ),
+  affDashShortcuts: L(
+    "Snelkoppelingen",
+    "Shortcuts",
+    "Schnellzugriff",
+    "Raccourcis"
+  ),
+  affDashSearchProducts: L(
+    "Producten zoeken om te promoten",
+    "Search products to promote",
+    "Produkte zum Bewerben suchen",
+    "Chercher des produits à promouvoir"
+  ),
+  affDashMyLinks: L(
+    "Mijn affiliate-links",
+    "My affiliate links",
+    "Meine Affiliate-Links",
+    "Mes liens affiliés"
+  ),
+  affDashStatsPerLink: L(
+    "Statistieken per link",
+    "Statistics per link",
+    "Statistiken pro Link",
+    "Statistiques par lien"
+  ),
+  affDashSearchCta: L("Zoeken →", "Search →", "Suchen →", "Rechercher →"),
+  affDashViewCta: L("Bekijken →", "View →", "Ansehen →", "Voir →"),
+  affProductsIntro: L(
+    "Zoek verkoopbare EuropMade-producten om te promoten. Platformcommissie: {rate} (ADR-0030).",
+    "Search sellable EuropMade products to promote. Platform commission: {rate} (ADR-0030).",
+    "Suchen Sie verkaufbare EuropMade-Produkte zum Bewerben. Plattformprovision: {rate} (ADR-0030).",
+    "Cherchez des produits EuropMade vendables à promouvoir. Commission plateforme : {rate} (ADR-0030)."
+  ),
+  affProductsSearchPlaceholder: L(
+    "Productnaam, SKU of EAN…",
+    "Product name, SKU or EAN…",
+    "Produktname, SKU oder EAN…",
+    "Nom du produit, SKU ou EAN…"
+  ),
+  affProductsSellableCount: L(
+    "{count} verkoopbare producten",
+    "{count} sellable products",
+    "{count} verkaufbare Produkte",
+    "{count} produits vendables"
+  ),
+  affProductsLoadFailed: L(
+    "Producten laden mislukt.",
+    "Failed to load products.",
+    "Produkte konnten nicht geladen werden.",
+    "Échec du chargement des produits."
+  ),
+  affCatalogLoadFailed: L(
+    "Catalogus kon niet worden geladen.",
+    "Catalogue could not be loaded.",
+    "Katalog konnte nicht geladen werden.",
+    "Le catalogue n'a pas pu être chargé."
+  ),
+  affProductsLoading: L(
+    "Producten laden…",
+    "Loading products…",
+    "Produkte werden geladen…",
+    "Chargement des produits…"
+  ),
+  affProductsEmpty: L(
+    "Geen verkoopbare producten gevonden voor deze zoekopdracht.",
+    "No sellable products found for this search.",
+    "Keine verkaufbaren Produkte für diese Suche gefunden.",
+    "Aucun produit vendable trouvé pour cette recherche."
+  ),
+  affLinksIntro: L(
+    "Links die je via Producten → Promoten hebt aangemaakt, plus optionele coupon-code.",
+    "Links you created via Products → Promote, plus an optional coupon code.",
+    "Links, die Sie über Produkte → Bewerben erstellt haben, plus optionaler Coupon-Code.",
+    "Liens créés via Produits → Promouvoir, plus un code coupon optionnel."
+  ),
+  affLinksEmpty: L(
+    "Nog geen links. Ga naar Producten om te promoten.",
+    "No links yet. Go to Products to promote.",
+    "Noch keine Links. Gehen Sie zu Produkte, um zu werben.",
+    "Pas encore de liens. Allez dans Produits pour promouvoir."
+  ),
+  affLinksLoadFailed: L(
+    "Links laden mislukt.",
+    "Failed to load links.",
+    "Links konnten nicht geladen werden.",
+    "Échec du chargement des liens."
+  ),
+  affCouponHeading: L("Coupon-code", "Coupon code", "Coupon-Code", "Code coupon"),
+  affCouponCode: L("Code", "Code", "Code", "Code"),
+  affCouponPurpose: L("Doel", "Purpose", "Zweck", "Objectif"),
+  affCouponPurposeValue: L(
+    "Attributie zonder cookie",
+    "Attribution without cookie",
+    "Attribution ohne Cookie",
+    "Attribution sans cookie"
+  ),
+  affCouponCreate: L(
+    "Coupon-code aanmaken",
+    "Create coupon code",
+    "Coupon-Code erstellen",
+    "Créer un code coupon"
+  ),
+  affCouponCreateFailed: L(
+    "Coupon aanmaken mislukt.",
+    "Failed to create coupon.",
+    "Coupon konnte nicht erstellt werden.",
+    "Échec de la création du coupon."
+  ),
+  affStatsIntro: L(
+    "Klikken en conversies per trackinglink (laatste {days} dagen).",
+    "Clicks and conversions per tracking link (last {days} days).",
+    "Klicks und Conversions pro Tracking-Link (letzte {days} Tage).",
+    "Clics et conversions par lien de suivi ({days} derniers jours)."
+  ),
+  affStatsEmpty: L(
+    "Nog geen trackinglinks.",
+    "No tracking links yet.",
+    "Noch keine Tracking-Links.",
+    "Pas encore de liens de suivi."
+  ),
+  affStatsLoadFailed: L(
+    "Statistieken laden mislukt.",
+    "Failed to load statistics.",
+    "Statistiken konnten nicht geladen werden.",
+    "Échec du chargement des statistiques."
+  ),
+  affClicks: L("Klikken", "Clicks", "Klicks", "Clics"),
+  affConversions: L("Conversies", "Conversions", "Conversions", "Conversions"),
+  affConversionRate: L(
+    "Conversieratio",
+    "Conversion rate",
+    "Conversion-Rate",
+    "Taux de conversion"
+  ),
+  affCommIntro: L(
+    "Overzicht van toegekende commissie per conversie.",
+    "Overview of awarded commission per conversion.",
+    "Übersicht der gutgeschriebenen Provision pro Conversion.",
+    "Aperçu des commissions attribuées par conversion."
+  ),
+  affCommEmpty: L(
+    "Nog geen commissies.",
+    "No commissions yet.",
+    "Noch keine Provisionen.",
+    "Pas encore de commissions."
+  ),
+  affCommLoadFailed: L(
+    "Commissies laden mislukt.",
+    "Failed to load commissions.",
+    "Provisionen konnten nicht geladen werden.",
+    "Échec du chargement des commissions."
+  ),
+  affCommDate: L("Datum", "Date", "Datum", "Date"),
+  affCommOrder: L("Order", "Order", "Bestellung", "Commande"),
+  affCommType: L("Type", "Type", "Typ", "Type"),
+  affCommAmount: L("Bedrag", "Amount", "Betrag", "Montant"),
+  affCommStatus: L("Status", "Status", "Status", "Statut"),
+  affCommPayoutNote: L(
+    "Commissie wordt pas uitbetaald na de wettelijke herroepingstermijn van de onderliggende order.",
+    "Commission is paid out only after the statutory withdrawal period of the underlying order.",
+    "Provision wird erst nach der gesetzlichen Widerrufsfrist der zugrunde liegenden Bestellung ausgezahlt.",
+    "La commission n'est versée qu'après le délai légal de rétractation de la commande sous-jacente."
+  ),
+  affPayoutsIntro: L(
+    "Overzicht van je uitbetalingen.",
+    "Overview of your payouts.",
+    "Übersicht deiner Auszahlungen.",
+    "Aperçu de tes versements."
+  ),
+  affPayoutsEmpty: L(
+    "Nog geen uitbetalingen.",
+    "No payouts yet.",
+    "Noch keine Auszahlungen.",
+    "Pas encore de versements."
+  ),
+  affPayoutsLoadFailed: L(
+    "Uitbetalingen laden mislukt.",
+    "Failed to load payouts.",
+    "Auszahlungen konnten nicht geladen werden.",
+    "Échec du chargement des versements."
+  ),
+  affAccountIntro: L(
+    "Je accountgegevens voor het affiliateprogramma.",
+    "Your account details for the affiliate programme.",
+    "Deine Kontodaten für das Affiliate-Programm.",
+    "Tes informations de compte pour le programme d'affiliation."
+  ),
+  affAccountLoadFailed: L(
+    "Accountgegevens laden mislukt.",
+    "Failed to load account details.",
+    "Kontodaten konnten nicht geladen werden.",
+    "Échec du chargement du compte."
+  ),
+  affAccountChannel: L(
+    "Promotiekanaal",
+    "Promotion channel",
+    "Werbekanal",
+    "Canal de promotion"
+  ),
+  affAccountLegalName: L(
+    "Bedrijfsnaam",
+    "Company name",
+    "Firmenname",
+    "Raison sociale"
+  ),
+  affAccountIban: L("IBAN", "IBAN", "IBAN", "IBAN"),
+  affAccountApprovedAt: L(
+    "Goedgekeurd op",
+    "Approved on",
+    "Genehmigt am",
+    "Approuvé le"
+  ),
+  affAccountChangeNote: L(
+    "Bedrijfs- en bankgegevens kun je hier niet zelf wijzigen. Neem contact op met EuropMade als iets niet klopt.",
+    "Company and bank details cannot be changed here. Contact EuropMade if something is incorrect.",
+    "Firmen- und Bankdaten können hier nicht selbst geändert werden. Kontaktiere EuropMade, wenn etwas nicht stimmt.",
+    "Les données d'entreprise et bancaires ne peuvent pas être modifiées ici. Contacte EuropMade si quelque chose est incorrect."
+  ),
+  affAttrTypeLink: L("Link", "Link", "Link", "Lien"),
+  affAttrTypeCoupon: L("Coupon", "Coupon", "Coupon", "Coupon"),
+  affAttrTypeUnknown: L("Onbekend", "Unknown", "Unbekannt", "Inconnu"),
+  affCommReversedReturn: L(
+    "Teruggedraaid (retour)",
+    "Reversed (return)",
+    "Rückgängig (Retour)",
+    "Annulé (retour)"
+  ),
+  statusReversed: L(
+    "Teruggedraaid",
+    "Reversed",
+    "Rückgängig",
+    "Annulé"
+  ),
+  statusInactive: L("Inactief", "Inactive", "Inaktiv", "Inactif"),
+  affRegTitle: L(
+    "Word EuropMade Affiliate",
+    "Become a EuropMade Affiliate",
+    "EuropMade-Affiliate werden",
+    "Devenir affilié EuropMade"
+  ),
+  affRegLead: L(
+    "Meld je aan voor het Affiliate-programma en ontvang commissie op conversies.",
+    "Sign up for the Affiliate programme and earn commission on conversions.",
+    "Melden Sie sich für das Affiliate-Programm an und erhalten Sie Provision auf Conversions.",
+    "Inscrivez-vous au programme d'affiliation et percevez une commission sur les conversions."
+  ),
+  affRegLegalName: L(
+    "Naam / bedrijfsnaam",
+    "Name / company name",
+    "Name / Firmenname",
+    "Nom / raison sociale"
+  ),
+  affRegLegalPlaceholder: L(
+    "Jouw naam of bedrijf",
+    "Your name or company",
+    "Ihr Name oder Unternehmen",
+    "Votre nom ou entreprise"
+  ),
+  affRegChannel: L(
+    "Website of kanaal",
+    "Website or channel",
+    "Website oder Kanal",
+    "Site web ou canal"
+  ),
+  affRegIban: L(
+    "IBAN (voor uitbetaling)",
+    "IBAN (for payout)",
+    "IBAN (für Auszahlung)",
+    "IBAN (pour le paiement)"
+  ),
+  affRegManualReview: L(
+    "Je aanvraag wordt handmatig beoordeeld door een Beheerder — geen automatische goedkeuring.",
+    "Your application is reviewed manually by an Administrator — no automatic approval.",
+    "Ihr Antrag wird manuell von einem Administrator geprüft — keine automatische Freigabe.",
+    "Votre demande est examinée manuellement par un Administrateur — pas d'approbation automatique."
+  ),
+  affRegSubmit: L(
+    "Aanvraag indienen",
+    "Submit application",
+    "Antrag einreichen",
+    "Soumettre la demande"
+  ),
+  affRegSubmitting: L(
+    "Indienen…",
+    "Submitting…",
+    "Wird gesendet…",
+    "Envoi…"
+  ),
+  affRegSubmitFailed: L(
+    "Aanvraag indienen mislukt.",
+    "Failed to submit application.",
+    "Antrag konnte nicht eingereicht werden.",
+    "Échec de l'envoi de la demande."
+  ),
+  affRegApprovedTitle: L(
+    "Je bent goedgekeurd als Affiliate",
+    "You are approved as an Affiliate",
+    "Sie sind als Affiliate genehmigt",
+    "Vous êtes approuvé en tant qu'affilié"
+  ),
+  affRegApprovedBody: L(
+    "Je kunt nu trackinglinks aanmaken en commissies volgen.",
+    "You can now create tracking links and follow commissions.",
+    "Sie können jetzt Tracking-Links erstellen und Provisionen verfolgen.",
+    "Vous pouvez maintenant créer des liens de suivi et suivre les commissions."
+  ),
+  affRegRejectedTitle: L(
+    "Aanvraag afgewezen",
+    "Application rejected",
+    "Antrag abgelehnt",
+    "Demande refusée"
+  ),
+  affRegRejectedFallback: L(
+    "Neem contact op met support voor meer informatie.",
+    "Contact support for more information.",
+    "Kontaktieren Sie den Support für weitere Informationen.",
+    "Contactez le support pour plus d'informations."
+  ),
+  affRegPendingTitle: L(
+    "Aanvraag ingediend",
+    "Application submitted",
+    "Antrag eingereicht",
+    "Demande soumise"
+  ),
+  affRegPendingBody: L(
+    "Een Beheerder beoordeelt je aanvraag handmatig. Je ontvangt geen automatische goedkeuring.",
+    "An Administrator reviews your application manually. You will not receive automatic approval.",
+    "Ein Administrator prüft Ihren Antrag manuell. Es gibt keine automatische Freigabe.",
+    "Un Administrateur examine votre demande manuellement. Vous ne recevrez pas d'approbation automatique."
+  ),
+  affRegToDashboard: L(
+    "Naar dashboard",
+    "Go to dashboard",
+    "Zum Dashboard",
+    "Aller au tableau de bord"
+  ),
+  affLandingFaqTitle: L("Veelgestelde vragen", "FAQ", "FAQ", "FAQ"),
+  affLandingFaq1Q: L(
+    "Hoe hoog is de commissie?",
+    "What is the commission rate?",
+    "Wie hoch ist die Provision?",
+    "Quel est le taux de commission ?"
+  ),
+  affLandingFaq1A: L(
+    "De platformdefault is 5% van de toegeschreven orderwaarde. Er zijn geen product- of seller-specifieke overrides in dit programma.",
+    "The platform default is 5% of attributed order value. This programme has no product- or seller-specific overrides.",
+    "Die Plattform-Default ist 5% des zugeschriebenen Bestellwerts. Es gibt keine produkt- oder seller-spezifischen Overrides.",
+    "Le défaut plateforme est 5% de la valeur attribuée. Ce programme n'a pas d'overrides produit ou vendeur."
+  ),
+  affLandingFaq2Q: L(
+    "Hoe lang geldt attributie?",
+    "How long does attribution last?",
+    "Wie lange gilt die Attribution?",
+    "Combien de temps dure l'attribution ?"
+  ),
+  affLandingFaq2A: L(
+    "30 dagen na een geldige click, mits de bezoeker cookie-toestemming heeft gegeven voor affiliate-tracking.",
+    "30 days after a valid click, provided the visitor gave cookie consent for affiliate tracking.",
+    "30 Tage nach gültigem Click, sofern Cookie-Zustimmung für Affiliate-Tracking vorliegt.",
+    "30 jours après un clic valide, si le visiteur a consenti aux cookies de suivi affilié."
+  ),
+  affLandingFaq3Q: L(
+    "Word ik automatisch goedgekeurd?",
+    "Am I auto-approved?",
+    "Werde ich automatisch freigegeben?",
+    "Suis-je approuvé automatiquement ?"
+  ),
+  affLandingFaq3A: L(
+    "Nee. Na aanmelding heeft je aanvraag de status Ingediend en beoordeelt een beheerder handmatig. Er is geen auto-approve.",
+    "No. After signup your application is Submitted and a admin reviews it manually. There is no auto-approve.",
+    "Nein. Nach Anmeldung ist der Status Eingereicht; ein Admin prüft manuell. Kein Auto-Approve.",
+    "Non. Après inscription le statut est Soumis ; un admin valide manuellement. Pas d'approbation auto."
+  ),
+  affLandingFaq4Q: L(
+    "Kan ik mijn eigen aankopen attributeren?",
+    "Can I attribute my own purchases?",
+    "Kann ich eigene Käufe attributieren?",
+    "Puis-je m'attribuer mes propres achats ?"
+  ),
+  affLandingFaq4A: L(
+    "Nee. Self-attribution is geblokkeerd: een affiliate kan geen commissie claimen op eigen bestellingen.",
+    "No. Self-attribution is blocked: an affiliate cannot claim commission on their own orders.",
+    "Nein. Self-Attribution ist blockiert: keine Provision auf eigene Bestellungen.",
+    "Non. L'auto-attribution est bloquée : pas de commission sur vos propres commandes."
+  ),
+  affLandingFaq5Q: L(
+    "Wat gebeurt er bij een retour?",
+    "What happens on a return?",
+    "Was passiert bei einer Retoure?",
+    "Que se passe-t-il en cas de retour ?"
+  ),
+  affLandingFaq5A: L(
+    "Bij refund van een toegeschreven order wordt de bijbehorende affiliate-conversie/commissie teruggedraaid volgens de bestaande refund-logica.",
+    "On refund of an attributed order, the related affiliate conversion/commission is reversed per existing refund logic.",
+    "Bei Refund einer zugeschriebenen Bestellung wird die Affiliate-Conversion/Provision gemäß bestehender Refund-Logik rückgängig gemacht.",
+    "En cas de remboursement d'une commande attribuée, la conversion/commission affiliée est annulée selon la logique refund existante."
+  ),
+  affLandingCtaBottomTitle: L(
+    "Klaar om te starten?",
+    "Ready to start?",
+    "Bereit zum Start?",
+    "Prêt à commencer ?"
+  ),
+  affLandingCtaBottomBody: L(
+    "Registreer je als affiliate of log in om naar je dashboard te gaan.",
+    "Register as an affiliate or log in to open your dashboard.",
+    "Registrieren Sie sich als Affiliate oder melden Sie sich an, um Ihr Dashboard zu öffnen.",
+    "Inscrivez-vous comme affilié ou connectez-vous pour ouvrir votre tableau de bord."
   ),
   cookiePrefsTitle: L(
     "Cookievoorkeuren",
@@ -3095,6 +3815,7 @@ const M = {
     "Non lié"
   ),
   statusScheduled: L("Gepland", "Scheduled", "Geplant", "Planifié"),
+  statusCancelled: L("Geannuleerd", "Cancelled", "Storniert", "Annulé"),
   statusPaidOut: L("Uitbetaald", "Paid out", "Ausgezahlt", "Versé"),
   statusToInvoice: L(
     "Nog te factureren",

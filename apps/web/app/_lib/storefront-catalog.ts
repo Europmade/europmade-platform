@@ -15,10 +15,8 @@ import {
 } from "./catalog-api"
 import { slugifyForManufacturer } from "./manufacturer-slug"
 import { type ListingProduct } from "./listing-products"
-import {
-  findMarketplaceCategory,
-  MARKETPLACE_CATEGORIES,
-} from "./marketplace-categories"
+import { findMarketplaceCategory } from "./marketplace-categories"
+import { categorySlugFromName, localizeCategoryNames } from "./localize-category-names"
 import { type PdpDetail, type PdpOffer, type PdpReview } from "./pdp-seed"
 import {
   FREE_SHIPPING_SENTINEL,
@@ -72,28 +70,6 @@ async function isCheckoutReadyOffer(offerId: string): Promise<boolean> {
   } finally {
     clearTimeout(timer)
   }
-}
-
-function categorySlugFromName(name: string): string | null {
-  const lower = name.toLowerCase()
-  const exact = MARKETPLACE_CATEGORIES.find(
-    (c) => c.label.toLowerCase() === lower
-  )
-  if (exact) return exact.slug
-  const partial = MARKETPLACE_CATEGORIES.find(
-    (c) =>
-      lower.includes(c.label.toLowerCase()) ||
-      c.label.toLowerCase().includes(lower)
-  )
-  if (partial) return partial.slug
-  if (lower.includes("tuin")) return "tuin"
-  if (lower.includes("keuken")) return "keuken"
-  if (lower.includes("elektron")) return "elektronica"
-  if (lower.includes("mode") || lower.includes("kleding")) return "mode"
-  if (lower.includes("woon")) return "wonen"
-  if (lower.includes("sport")) return "sport"
-  if (lower.includes("voeding") || lower.includes("food")) return "voeding"
-  return null
 }
 
 function categorySlugsFromNames(names: string[]): string[] {
@@ -290,19 +266,6 @@ export async function resolveProducerPage(
     }
     return null
   }
-}
-
-function localizeCategoryNames(
-  names: string[],
-  locale: StorefrontLocale
-): string {
-  if (names.length === 0) return t("catAlgemeen", locale)
-  return names
-    .map((name) => {
-      const slug = categorySlugFromName(name)
-      return slug ? categoryNavLabel(slug, name, locale) : name
-    })
-    .join(", ")
 }
 
 function currencyLocale(locale: StorefrontLocale): string {

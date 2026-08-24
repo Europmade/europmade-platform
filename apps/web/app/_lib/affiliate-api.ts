@@ -65,6 +65,8 @@ export type AffiliateRecord = {
   rejection_reason: string | null
   approved_at: string | null
   company_id: string | null
+  legal_name?: string | null
+  iban_masked?: string | null
 }
 
 export type AffiliateLink = {
@@ -203,6 +205,25 @@ export function trackAffiliateClick(
     },
     false
   )
+}
+
+export type AffiliatePayoutRow = {
+  id: string
+  amount: number
+  currency: string
+  period: string
+  status: string
+  eligible_at: string
+  processed_at: string | null
+  order_id: string | null
+  stripe_transfer_id: string | null
+}
+
+export function getAffiliatePayouts() {
+  return request<{
+    affiliate_id: string
+    payouts: AffiliatePayoutRow[]
+  }>("/store/finance/affiliate/payouts")
 }
 
 export type CommissionSettings = {
