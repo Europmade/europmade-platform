@@ -796,6 +796,11 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/affiliates/performance",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/affiliates/:id/approve",
       methods: ["POST"],
       middlewares: [adminAuth],
