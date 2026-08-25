@@ -692,7 +692,7 @@ export async function executeListAdminPayouts(
   if (filters?.recipient_type) query.recipient_type = filters.recipient_type
 
   const payouts = await finance.listPayouts(query, {
-    take: 200,
+    take: 10000,
     order: { created_at: "DESC" },
   })
 
@@ -708,6 +708,7 @@ export async function executeListAdminPayouts(
       status: p.status,
       eligible_at: p.eligible_at,
       processed_at: p.processed_at,
+      created_at: p.created_at,
       order_id: p.order_id,
       stripe_transfer_id: p.stripe_transfer_id,
     })),

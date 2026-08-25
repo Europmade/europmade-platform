@@ -852,8 +852,48 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/finance/payouts/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/finance/payouts/:id/process",
       methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/overview",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/transactions",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/transactions/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/sellers",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/sellers/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/affiliates",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/affiliates/:id",
+      methods: ["GET"],
       middlewares: [adminAuth],
     },
     {
