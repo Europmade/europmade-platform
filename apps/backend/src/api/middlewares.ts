@@ -897,6 +897,31 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/finance/invoicing",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/settlements",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/finance/settlements/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/store/finance/seller/settlements",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/finance/seller/settlements/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/admin/ai-support/recommendations",
       methods: ["POST"],
       middlewares: [

@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/finance/sellers", label: "Sellers" },
   { href: "/finance/affiliates", label: "Affiliates" },
   { href: "/finance/payouts", label: "Uitbetalingen" },
+  { href: "/finance/settlements", label: "Settlements" },
 ] as const
 
 export function FinanceNav({

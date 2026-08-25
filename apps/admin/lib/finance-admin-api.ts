@@ -318,6 +318,76 @@ export function getFinancePayout(id: string) {
   )
 }
 
+export type FinanceSettlement = {
+  id: string
+  seller_id: string
+  seller_name?: string
+  period_start: string
+  period_end: string
+  status: string
+  created_at: string | null
+  closed_at: string | null
+  invoice_id: string | null
+  payout_id: string | null
+  currency: string
+  gross_sales: number
+  refunds: number
+  net_sales: number
+  platform_commission: number
+  advertising_amount: number
+  banner_amount: number
+  other_services_amount: number
+  credits_amount: number
+  invoice_total: number
+  amount_before_payout: number
+  net_settlement: number
+}
+
+export type FinanceSellerInvoice = {
+  id: string
+  invoice_number: string
+  invoice_date: string
+  status: string
+  subtotal: number
+  vat_amount: number
+  total: number
+  vat_regime: string
+  settlement_id: string | null
+  pdf_url: string | null
+}
+
+export function listFinanceSettlements(sellerId?: string) {
+  return request<{ settlements: FinanceSettlement[] }>(
+    `/admin/finance/settlements${qs({ seller_id: sellerId })}`
+  )
+}
+
+export function getFinanceSettlement(id: string) {
+  return request<{
+    settlement: FinanceSettlement
+    invoice: FinanceSellerInvoice | null
+    lines: Array<{
+      id: string
+      line_type: string
+      description: string
+      net_amount: number
+      vat_amount: number
+      gross_amount: number
+    }>
+  }>(`/admin/finance/settlements/${encodeURIComponent(id)}`)
+}
+
+export function closeFinancePeriod(body: {
+  seller_id?: string
+  year: number
+  month: number
+}) {
+  return request<Record<string, unknown>>(`/admin/finance/invoicing`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
 export function formatFinanceEuro(n: number): string {
   return new Intl.NumberFormat("nl-NL", {
     style: "currency",
