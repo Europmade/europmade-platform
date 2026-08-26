@@ -221,6 +221,10 @@ export const submitVersionStep = createStep(
     const updated = await productCloud.updateProductVersions({
       id: version.id,
       publication_status: "In review",
+      approval_requested_at: new Date(),
+      approval_rejection_reason: null,
+      approval_decided_at: null,
+      approval_decided_by: null,
     })
     const result = (
       Array.isArray(updated) ? updated[0] : updated
@@ -372,10 +376,19 @@ export const addMediaStep = createStep(
       )
     }
 
+    const existing = await productCloud.listProductMedias({
+      product_version_id: version.id,
+    })
+    const maxOrder = existing.reduce(
+      (max, row: { sort_order?: number | null }) =>
+        Math.max(max, Number(row.sort_order ?? 0)),
+      -1
+    )
     const media = await productCloud.createProductMedias({
       product_version_id: version.id,
       media_type: input.media_type,
       storage_reference: input.storage_reference,
+      sort_order: maxOrder + 1,
     })
     return new StepResponse(media)
   }
@@ -486,6 +499,120 @@ export const adminArchiveWorkflow = createWorkflow(
   "admin-archive-product",
   (input: AdminArchiveInput) => {
     const result = adminArchiveStep(input)
+    return new WorkflowResponse(result)
+  }
+)
+
+export type AdminDecideVersionInput = {
+  product_id: string
+  version_id: string
+  actor_id: string
+  decision: "approved" | "rejected"
+  reason?: string
+}
+
+export const adminDecideVersionStep = createStep(
+  "admin-decide-product-version",
+  async (input: AdminDecideVersionInput, { container }) => {
+    const productCloud = container.resolve(
+      PRODUCT_CLOUD_MODULE
+    ) as ProductCloudModuleService
+    const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
+
+    const product = (await productCloud.retrieveProduct(
+      input.product_id
+    )) as ProductRow
+    const version = (await productCloud.retrieveProductVersion(
+      input.version_id
+    )) as ProductVersionRow
+    if (version.product_id !== input.product_id) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Versie hoort niet bij dit product."
+      )
+    }
+    if (version.publication_status !== "In review") {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        "Alleen producten in productgoedkeuring (In review) kunnen worden beoordeeld."
+      )
+    }
+
+    if (input.decision === "rejected") {
+      const reason = (input.reason || "").trim()
+      if (!reason) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          "Bij afwijzen is een reden verplicht."
+        )
+      }
+      const updated = await productCloud.updateProductVersions({
+        id: version.id,
+        publication_status: "Concept",
+        approval_rejection_reason: reason,
+        approval_decided_at: new Date(),
+        approval_decided_by: input.actor_id,
+      })
+      await productCloud.createProductFieldChanges({
+        product_id: input.product_id,
+        product_version_id: version.id,
+        seller_id: "admin",
+        actor_customer_id: input.actor_id,
+        field_code: "publication.approval",
+        field_label: "Productgoedkeuring",
+        old_value: "In review",
+        new_value: `rejected:${reason}`,
+        status: "rejected",
+        reason,
+      })
+      logger.info(
+        `[audit] product approval rejected product=${input.product_id} version=${version.id}`
+      )
+      return new StepResponse({
+        version: (Array.isArray(updated) ? updated[0] : updated) as ProductVersionRow,
+        lifecycle_status: product.lifecycle_status,
+        decision: "rejected" as const,
+      })
+    }
+
+    const published = await productCloud.publishVersionGraph({
+      product_id: input.product_id,
+      version_id: version.id,
+      current_lifecycle_status: product.lifecycle_status,
+    })
+    await productCloud.updateProductVersions({
+      id: version.id,
+      approval_rejection_reason: null,
+      approval_decided_at: new Date(),
+      approval_decided_by: input.actor_id,
+    })
+    await productCloud.createProductFieldChanges({
+      product_id: input.product_id,
+      product_version_id: version.id,
+      seller_id: "admin",
+      actor_customer_id: input.actor_id,
+      field_code: "publication.approval",
+      field_label: "Productgoedkeuring",
+      old_value: "In review",
+      new_value: "Gepubliceerd",
+      status: "approved",
+      reason: input.reason || "Goedgekeurd door EuropMade",
+    })
+    logger.info(
+      `[audit] product approval approved product=${input.product_id} version=${version.id}`
+    )
+    return new StepResponse({
+      version: published.version as ProductVersionRow,
+      lifecycle_status: published.lifecycle_status,
+      decision: "approved" as const,
+    })
+  }
+)
+
+export const adminDecideVersionWorkflow = createWorkflow(
+  "admin-decide-product-version",
+  (input: AdminDecideVersionInput) => {
+    const result = adminDecideVersionStep(input)
     return new WorkflowResponse(result)
   }
 )

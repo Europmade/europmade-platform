@@ -1,7 +1,15 @@
 /**
  * EuropMade Made in Europe score — vaste criteria (Sprint 8).
  * Stabiele IDs; geen handmatige score-invoer door sellers.
+ *
+ * EU-landenlijst: één bron in @europmade/types (EU_MARKET_CODES).
  */
+
+import {
+  EU_MARKET_CODES,
+  isEuMarketCode,
+  type EuMarketCode,
+} from "@europmade/types"
 
 export const ASSEMBLY_EU_BANDS = [
   "eu_100",
@@ -26,38 +34,15 @@ export type AssemblyEuBand = (typeof ASSEMBLY_EU_BANDS)[number]
 export type PartsEuLevel = (typeof PARTS_EU_LEVELS)[number]
 export type MaterialsEuLevel = (typeof MATERIALS_EU_LEVELS)[number]
 
-/** ISO 3166-1 alpha-2 EU member states (no UK/CH/NO). */
-export const EU_COUNTRY_CODES = [
-  "AT",
-  "BE",
-  "BG",
-  "CY",
-  "CZ",
-  "DE",
-  "DK",
-  "EE",
-  "ES",
-  "FI",
-  "FR",
-  "GR",
-  "HR",
-  "HU",
-  "IE",
-  "IT",
-  "LT",
-  "LU",
-  "LV",
-  "MT",
-  "NL",
-  "PL",
-  "PT",
-  "RO",
-  "SE",
-  "SI",
-  "SK",
-] as const
+/** Alias van centrale EU_MARKET_CODES (CMS + MiE). */
+export const EU_COUNTRY_CODES = EU_MARKET_CODES
+export type { EuMarketCode }
+export type EuCountryCode = EuMarketCode
+export { isEuMarketCode }
 
-export type EuCountryCode = (typeof EU_COUNTRY_CODES)[number]
+export function isEuCountryCode(code: string | null | undefined): boolean {
+  return isEuMarketCode(code)
+}
 
 export type MadeInEuropeInput = {
   assembly_eu_band: AssemblyEuBand
@@ -99,11 +84,6 @@ const MATERIALS_POINTS: Record<MaterialsEuLevel, number> = {
   eu_majority: 10,
   eu_partial: 5,
   eu_none: 0,
-}
-
-export function isEuCountryCode(code: string | null | undefined): boolean {
-  if (!code) return false
-  return (EU_COUNTRY_CODES as readonly string[]).includes(code.trim().toUpperCase())
 }
 
 export function isAssemblyEuBand(value: string): value is AssemblyEuBand {

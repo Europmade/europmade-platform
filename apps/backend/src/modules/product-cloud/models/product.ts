@@ -11,6 +11,7 @@ import MergeRecord from "./merge-record"
 import SplitRecord from "./split-record"
 import ChangeProposal from "./change-proposal"
 import ProductRelation from "./product-relation"
+import ProductFieldChange from "./product-field-change"
 
 /**
  * Product — Blueprint `02-database-model.md` Deel B.2.
@@ -29,6 +30,11 @@ const Product = model
     brand_id: model.text(),
     manufacturer_id: model.text(),
     current_owner_seller_id: model.text(),
+    /**
+     * Centrale reguliere klantprijs (excl. verzending) — gelijk voor alle markten.
+     * Offer.base_price is een sync-kopie; verzendkosten/actie blijven markt-specifiek.
+     */
+    regular_customer_price: model.bigNumber().nullable(),
     lifecycle_status: model.enum([
       "Retailer Created",
       "Concept gecontroleerd",
@@ -74,6 +80,9 @@ const Product = model
     }),
     relations_to: model.hasMany(() => ProductRelation, {
       mappedBy: "to_product",
+    }),
+    field_changes: model.hasMany(() => ProductFieldChange, {
+      mappedBy: "product",
     }),
   })
   .indexes([

@@ -5,11 +5,21 @@ import type {
 import { PRODUCT_CLOUD_MODULE } from "../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../modules/product-cloud/service"
 import { createProductCloudWorkflow } from "../../../../workflows/product-cloud"
+import { COMMERCE_CLOUD_MODULE } from "../../../../modules/commerce-cloud"
+import type CommerceCloudModuleService from "../../../../modules/commerce-cloud/service"
+import { PARTNER_MODULE } from "../../../../modules/partner"
+import type PartnerModuleService from "../../../../modules/partner/service"
 import { resolveApprovedSeller } from "../resolve-seller"
 import type { StoreCreateProductBodyInput } from "../validators"
-import { buildProductCloudPreview } from "../product-preview"
+import {
+  buildSellerProductManagerRow,
+  filterAndSortProductRows,
+  loadSellerOfferLookup,
+} from "../product-manager"
+import { VERIFICATION_MODULE } from "../../../../modules/verification"
+import type VerificationModuleService from "../../../../modules/verification/service"
 
-/** Eigen catalogus (eigenaarschap) — PM §8/§9 + ADR-0013 preview-velden. */
+/** Eigen catalogus + offer/completeness (Seller Product Manager). */
 export async function GET(
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
@@ -22,24 +32,76 @@ export async function GET(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
 
+  let commerce: CommerceCloudModuleService | null = null
+  try {
+    commerce = req.scope.resolve(
+      COMMERCE_CLOUD_MODULE
+    ) as CommerceCloudModuleService
+  } catch {
+    commerce = null
+  }
+
+  let partner: PartnerModuleService | null = null
+  try {
+    partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
+  } catch {
+    partner = null
+  }
+
   const products = await productCloud.listProducts({
     current_owner_seller_id: seller.id,
   })
 
-  const enriched = []
-  for (const product of products) {
-    const preview = await buildProductCloudPreview(productCloud, product.id)
-    enriched.push({
-      ...product,
-      title: preview.title,
-      category_names: preview.category_names,
-      identifier_id: preview.identifier_id,
-      identifier_type: preview.identifier_type,
-      identifier_value: preview.identifier_value,
-    })
+  let verification: VerificationModuleService | null = null
+  try {
+    verification = req.scope.resolve(
+      VERIFICATION_MODULE
+    ) as VerificationModuleService
+  } catch {
+    verification = null
   }
 
-  res.json({ products: enriched, count: enriched.length })
+  const offerMaps = await loadSellerOfferLookup(commerce, seller.id)
+  const brandNameCache = new Map<string, string | null>()
+
+  const enriched = []
+  for (const product of products) {
+    enriched.push(
+      await buildSellerProductManagerRow(
+        productCloud,
+        commerce,
+        product,
+        seller.id,
+        {
+          offerMaps,
+          partner,
+          brandNameCache,
+          verification,
+          container: req.scope,
+        }
+      )
+    )
+  }
+
+  const q =
+    typeof req.query.q === "string" ? req.query.q : undefined
+  const filter =
+    typeof req.query.filter === "string" ? req.query.filter : undefined
+  const sort =
+    typeof req.query.sort === "string" ? req.query.sort : undefined
+  const brandId =
+    typeof req.query.brand_id === "string" ? req.query.brand_id : undefined
+
+  const scoped = brandId
+    ? enriched.filter((p) => p.brand_id === brandId)
+    : enriched
+  const filtered = filterAndSortProductRows(scoped, { q, filter, sort })
+
+  res.json({
+    products: filtered,
+    count: filtered.length,
+    total_unfiltered: enriched.length,
+  })
 }
 
 /**

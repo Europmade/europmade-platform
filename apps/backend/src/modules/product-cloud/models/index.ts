@@ -18,6 +18,7 @@ import ProductDocument from "./document"
 import ProductTranslation from "./translation"
 import ProductRelation from "./product-relation"
 import ChangeProposal from "./change-proposal"
+import ProductFieldChange from "./product-field-change"
 
 export {
   ProductFamily,
@@ -40,4 +41,5 @@ export {
   ProductTranslation,
   ProductRelation,
   ChangeProposal,
+  ProductFieldChange,
 }

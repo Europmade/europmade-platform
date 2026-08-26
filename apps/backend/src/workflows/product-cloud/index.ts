@@ -10,6 +10,7 @@ export {
   addMediaWorkflow,
   ownerLifecycleWorkflow,
   adminArchiveWorkflow,
+  adminDecideVersionWorkflow,
 } from "./versions"
 export {
   submitClaimWorkflow,

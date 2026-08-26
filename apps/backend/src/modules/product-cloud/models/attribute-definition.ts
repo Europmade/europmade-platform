@@ -17,7 +17,23 @@ const AttributeDefinition = model
     code: model.text().nullable(),
     data_type: model.enum(["Numeriek", "Keuzelijst", "Tekst-met-eenheid"]),
     is_required: model.boolean(),
+    /**
+     * Schema tier for dynamic forms (managed config).
+     * compliance_required is never AI-waivable.
+     */
+    requirement_tier: model
+      .enum([
+        "compliance_required",
+        "category_required",
+        "recommended",
+        "optional",
+        "not_applicable",
+      ])
+      .default("optional"),
     unit: model.text().nullable(),
+    /** Seller-facing help / i-hint. */
+    help_text: model.text().nullable(),
+    is_active: model.boolean().default(true),
     is_filterable: model.boolean().default(true),
     is_comparable: model.boolean().default(true),
     sort_order: model.number().default(0),

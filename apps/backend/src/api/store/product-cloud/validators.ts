@@ -56,7 +56,7 @@ export const StoreUpsertConceptBody = z.object({
 export type StoreUpsertConceptBodyInput = z.infer<typeof StoreUpsertConceptBody>
 
 export const StoreAddMediaBody = z.object({
-  version_id: z.string().trim().min(1),
+  version_id: z.string().trim().min(1).optional(),
   media_type: z.enum(["Hoofdafbeelding", "Overige afbeelding", "Video"]),
   storage_reference: z.string().trim().min(1),
 })
@@ -146,4 +146,13 @@ export const StoreCsvMadeInEuropeBody = z.object({
 })
 export type StoreCsvMadeInEuropeBodyInput = z.infer<
   typeof StoreCsvMadeInEuropeBody
+>
+
+export const StoreBulkBrandLocationBody = z.object({
+  product_ids: z.array(z.string().trim().min(1)).min(1).max(500),
+  brand_id: z.string().trim().min(1),
+  production_facility_id: z.string().trim().min(1),
+})
+export type StoreBulkBrandLocationBodyInput = z.infer<
+  typeof StoreBulkBrandLocationBody
 >

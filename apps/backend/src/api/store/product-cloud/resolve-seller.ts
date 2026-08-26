@@ -8,8 +8,11 @@ export type ApprovedSeller = {
   customer_id: string
   is_retailer: boolean
   is_producer_or_brand_owner: boolean
+  is_brand_owner?: boolean
+  is_producer?: boolean
   is_distributor: boolean
   onboarding_status: string
+  company_id?: string | null
 }
 
 /**
@@ -42,5 +45,18 @@ export async function resolveApprovedSeller(
     )
   }
 
-  return seller as ApprovedSeller
+  let company_id: string | null =
+    (seller as { company_id?: string | null }).company_id ?? null
+  if (!company_id) {
+    try {
+      const full = (await partnerService.retrieveSeller(seller.id, {
+        relations: ["company"],
+      })) as { company_id?: string | null; company?: { id?: string } | null }
+      company_id = full.company_id ?? full.company?.id ?? null
+    } catch {
+      company_id = null
+    }
+  }
+
+  return { ...(seller as ApprovedSeller), company_id }
 }

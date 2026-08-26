@@ -155,6 +155,16 @@ export default defineMiddlewares({
       ],
     },
     {
+      matcher: "/store/product-cloud/products/:id/manager",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/information",
+      methods: ["PATCH"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/product-cloud/products/:id/versions",
       methods: ["POST"],
       middlewares: [
@@ -607,6 +617,16 @@ export default defineMiddlewares({
       middlewares: [adminAuth, validateAndTransformBody(AdminEanMatchBody)],
     },
     {
+      matcher: "/admin/product-cloud/approvals",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/:id/approval",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/product-cloud/products",
       methods: ["GET"],
       middlewares: [adminAuth],
@@ -725,6 +745,16 @@ export default defineMiddlewares({
         customerAuth,
         validateAndTransformBody(StoreUpsertProductionFacilityBody),
       ],
+    },
+    {
+      matcher: "/store/partner/manufacturers",
+      methods: ["GET", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/partner/manufacturers/:id",
+      methods: ["PATCH"],
+      middlewares: [customerAuth],
     },
     {
       matcher: "/store/affiliate",

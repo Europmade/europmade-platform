@@ -40,6 +40,7 @@ export default function SellerProductTranslationsPage() {
   const [source, setSource] = useState("nl")
   const [targets, setTargets] = useState<Target[]>([])
   const [providerOff, setProviderOff] = useState(true)
+  const [providerMessage, setProviderMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -52,6 +53,7 @@ export default function SellerProductTranslationsPage() {
     setSource(res.source_language_code ?? "nl")
     setTargets(res.targets)
     setProviderOff(!res.provider_configured)
+    setProviderMessage(res.provider_message)
   }, [productId])
 
   useEffect(() => {
@@ -100,12 +102,22 @@ export default function SellerProductTranslationsPage() {
     setNotice(null)
     setError(null)
     try {
+      // Persist selected source language before enqueue (required by API).
+      await setProductSourceLanguage(productId, source)
       const res = await prepareProductTranslations(productId)
-      setNotice(
-        res.provider_message
-          ? `${t("sellerTranslationsPrepared", locale)} ${res.provider_message}.`
-          : t("sellerTranslationsPrepared", locale)
-      )
+      if (providerOff || !res.enqueue?.provider_configured) {
+        setNotice(
+          res.provider_message
+            ? `Placeholders aangemaakt (geen AI). ${res.provider_message}`
+            : t("transPlaceholderCreated", locale)
+        )
+      } else {
+        setNotice(
+          res.provider_message
+            ? `${t("sellerTranslationsPrepared", locale)} ${res.provider_message}.`
+            : t("sellerTranslationsPrepared", locale)
+        )
+      }
       await load()
     } catch (err: unknown) {
       setError(
@@ -119,10 +131,20 @@ export default function SellerProductTranslationsPage() {
   }
 
   return (
-    <SellerGate>
-      <div className="mx-auto max-w-3xl px-4 py-6">
+    <SellerGate
+      breadcrumb={[
+        { label: t("sellerDashboardTitle", locale), href: "/seller" },
+        { label: t("sellerNavProducts", locale), href: "/seller/products" },
+        {
+          label: title || productId,
+          href: `/seller/products/${productId}`,
+        },
+        { label: t("sellerTranslationsTitle", locale) },
+      ]}
+    >
+      <div className="mx-auto max-w-3xl">
         <Link
-          href="/seller/products"
+          href={`/seller/products/${productId}`}
           className="text-xs font-semibold text-wf-700 underline"
         >
           {t("sellerTranslationsBack", locale)}
@@ -146,7 +168,9 @@ export default function SellerProductTranslationsPage() {
 
             {providerOff ? (
               <Notice variant="info" className="mt-3">
-                {t("sellerTranslationsProviderOff", locale)}
+                {providerMessage || t("sellerTranslationsProviderOff", locale)}{" "}
+                Er wordt geen AI-vertaling uitgevoerd zolang DeepL niet is
+                geconfigureerd.
               </Notice>
             ) : null}
             {error ? (
@@ -185,13 +209,19 @@ export default function SellerProductTranslationsPage() {
                 disabled={busy}
                 onClick={() => void prepare()}
               >
-                {t("sellerTranslationsPrepare", locale)}
+                {providerOff
+                  ? "Placeholders aanmaken (geen AI)"
+                  : "Vertalen met DeepL"}
               </Button>
             </div>
 
             <h2 className="mt-6 text-sm font-bold text-wf-900">
               {t("sellerTranslationsStatusHeading", locale)}
             </h2>
+            <p className="mt-1 text-[11px] text-wf-600">
+              Status per doeltaal (alleen-lezen). Handmatige bewerking van
+              vertaalregels is hier niet beschikbaar.
+            </p>
             <ul className="mt-2 space-y-2">
               {targets.map((row) => (
                 <li

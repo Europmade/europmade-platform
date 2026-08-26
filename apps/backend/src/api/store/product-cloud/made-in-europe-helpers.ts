@@ -49,10 +49,86 @@ type FacilityRow = {
   country_code: string
   region?: string | null
   description?: string | null
+  is_active?: boolean | null
   assembly_eu_band?: string | null
   parts_eu_level?: string | null
   materials_eu_level?: string | null
   primary_assembly_country?: string | null
+}
+
+export function serializeProductionLocation(facility: FacilityRow | null) {
+  if (!facility) return null
+  return {
+    id: facility.id,
+    name: facility.name,
+    country_code: facility.country_code,
+    is_active: facility.is_active !== false,
+    brand_id: facility.brand_id,
+  }
+}
+
+export function assertFacilityAssignableToBrand(opts: {
+  facility: {
+    brand_id?: string | null
+    is_active?: boolean | null
+  }
+  brandId: string | null | undefined
+  currentFacilityId?: string | null
+  nextFacilityId: string
+}): void {
+  if (!opts.brandId) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "Selecteer eerst een merk."
+    )
+  }
+  if (!opts.facility.brand_id || opts.facility.brand_id !== opts.brandId) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Productielocatie hoort niet bij het geselecteerde merk."
+    )
+  }
+  const keepingExisting = Boolean(
+    opts.currentFacilityId && opts.currentFacilityId === opts.nextFacilityId
+  )
+  if (opts.facility.is_active === false && !keepingExisting) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Deze productielocatie is gedeactiveerd en kan niet opnieuw worden gekoppeld."
+    )
+  }
+}
+
+export async function syncProductOriginToBrand(
+  scope: MedusaContainer,
+  opts: { product_id: string; brand_id: string }
+): Promise<void> {
+  const loaded = await loadMadeInEuropeForProduct(scope, opts.product_id)
+  if (!loaded?.origin) return
+
+  const verification = scope.resolve(
+    VERIFICATION_MODULE
+  ) as VerificationModuleService
+  const facilityMatches =
+    Boolean(loaded.facility?.brand_id) &&
+    loaded.facility?.brand_id === opts.brand_id
+
+  if (facilityMatches) {
+    if (loaded.origin.brand_id !== opts.brand_id) {
+      await verification.updateProductOrigins({
+        id: loaded.origin.id,
+        brand_id: opts.brand_id,
+      })
+    }
+    return
+  }
+
+  await verification.updateProductOrigins({
+    id: loaded.origin.id,
+    brand_id: opts.brand_id,
+    production_facility_id: null,
+    production_location: loaded.origin.production_country || "EU",
+  })
 }
 
 function requireBand<T extends string>(
@@ -71,7 +147,13 @@ function requireBand<T extends string>(
 
 export function resolveEffectiveMadeInEuropeBands(
   input: MadeInEuropeAssignInput,
-  facility: FacilityRow | null
+  facility: FacilityRow | null,
+  existing?: {
+    assembly_eu_band?: string | null
+    parts_eu_level?: string | null
+    materials_eu_level?: string | null
+    primary_assembly_country?: string | null
+  } | null
 ): {
   assembly_eu_band: AssemblyEuBand
   parts_eu_level: PartsEuLevel
@@ -80,23 +162,33 @@ export function resolveEffectiveMadeInEuropeBands(
   production_facility_id: string | null
 } {
   const assembly = requireBand(
-    input.assembly_eu_band ?? facility?.assembly_eu_band ?? undefined,
+    input.assembly_eu_band ??
+      facility?.assembly_eu_band ??
+      existing?.assembly_eu_band ??
+      "eu_100",
     isAssemblyEuBand,
     "assembly_eu_band"
   )
   const parts = requireBand(
-    input.parts_eu_level ?? facility?.parts_eu_level ?? undefined,
+    input.parts_eu_level ??
+      facility?.parts_eu_level ??
+      existing?.parts_eu_level ??
+      "eu_majority",
     isPartsEuLevel,
     "parts_eu_level"
   )
   const materials = requireBand(
-    input.materials_eu_level ?? facility?.materials_eu_level ?? undefined,
+    input.materials_eu_level ??
+      facility?.materials_eu_level ??
+      existing?.materials_eu_level ??
+      "eu_majority",
     isMaterialsEuLevel,
     "materials_eu_level"
   )
   const countryRaw =
     input.primary_assembly_country ??
     facility?.primary_assembly_country ??
+    existing?.primary_assembly_country ??
     facility?.country_code ??
     null
   const primary_assembly_country = countryRaw
@@ -165,6 +257,11 @@ export async function upsertProductMadeInEurope(
     )
   }
 
+  const existing = (await verification.listProductOrigins({
+    product_version_id: versionId,
+  })) as ProductOriginRow[]
+  const current = existing[0]
+
   let facility: FacilityRow | null = null
   const facilityId = opts.input.production_facility_id?.trim() || null
   if (facilityId) {
@@ -175,27 +272,21 @@ export async function upsertProductMadeInEurope(
     } catch {
       throw new MedusaError(
         MedusaError.Types.NOT_FOUND,
-        "Productiefaciliteit niet gevonden."
+        "Productielocatie niet gevonden."
       )
     }
-    if (facility.brand_id && facility.brand_id !== opts.brand_id) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "Productiefaciliteit hoort niet bij het productmerk."
-      )
-    }
+    assertFacilityAssignableToBrand({
+      facility,
+      brandId: opts.brand_id,
+      currentFacilityId: current?.production_facility_id ?? null,
+      nextFacilityId: facilityId,
+    })
   }
-
-  const bands = resolveEffectiveMadeInEuropeBands(opts.input, facility)
+  const bands = resolveEffectiveMadeInEuropeBands(opts.input, facility, current)
   const score = computeMadeInEuropeScore(bands)
   const production_country =
     bands.primary_assembly_country ?? facility?.country_code ?? "EU"
   const production_location = facility?.name ?? production_country
-
-  const existing = (await verification.listProductOrigins({
-    product_version_id: versionId,
-  })) as ProductOriginRow[]
-  const current = existing[0]
 
   const payload = {
     manufacturer_id: opts.manufacturer_id || facility?.brand_id || "unknown",
@@ -257,23 +348,8 @@ export async function loadMadeInEuropeForProduct(
     product_version_id: versionId,
   })) as ProductOriginRow[]
   const origin = origins[0] ?? null
-  if (
-    !origin?.assembly_eu_band ||
-    !origin.parts_eu_level ||
-    !origin.materials_eu_level
-  ) {
-    return { score: null, facility: null, origin }
-  }
-  if (
-    !isAssemblyEuBand(origin.assembly_eu_band) ||
-    !isPartsEuLevel(origin.parts_eu_level) ||
-    !isMaterialsEuLevel(origin.materials_eu_level)
-  ) {
-    return { score: null, facility: null, origin }
-  }
-
   let facility: FacilityRow | null = null
-  if (origin.production_facility_id) {
+  if (origin?.production_facility_id) {
     try {
       facility = (await partner.retrieveProductionFacility(
         origin.production_facility_id
@@ -281,6 +357,17 @@ export async function loadMadeInEuropeForProduct(
     } catch {
       facility = null
     }
+  }
+
+  if (
+    !origin?.assembly_eu_band ||
+    !origin.parts_eu_level ||
+    !origin.materials_eu_level ||
+    !isAssemblyEuBand(origin.assembly_eu_band) ||
+    !isPartsEuLevel(origin.parts_eu_level) ||
+    !isMaterialsEuLevel(origin.materials_eu_level)
+  ) {
+    return { score: null, facility, origin }
   }
 
   const score = computeMadeInEuropeScore({

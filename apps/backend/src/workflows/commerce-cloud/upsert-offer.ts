@@ -24,6 +24,10 @@ export type UpsertOfferInput = {
   base_price: number
   shipping_cost: number
   vat_rate: number
+  seller_sku?: string | null
+  sales_status?: "active" | "paused"
+  delivery_days_max?: number | null
+  regular_customer_price?: number | null
 }
 
 export type UpsertOfferWorkflowResult = {
@@ -82,8 +86,9 @@ export const upsertOfferStep = createStep(
       )
     }
 
+    let identifier
     try {
-      await productCloud.retrieveIdentifier(input.identifier_id)
+      identifier = await productCloud.retrieveIdentifier(input.identifier_id)
     } catch {
       throw new MedusaError(
         MedusaError.Types.NOT_FOUND,
@@ -91,10 +96,58 @@ export const upsertOfferStep = createStep(
       )
     }
 
+    const variant = await productCloud.retrieveProductVariant(
+      identifier.product_variant_id
+    )
+    const product = await productCloud.retrieveProduct(variant.product_id)
+    const existingCentral =
+      product.regular_customer_price != null
+        ? Number(product.regular_customer_price)
+        : null
+    const requestedCentral =
+      input.regular_customer_price != null
+        ? Number(input.regular_customer_price)
+        : input.base_price
+    const central =
+      existingCentral != null && input.regular_customer_price == null
+        ? existingCentral
+        : requestedCentral
+    if (existingCentral == null || existingCentral !== central) {
+      await productCloud.updateProducts({
+        id: product.id,
+        regular_customer_price: central,
+      })
+    }
+
     const result = await commerce.upsertOfferGraph({
       ...input,
+      base_price: central,
       region_code: region,
     })
+
+    const variants = await productCloud.listProductVariants({
+      product_id: product.id,
+    })
+    for (const v of variants) {
+      const ids = await productCloud.listIdentifiers({
+        product_variant_id: v.id,
+      })
+      for (const idRow of ids) {
+        const offers = await commerce.listOffers({
+          seller_id: input.seller_id,
+          identifier_id: idRow.id,
+        })
+        for (const offer of offers) {
+          const [price] = await commerce.listOfferPrices({ offer_id: offer.id })
+          if (price && Number(price.base_price) !== central) {
+            await commerce.updateOfferPrices({
+              id: price.id,
+              base_price: central,
+            })
+          }
+        }
+      }
+    }
 
     if (result.created) {
       await emitCommerceEvent(container, "OfferCreated", {
@@ -162,6 +215,11 @@ export type PatchOfferInput = {
   base_price?: number
   shipping_cost?: number
   vat_rate?: number
+  seller_sku?: string | null
+  sales_status?: "active" | "paused"
+  delivery_days_max?: number | null
+  regular_customer_price?: number | null
+  actor_customer_id?: string | null
 }
 
 export const patchOfferStep = createStep(
@@ -170,6 +228,9 @@ export const patchOfferStep = createStep(
     const commerce = container.resolve(
       COMMERCE_CLOUD_MODULE
     ) as CommerceCloudModuleService
+    const productCloud = container.resolve(
+      PRODUCT_CLOUD_MODULE
+    ) as ProductCloudModuleService
     const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
     const offer = await commerce.retrieveOffer(input.offer_id)
@@ -184,11 +245,32 @@ export const patchOfferStep = createStep(
       input.quantity_available === undefined &&
       input.base_price === undefined &&
       input.shipping_cost === undefined &&
-      input.vat_rate === undefined
+      input.vat_rate === undefined &&
+      input.seller_sku === undefined &&
+      input.sales_status === undefined &&
+      input.delivery_days_max === undefined &&
+      input.regular_customer_price === undefined
     ) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
-        "Geef minstens één veld op: quantity_available, base_price, shipping_cost of vat_rate."
+        "Geef minstens één offer-veld op om te wijzigen."
+      )
+    }
+
+    if (input.sales_status != null && input.sales_status !== "active" && input.sales_status !== "paused") {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "sales_status moet 'active' of 'paused' zijn."
+      )
+    }
+
+    if (
+      input.delivery_days_max != null &&
+      (input.delivery_days_max < 0 || input.delivery_days_max > 365)
+    ) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "delivery_days_max moet tussen 0 en 365 liggen."
       )
     }
 
@@ -203,10 +285,36 @@ export const patchOfferStep = createStep(
       )
     }
 
+    const identifier = await productCloud.retrieveIdentifier(
+      offer.identifier_id
+    )
+    const variant = await productCloud.retrieveProductVariant(
+      identifier.product_variant_id
+    )
+    const product = await productCloud.retrieveProduct(variant.product_id)
+    const existingCentral =
+      product.regular_customer_price != null
+        ? Number(product.regular_customer_price)
+        : Number(price.base_price)
+    const centralRequested =
+      input.regular_customer_price != null
+        ? Number(input.regular_customer_price)
+        : input.base_price != null
+          ? Number(input.base_price)
+          : null
+    const central =
+      centralRequested != null ? centralRequested : existingCentral
+    if (centralRequested != null && central !== existingCentral) {
+      await productCloud.updateProducts({
+        id: product.id,
+        regular_customer_price: central,
+      })
+    }
+
     const next = {
       quantity_available:
         input.quantity_available ?? Number(inventory.quantity_available),
-      base_price: input.base_price ?? Number(price.base_price),
+      base_price: central,
       shipping_cost: input.shipping_cost ?? Number(price.shipping_cost),
       vat_rate: input.vat_rate ?? Number(price.vat_rate),
     }
@@ -214,12 +322,43 @@ export const patchOfferStep = createStep(
 
     const result = await commerce.patchOfferGraph({
       offer_id: offer.id,
-      ...input,
       quantity_available: input.quantity_available,
-      base_price: input.base_price,
+      base_price:
+        centralRequested != null ? central : undefined,
       shipping_cost: input.shipping_cost,
       vat_rate: input.vat_rate,
+      seller_sku: input.seller_sku,
+      sales_status: input.sales_status,
+      delivery_days_max: input.delivery_days_max,
     })
+
+    if (centralRequested != null) {
+      const variants = await productCloud.listProductVariants({
+        product_id: product.id,
+      })
+      for (const v of variants) {
+        const ids = await productCloud.listIdentifiers({
+          product_variant_id: v.id,
+        })
+        for (const idRow of ids) {
+          const offers = await commerce.listOffers({
+            seller_id: input.seller_id,
+            identifier_id: idRow.id,
+          })
+          for (const sibling of offers) {
+            const [sibPrice] = await commerce.listOfferPrices({
+              offer_id: sibling.id,
+            })
+            if (sibPrice && Number(sibPrice.base_price) !== central) {
+              await commerce.updateOfferPrices({
+                id: sibPrice.id,
+                base_price: central,
+              })
+            }
+          }
+        }
+      }
+    }
 
     if (result.inventory_changed) {
       await emitCommerceEvent(container, "InventoryChanged", {
@@ -240,10 +379,88 @@ export const patchOfferStep = createStep(
         previous_shipping_cost: result.previous_shipping_cost,
         previous_vat_rate: result.previous_vat_rate,
       })
+
+      // Append-only price history on linked Product Cloud product
+      try {
+        const identifier = await productCloud.retrieveIdentifier(
+          offer.identifier_id
+        )
+        const variant = await productCloud.retrieveProductVariant(
+          identifier.product_variant_id
+        )
+        const historyRows: Array<{
+          product_id: string
+          seller_id: string
+          actor_customer_id: string | null
+          field_code: string
+          field_label: string
+          old_value: string | null
+          new_value: string | null
+          status: "current"
+          reason: string | null
+        }> = []
+        if (
+          input.base_price !== undefined &&
+          result.previous_base_price !== next.base_price
+        ) {
+          historyRows.push({
+            product_id: variant.product_id,
+            seller_id: input.seller_id,
+            actor_customer_id: input.actor_customer_id ?? null,
+            field_code: "offer.base_price",
+            field_label: "Reguliere prijs",
+            old_value:
+              result.previous_base_price != null
+                ? String(result.previous_base_price)
+                : null,
+            new_value: String(next.base_price),
+            status: "current",
+            reason: `offer:${offer.id}`,
+          })
+        }
+        if (
+          input.shipping_cost !== undefined &&
+          result.previous_shipping_cost !== next.shipping_cost
+        ) {
+          historyRows.push({
+            product_id: variant.product_id,
+            seller_id: input.seller_id,
+            actor_customer_id: input.actor_customer_id ?? null,
+            field_code: "offer.shipping_cost",
+            field_label: "Verzendkosten",
+            old_value:
+              result.previous_shipping_cost != null
+                ? String(result.previous_shipping_cost)
+                : null,
+            new_value: String(next.shipping_cost),
+            status: "current",
+            reason: `offer:${offer.id}`,
+          })
+        }
+        for (const row of historyRows) {
+          await productCloud.createProductFieldChanges(row)
+        }
+      } catch (err) {
+        logger.warn(
+          `[audit] offer price history skipped offer=${offer.id}: ${String(err)}`
+        )
+      }
+    }
+    if (result.offer_meta_changed) {
+      await emitCommerceEvent(container, "OfferMetaChanged", {
+        offer_id: result.offer_id,
+        seller_id: input.seller_id,
+        seller_sku: input.seller_sku,
+        sales_status: input.sales_status,
+        delivery_days_max: input.delivery_days_max,
+        previous_seller_sku: result.previous_seller_sku,
+        previous_sales_status: result.previous_sales_status,
+        previous_delivery_days_max: result.previous_delivery_days_max,
+      })
     }
 
     logger.info(
-      `[audit] offer patched offer=${result.offer_id} seller=${input.seller_id}`
+      `[audit] offer patched offer=${result.offer_id} seller=${input.seller_id} sku=${input.seller_sku ?? "-"} status=${input.sales_status ?? "-"}`
     )
 
     const buy_box = await executeRecomputeBuyBox(container, {

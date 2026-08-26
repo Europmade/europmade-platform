@@ -19,6 +19,7 @@ const ProductMedia = model
       "Video",
     ]),
     storage_reference: model.text(),
+    sort_order: model.number().default(0),
   })
   .indexes([{ on: ["product_version_id"] }])
 

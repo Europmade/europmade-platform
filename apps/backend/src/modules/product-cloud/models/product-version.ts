@@ -3,6 +3,7 @@ import Product from "./product"
 import AttributeValue from "./attribute-value"
 import ProductMedia from "./media"
 import ProductDocument from "./document"
+import ProductFieldChange from "./product-field-change"
 
 /**
  * ProductVersion — Blueprint `02-database-model.md` Deel B.3 + ADR-0037.
@@ -33,6 +34,10 @@ const ProductVersion = model
       "Gearchiveerd",
       "Verwijderd",
     ]),
+    approval_requested_at: model.dateTime().nullable(),
+    approval_rejection_reason: model.text().nullable(),
+    approval_decided_at: model.dateTime().nullable(),
+    approval_decided_by: model.text().nullable(),
     created_by_seller_id: model.text(),
     attribute_values: model.hasMany(() => AttributeValue, {
       mappedBy: "product_version",
@@ -41,6 +46,9 @@ const ProductVersion = model
       mappedBy: "product_version",
     }),
     documents: model.hasMany(() => ProductDocument, {
+      mappedBy: "product_version",
+    }),
+    field_changes: model.hasMany(() => ProductFieldChange, {
       mappedBy: "product_version",
     }),
   })

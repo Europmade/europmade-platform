@@ -8,6 +8,7 @@ import { PRODUCT_CLOUD_MODULE } from "../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../modules/product-cloud/service"
 import { upsertOfferWorkflow } from "../../../../workflows/commerce-cloud"
 import { resolveApprovedSeller } from "../../product-cloud/resolve-seller"
+import { assertPermission } from "../../../../modules/partner/permissions"
 import { buildProductCloudPreview } from "../../product-cloud/product-preview"
 import type { StoreUpsertOfferBodyInput } from "../validators"
 
@@ -95,6 +96,7 @@ export async function POST(
     req.scope,
     req.auth_context.actor_id
   )
+  assertPermission(seller, "offers.manage")
   const body = req.validatedBody
 
   const { result } = await upsertOfferWorkflow(req.scope).run({
@@ -106,6 +108,9 @@ export async function POST(
       base_price: body.base_price,
       shipping_cost: body.shipping_cost,
       vat_rate: body.vat_rate,
+      seller_sku: body.seller_sku,
+      sales_status: body.sales_status,
+      delivery_days_max: body.delivery_days_max,
     },
   })
 

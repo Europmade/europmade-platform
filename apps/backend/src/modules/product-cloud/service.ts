@@ -26,9 +26,11 @@ import {
   ProductTranslation,
   ProductRelation,
   ChangeProposal,
+  ProductFieldChange,
 } from "./models"
 import {
-  CATEGORY_ATTRIBUTE_CATALOGS,
+  catalogForCategorySlug,
+  resolveRequirementTier,
   slugifyCategoryName,
   type AttributeCatalogItem,
 } from "./category-attributes"
@@ -132,6 +134,7 @@ class ProductCloudModuleService extends MedusaService({
   ProductTranslation,
   ProductRelation,
   ChangeProposal,
+  ProductFieldChange,
 }) {
   @InjectManager()
   async createProductGraph(
@@ -482,7 +485,7 @@ class ProductCloudModuleService extends MedusaService({
     categorySlug: string,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<{ created: number; existing: number }> {
-    const catalog = CATEGORY_ATTRIBUTE_CATALOGS[categorySlug] ?? []
+    const catalog = catalogForCategorySlug(categorySlug)
     let created = 0
     let existing = 0
     for (const item of catalog) {
@@ -495,6 +498,32 @@ class ProductCloudModuleService extends MedusaService({
       )[0]
       if (found) {
         existing += 1
+        // Upgrade tier / is_required if catalog is stricter
+        const tier = resolveRequirementTier(item)
+        const nextOptions = item.option_values
+          ? JSON.stringify(item.option_values)
+          : null
+        if (
+          found.requirement_tier !== tier ||
+          found.is_required !== item.is_required ||
+          found.name !== item.name ||
+          found.option_values !== nextOptions ||
+          (item.help_text && found.help_text !== item.help_text) ||
+          (item.unit && found.unit !== item.unit)
+        ) {
+          await this.updateAttributeDefinitions(
+            {
+              id: found.id,
+              name: item.name,
+              requirement_tier: tier,
+              is_required: item.is_required,
+              option_values: nextOptions,
+              unit: item.unit ?? found.unit ?? null,
+              help_text: item.help_text ?? found.help_text ?? null,
+            },
+            sharedContext
+          )
+        }
         continue
       }
       await this.createAttributeDefinitions(
@@ -504,7 +533,10 @@ class ProductCloudModuleService extends MedusaService({
           code: item.code,
           data_type: item.data_type,
           is_required: item.is_required,
+          requirement_tier: resolveRequirementTier(item),
           unit: item.unit ?? null,
+          help_text: item.help_text ?? null,
+          is_active: true,
           is_filterable: item.is_filterable ?? true,
           is_comparable: item.is_comparable ?? true,
           sort_order: item.sort_order ?? 0,

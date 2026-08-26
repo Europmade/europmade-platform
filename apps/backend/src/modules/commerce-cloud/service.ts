@@ -20,6 +20,7 @@ import {
   type BuyBoxOfferInput,
   type BuyBoxWeights,
 } from "./buy-box-engine"
+import { normalizeSellerSku } from "./offer-sellability"
 
 export type UpsertOfferGraphInput = {
   seller_id: string
@@ -29,6 +30,9 @@ export type UpsertOfferGraphInput = {
   base_price: number
   shipping_cost: number
   vat_rate: number
+  seller_sku?: string | null
+  sales_status?: "active" | "paused"
+  delivery_days_max?: number | null
 }
 
 export type UpsertOfferGraphResult = {
@@ -38,10 +42,14 @@ export type UpsertOfferGraphResult = {
   created: boolean
   inventory_changed: boolean
   price_changed: boolean
+  offer_meta_changed: boolean
   previous_quantity_available: number | null
   previous_base_price: number | null
   previous_shipping_cost: number | null
   previous_vat_rate: number | null
+  previous_seller_sku: string | null
+  previous_sales_status: string | null
+  previous_delivery_days_max: number | null
 }
 
 export type PatchOfferGraphInput = {
@@ -50,6 +58,9 @@ export type PatchOfferGraphInput = {
   base_price?: number
   shipping_cost?: number
   vat_rate?: number
+  seller_sku?: string | null
+  sales_status?: "active" | "paused"
+  delivery_days_max?: number | null
 }
 
 export type WithdrawOfferResult = {
@@ -89,6 +100,11 @@ class CommerceCloudModuleService extends MedusaService({
     input: UpsertOfferGraphInput,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<UpsertOfferGraphResult> {
+    const sellerSku =
+      input.seller_sku !== undefined
+        ? normalizeSellerSku(input.seller_sku)
+        : undefined
+
     const existing = await this.listOffers(
       {
         seller_id: input.seller_id,
@@ -101,6 +117,51 @@ class CommerceCloudModuleService extends MedusaService({
 
     if (existing.length > 0) {
       const offer = existing[0]
+      const previous_seller_sku =
+        offer.seller_sku != null ? String(offer.seller_sku) : null
+      const previous_sales_status =
+        offer.sales_status != null ? String(offer.sales_status) : "active"
+      const previous_delivery_days_max =
+        offer.delivery_days_max != null
+          ? Number(offer.delivery_days_max)
+          : null
+
+      if (sellerSku) {
+        await this.assertSellerSkuUnique_(
+          input.seller_id,
+          sellerSku,
+          offer.id,
+          sharedContext
+        )
+      }
+
+      const offerUpdate: Record<string, unknown> = { id: offer.id }
+      let offer_meta_changed = false
+      if (sellerSku !== undefined && sellerSku !== previous_seller_sku) {
+        offerUpdate.seller_sku = sellerSku
+        offer_meta_changed = true
+      }
+      if (
+        input.sales_status !== undefined &&
+        input.sales_status !== previous_sales_status
+      ) {
+        offerUpdate.sales_status = input.sales_status
+        offer_meta_changed = true
+      }
+      if (input.delivery_days_max !== undefined) {
+        const nextDelivery =
+          input.delivery_days_max == null
+            ? null
+            : Number(input.delivery_days_max)
+        if (nextDelivery !== previous_delivery_days_max) {
+          offerUpdate.delivery_days_max = nextDelivery
+          offer_meta_changed = true
+        }
+      }
+      if (offer_meta_changed) {
+        await this.updateOffers(offerUpdate, sharedContext)
+      }
+
       const inventories = await this.listOfferInventories(
         { offer_id: offer.id },
         {},
@@ -188,11 +249,24 @@ class CommerceCloudModuleService extends MedusaService({
         created: false,
         inventory_changed,
         price_changed,
+        offer_meta_changed,
         previous_quantity_available,
         previous_base_price,
         previous_shipping_cost,
         previous_vat_rate,
+        previous_seller_sku,
+        previous_sales_status,
+        previous_delivery_days_max,
       }
+    }
+
+    if (sellerSku) {
+      await this.assertSellerSkuUnique_(
+        input.seller_id,
+        sellerSku,
+        null,
+        sharedContext
+      )
     }
 
     const offer = await this.createOffers(
@@ -200,6 +274,12 @@ class CommerceCloudModuleService extends MedusaService({
         seller_id: input.seller_id,
         identifier_id: input.identifier_id,
         region_code: input.region_code,
+        seller_sku: sellerSku ?? null,
+        sales_status: input.sales_status ?? "active",
+        delivery_days_max:
+          input.delivery_days_max === undefined
+            ? null
+            : input.delivery_days_max,
       },
       sharedContext
     )
@@ -229,10 +309,34 @@ class CommerceCloudModuleService extends MedusaService({
       created: true,
       inventory_changed: true,
       price_changed: true,
+      offer_meta_changed: true,
       previous_quantity_available: null,
       previous_base_price: null,
       previous_shipping_cost: null,
       previous_vat_rate: null,
+      previous_seller_sku: null,
+      previous_sales_status: null,
+      previous_delivery_days_max: null,
+    }
+  }
+
+  protected async assertSellerSkuUnique_(
+    sellerId: string,
+    sellerSku: string,
+    excludeOfferId: string | null,
+    sharedContext: Context
+  ): Promise<void> {
+    const clashes = await this.listOffers(
+      { seller_id: sellerId, seller_sku: sellerSku },
+      {},
+      sharedContext
+    )
+    const other = clashes.find((row) => row.id !== excludeOfferId)
+    if (other) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Seller SKU is al in gebruik voor een ander aanbod van deze seller."
+      )
     }
   }
 
@@ -284,6 +388,9 @@ class CommerceCloudModuleService extends MedusaService({
         base_price,
         shipping_cost,
         vat_rate,
+        seller_sku: input.seller_sku,
+        sales_status: input.sales_status,
+        delivery_days_max: input.delivery_days_max,
       },
       sharedContext
     )

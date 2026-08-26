@@ -73,17 +73,11 @@ export async function buildProductCloudPreview(
     identifier_value?: string
   }
 ): Promise<ProductCloudPreview> {
-  const product = (await productCloud.retrieveProduct(
-    productId
-  )) as ProductRow
-
-  const versions = (await productCloud.listProductVersions({
-    product_id: productId,
-  })) as VersionRow[]
-
-  const links = (await productCloud.listProductCategories({
-    product_id: productId,
-  })) as ProductCategoryRow[]
+  const [product, versions, links] = (await Promise.all([
+    productCloud.retrieveProduct(productId),
+    productCloud.listProductVersions({ product_id: productId }),
+    productCloud.listProductCategories({ product_id: productId }),
+  ])) as [ProductRow, VersionRow[], ProductCategoryRow[]]
   const categoryIds = links.map((l) => l.category_id)
   const categories =
     categoryIds.length > 0
