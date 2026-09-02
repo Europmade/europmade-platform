@@ -356,7 +356,7 @@ export async function PATCH(
     commerce,
     id,
     seller.id,
-    null,
+    req.scope.resolve(PARTNER_MODULE) as PartnerModuleService,
     req.scope
   )
   res.json({ product: detail })

@@ -10,7 +10,9 @@ import {
 } from "@medusajs/framework/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
 import type ProductCloudModuleService from "../../modules/product-cloud/service"
-import { matchByEanWorkflow } from "../ean-matching"
+import type { ProductCloudIdentifierType } from "../../modules/product-cloud/identifier-types"
+import { matchByEanWorkflow, type EanMatchResult } from "../ean-matching"
+import { isConceptDraftIdentifier } from "../../modules/product-cloud/concept-identifier"
 
 export type CreateProductCloudInput = {
   seller_id: string
@@ -27,7 +29,7 @@ export type CreateProductCloudInput = {
   description: string
   category_name: string
   category_names?: string[]
-  identifier_type: "GTIN" | "MPN"
+  identifier_type: ProductCloudIdentifierType
   identifier_value: string
   country_scope?: string | null
   variant_type?:
@@ -44,6 +46,7 @@ export type CreateProductCloudInput = {
     media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
     storage_reference: string
   }>
+  mpn?: string | null
 }
 
 export type CreateProductCloudResult = {
@@ -90,13 +93,24 @@ export const createProductCloudStep = createStep(
     ) as ProductCloudModuleService
     const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
-    const { result: match } = await matchByEanWorkflow(container).run({
-      input: {
-        identifier_value: input.identifier_value,
-        identifier_type: input.identifier_type,
-        country_scope: input.country_scope ?? null,
-      },
-    })
+    const isDraftConcept = isConceptDraftIdentifier(
+      input.identifier_type,
+      input.identifier_value,
+      input.country_scope ?? null
+    )
+
+    let match: EanMatchResult = { outcome: "no_match" }
+    if (!isDraftConcept) {
+      const { result } = await matchByEanWorkflow(container).run({
+        input: {
+          identifier_value: input.identifier_value,
+          identifier_type:
+            input.identifier_type === "MPN" ? "MPN" : "GTIN",
+          country_scope: input.country_scope ?? null,
+        },
+      })
+      match = result
+    }
 
     if (match.outcome === "exact_match" && match.product_id) {
       logger.info(
@@ -127,6 +141,7 @@ export const createProductCloudStep = createStep(
       variant_type: input.variant_type,
       variant_value: input.variant_value,
       media: input.media,
+      mpn: input.mpn ?? null,
     })
 
     if (match.outcome === "uncertain") {

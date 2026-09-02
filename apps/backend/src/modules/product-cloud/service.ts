@@ -2,6 +2,7 @@ import {
   InjectManager,
   InjectTransactionManager,
   MedusaContext,
+  MedusaError,
   MedusaService,
 } from "@medusajs/framework/utils"
 import type { Context } from "@medusajs/framework/types"
@@ -28,10 +29,11 @@ import {
   ChangeProposal,
   ProductFieldChange,
 } from "./models"
+import type { ProductCloudIdentifierType } from "./identifier-types"
 import {
   catalogForCategorySlug,
+  categoryLookupSlugs,
   resolveRequirementTier,
-  slugifyCategoryName,
   type AttributeCatalogItem,
 } from "./category-attributes"
 import {
@@ -64,7 +66,7 @@ export type CreateProductGraphInput = {
   description: string
   category_name: string
   category_names?: string[]
-  identifier_type: "GTIN" | "MPN"
+  identifier_type: ProductCloudIdentifierType
   identifier_value: string
   country_scope?: string | null
   variant_type?:
@@ -81,7 +83,8 @@ export type CreateProductGraphInput = {
     media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
     storage_reference: string
   }>
-  /** ISO-639 editorial source language (nl/en/de/fr). */
+  /** Optional manufacturer part number (separate from GTIN / seller SKU). */
+  mpn?: string | null
   source_language_code?: string | null
 }
 
@@ -215,6 +218,19 @@ class ProductCloudModuleService extends MedusaService({
       sharedContext
     )
 
+    const mpn = input.mpn?.trim()
+    if (mpn && !(input.identifier_type === "MPN" && input.identifier_value.trim() === mpn)) {
+      await this.createIdentifiers(
+        {
+          product_variant_id: variant.id,
+          identifier_type: "MPN",
+          identifier_value: mpn,
+          country_scope: null,
+        },
+        sharedContext
+      )
+    }
+
     const categoryNames = [
       ...(input.category_names ?? []),
       input.category_name,
@@ -224,31 +240,26 @@ class ProductCloudModuleService extends MedusaService({
       .filter((name, index, arr) => arr.indexOf(name) === index)
 
     for (const categoryName of categoryNames) {
-      let category = (
-        await this.listCategories(
-          { name: categoryName },
-          {},
-          sharedContext
-        )
-      )[0]
+      let category: Category | undefined
+      for (const slug of categoryLookupSlugs(categoryName)) {
+        category = (
+          await this.listCategories({ slug }, {}, sharedContext)
+        )[0]
+        if (category) break
+      }
       if (!category) {
-        const slug = slugifyCategoryName(categoryName)
-        category = await this.createCategories(
-          { name: categoryName, slug },
-          sharedContext
-        )
-        await this.ensureCategoryAttributeCatalog_(
-          category.id,
-          slug,
-          sharedContext
-        )
-      } else if (!category.slug) {
-        await this.updateCategories(
-          {
-            id: category.id,
-            slug: slugifyCategoryName(categoryName),
-          },
-          sharedContext
+        category = (
+          await this.listCategories(
+            { name: categoryName },
+            {},
+            sharedContext
+          )
+        )[0]
+      }
+      if (!category) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          `Categorie bestaat niet: ${categoryName}. Kies een bestaande categorie of stel er een voor.`
         )
       }
       await this.createProductCategories(

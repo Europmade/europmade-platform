@@ -249,6 +249,12 @@ export default function SellerProductAddPage() {
                 !view.data.product_preview?.identifier_id
               }
               onClick={() => {
+                const productId =
+                  view.data.product_id ?? view.data.product_preview?.product_id
+                if (productId) {
+                  router.push(`/seller/products/${productId}?tab=offer`)
+                  return
+                }
                 const id =
                   view.data.identifier_id ??
                   view.data.product_preview?.identifier_id

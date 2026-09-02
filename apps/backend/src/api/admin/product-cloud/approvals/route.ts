@@ -104,7 +104,11 @@ export async function GET(
             : row.completeness?.compliance_review_status) ||
           "—",
       })
-    } catch {
+    } catch (err) {
+      console.warn(
+        `[admin/product-cloud/approvals] skip product ${version.product_id}:`,
+        err instanceof Error ? err.message : err
+      )
       continue
     }
   }

@@ -2,6 +2,7 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
+import { MedusaError } from "@medusajs/framework/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../modules/product-cloud/service"
 import { createProductCloudWorkflow } from "../../../../workflows/product-cloud"
@@ -18,6 +19,12 @@ import {
 } from "../product-manager"
 import { VERIFICATION_MODULE } from "../../../../modules/verification"
 import type VerificationModuleService from "../../../../modules/verification/service"
+import { generateConceptDraftIdentifier } from "../../../../modules/product-cloud/concept-identifier"
+import {
+  isValidGtin,
+  normalizeGtinDigits,
+} from "../../../../modules/product-cloud/gtin-validation"
+import { listManageableBrands } from "../../brands/brand-helpers"
 
 /** Eigen catalogus + offer/completeness (Seller Product Manager). */
 export async function GET(
@@ -118,24 +125,61 @@ export async function POST(
   )
   const body = req.validatedBody
 
+  const partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
+  const brands = await listManageableBrands(req.scope, seller)
+  const brandRaw = body.brand_id.trim()
+  const brandHit =
+    brands.find((b) => b.id === brandRaw) ||
+    brands.find((b) => b.name.trim().toLowerCase() === brandRaw.toLowerCase())
+  if (!brandHit) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "Merk niet gevonden. Kies een bestaand merk of maak er eerst een aan."
+    )
+  }
+
+  let identifier_type = body.identifier_type ?? "GTIN"
+  let identifier_value = body.identifier_value?.trim() || ""
+  let country_scope = body.country_scope ?? null
+
+  if (!identifier_value) {
+    const draft = generateConceptDraftIdentifier()
+    identifier_type = draft.identifier_type
+    identifier_value = draft.identifier_value
+    country_scope = draft.country_scope
+  } else if (
+    identifier_type === "GTIN" ||
+    /^\d{8,14}$/.test(identifier_value.replace(/\s/g, ""))
+  ) {
+    identifier_type = "GTIN"
+    identifier_value = normalizeGtinDigits(identifier_value)
+    if (!isValidGtin(identifier_value)) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Ongeldige EAN/GTIN (formaat of checksum)."
+      )
+    }
+  }
+
   const { result } = await createProductCloudWorkflow(req.scope).run({
     input: {
       seller_id: seller.id,
       is_retailer: seller.is_retailer,
       is_producer_or_brand_owner: seller.is_producer_or_brand_owner,
       create_as_retailer: body.create_as_retailer,
-      brand_id: body.brand_id,
-      manufacturer_id: body.manufacturer_id,
+      brand_id: brandHit.id,
+      manufacturer_id: body.manufacturer_id?.trim() || brandHit.id,
       title: body.title,
       description: body.description,
       category_name: body.category_name,
       category_names: body.category_names,
-      identifier_type: body.identifier_type,
-      identifier_value: body.identifier_value,
-      country_scope: body.country_scope,
+      identifier_type,
+      identifier_value,
+      country_scope,
       variant_type: body.variant_type,
       variant_value: body.variant_value,
       media: body.media,
+      mpn: body.mpn?.trim() || null,
     },
   })
 

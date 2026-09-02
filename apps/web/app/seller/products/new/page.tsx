@@ -7,26 +7,42 @@ import { SellerGate } from "../../_components/seller-gate"
 import {
   createProduct,
   ProductCloudApiError,
+  uploadProductMediaFile,
 } from "../../_lib/product-cloud-api"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { t, type StorefrontMessageKey } from "../../../_lib/i18n/messages"
 
 const CATEGORY_KEYS = [
-  { value: "Algemeen", key: "sellerProductCatGeneral" as StorefrontMessageKey },
-  {
-    value: "Elektronica",
-    key: "sellerProductCatElectronics" as StorefrontMessageKey,
-  },
-  { value: "Mode", key: "sellerProductCatFashion" as StorefrontMessageKey },
-  { value: "Home & Living", key: "sellerProductCatHome" as StorefrontMessageKey },
-  {
-    value: "Sport & Outdoor",
-    key: "sellerProductCatSport" as StorefrontMessageKey,
-  },
-  {
-    value: "Beauty & Verzorging",
-    key: "sellerProductCatBeauty" as StorefrontMessageKey,
-  },
+  { value: "Tuin", key: "catTuin" as StorefrontMessageKey },
+  { value: "Elektronica", key: "catElektronica" as StorefrontMessageKey },
+  { value: "Mode", key: "catMode" as StorefrontMessageKey },
+  { value: "Wonen", key: "catWonen" as StorefrontMessageKey },
+  { value: "Sport", key: "catSport" as StorefrontMessageKey },
+  { value: "Voeding", key: "catVoeding" as StorefrontMessageKey },
+  { value: "Keuken", key: "catKeuken" as StorefrontMessageKey },
+  { value: "Huishouden", key: "catHuishouden" as StorefrontMessageKey },
+  { value: "Beauty & Verzorging", key: "catBeautyVerzorging" as StorefrontMessageKey },
+  { value: "Baby & Kind", key: "catBabyKind" as StorefrontMessageKey },
+  { value: "Speelgoed", key: "catSpeelgoed" as StorefrontMessageKey },
+  { value: "Dieren", key: "catDieren" as StorefrontMessageKey },
+  { value: "Klus & Gereedschap", key: "catKlusGereedschap" as StorefrontMessageKey },
+  { value: "Auto & Motor", key: "catAutoMotor" as StorefrontMessageKey },
+  { value: "Kantoor", key: "catKantoor" as StorefrontMessageKey },
+  { value: "Boeken & Media", key: "catBoekenMedia" as StorefrontMessageKey },
+  { value: "Gezondheid", key: "catGezondheid" as StorefrontMessageKey },
+  { value: "Verlichting", key: "catVerlichting" as StorefrontMessageKey },
+  { value: "Badkamer", key: "catBadkamer" as StorefrontMessageKey },
+  { value: "Slaapkamer", key: "catSlaapkamer" as StorefrontMessageKey },
+  { value: "Outdoor", key: "catOutdoor" as StorefrontMessageKey },
+  { value: "Duurzaam", key: "catDuurzaam" as StorefrontMessageKey },
+  { value: "Cadeaus", key: "catCadeaus" as StorefrontMessageKey },
+  { value: "Juwelen & Horloges", key: "catJuwelenHorloges" as StorefrontMessageKey },
+  { value: "Tassen & Accessoires", key: "catTassenAccessoires" as StorefrontMessageKey },
+  { value: "Schoenen", key: "catSchoenen" as StorefrontMessageKey },
+  { value: "Plant & Bloem", key: "catPlantBloem" as StorefrontMessageKey },
+  { value: "Feest & Seizoen", key: "catFeestSeizoen" as StorefrontMessageKey },
+  { value: "Ambacht", key: "catAmbacht" as StorefrontMessageKey },
+  { value: "Algemeen", key: "catAlgemeen" as StorefrontMessageKey },
 ] as const
 
 /** GTIN: 8–14 digits; otherwise MPN (ADR-0016). */
@@ -51,6 +67,7 @@ export default function SellerProductNewPage() {
   const [category, setCategory] = useState<string>("")
   const [identifier, setIdentifier] = useState("")
   const [fileName, setFileName] = useState<string | null>(null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -71,11 +88,57 @@ export default function SellerProductNewPage() {
       return
     }
     if (!trimmedId) {
-      setError(t("sellerProductNewIdRequired", locale))
+      // EAN/GTIN optional at concept creation — seller can add it in the product flow.
+    } else {
+      const { identifier_type, identifier_value } = resolveIdentifier(trimmedId)
+      setBusy(true)
+      setError(null)
+      try {
+        const result = await createProduct({
+          brand_id: trimmedBrand,
+          manufacturer_id: trimmedBrand,
+          title: trimmedTitle,
+          description: trimmedTitle,
+          category_name: category,
+          identifier_type,
+          identifier_value,
+          create_as_retailer: true,
+        })
+
+        if (!result.created && result.exact_match_existing) {
+          if (result.product_id) {
+            router.push(`/seller/products/${result.product_id}?tab=offer`)
+            return
+          }
+          setError(result.message ?? t("sellerProductNewExists", locale))
+          return
+        }
+
+        if (!result.product_id) {
+          setError(t("sellerProductNewCreatedNoId", locale))
+          return
+        }
+
+        if (pendingFile) {
+          await uploadProductMediaFile(result.product_id, pendingFile, {
+            media_type: "Hoofdafbeelding",
+            version_id: result.version_id,
+          })
+        }
+
+        router.push(`/seller/products/${result.product_id}?tab=information`)
+      } catch (err: unknown) {
+        setError(
+          err instanceof ProductCloudApiError
+            ? err.message
+            : t("sellerProductNewCreateFailed", locale)
+        )
+      } finally {
+        setBusy(false)
+      }
       return
     }
 
-    const { identifier_type, identifier_value } = resolveIdentifier(trimmedId)
     setBusy(true)
     setError(null)
     try {
@@ -85,38 +148,22 @@ export default function SellerProductNewPage() {
         title: trimmedTitle,
         description: trimmedTitle,
         category_name: category,
-        identifier_type,
-        identifier_value,
         create_as_retailer: true,
-        media: fileName
-          ? [
-              {
-                media_type: "Hoofdafbeelding",
-                storage_reference: `upload://${fileName}`,
-              },
-            ]
-          : undefined,
       })
 
-      if (!result.created && result.exact_match_existing) {
-        if (result.identifier_id) {
-          router.push(
-            `/seller/products/offer?identifier_id=${encodeURIComponent(result.identifier_id)}`
-          )
-          return
-        }
-        setError(result.message ?? t("sellerProductNewExists", locale))
-        return
-      }
-
-      if (!result.identifier_id) {
+      if (!result.product_id) {
         setError(t("sellerProductNewCreatedNoId", locale))
         return
       }
 
-      router.push(
-        `/seller/products/offer?identifier_id=${encodeURIComponent(result.identifier_id)}`
-      )
+      if (pendingFile) {
+        await uploadProductMediaFile(result.product_id, pendingFile, {
+          media_type: "Hoofdafbeelding",
+          version_id: result.version_id,
+        })
+      }
+
+      router.push(`/seller/products/${result.product_id}?tab=information`)
     } catch (err: unknown) {
       setError(
         err instanceof ProductCloudApiError
@@ -204,7 +251,8 @@ export default function SellerProductNewPage() {
             accept="image/*"
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0]
+              const file = e.target.files?.[0] ?? null
+              setPendingFile(file)
               setFileName(file?.name ?? null)
             }}
           />

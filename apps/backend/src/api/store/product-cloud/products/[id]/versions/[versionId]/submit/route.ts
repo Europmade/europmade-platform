@@ -13,6 +13,7 @@ import type CommerceCloudModuleService from "../../../../../../../../modules/com
 import { PARTNER_MODULE } from "../../../../../../../../modules/partner"
 import type PartnerModuleService from "../../../../../../../../modules/partner/service"
 import { buildSellerProductManagerDetail } from "../../../../../product-manager"
+import { assertValidGtinForSubmission } from "../../../../../submit-gates"
 
 type RouteParams = { id: string; versionId: string }
 
@@ -73,6 +74,8 @@ export async function POST(
       "Dit product wacht al op productgoedkeuring."
     )
   }
+
+  await assertValidGtinForSubmission(productCloud, id)
 
   const { result } = await submitVersionWorkflow(req.scope).run({
     input: {

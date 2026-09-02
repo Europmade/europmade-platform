@@ -1,4 +1,8 @@
 import type ProductCloudModuleService from "../../../modules/product-cloud/service"
+import {
+  isConceptDraftIdentifier,
+  resolveCatalogGtinValue,
+} from "../../../modules/product-cloud/concept-identifier"
 
 export type ProductCloudPreview = {
   product_id: string
@@ -47,6 +51,28 @@ type IdentifierRow = {
   product_variant_id: string
   identifier_type: string
   identifier_value: string
+  country_scope?: string | null
+}
+
+function pickCatalogIdentifier(ids: IdentifierRow[]): IdentifierRow | null {
+  const gtin = ids.find(
+    (i) =>
+      i.identifier_type === "GTIN" &&
+      resolveCatalogGtinValue(i.identifier_type, i.identifier_value, i.country_scope)
+  )
+  if (gtin) return gtin
+  const mpn = ids.find((i) => i.identifier_type === "MPN")
+  if (mpn) return mpn
+  return (
+    ids.find(
+      (i) =>
+        !isConceptDraftIdentifier(
+          i.identifier_type,
+          i.identifier_value,
+          i.country_scope
+        )
+    ) ?? null
+  )
 }
 
 function pickDisplayTitle(versions: VersionRow[]): string | null {
@@ -105,12 +131,24 @@ export async function buildProductCloudPreview(
         identifier_value != null
           ? ids.find((i) => i.identifier_value === identifier_value)
           : undefined
-      const gtin =
-        preferred ?? ids.find((i) => i.identifier_type === "GTIN") ?? ids[0]
-      if (gtin) {
-        identifier_id = gtin.id
-        identifier_type = gtin.identifier_type
-        identifier_value = gtin.identifier_value
+      const hit = preferred ?? pickCatalogIdentifier(ids)
+      if (hit) {
+        identifier_id = hit.id
+        identifier_type = hit.identifier_type
+        identifier_value =
+          hit.identifier_type === "GTIN"
+            ? resolveCatalogGtinValue(
+                hit.identifier_type,
+                hit.identifier_value,
+                hit.country_scope
+              )
+            : isConceptDraftIdentifier(
+                  hit.identifier_type,
+                  hit.identifier_value,
+                  hit.country_scope
+                )
+              ? null
+              : hit.identifier_value
         break
       }
     }

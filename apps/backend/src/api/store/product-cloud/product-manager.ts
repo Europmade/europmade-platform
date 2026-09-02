@@ -15,6 +15,8 @@ import {
   type RequirementTier,
 } from "../../../modules/product-cloud/category-attributes"
 import { applyGpsrComplianceAttributes } from "../../../modules/product-cloud/gpsr-manufacturer"
+import type { ManufacturerGpsrSource } from "../../../modules/product-cloud/gpsr-manufacturer"
+import { resolveCatalogGtinValue } from "../../../modules/product-cloud/concept-identifier"
 import { buildDocumentInputs, evidenceKindOf, type EvidenceRow } from "../../../modules/product-cloud/compliance-gates"
 import type VerificationModuleService from "../../../modules/verification/service"
 import { VERIFICATION_MODULE } from "../../../modules/verification"
@@ -170,6 +172,7 @@ export type SellerProductManagerRow = {
   identifier_id: string | null
   identifier_type: string | null
   identifier_value: string | null
+  mpn_value: string | null
   publication_status: string | null
   version_id: string | null
   variant_count: number
@@ -389,23 +392,61 @@ async function loadOfferForIdentifier(
 async function resolveManufacturerProfile(
   partner: PartnerModuleService | null,
   manufacturerId: string | null | undefined
-) {
+): Promise<ManufacturerGpsrSource | null> {
   if (!partner || !manufacturerId) return null
   try {
-    return (await partner.retrieveManufacturer(manufacturerId)) as {
+    return (await partner.retrieveManufacturer(manufacturerId)) as ManufacturerGpsrSource & {
       id: string
-      name?: string | null
-      street?: string | null
-      house_number?: string | null
-      postal_code?: string | null
-      city?: string | null
-      country_code?: string | null
-      contact_email?: string | null
-      contact_phone?: string | null
     }
   } catch {
     return null
   }
+}
+
+async function resolveManufacturerForCompleteness(
+  partner: PartnerModuleService | null,
+  manufacturerId: string | null | undefined,
+  container?: MedusaContainer | null,
+  productId?: string
+): Promise<ManufacturerGpsrSource | null> {
+  const fromManufacturer = await resolveManufacturerProfile(partner, manufacturerId)
+  const hasGpsrCore = Boolean(
+    fromManufacturer?.name?.trim() &&
+      fromManufacturer?.country_code?.trim() &&
+      fromManufacturer?.contact_email?.trim()
+  )
+  if (hasGpsrCore) return fromManufacturer
+
+  if (container && productId) {
+    try {
+      const mie = await loadMadeInEuropeForProduct(container, productId)
+      const facility = mie?.facility as {
+        name?: string
+        street?: string | null
+        house_number?: string | null
+        postal_code?: string | null
+        city?: string | null
+        country_code?: string | null
+      } | null
+      if (facility?.name && facility.country_code) {
+        return {
+          name: fromManufacturer?.name?.trim() || facility.name,
+          street: fromManufacturer?.street ?? facility.street ?? null,
+          house_number:
+            fromManufacturer?.house_number ?? facility.house_number ?? null,
+          postal_code: fromManufacturer?.postal_code ?? facility.postal_code ?? null,
+          city: fromManufacturer?.city ?? facility.city ?? null,
+          country_code:
+            fromManufacturer?.country_code ?? facility.country_code ?? null,
+          contact_email: fromManufacturer?.contact_email ?? null,
+        }
+      }
+    } catch {
+      /* optional enrichment */
+    }
+  }
+
+  return fromManufacturer
 }
 
 async function resolveBrandName(
@@ -463,11 +504,17 @@ export async function buildSellerProductManagerRow(
   })) as VariantRow[]
 
   const identifierIds: string[] = []
+  let mpnValue: string | null = null
   for (const v of variants) {
     const ids = (await productCloud.listIdentifiers({
       product_variant_id: v.id,
     })) as IdentifierRow[]
-    for (const idRow of ids) identifierIds.push(idRow.id)
+    for (const idRow of ids) {
+      identifierIds.push(idRow.id)
+      if (idRow.identifier_type === "MPN" && !mpnValue) {
+        mpnValue = idRow.identifier_value
+      }
+    }
   }
 
   const links = await productCloud.listProductCategories({
@@ -542,7 +589,12 @@ export async function buildSellerProductManagerRow(
         (d.is_required ? "category_required" : "optional")) as RequirementTier,
       value: valueByDef.get(d.id) ?? null,
     })),
-    await resolveManufacturerProfile(opts?.partner ?? null, product.manufacturer_id)
+    await resolveManufacturerForCompleteness(
+      opts?.partner ?? null,
+      product.manufacturer_id,
+      opts?.container ?? null,
+      product.id
+    )
   )
   const ceValue =
     attributes.find((a) => a.code === "ce_marking")?.value?.trim() || null
@@ -636,6 +688,7 @@ export async function buildSellerProductManagerRow(
     identifier_id: preview.identifier_id,
     identifier_type: preview.identifier_type,
     identifier_value: preview.identifier_value,
+    mpn_value: mpnValue,
     publication_status: working?.publication_status ?? null,
     version_id: working?.id ?? null,
     approval_status:
@@ -740,9 +793,11 @@ export async function buildSellerProductManagerDetail(
     values.map((v) => [v.attribute_definition_id, v])
   )
 
-  const manufacturer = await resolveManufacturerProfile(
+  const manufacturer = await resolveManufacturerForCompleteness(
     partner ?? null,
-    product.manufacturer_id
+    product.manufacturer_id,
+    container ?? null,
+    productId
   )
   const schema = applyGpsrComplianceAttributes(
     defs

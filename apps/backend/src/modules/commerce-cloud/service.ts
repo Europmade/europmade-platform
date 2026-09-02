@@ -20,7 +20,57 @@ import {
   type BuyBoxOfferInput,
   type BuyBoxWeights,
 } from "./buy-box-engine"
-import { normalizeSellerSku } from "./offer-sellability"
+import {
+  isOfferActiveForSale,
+  normalizeSellerSku,
+  generateSellerSku,
+} from "./offer-sellability"
+import { buildEffectivePriceView } from "./offer-pricing"
+
+function resolvePromoFields(
+  input: {
+    promo_price?: number | null
+    promo_starts_at?: string | Date | null
+    promo_ends_at?: string | Date | null
+    clear_promo?: boolean
+  },
+  existing: {
+    promo_price?: unknown
+    promo_starts_at?: unknown
+    promo_ends_at?: unknown
+  } | null
+): {
+  promo_price: number | null
+  promo_starts_at: Date | null
+  promo_ends_at: Date | null
+} {
+  if (input.clear_promo) {
+    return { promo_price: null, promo_starts_at: null, promo_ends_at: null }
+  }
+  const promo_price =
+    input.promo_price !== undefined
+      ? input.promo_price
+      : existing?.promo_price != null
+        ? Number(existing.promo_price)
+        : null
+  const promo_starts_at =
+    input.promo_starts_at !== undefined
+      ? input.promo_starts_at
+        ? new Date(input.promo_starts_at)
+        : null
+      : existing?.promo_starts_at
+        ? new Date(existing.promo_starts_at as string)
+        : null
+  const promo_ends_at =
+    input.promo_ends_at !== undefined
+      ? input.promo_ends_at
+        ? new Date(input.promo_ends_at)
+        : null
+      : existing?.promo_ends_at
+        ? new Date(existing.promo_ends_at as string)
+        : null
+  return { promo_price, promo_starts_at, promo_ends_at }
+}
 
 export type UpsertOfferGraphInput = {
   seller_id: string
@@ -33,6 +83,11 @@ export type UpsertOfferGraphInput = {
   seller_sku?: string | null
   sales_status?: "active" | "paused"
   delivery_days_max?: number | null
+  extra_delivery_cost?: number | null
+  promo_price?: number | null
+  promo_starts_at?: string | Date | null
+  promo_ends_at?: string | Date | null
+  clear_promo?: boolean
 }
 
 export type UpsertOfferGraphResult = {
@@ -47,6 +102,7 @@ export type UpsertOfferGraphResult = {
   previous_base_price: number | null
   previous_shipping_cost: number | null
   previous_vat_rate: number | null
+  previous_promo_price: number | null
   previous_seller_sku: string | null
   previous_sales_status: string | null
   previous_delivery_days_max: number | null
@@ -61,6 +117,11 @@ export type PatchOfferGraphInput = {
   seller_sku?: string | null
   sales_status?: "active" | "paused"
   delivery_days_max?: number | null
+  extra_delivery_cost?: number | null
+  promo_price?: number | null
+  promo_starts_at?: string | Date | null
+  promo_ends_at?: string | Date | null
+  clear_promo?: boolean
 }
 
 export type WithdrawOfferResult = {
@@ -100,7 +161,7 @@ class CommerceCloudModuleService extends MedusaService({
     input: UpsertOfferGraphInput,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<UpsertOfferGraphResult> {
-    const sellerSku =
+    const explicitSellerSku =
       input.seller_sku !== undefined
         ? normalizeSellerSku(input.seller_sku)
         : undefined
@@ -119,6 +180,10 @@ class CommerceCloudModuleService extends MedusaService({
       const offer = existing[0]
       const previous_seller_sku =
         offer.seller_sku != null ? String(offer.seller_sku) : null
+      const sellerSku =
+        explicitSellerSku !== undefined
+          ? explicitSellerSku
+          : previous_seller_sku ?? generateSellerSku()
       const previous_sales_status =
         offer.sales_status != null ? String(offer.sales_status) : "active"
       const previous_delivery_days_max =
@@ -137,8 +202,14 @@ class CommerceCloudModuleService extends MedusaService({
 
       const offerUpdate: Record<string, unknown> = { id: offer.id }
       let offer_meta_changed = false
-      if (sellerSku !== undefined && sellerSku !== previous_seller_sku) {
+      if (!previous_seller_sku && sellerSku) {
         offerUpdate.seller_sku = sellerSku
+        offer_meta_changed = true
+      } else if (
+        explicitSellerSku !== undefined &&
+        explicitSellerSku !== previous_seller_sku
+      ) {
+        offerUpdate.seller_sku = explicitSellerSku
         offer_meta_changed = true
       }
       if (
@@ -183,6 +254,18 @@ class CommerceCloudModuleService extends MedusaService({
         prices[0] != null ? Number(prices[0].shipping_cost) : null
       const previous_vat_rate =
         prices[0] != null ? Number(prices[0].vat_rate) : null
+      const previous_promo_price =
+        prices[0]?.promo_price != null ? Number(prices[0].promo_price) : null
+      const previous_extra =
+        prices[0]?.extra_delivery_cost != null
+          ? Number(prices[0].extra_delivery_cost)
+          : null
+      const nextExtra =
+        input.extra_delivery_cost === undefined
+          ? previous_extra
+          : input.extra_delivery_cost
+
+      const nextPromo = resolvePromoFields(input, prices[0] ?? null)
 
       let inventory_id = inventories[0]?.id
       let inventory_changed = false
@@ -216,14 +299,24 @@ class CommerceCloudModuleService extends MedusaService({
         price_changed =
           previous_base_price !== input.base_price ||
           previous_shipping_cost !== input.shipping_cost ||
-          previous_vat_rate !== input.vat_rate
+          previous_vat_rate !== input.vat_rate ||
+          previous_extra !== (nextExtra ?? null) ||
+          previous_promo_price !== nextPromo.promo_price ||
+          String(prices[0]?.promo_starts_at ?? "") !==
+            String(nextPromo.promo_starts_at ?? "") ||
+          String(prices[0]?.promo_ends_at ?? "") !==
+            String(nextPromo.promo_ends_at ?? "")
         if (price_changed) {
           await this.updateOfferPrices(
             {
               id: price_id,
               base_price: input.base_price,
               shipping_cost: input.shipping_cost,
+              extra_delivery_cost: nextExtra ?? null,
               vat_rate: input.vat_rate,
+              promo_price: nextPromo.promo_price,
+              promo_starts_at: nextPromo.promo_starts_at,
+              promo_ends_at: nextPromo.promo_ends_at,
             },
             sharedContext
           )
@@ -234,7 +327,11 @@ class CommerceCloudModuleService extends MedusaService({
             offer_id: offer.id,
             base_price: input.base_price,
             shipping_cost: input.shipping_cost,
+            extra_delivery_cost: input.extra_delivery_cost ?? null,
             vat_rate: input.vat_rate,
+            promo_price: nextPromo.promo_price,
+            promo_starts_at: nextPromo.promo_starts_at,
+            promo_ends_at: nextPromo.promo_ends_at,
           },
           sharedContext
         )
@@ -254,11 +351,14 @@ class CommerceCloudModuleService extends MedusaService({
         previous_base_price,
         previous_shipping_cost,
         previous_vat_rate,
+        previous_promo_price,
         previous_seller_sku,
         previous_sales_status,
         previous_delivery_days_max,
       }
     }
+
+    const sellerSku = explicitSellerSku ?? generateSellerSku()
 
     if (sellerSku) {
       await this.assertSellerSkuUnique_(
@@ -284,6 +384,8 @@ class CommerceCloudModuleService extends MedusaService({
       sharedContext
     )
 
+    const nextPromo = resolvePromoFields(input, null)
+
     const inventory = await this.createOfferInventories(
       {
         offer_id: offer.id,
@@ -297,7 +399,11 @@ class CommerceCloudModuleService extends MedusaService({
         offer_id: offer.id,
         base_price: input.base_price,
         shipping_cost: input.shipping_cost,
+        extra_delivery_cost: input.extra_delivery_cost ?? null,
         vat_rate: input.vat_rate,
+        promo_price: nextPromo.promo_price,
+        promo_starts_at: nextPromo.promo_starts_at,
+        promo_ends_at: nextPromo.promo_ends_at,
       },
       sharedContext
     )
@@ -314,6 +420,7 @@ class CommerceCloudModuleService extends MedusaService({
       previous_base_price: null,
       previous_shipping_cost: null,
       previous_vat_rate: null,
+      previous_promo_price: null,
       previous_seller_sku: null,
       previous_sales_status: null,
       previous_delivery_days_max: null,
@@ -377,6 +484,12 @@ class CommerceCloudModuleService extends MedusaService({
     const base_price = input.base_price ?? Number(prices[0].base_price)
     const shipping_cost =
       input.shipping_cost ?? Number(prices[0].shipping_cost)
+    const extra_delivery_cost =
+      input.extra_delivery_cost !== undefined
+        ? input.extra_delivery_cost
+        : prices[0].extra_delivery_cost != null
+          ? Number(prices[0].extra_delivery_cost)
+          : null
     const vat_rate = input.vat_rate ?? Number(prices[0].vat_rate)
 
     return await this.upsertOfferGraph_(
@@ -387,10 +500,15 @@ class CommerceCloudModuleService extends MedusaService({
         quantity_available: quantity,
         base_price,
         shipping_cost,
+        extra_delivery_cost,
         vat_rate,
         seller_sku: input.seller_sku,
         sales_status: input.sales_status,
         delivery_days_max: input.delivery_days_max,
+        promo_price: input.promo_price,
+        promo_starts_at: input.promo_starts_at,
+        promo_ends_at: input.promo_ends_at,
+        clear_promo: input.clear_promo,
       },
       sharedContext
     )
@@ -477,6 +595,7 @@ class CommerceCloudModuleService extends MedusaService({
     )
     const inputs: BuyBoxOfferInput[] = []
     for (const offer of offers) {
+      if (!isOfferActiveForSale(offer.sales_status)) continue
       const [inventory] = await this.listOfferInventories(
         { offer_id: offer.id },
         {},
@@ -488,12 +607,24 @@ class CommerceCloudModuleService extends MedusaService({
         sharedContext
       )
       if (!inventory || !price) continue
+      const view = buildEffectivePriceView({
+        base_price: Number(price.base_price),
+        shipping_cost: Number(price.shipping_cost),
+        extra_delivery_cost:
+          price.extra_delivery_cost != null
+            ? Number(price.extra_delivery_cost)
+            : null,
+        promo_price:
+          price.promo_price != null ? Number(price.promo_price) : null,
+        promo_starts_at: price.promo_starts_at ?? null,
+        promo_ends_at: price.promo_ends_at ?? null,
+      })
       inputs.push({
         offer_id: offer.id,
         seller_id: offer.seller_id,
         quantity_available: Number(inventory.quantity_available),
-        base_price: Number(price.base_price),
-        shipping_cost: Number(price.shipping_cost),
+        base_price: view.unit_price,
+        shipping_cost: view.shipping_cost + view.extra_delivery_cost,
         seller_tenure_at_ms: sellerTenureById[offer.seller_id] ?? null,
         seller_review_score: sellerReviewScoreById[offer.seller_id] ?? null,
       })

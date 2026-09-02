@@ -134,6 +134,10 @@ export async function GET(
       brandNameCache.set(brandId, name)
       return name
     } catch {
+      if (brandId && !brandId.startsWith("brand_")) {
+        brandNameCache.set(brandId, brandId)
+        return brandId
+      }
       brandNameCache.set(brandId, null)
       return null
     }

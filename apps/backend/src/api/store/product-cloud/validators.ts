@@ -1,8 +1,9 @@
 import { z } from "@medusajs/framework/zod"
+import { IDENTIFIER_TYPES } from "../../../modules/product-cloud/identifier-types"
 
 export const StoreEanMatchBody = z.object({
   identifier_value: z.string().trim().min(1),
-  identifier_type: z.enum(["GTIN", "MPN"]).optional(),
+  identifier_type: z.enum(IDENTIFIER_TYPES).optional(),
   country_scope: z.string().trim().min(1).nullable().optional(),
   draft_product_id: z.string().trim().min(1).optional(),
   candidate_product_ids: z.array(z.string().trim().min(1)).optional(),
@@ -21,8 +22,9 @@ export const StoreCreateProductBody = z.object({
   description: z.string().trim().min(1),
   category_name: z.string().trim().min(1).optional().default("Algemeen"),
   category_names: z.array(z.string().trim().min(1)).optional(),
-  identifier_type: z.enum(["GTIN", "MPN"]).optional().default("GTIN"),
-  identifier_value: z.string().trim().min(1),
+  identifier_type: z.enum(IDENTIFIER_TYPES).optional().default("GTIN"),
+  identifier_value: z.string().trim().min(1).optional(),
+  mpn: z.string().trim().min(1).optional(),
   country_scope: z.string().trim().min(1).nullable().optional(),
   create_as_retailer: z.boolean().optional(),
   variant_type: z
