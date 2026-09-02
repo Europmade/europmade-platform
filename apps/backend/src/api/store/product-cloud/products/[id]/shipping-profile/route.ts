@@ -2,14 +2,14 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
-import { COMMERCE_CLOUD_MODULE } from "../../../../../modules/commerce-cloud"
-import type CommerceCloudModuleService from "../../../../../modules/commerce-cloud/service"
-import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
-import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
-import { assertPermission } from "../../../../../modules/partner/permissions"
+import { COMMERCE_CLOUD_MODULE } from "../../../../../../modules/commerce-cloud"
+import type CommerceCloudModuleService from "../../../../../../modules/commerce-cloud/service"
+import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
+import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
+import { assertPermission } from "../../../../../../modules/partner/permissions"
 import { resolveApprovedSeller } from "../../resolve-seller"
 import type { StoreProductShippingProfileBodyInput } from "../../validators"
-import { syncProfileToProductOffers } from "../../../../../modules/commerce-cloud/shipping-profile-engine"
+import { syncProfileToProductOffers } from "../../../../../../modules/commerce-cloud/shipping-profile-engine"
 
 type RouteParams = { id: string }
 
