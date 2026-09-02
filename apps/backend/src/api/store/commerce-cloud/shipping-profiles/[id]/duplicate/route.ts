@@ -4,7 +4,7 @@ import type {
 } from "@medusajs/framework/http"
 import { COMMERCE_CLOUD_MODULE } from "../../../../../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../../../../../modules/commerce-cloud/service"
-import { resolveApprovedSeller } from "../../../../../product-cloud/resolve-seller"
+import { resolveApprovedSeller } from "../../../../product-cloud/resolve-seller"
 import {
   assertProfileWritable,
   duplicateShippingProfile,
