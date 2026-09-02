@@ -22,11 +22,13 @@ export default function AdminLoginPage() {
       router.replace("/dashboard");
       router.refresh();
     } catch (err) {
-      setError(
-        err instanceof MedusaAdminAuthError
-          ? err.message
-          : "Inloggen is niet gelukt.",
-      );
+      if (err instanceof MedusaAdminAuthError && err.status === 401) {
+        setError("E-mailadres of wachtwoord onjuist.");
+      } else if (err instanceof MedusaAdminAuthError) {
+        setError(err.message);
+      } else {
+        setError("Inloggen is tijdelijk niet mogelijk. Probeer het opnieuw.");
+      }
     } finally {
       setBusy(false);
     }
@@ -39,10 +41,11 @@ export default function AdminLoginPage() {
         className="w-full max-w-md border border-wf-400 bg-white p-6 tablet:p-8"
       >
         <div
-          className="mb-5 h-6 w-[130px] rounded bg-wf-300"
-          role="img"
-          aria-label="EuropMade logo"
-        />
+          className="mb-5 text-[15px] font-bold tracking-tight text-wf-900"
+          aria-label="EuropMade"
+        >
+          EuropMade
+        </div>
         <h1 className="mb-1 text-lg font-bold text-wf-900">Beheerder-login</h1>
         <p className="mb-5 text-xs text-wf-600">
           Log in om het Admin Dashboard te openen.

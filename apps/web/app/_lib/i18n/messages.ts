@@ -3,6 +3,7 @@
  */
 
 import {
+  DEFAULT_STOREFRONT_LOCALE,
   L,
   pickLocalized,
   type LocalizedString,
@@ -633,6 +634,129 @@ const M = {
     "No brands to manage yet.",
     "Noch keine Marken zu verwalten.",
     "Pas encore de marques à gérer."
+  ),
+  sellerBrandsIntro: L(
+    "Beheer de merken die aan jouw Partner-account zijn gekoppeld.",
+    "Manage the brands linked to your Partner account.",
+    "Verwalten Sie die Marken, die mit Ihrem Partnerkonto verknüpft sind.",
+    "Gérez les marques liées à votre compte partenaire."
+  ),
+  sellerBrandNoDescription: L(
+    "Nog geen merkbeschrijving",
+    "No brand description yet",
+    "Noch keine Markenbeschreibung",
+    "Pas encore de description de marque"
+  ),
+  sellerBrandProductCount: L(
+    "Producten",
+    "Products",
+    "Produkte",
+    "Produits"
+  ),
+  sellerBrandFacilityCount: L(
+    "Productielocaties",
+    "Production locations",
+    "Produktionsstandorte",
+    "Lieux de production"
+  ),
+  sellerBrandViewCta: L(
+    "Merk bekijken",
+    "View brand",
+    "Marke ansehen",
+    "Voir la marque"
+  ),
+  sellerBrandDetailEyebrow: L("Merk", "Brand", "Marke", "Marque"),
+  sellerBrandDescriptionLabel: L(
+    "Merkbeschrijving",
+    "Brand description",
+    "Markenbeschreibung",
+    "Description de la marque"
+  ),
+  sellerBrandDescriptionHint: L(
+    "Korte beschrijving van het merk die op het merkprofiel kan worden gebruikt.",
+    "Short description of the brand that can be used on the brand profile.",
+    "Kurze Beschreibung der Marke für das Markenprofil.",
+    "Courte description de la marque utilisable sur le profil."
+  ),
+  sellerBrandDescriptionReadonly: L(
+    "Je hebt geen recht om de merkbeschrijving te wijzigen.",
+    "You do not have permission to edit the brand description.",
+    "Sie dürfen die Markenbeschreibung nicht ändern.",
+    "Vous n’avez pas le droit de modifier la description de la marque."
+  ),
+  sellerBrandSaved: L(
+    "Merkbeschrijving opgeslagen.",
+    "Brand description saved.",
+    "Markenbeschreibung gespeichert.",
+    "Description de la marque enregistrée."
+  ),
+  sellerBrandFacilitiesHeading: L(
+    "Productielocaties",
+    "Production locations",
+    "Produktionsstandorte",
+    "Lieux de production"
+  ),
+  sellerBrandFacilitiesReadonly: L(
+    "Je hebt geen recht om productielocaties te beheren.",
+    "You do not have permission to manage production locations.",
+    "Sie dürfen Produktionsstandorte nicht verwalten.",
+    "Vous n’avez pas le droit de gérer les lieux de production."
+  ),
+  sellerFacilityAdded: L(
+    "Productielocatie opgeslagen.",
+    "Production location saved.",
+    "Produktionsstandort gespeichert.",
+    "Lieu de production enregistré."
+  ),
+  sellerFacilityUpdated: L(
+    "Productielocatie bijgewerkt.",
+    "Production location updated.",
+    "Produktionsstandort aktualisiert.",
+    "Lieu de production mis à jour."
+  ),
+  sellerFacilityDeactivated: L(
+    "Productielocatie gedeactiveerd.",
+    "Production location deactivated.",
+    "Produktionsstandort deaktiviert.",
+    "Lieu de production désactivé."
+  ),
+  sellerFacilityDeactivate: L(
+    "Deactiveren",
+    "Deactivate",
+    "Deaktivieren",
+    "Désactiver"
+  ),
+  sellerFacilityAddCta: L(
+    "+ Productielocatie toevoegen",
+    "+ Add production location",
+    "+ Produktionsstandort hinzufügen",
+    "+ Ajouter un lieu de production"
+  ),
+  sellerFacilityUpdateCta: L(
+    "Productielocatie bijwerken",
+    "Update production location",
+    "Produktionsstandort aktualisieren",
+    "Mettre à jour le lieu de production"
+  ),
+  sellerBrandProductsHeading: L(
+    "Producten van dit merk",
+    "Products of this brand",
+    "Produkte dieser Marke",
+    "Produits de cette marque"
+  ),
+  sellerBrandProductsEmpty: L(
+    "Nog geen producten van dit merk.",
+    "No products for this brand yet.",
+    "Noch keine Produkte dieser Marke.",
+    "Pas encore de produits pour cette marque."
+  ),
+  sellerBrandProductView: L("Bekijken", "View", "Ansehen", "Voir"),
+  sellerBrandProductEdit: L("Bewerken", "Edit", "Bearbeiten", "Modifier"),
+  sellerBrandBack: L(
+    "Terug naar merken",
+    "Back to brands",
+    "Zurück zu Marken",
+    "Retour aux marques"
   ),
   madeInEurope: L(
     "Gemaakt in Europa",
@@ -3253,6 +3377,12 @@ const M = {
     "E-Mail-Adresse oder Passwort falsch.",
     "Adresse e-mail ou mot de passe incorrect."
   ),
+  authLoginUnavailable: L(
+    "Inloggen is tijdelijk niet mogelijk. Probeer het opnieuw.",
+    "Sign-in is temporarily unavailable. Please try again.",
+    "Anmeldung ist vorübergehend nicht möglich. Bitte versuchen Sie es erneut.",
+    "La connexion est temporairement indisponible. Veuillez réessayer."
+  ),
   authOr: L("of", "or", "oder", "ou"),
   authNoAccount: L(
     "Nog geen account?",
@@ -3281,6 +3411,78 @@ const M = {
     "Faire confiance à cet appareil pendant 30 jours"
   ),
   authConfirm: L("Bevestigen", "Confirm", "Bestätigen", "Confirmer"),
+  auth2faSetupTitle: L(
+    "Tweestapsverificatie instellen",
+    "Set up two-factor authentication",
+    "Zwei-Faktor-Authentifizierung einrichten",
+    "Configurer l’authentification à deux facteurs"
+  ),
+  auth2faSetupSubtitle: L(
+    "Scan de QR-code met je authenticator-app",
+    "Scan the QR code with your authenticator app",
+    "Scannen Sie den QR-Code mit Ihrer Authenticator-App",
+    "Scannez le code QR avec votre application d’authentification"
+  ),
+  auth2faSetupRequiredSubtitle: L(
+    "Tweestapsverificatie is verplicht voor toegang tot je Dashboard",
+    "Two-factor authentication is required to access your Dashboard",
+    "Zwei-Faktor-Authentifizierung ist für den Dashboard-Zugang Pflicht",
+    "L’authentification à deux facteurs est obligatoire pour accéder au tableau de bord"
+  ),
+  auth2faManualLabel: L(
+    "Handmatige code:",
+    "Manual code:",
+    "Manueller Code:",
+    "Code manuel :"
+  ),
+  auth2faConfirmLabel: L(
+    "Voer de 6-cijferige code in ter bevestiging",
+    "Enter the 6-digit code to confirm",
+    "Geben Sie den 6-stelligen Code zur Bestätigung ein",
+    "Saisissez le code à 6 chiffres pour confirmer"
+  ),
+  auth2faQrAlt: L(
+    "QR-code voor authenticator-app",
+    "QR code for authenticator app",
+    "QR-Code für Authenticator-App",
+    "Code QR pour l’application d’authentification"
+  ),
+  auth2faQrFallback: L(
+    "Gebruik de handmatige code hieronder in je authenticator-app.",
+    "Use the manual code below in your authenticator app.",
+    "Verwenden Sie den manuellen Code unten in Ihrer Authenticator-App.",
+    "Utilisez le code manuel ci-dessous dans votre application d’authentification."
+  ),
+  auth2faRecoverySubtitle: L(
+    "Bewaar deze herstelcodes op een veilige plek — je kunt ze gebruiken als je geen toegang hebt tot je authenticator-app.",
+    "Store these recovery codes somewhere safe — you can use them if you lose access to your authenticator app.",
+    "Bewahren Sie diese Wiederherstellungscodes sicher auf — Sie können sie nutzen, wenn Sie keinen Zugriff auf Ihre Authenticator-App haben.",
+    "Conservez ces codes de récupération en lieu sûr — vous pourrez les utiliser si vous perdez l’accès à votre application d’authentification."
+  ),
+  auth2faSavedCodes: L(
+    "Ik heb deze herstelcodes veilig bewaard",
+    "I have stored these recovery codes safely",
+    "Ich habe diese Wiederherstellungscodes sicher aufbewahrt",
+    "J’ai conservé ces codes de récupération en sécurité"
+  ),
+  auth2faFinish: L(
+    "Tweestapsverificatie afronden",
+    "Finish two-factor setup",
+    "Zwei-Faktor-Einrichtung abschließen",
+    "Terminer la configuration à deux facteurs"
+  ),
+  auth2faEnrollError: L(
+    "2FA-setup kon niet worden gestart. Probeer het opnieuw.",
+    "Could not start 2FA setup. Please try again.",
+    "2FA-Einrichtung konnte nicht gestartet werden. Bitte erneut versuchen.",
+    "Impossible de démarrer la configuration 2FA. Réessayez."
+  ),
+  authOpenDashboard: L(
+    "Naar Seller Dashboard",
+    "Go to Seller Dashboard",
+    "Zum Seller-Dashboard",
+    "Aller au tableau de bord vendeur"
+  ),
   authUseAuthenticator: L(
     "Gebruik je authenticator-app",
     "Use your authenticator app",
@@ -3479,16 +3681,16 @@ const M = {
     "{count} en brouillon"
   ),
   sellerUnread: L(
-    "{count} ongelezen",
-    "{count} unread",
-    "{count} ungelesen",
-    "{count} non lus"
+    "{count} openstaand",
+    "{count} requiring action",
+    "{count} offen",
+    "{count} en attente"
   ),
   sellerNewMessages: L(
-    "{count} nieuwe berichten",
-    "{count} new messages",
-    "{count} neue Nachrichten",
-    "{count} nouveaux messages"
+    "{count} berichten wachten op antwoord",
+    "{count} messages require a reply",
+    "{count} Nachrichten warten auf Antwort",
+    "{count} messages en attente de réponse"
   ),
   sellerProductsAwaiting: L(
     "{count} producten wachten op goedkeuring",
@@ -3589,6 +3791,18 @@ const M = {
     "Producteur/Propriétaire de marque"
   ),
   sellerRolePartner: L("Partner", "Partner", "Partner", "Partenaire"),
+  sellerRoleBrandOwner: L(
+    "Merkeigenaar",
+    "Brand owner",
+    "Markeninhaber",
+    "Propriétaire de marque"
+  ),
+  sellerRoleProducerOnly: L(
+    "Producent",
+    "Producer",
+    "Produzent",
+    "Producteur"
+  ),
 
   // —— Document metadata ——
   metaSiteTitle: L(
@@ -3612,6 +3826,7 @@ const M = {
   commonNext: L("Volgende", "Next", "Weiter", "Suivant"),
   commonPrevious: L("← Terug", "← Back", "← Zurück", "← Retour"),
   commonSave: L("Opslaan", "Save", "Speichern", "Enregistrer"),
+  commonEdit: L("Bewerken", "Edit", "Bearbeiten", "Modifier"),
   commonSubmit: L("Versturen", "Send", "Senden", "Envoyer"),
   commonCancel: L("Annuleren", "Cancel", "Abbrechen", "Annuler"),
   commonAll: L("Alle", "All", "Alle", "Tous"),
@@ -4145,6 +4360,18 @@ const M = {
     "Kundenbestellungen auf deinem Verkäuferkonto.",
     "Commandes clients sur votre compte vendeur."
   ),
+  sellerOrderPromisedDelivery: L(
+    "Toegezegde levering",
+    "Promised delivery",
+    "Zugesagte Lieferung",
+    "Livraison promise"
+  ),
+  sellerOrderProductsCol: L(
+    "Producten",
+    "Products",
+    "Produkte",
+    "Produits"
+  ),
   sellerOrdersSearchPlaceholder: L(
     "Zoek op ordernummer of klant…",
     "Search by order number or customer…",
@@ -4183,6 +4410,181 @@ const M = {
     "Unterhaltungen mit Kunden zu Bestellungen und Retouren.",
     "Conversations avec les clients sur les commandes et retours."
   ),
+  sellerMessagesAttentionCount: L(
+    "{count} openstaand",
+    "{count} requiring action",
+    "{count} offen",
+    "{count} en attente"
+  ),
+  sellerMessagesLoadError: L(
+    "Berichten konden niet worden geladen.",
+    "Messages could not be loaded.",
+    "Nachrichten konnten nicht geladen werden.",
+    "Impossible de charger les messages."
+  ),
+  sellerMessagesSendFailed: L(
+    "Bericht kon niet worden verzonden.",
+    "Message could not be sent.",
+    "Nachricht konnte nicht gesendet werden.",
+    "Impossible d’envoyer le message."
+  ),
+  sellerMessagesStatusUpdated: L(
+    "Conversatiestatus bijgewerkt.",
+    "Conversation status updated.",
+    "Konversationsstatus aktualisiert.",
+    "Statut de la conversation mis à jour."
+  ),
+  sellerMessagesSearchCustomer: L(
+    "Zoek klant",
+    "Search customer",
+    "Kunde suchen",
+    "Rechercher un client"
+  ),
+  sellerMessagesSearchCustomerPlaceholder: L(
+    "Naam of e-mail…",
+    "Name or email…",
+    "Name oder E-Mail…",
+    "Nom ou e-mail…"
+  ),
+  sellerMessagesLinkedOrderOptional: L(
+    "Gekoppelde order (optioneel)",
+    "Linked order (optional)",
+    "Verknüpfte Bestellung (optional)",
+    "Commande liée (facultatif)"
+  ),
+  sellerMessagesNoOrder: L(
+    "Geen order",
+    "No order",
+    "Keine Bestellung",
+    "Aucune commande"
+  ),
+  sellerMessagesNoOrderLinked: L(
+    "Geen order gekoppeld",
+    "No order linked",
+    "Keine Bestellung verknüpft",
+    "Aucune commande liée"
+  ),
+  sellerMessagesSearchMessages: L(
+    "Zoek berichten",
+    "Search messages",
+    "Nachrichten suchen",
+    "Rechercher des messages"
+  ),
+  sellerMessagesSearchMessagesPlaceholder: L(
+    "Klant, e-mail, ordernummer of onderwerp…",
+    "Customer, email, order number or subject…",
+    "Kunde, E-Mail, Bestellnummer oder Betreff…",
+    "Client, e-mail, n° de commande ou objet…"
+  ),
+  sellerMessagesSearchOrder: L(
+    "Order (optioneel)",
+    "Order (optional)",
+    "Bestellung (optional)",
+    "Commande (facultatif)"
+  ),
+  sellerMessagesSearchOrderPlaceholder: L(
+    "Zoek op ordernummer…",
+    "Search by order number…",
+    "Nach Bestellnummer suchen…",
+    "Rechercher par n° de commande…"
+  ),
+  sellerMessagesSelectedCustomer: L(
+    "Geselecteerde klant",
+    "Selected customer",
+    "Ausgewählter Kunde",
+    "Client sélectionné"
+  ),
+  sellerMessagesClearCustomer: L(
+    "Andere klant kiezen",
+    "Choose another customer",
+    "Anderen Kunden wählen",
+    "Choisir un autre client"
+  ),
+  sellerMessagesNoCustomerResults: L(
+    "Geen klanten gevonden. Typ een naam of e-mail.",
+    "No customers found. Type a name or email.",
+    "Keine Kunden gefunden. Name oder E-Mail eingeben.",
+    "Aucun client trouvé. Saisissez un nom ou un e-mail."
+  ),
+  sellerMessagesNoOrderResults: L(
+    "Geen orders gevonden voor deze klant.",
+    "No orders found for this customer.",
+    "Keine Bestellungen für diesen Kunden gefunden.",
+    "Aucune commande trouvée pour ce client."
+  ),
+  sellerMessagesCustomerRequired: L(
+    "Selecteer eerst een klant.",
+    "Please select a customer first.",
+    "Bitte zuerst einen Kunden auswählen.",
+    "Veuillez d’abord sélectionner un client."
+  ),
+  sellerMessagesBodyRequired: L(
+    "Vul een bericht in.",
+    "Please enter a message.",
+    "Bitte eine Nachricht eingeben.",
+    "Veuillez saisir un message."
+  ),
+  sellerMessagesLastMessage: L(
+    "Laatste bericht",
+    "Last message",
+    "Letzte Nachricht",
+    "Dernier message"
+  ),
+  sellerMessagesAttachments: L(
+    "Bijlagen",
+    "Attachments",
+    "Anhänge",
+    "Pièces jointes"
+  ),
+  sellerMessagesMarkResolved: L(
+    "Markeer als afgehandeld",
+    "Mark as resolved",
+    "Als erledigt markieren",
+    "Marquer comme traité"
+  ),
+  sellerMessagesReopen: L(
+    "Heropen conversatie",
+    "Reopen conversation",
+    "Konversation erneut öffnen",
+    "Rouvrir la conversation"
+  ),
+  sellerMsgStatusWaitingSeller: L(
+    "Wacht op antwoord",
+    "Waiting for seller",
+    "Wartet auf Antwort",
+    "En attente du vendeur"
+  ),
+  sellerMsgStatusWaitingCustomer: L(
+    "Wacht op klant",
+    "Waiting for customer",
+    "Wartet auf Kunden",
+    "En attente du client"
+  ),
+  sellerMsgStatusResolved: L(
+    "Afgehandeld",
+    "Resolved",
+    "Erledigt",
+    "Traité"
+  ),
+  sellerMsgFilterAction: L(
+    "Openstaand",
+    "Action required",
+    "Offen",
+    "À traiter"
+  ),
+  sellerMsgFilterWaitingCustomer: L(
+    "Wacht op klant",
+    "Waiting for customer",
+    "Wartet auf Kunden",
+    "En attente du client"
+  ),
+  sellerMsgFilterResolved: L(
+    "Afgehandeld",
+    "Resolved",
+    "Erledigt",
+    "Traité"
+  ),
+  sellerMsgFilterAll: L("Alles", "All", "Alle", "Tout"),
   sellerMessagesUnreadCount: L(
     "{count} ongelezen",
     "{count} unread",
@@ -4220,10 +4622,16 @@ const M = {
     "Écrivez votre message…"
   ),
   sellerMessagesFillRequired: L(
-    "Vul order, onderwerp en bericht in.",
-    "Fill in order, subject and message.",
-    "Fülle Bestellung, Betreff und Nachricht aus.",
-    "Renseignez commande, objet et message."
+    "Selecteer een klant en vul het bericht in.",
+    "Select a customer and enter a message.",
+    "Kunden auswählen und Nachricht eingeben.",
+    "Sélectionnez un client et saisissez un message."
+  ),
+  sellerMessagesSubjectRequired: L(
+    "Vul een onderwerp in.",
+    "Please enter a subject.",
+    "Bitte einen Betreff eingeben.",
+    "Veuillez saisir un objet."
   ),
   sellerMessagesEmptyTitle: L(
     "Geen berichten",
@@ -4539,10 +4947,10 @@ const M = {
     "Aperçu des commissions"
   ),
   sellerFinanceDownloadInvoices: L(
-    "Facturen downloaden",
-    "Download invoices",
-    "Rechnungen herunterladen",
-    "Télécharger les factures"
+    "Facturen EuropMade",
+    "EuropMade invoices",
+    "EuropMade-Rechnungen",
+    "Factures EuropMade"
   ),
   sellerFinanceVatOss: L(
     "BTW-overzicht (OSS)",
@@ -4668,6 +5076,185 @@ const M = {
   ),
   sellerFinanceVatLabel: L("BTW", "VAT", "MwSt.", "TVA"),
   sellerFinanceVatOssShort: L("BTW (OSS)", "VAT (OSS)", "MwSt. (OSS)", "TVA (OSS)"),
+
+  sellerFinanceEuropmadeInvoices: L(
+    "Facturen van EuropMade",
+    "Invoices from EuropMade",
+    "Rechnungen von EuropMade",
+    "Factures d'EuropMade"
+  ),
+  sellerFinanceEuropmadeInvoicesDesc: L(
+    "Facturen voor commissies, advertising en andere diensten van EuropMade.",
+    "Invoices for commissions, advertising and other services from EuropMade.",
+    "Rechnungen für Provisionen, Werbung und andere Dienstleistungen von EuropMade.",
+    "Factures pour commissions, publicité et autres services d'EuropMade."
+  ),
+  sellerFinanceEuropmadeInvoicesEmpty: L(
+    "Nog geen facturen van EuropMade.",
+    "No invoices from EuropMade yet.",
+    "Noch keine Rechnungen von EuropMade.",
+    "Pas encore de factures d'EuropMade."
+  ),
+  sellerFinanceSalesOverview: L(
+    "Verkopen via EuropMade",
+    "Sales via EuropMade",
+    "Verkäufe über EuropMade",
+    "Ventes via EuropMade"
+  ),
+  sellerFinanceSalesOverviewDesc: L(
+    "Overzicht van al jouw verkopen via het EuropMade-platform.",
+    "Overview of all your sales via the EuropMade platform.",
+    "Übersicht aller deiner Verkäufe über die EuropMade-Plattform.",
+    "Aperçu de toutes vos ventes via la plateforme EuropMade."
+  ),
+  sellerFinanceSalesEmpty: L(
+    "Nog geen verkopen.",
+    "No sales yet.",
+    "Noch keine Verkäufe.",
+    "Pas encore de ventes."
+  ),
+  sellerFinanceDownloadSales: L(
+    "Download verkoopoverzicht",
+    "Download sales overview",
+    "Verkaufsübersicht herunterladen",
+    "Télécharger l'aperçu des ventes"
+  ),
+  sellerFinanceInvoiceNumber: L(
+    "Factuurnummer",
+    "Invoice number",
+    "Rechnungsnummer",
+    "Numéro de facture"
+  ),
+  sellerFinanceInvoiceDate: L(
+    "Factuurdatum",
+    "Invoice date",
+    "Rechnungsdatum",
+    "Date de facture"
+  ),
+  sellerFinancePeriod: L("Periode", "Period", "Zeitraum", "Période"),
+  sellerFinanceExclVat: L(
+    "Excl. BTW",
+    "Excl. VAT",
+    "Exkl. MwSt.",
+    "HT"
+  ),
+  sellerFinanceVat: L("BTW", "VAT", "MwSt.", "TVA"),
+  sellerFinanceTotal: L("Totaal", "Total", "Gesamt", "Total"),
+  sellerFinanceDueDate: L(
+    "Vervaldatum",
+    "Due date",
+    "Fälligkeitsdatum",
+    "Date d'échéance"
+  ),
+  sellerFinanceDownloadInvoicePdf: L(
+    "Download factuur",
+    "Download invoice",
+    "Rechnung herunterladen",
+    "Télécharger la facture"
+  ),
+  sellerFinanceDownloadSpec: L(
+    "Download specificatie",
+    "Download specification",
+    "Spezifikation herunterladen",
+    "Télécharger la spécification"
+  ),
+  sellerFinanceInvoiceDetail: L(
+    "Factuurdetail",
+    "Invoice detail",
+    "Rechnungsdetail",
+    "Détail de la facture"
+  ),
+  sellerFinanceInvoiceInfo: L(
+    "Factuurinformatie",
+    "Invoice information",
+    "Rechnungsinformationen",
+    "Informations de la facture"
+  ),
+  sellerFinanceAmounts: L(
+    "Bedragen",
+    "Amounts",
+    "Beträge",
+    "Montants"
+  ),
+  sellerFinanceSpecification: L(
+    "Specificatie",
+    "Specification",
+    "Spezifikation",
+    "Spécification"
+  ),
+  sellerFinanceCommissionLines: L(
+    "Commissieregels",
+    "Commission lines",
+    "Provisionszeilen",
+    "Lignes de commission"
+  ),
+  sellerFinanceAdvertisingLines: L(
+    "Advertentieregels",
+    "Advertising lines",
+    "Werbezeilen",
+    "Lignes publicitaires"
+  ),
+  sellerFinanceCreditLines: L(
+    "Correcties",
+    "Corrections",
+    "Korrekturen",
+    "Corrections"
+  ),
+  sellerFinanceProduct: L("Product", "Product", "Produkt", "Produit"),
+  sellerFinanceSalesValue: L(
+    "Verkoopwaarde",
+    "Sales value",
+    "Verkaufswert",
+    "Valeur de vente"
+  ),
+  sellerFinanceCommissionPct: L(
+    "Commissie %",
+    "Commission %",
+    "Provision %",
+    "Commission %"
+  ),
+  sellerFinanceCommissionAmount: L(
+    "Commissiebedrag",
+    "Commission amount",
+    "Provisionsbetrag",
+    "Montant de commission"
+  ),
+  sellerFinanceOrderStatus: L(
+    "Orderstatus",
+    "Order status",
+    "Bestellstatus",
+    "Statut de commande"
+  ),
+  sellerFinanceQuantity: L(
+    "Aantal",
+    "Quantity",
+    "Menge",
+    "Quantité"
+  ),
+  sellerFinanceAdvertisingCosts: L(
+    "Advertisingkosten",
+    "Advertising costs",
+    "Werbekosten",
+    "Coûts publicitaires"
+  ),
+  sellerFinanceVatRegime: L(
+    "BTW-regime",
+    "VAT regime",
+    "MwSt.-Regime",
+    "Régime TVA"
+  ),
+  sellerFinancePayoutNotInvoice: L(
+    "Uitbetaling ≠ Factuur. Een uitbetaling is geld dat aan jou wordt uitbetaald. Een factuur betreft kosten die EuropMade bij jou in rekening brengt.",
+    "Payout ≠ Invoice. A payout is money paid to you. An invoice covers costs charged to you by EuropMade.",
+    "Auszahlung ≠ Rechnung. Eine Auszahlung ist Geld, das an dich ausgezahlt wird. Eine Rechnung betrifft Kosten, die EuropMade dir berechnet.",
+    "Versement ≠ Facture. Un versement est de l'argent qui vous est versé. Une facture concerne les coûts facturés par EuropMade."
+  ),
+  sellerFinanceVatDemoNotice: L(
+    "Dit overzicht toont indicatieve BTW-gegevens. EuropMade produceert hiermee geen formele OSS-aangifte.",
+    "This overview shows indicative VAT data. EuropMade does not produce a formal OSS declaration with this.",
+    "Diese Übersicht zeigt indikative MwSt.-Daten. EuropMade erstellt damit keine formale OSS-Erklärung.",
+    "Cet aperçu montre des données TVA indicatives. EuropMade ne produit pas de déclaration OSS formelle avec ceci."
+  ),
 
   sellerReviewsIntro: L(
     "Filter op onbeantwoord en sterren. Beantwoord reviews vanuit dit overzicht.",
@@ -4809,6 +5396,13 @@ const M = {
   ),
   sellerSettingsKvk: L("KvK", "Chamber of Commerce", "Handelsregister", "RCS"),
   sellerSettingsRoles: L("Rollen", "Roles", "Rollen", "Rôles"),
+  sellerSettingsUsers: L("Gebruikers", "Users", "Benutzer", "Utilisateurs"),
+  sellerSettingsPermissions: L(
+    "Rechten",
+    "Permissions",
+    "Berechtigungen",
+    "Droits"
+  ),
   sellerSettingsRoleRetailer: L(
     "Retailer",
     "Retailer",
@@ -5030,6 +5624,42 @@ const M = {
     "Sendungsverfolgung",
     "Suivi"
   ),
+  sellerShipStatusPending: L(
+    "Nog niet verzonden",
+    "Not shipped",
+    "Noch nicht versandt",
+    "Pas encore expédié"
+  ),
+  sellerShipStatusShipped: L(
+    "Verzonden",
+    "Shipped",
+    "Versandt",
+    "Expédié"
+  ),
+  sellerShipStatusInTransit: L(
+    "Onderweg",
+    "In transit",
+    "Unterwegs",
+    "En transit"
+  ),
+  sellerShipStatusOutForDelivery: L(
+    "In bezorging",
+    "Out for delivery",
+    "In Zustellung",
+    "En cours de livraison"
+  ),
+  sellerShipStatusDelivered: L(
+    "Geleverd",
+    "Delivered",
+    "Zugestellt",
+    "Livré"
+  ),
+  sellerShipStatusException: L(
+    "Uitzondering",
+    "Exception",
+    "Ausnahme",
+    "Exception"
+  ),
   sellerOrderMessages: L("Berichten:", "Messages:", "Nachrichten:", "Messages :"),
   sellerOrderReturns: L("Retouren:", "Returns:", "Retouren:", "Retours :"),
   sellerOrderBillingAddress: L(
@@ -5037,6 +5667,284 @@ const M = {
     "Billing address",
     "Rechnungsadresse",
     "Adresse de facturation"
+  ),
+  sellerOrderDeliveredAt: L(
+    "Afgeleverd op",
+    "Delivered on",
+    "Zugestellt am",
+    "Livré le"
+  ),
+  sellerOrderReturnPeriod: L(
+    "Retourtermijn",
+    "Return period",
+    "Rückgabefrist",
+    "Délai de retour"
+  ),
+  sellerOrderReturnDeadline: L(
+    "Deadline retour",
+    "Return deadline",
+    "Rückgabe-Fristende",
+    "Date limite de retour"
+  ),
+  sellerOrderDaysRemaining: L(
+    "{days} dagen resterend",
+    "{days} days remaining",
+    "{days} Tage verbleibend",
+    "{days} jours restants"
+  ),
+  sellerOrderReturnPeriodDays: L(
+    "{days} dagen",
+    "{days} days",
+    "{days} Tage",
+    "{days} jours"
+  ),
+  sellerOrderReturnStartsAfterDelivery: L(
+    "Retourtermijn start zodra de bestelling is afgeleverd.",
+    "Return period starts once the order is delivered.",
+    "Die Rückgabefrist beginnt erst nach Zustellung.",
+    "Le délai de retour commence une fois la commande livrée."
+  ),
+  sellerOrderNoTracking: L(
+    "Nog geen track & trace",
+    "No tracking yet",
+    "Noch keine Sendungsverfolgung",
+    "Pas encore de suivi"
+  ),
+  sellerOrderTrackLink: L(
+    "Volg zending",
+    "Track shipment",
+    "Sendung verfolgen",
+    "Suivre l'envoi"
+  ),
+  sellerOrderDocuments: L(
+    "Documenten",
+    "Documents",
+    "Dokumente",
+    "Documents"
+  ),
+  sellerOrderUploadInvoice: L(
+    "Factuur uploaden",
+    "Upload invoice",
+    "Rechnung hochladen",
+    "Téléverser la facture"
+  ),
+  sellerOrderViewInvoice: L(
+    "Factuur bekijken",
+    "View invoice",
+    "Rechnung ansehen",
+    "Voir la facture"
+  ),
+  sellerOrderReplaceInvoice: L(
+    "Factuur vervangen",
+    "Replace invoice",
+    "Rechnung ersetzen",
+    "Remplacer la facture"
+  ),
+  sellerOrderUploadPacking: L(
+    "Pakbon uploaden",
+    "Upload packing slip",
+    "Lieferschein hochladen",
+    "Téléverser le bon de livraison"
+  ),
+  sellerOrderViewPacking: L(
+    "Pakbon bekijken",
+    "View packing slip",
+    "Lieferschein ansehen",
+    "Voir le bon de livraison"
+  ),
+  sellerOrderReplacePacking: L(
+    "Pakbon opnieuw genereren",
+    "Regenerate packing slip",
+    "Lieferschein neu erzeugen",
+    "Régénérer le bon de livraison"
+  ),
+  sellerOrderGeneratePacking: L(
+    "Pakbon genereren",
+    "Generate packing slip",
+    "Lieferschein erzeugen",
+    "Générer le bon de livraison"
+  ),
+  sellerOrderDownloadPacking: L(
+    "Pakbon downloaden",
+    "Download packing slip",
+    "Lieferschein herunterladen",
+    "Télécharger le bon de livraison"
+  ),
+  sellerOrderInvoiceMissing: L(
+    "Factuur niet geüpload",
+    "Invoice not uploaded",
+    "Rechnung nicht hochgeladen",
+    "Facture non téléversée"
+  ),
+  sellerOrderPostalCode: L(
+    "Postcode",
+    "Postal code",
+    "Postleitzahl",
+    "Code postal"
+  ),
+  sellerOrderCity: L("Plaats", "City", "Ort", "Ville"),
+  sellerOrderCountry: L("Land", "Country", "Land", "Pays"),
+  sellerOrderStreet: L(
+    "Straat + huisnummer",
+    "Street + number",
+    "Straße + Nr.",
+    "Rue + numéro"
+  ),
+  sellerOrderVatRate: L(
+    "BTW-tarief (bestemming)",
+    "VAT rate (destination)",
+    "MwSt.-Satz (Bestimmungsland)",
+    "Taux TVA (destination)"
+  ),
+  sellerOrderDeliveryCountry: L(
+    "Bestemmingsland",
+    "Delivery country",
+    "Bestimmungsland",
+    "Pays de livraison"
+  ),
+  sellerOrderSendMessage: L(
+    "Bericht naar klant",
+    "Message customer",
+    "Nachricht an Kunden",
+    "Message au client"
+  ),
+  sellerOrderCreateReturn: L(
+    "Retour aanmaken",
+    "Create return",
+    "Retoure anlegen",
+    "Créer un retour"
+  ),
+  sellerOrderMarkDelivered: L(
+    "Markeer als afgeleverd",
+    "Mark as delivered",
+    "Als zugestellt markieren",
+    "Marquer comme livré"
+  ),
+  sellerOrderSaveTracking: L(
+    "Track & trace opslaan",
+    "Save tracking",
+    "Sendungsverfolgung speichern",
+    "Enregistrer le suivi"
+  ),
+  sellerOrderTrackingCode: L(
+    "Trackingcode",
+    "Tracking code",
+    "Sendungsnummer",
+    "Code de suivi"
+  ),
+  sellerOrderTrackingUrl: L(
+    "Tracking-URL (optioneel)",
+    "Tracking URL (optional)",
+    "Tracking-URL (optional)",
+    "URL de suivi (optionnel)"
+  ),
+  sellerOrderShipmentSaved: L(
+    "Verzendgegevens opgeslagen.",
+    "Shipment details saved.",
+    "Versanddaten gespeichert.",
+    "Détails d'expédition enregistrés."
+  ),
+  sellerMsgOrderSummary: L(
+    "Ordersamenvatting",
+    "Order summary",
+    "Bestellübersicht",
+    "Résumé de commande"
+  ),
+  sellerMsgReturnInfo: L(
+    "Retourinformatie",
+    "Return information",
+    "Retoureninformationen",
+    "Informations de retour"
+  ),
+  sellerReturnTracking: L(
+    "Retour track & trace",
+    "Return tracking",
+    "Retouren-Sendungsverfolgung",
+    "Suivi du retour"
+  ),
+  sellerReturnMarkInTransit: L(
+    "Bevestigen (onderweg)",
+    "Confirm (in transit)",
+    "Bestätigen (unterwegs)",
+    "Confirmer (en transit)"
+  ),
+  sellerReturnMarkReceived: L(
+    "Markeer als ontvangen",
+    "Mark as received",
+    "Als empfangen markieren",
+    "Marquer comme reçu"
+  ),
+  sellerReturnProcessRefund: L(
+    "Refund verwerken",
+    "Process refund",
+    "Erstattung verarbeiten",
+    "Traiter le remboursement"
+  ),
+  sellerReturnRefundStatus: L(
+    "Refundstatus",
+    "Refund status",
+    "Erstattungsstatus",
+    "Statut du remboursement"
+  ),
+  sellerReturnStatusRequested: L(
+    "Aangevraagd",
+    "Requested",
+    "Angefordert",
+    "Demandé"
+  ),
+  sellerReturnStatusConfirmed: L(
+    "Bevestigd",
+    "Confirmed",
+    "Bestätigt",
+    "Confirmé"
+  ),
+  sellerReturnStatusInTransit: L(
+    "Onderweg",
+    "In transit",
+    "Unterwegs",
+    "En transit"
+  ),
+  sellerReturnStatusReceived: L(
+    "Ontvangen",
+    "Received",
+    "Empfangen",
+    "Reçu"
+  ),
+  sellerReturnStatusRefunded: L(
+    "Refund verwerkt",
+    "Refund processed",
+    "Erstattung verarbeitet",
+    "Remboursement traité"
+  ),
+  sellerRefundStatusRequested: L(
+    "Aangevraagd",
+    "Requested",
+    "Angefordert",
+    "Demandé"
+  ),
+  sellerRefundStatusProcessing: L(
+    "In verwerking",
+    "Processing",
+    "In Bearbeitung",
+    "En cours"
+  ),
+  sellerRefundStatusProcessed: L(
+    "Verwerkt",
+    "Processed",
+    "Verarbeitet",
+    "Traité"
+  ),
+  sellerRefundStatusFailed: L(
+    "Mislukt",
+    "Failed",
+    "Fehlgeschlagen",
+    "Échoué"
+  ),
+  sellerRefundStatusForced: L(
+    "Geforceerd",
+    "Forced",
+    "Erzwungen",
+    "Forcé"
   ),
 
   sellerProductAddTitle: L(
@@ -5659,6 +6567,135 @@ const M = {
     "{label} ({price}/semaine)"
   ),
 
+  // —— P2.16: Advertising / Banner Campaigns ——
+  adBannerCampaigns: L("Bannercampagnes", "Banner Campaigns", "Bannerkampagnen", "Campagnes bannières"),
+  adBannerIntro: L(
+    "Advertentieruimte boeken op de homepage, categoriepagina of zoekresultaten.",
+    "Book advertising space on the homepage, category page or search results.",
+    "Werbeflächen auf der Startseite, Kategorieseite oder Suchergebnissen buchen.",
+    "Réserver de l'espace publicitaire sur la page d'accueil, la page de catégorie ou les résultats de recherche."
+  ),
+  adNewCampaign: L("Nieuwe campagne", "New campaign", "Neue Kampagne", "Nouvelle campagne"),
+  adCampaignName: L("Campagnenaam", "Campaign name", "Kampagnenname", "Nom de la campagne"),
+  adCampaignNamePlaceholder: L("bijv. Zomeractie Homepage", "e.g. Summer Sale Homepage", "z.B. Sommeraktion Startseite", "p.ex. Promo été page d'accueil"),
+  adCampaignProducts: L(
+    "Producten voor deze campagne",
+    "Products for this campaign",
+    "Produkte für diese Kampagne",
+    "Produits pour cette campagne"
+  ),
+  adCampaignProductsHint: L(
+    "Selecteer minimaal één van je eigen producten. Deze verschijnen op de automatische bestemmingspagina.",
+    "Select at least one of your own products. They appear on the automatic destination page.",
+    "Wähle mindestens eines deiner eigenen Produkte. Diese erscheinen auf der automatischen Zielseite.",
+    "Sélectionnez au moins un de vos propres produits. Ils apparaissent sur la page de destination automatique."
+  ),
+  adProductSearch: L("Zoek producten", "Search products", "Produkte suchen", "Rechercher des produits"),
+  adProductSearchPlaceholder: L(
+    "Naam, SKU of EAN…",
+    "Name, SKU or EAN…",
+    "Name, SKU oder EAN…",
+    "Nom, SKU ou EAN…"
+  ),
+  adProductSearching: L("Zoeken…", "Searching…", "Suche…", "Recherche…"),
+  adNoProductsFound: L("Geen producten gevonden.", "No products found.", "Keine Produkte gefunden.", "Aucun produit trouvé."),
+  adSelectedProducts: L("Geselecteerde producten", "Selected products", "Ausgewählte Produkte", "Produits sélectionnés"),
+  adProductsRequired: L(
+    "Selecteer minimaal één product voor deze campagne.",
+    "Select at least one product for this campaign.",
+    "Wähle mindestens ein Produkt für diese Kampagne.",
+    "Sélectionnez au moins un produit pour cette campagne."
+  ),
+  adDiscoverProducts: L("Ontdek onze producten", "Discover our products", "Entdecke unsere Produkte", "Découvrez nos produits"),
+  adMoreSellerProducts: L(
+    "Bekijk meer producten van deze verkoper →",
+    "View more products from this seller →",
+    "Weitere Produkte dieses Verkäufers ansehen →",
+    "Voir plus de produits de ce vendeur →"
+  ),
+  adPreviewSellerName: L("Jouw verkopersnaam", "Your seller name", "Dein Verkäufername", "Votre nom de vendeur"),
+  adSelectCountries: L("Landen", "Countries", "Länder", "Pays"),
+  adPlacement: L("Advertentiepositie", "Ad placement", "Anzeigenposition", "Position publicitaire"),
+  adPlacementHomepage: L("Homepage", "Homepage", "Startseite", "Page d'accueil"),
+  adPlacementCategory: L("Categoriepagina", "Category page", "Kategorieseite", "Page de catégorie"),
+  adPlacementSearch: L("Zoekresultaat voor specifiek zoekwoord", "Search result for specific keyword", "Suchergebnis für bestimmtes Keyword", "Résultat de recherche pour mot-clé spécifique"),
+  adSelectCategory: L("Categorie", "Category", "Kategorie", "Catégorie"),
+  adChooseCategory: L("Kies een categorie…", "Choose a category…", "Wähle eine Kategorie…", "Choisir une catégorie…"),
+  adSearchKeyword: L("Zoekwoord", "Keyword", "Suchbegriff", "Mot-clé"),
+  adSearchKeywordPlaceholder: L("bijv. robotstofzuiger", "e.g. robot vacuum", "z.B. Saugroboter", "p.ex. aspirateur robot"),
+  adBannerImage: L("Banner afbeelding URL", "Banner image URL", "Banner-Bild-URL", "URL de l'image bannière"),
+  adSelectWeeks: L("Advertentieweken", "Advertising weeks", "Werbewochen", "Semaines publicitaires"),
+  adLoadingWeeks: L("Beschikbaarheid laden…", "Loading availability…", "Verfügbarkeit laden…", "Chargement de la disponibilité…"),
+  adAvailable: L("Beschikbaar", "Available", "Verfügbar", "Disponible"),
+  adBooked: L("Bezet", "Booked", "Belegt", "Occupé"),
+  adBlockedFor: L("Bezet voor", "Booked for", "Belegt für", "Occupé pour"),
+  adPartiallyBooked: L("Gedeeltelijk bezet", "Partially booked", "Teilweise belegt", "Partiellement occupé"),
+  adPriceSummary: L("Prijsoverzicht", "Price summary", "Preisübersicht", "Résumé des prix"),
+  adWeeksSelected: L("Weken geselecteerd", "Weeks selected", "Wochen ausgewählt", "Semaines sélectionnées"),
+  adCountries: L("Landen", "Countries", "Länder", "Pays"),
+  adPeriod: L("Periode", "Period", "Zeitraum", "Période"),
+  adPreviewTitle: L("Campagne bevestigen", "Confirm campaign", "Kampagne bestätigen", "Confirmer la campagne"),
+  adSubmitCampaign: L("Campagne aanvragen", "Submit campaign", "Kampagne einreichen", "Soumettre la campagne"),
+  adSubmitting: L("Bezig met aanvragen…", "Submitting…", "Wird eingereicht…", "Envoi en cours…"),
+  adReviewCampaign: L("Controleren en aanvragen", "Review and submit", "Prüfen und einreichen", "Vérifier et soumettre"),
+  adNoCampaigns: L("Geen campagnes", "No campaigns", "Keine Kampagnen", "Aucune campagne"),
+  adNoCampaignsDesc: L("Je hebt nog geen bannercampagnes aangevraagd.", "You haven't requested any banner campaigns yet.", "Du hast noch keine Bannerkampagnen beantragt.", "Vous n'avez pas encore demandé de campagnes bannières."),
+  adYourCampaigns: L("Jouw campagnes", "Your campaigns", "Deine Kampagnen", "Vos campagnes"),
+  adRejectedByEuropmade: L(
+    "Afgewezen door EuropMade",
+    "Rejected by EuropMade",
+    "Von EuropMade abgelehnt",
+    "Refusé par EuropMade"
+  ),
+  adRejectionReason: L("Reden", "Reason", "Grund", "Raison"),
+  adEditResubmit: L("Bekijken / aanpassen", "View / edit", "Ansehen / bearbeiten", "Voir / modifier"),
+  adEditingRejected: L(
+    "Afgewezen campagne aanpassen",
+    "Edit rejected campaign",
+    "Abgelehnte Kampagne bearbeiten",
+    "Modifier la campagne refusée"
+  ),
+  adResubmitCampaign: L("Opnieuw indienen", "Resubmit", "Erneut einreichen", "Soumettre à nouveau"),
+  adCampaignResubmitted: L(
+    "Campagne opnieuw ingediend ter beoordeling.",
+    "Campaign resubmitted for review.",
+    "Kampagne erneut zur Prüfung eingereicht.",
+    "Campagne soumise à nouveau pour examen."
+  ),
+  adCancelEdit: L("Bewerken annuleren", "Cancel editing", "Bearbeitung abbrechen", "Annuler la modification"),
+  adHasRejectionNote: L(
+    "Zie afwijzingsreden",
+    "See rejection reason",
+    "Ablehnungsgrund ansehen",
+    "Voir le motif de refus"
+  ),
+  adActions: L("Acties", "Actions", "Aktionen", "Actions"),
+  adNameRequired: L("Vul een campagnenaam in.", "Enter a campaign name.", "Gib einen Kampagnennamen ein.", "Entrez un nom de campagne."),
+  adMarketRequired: L("Selecteer minimaal één land.", "Select at least one country.", "Wähle mindestens ein Land.", "Sélectionnez au moins un pays."),
+  adCategoryRequired: L("Selecteer een categorie.", "Select a category.", "Wähle eine Kategorie.", "Sélectionnez une catégorie."),
+  adKeywordRequired: L("Vul een zoekwoord in.", "Enter a keyword.", "Gib einen Suchbegriff ein.", "Entrez un mot-clé."),
+  adWeekRequired: L("Selecteer minimaal één week.", "Select at least one week.", "Wähle mindestens eine Woche.", "Sélectionnez au moins une semaine."),
+  adCampaignCreated: L("Campagne succesvol aangevraagd.", "Campaign successfully submitted.", "Kampagne erfolgreich eingereicht.", "Campagne soumise avec succès."),
+  adCampaignFailed: L("Campagne aanvragen mislukt.", "Campaign submission failed.", "Kampagne einreichen fehlgeschlagen.", "Échec de la soumission de la campagne."),
+  adBannerContent: L("Bannerinhoud", "Banner content", "Banner-Inhalt", "Contenu de la bannière"),
+  adImageHint: L("Gebruik bij voorkeur een productafbeelding met transparante achtergrond.", "Preferably use a product image with transparent background.", "Verwende vorzugsweise ein Produktbild mit transparentem Hintergrund.", "Utilisez de préférence une image produit avec fond transparent."),
+  adUploadImage: L("Afbeelding uploaden", "Upload image", "Bild hochladen", "Télécharger l'image"),
+  adUploading: L("Uploaden…", "Uploading…", "Wird hochgeladen…", "Téléchargement…"),
+  adUploadFailed: L("Upload mislukt.", "Upload failed.", "Upload fehlgeschlagen.", "Échec du téléchargement."),
+  adHeadline: L("Kopregel", "Headline", "Überschrift", "Titre"),
+  adHeadlinePlaceholder: L("bijv. De beste stofzuiger van Europa", "e.g. Europe's best vacuum cleaner", "z.B. Der beste Staubsauger Europas", "p.ex. Le meilleur aspirateur d'Europe"),
+  adSubline: L("Subregel", "Subline", "Unterzeile", "Sous-titre"),
+  adSublinePlaceholder: L("bijv. Nu met 20% korting", "e.g. Now with 20% off", "z.B. Jetzt mit 20% Rabatt", "p.ex. Maintenant avec 20% de réduction"),
+  adCtaLabel: L("CTA-knop", "CTA button", "CTA-Button", "Bouton CTA"),
+  adDesign: L("Bannerdesign", "Banner design", "Banner-Design", "Design de la bannière"),
+  adLivePreview: L("Live preview", "Live preview", "Live-Vorschau", "Aperçu en direct"),
+  adPreviewHeadline: L("Jouw kopregel", "Your headline", "Deine Überschrift", "Votre titre"),
+  adPreviewSubline: L("Jouw subregel", "Your subline", "Deine Unterzeile", "Votre sous-titre"),
+  adBannerFormat: L("Aanbevolen formaat", "Recommended format", "Empfohlenes Format", "Format recommandé"),
+  adUseBrandLogo: L("Merklogo in banner tonen", "Show brand logo in banner", "Markenlogo im Banner anzeigen", "Afficher le logo de la marque dans la bannière"),
+  adNoLogoAvailable: L("Geen merklogo beschikbaar. Upload een logo bij je merkpagina.", "No brand logo available. Upload a logo on your brand page.", "Kein Markenlogo verfügbar. Laden Sie ein Logo auf Ihrer Markenseite hoch.", "Aucun logo de marque disponible. Téléchargez un logo sur votre page de marque."),
+  adLogoFromBrand: L("Logo van je merk", "Logo from your brand", "Logo deiner Marke", "Logo de votre marque"),
+
   sellerSponsoredIntro: L(
     "Campagnes aanmaken, budgetteren, pauzeren en beëindigen.",
     "Create, budget, pause and end campaigns.",
@@ -5934,6 +6971,32 @@ const M = {
     "Einstellungen lokal aktualisiert (Demo).",
     "Paramètres mis à jour localement (démo)."
   ),
+  affPriorityDefault: L("Algemene commissie", "Default commission", "Allgemeine Provision", "Commission par défaut"),
+  affPriorityExplain: L(
+    "Productcommissie heeft altijd voorrang. Als er geen productcommissie is, geldt de algemene commissie.",
+    "Product commission always takes priority. If no product commission exists, the default commission applies.",
+    "Produktprovision hat immer Vorrang. Ohne Produktprovision gilt die allgemeine Provision.",
+    "La commission produit est toujours prioritaire. Sans commission produit, la commission par défaut s'applique."
+  ),
+  affSourceProduct: L("Productcommissie", "Product commission", "Produktprovision", "Commission produit"),
+  affSourceDefault: L("Algemene commissie", "Default commission", "Allgemeine Provision", "Commission par défaut"),
+  affSelectProduct: L("Selecteer een product…", "Select a product…", "Produkt auswählen…", "Sélectionnez un produit…"),
+  affNoProducts: L(
+    "Je hebt nog geen goedgekeurde producten die beschikbaar zijn voor affiliate-promotie.",
+    "You don't have approved products available for affiliate promotion yet.",
+    "Du hast noch keine genehmigten Produkte für Affiliate-Promotion.",
+    "Vous n'avez pas encore de produits approuvés disponibles pour la promotion d'affiliation."
+  ),
+  affNoProductCommissions: L(
+    "Nog geen productspecifieke commissies ingesteld.",
+    "No product-specific commissions set yet.",
+    "Noch keine produktspezifischen Provisionen festgelegt.",
+    "Aucune commission spécifique par produit n'est encore définie."
+  ),
+  affEffectiveSource: L("Bron", "Source", "Quelle", "Source"),
+  affYourCommission: L("Uw commissie", "Your commission", "Ihre Provision", "Votre commission"),
+  affEuropmadeContribution: L("Bijdrage EuropMade", "EuropMade contribution", "EuropMade-Beitrag", "Contribution EuropMade"),
+  affTotalAffiliate: L("Totale affiliatecommissie", "Total affiliate commission", "Gesamte Affiliate-Provision", "Commission d'affiliation totale"),
 
   sellerBillingIntro: L(
     "Openstaand, betaald en historie van marketingkosten.",
@@ -6249,10 +7312,10 @@ const M = {
   buyerRefund: L("Refund", "Refund", "Erstattung", "Remboursement"),
   buyerDetail: L("Detail", "Detail", "Detail", "Détail"),
   buyerReturnWindowNote: L(
-    "Alleen binnen de wettelijke herroepingstermijn van 14 dagen.",
-    "Only within the legal 14-day withdrawal period.",
-    "Nur innerhalb der gesetzlichen Widerrufsfrist von 14 Tagen.",
-    "Uniquement dans le délai légal de rétractation de 14 jours."
+    "Alleen binnen de retourtermijn van 30 dagen na aflevering.",
+    "Only within the 30-day return period after delivery.",
+    "Nur innerhalb der 30-Tage-Rückgabefrist nach Lieferung.",
+    "Uniquement dans le délai de retour de 30 jours après livraison."
   ),
   buyerNoOrderLineSelected: L(
     "Geen orderregel geselecteerd.",
@@ -6709,6 +7772,30 @@ const M = {
     "Ich produziere und/oder besitze eine eigene Marke",
     "Je produis et/ou possède une marque"
   ),
+  partnerRoleBrandOwner: L(
+    "Merkeigenaar",
+    "Brand owner",
+    "Markeninhaber",
+    "Propriétaire de marque"
+  ),
+  partnerRoleBrandOwnerDesc: L(
+    "Ik bezit een eigen merk en beheer merkgegevens",
+    "I own a brand and manage brand details",
+    "Ich besitze eine Marke und verwalte Markendaten",
+    "Je possède une marque et gère ses informations"
+  ),
+  partnerRoleProducerOnly: L(
+    "Producent",
+    "Producer",
+    "Produzent",
+    "Producteur"
+  ),
+  partnerRoleProducerOnlyDesc: L(
+    "Ik produceer in Europa en beheer productiefaciliteiten",
+    "I produce in Europe and manage production facilities",
+    "Ich produziere in Europa und verwalte Produktionsstätten",
+    "Je produis en Europe et gère des installations de production"
+  ),
   partnerRoleDistributor: L(
     "Distributeur",
     "Distributor",
@@ -7135,6 +8222,12 @@ const M = {
     "Bevor Sie Ihr Dashboard öffnen können, richten Sie die Zwei-Faktor-Authentifizierung ein — erforderlich für Händler- und Produzentenkonten.",
     "Avant d’ouvrir votre tableau de bord, configurez l’authentification à deux facteurs — obligatoire pour les comptes Détaillant et Producteur."
   ),
+  partnerStatusApprovedReadyBody: L(
+    "Welkom als partner! Je account is goedgekeurd en tweestapsverificatie is actief. Je kunt je Dashboard openen.",
+    "Welcome as a partner! Your account is approved and two-factor authentication is active. You can open your Dashboard.",
+    "Willkommen als Partner! Ihr Konto ist genehmigt und die Zwei-Faktor-Authentifizierung ist aktiv. Sie können Ihr Dashboard öffnen.",
+    "Bienvenue en tant que partenaire ! Votre compte est approuvé et l’authentification à deux facteurs est active. Vous pouvez ouvrir votre tableau de bord."
+  ),
   partnerSetup2fa: L(
     "Tweestapsverificatie instellen",
     "Set up two-factor authentication",
@@ -7265,6 +8358,512 @@ const M = {
     "Noch keine Product-Cloud-Produkte. Legen Sie zuerst ein Produkt an.",
     "Pas encore de produits Product Cloud. Créez d’abord un produit."
   ),
+
+  // —— P2.15: Seller product detail + product list i18n ——
+  pdpTabOverview: L("Overzicht", "Overview", "Übersicht", "Aperçu"),
+  pdpTabInformation: L("Productinformatie", "Product information", "Produktinformation", "Informations produit"),
+  pdpTabVariants: L("Varianten", "Variants", "Varianten", "Variantes"),
+  pdpTabOffer: L("Verkoopaanbod", "Sales offer", "Verkaufsangebot", "Offre de vente"),
+  pdpTabMedia: L("Media", "Media", "Medien", "Médias"),
+  pdpTabTranslations: L("Vertalingen", "Translations", "Übersetzungen", "Traductions"),
+  pdpTabPublication: L("Publicatie", "Publication", "Veröffentlichung", "Publication"),
+  pdpTabHistory: L("Wijzigingsgeschiedenis", "Change history", "Änderungshistorie", "Historique des modifications"),
+  pdpNoMedia: L("Geen media", "No media", "Keine Medien", "Pas de médias"),
+  pdpUntitledProduct: L("Naamloos product", "Untitled product", "Unbenanntes Produkt", "Produit sans titre"),
+  pdpChooseBrandAtMie: L("Kies een merk bij Made in Europe", "Choose a brand at Made in Europe", "Wähle eine Marke bei Made in Europe", "Choisir une marque chez Made in Europe"),
+  pdpBasicInfo: L("Basisinformatie", "Basic information", "Basisinformationen", "Informations de base"),
+  pdpProductName: L("Productnaam", "Product name", "Produktname", "Nom du produit"),
+  pdpDescription: L("Beschrijving", "Description", "Beschreibung", "Description"),
+  pdpTierRequired: L("Verplicht", "Required", "Pflicht", "Obligatoire"),
+  pdpTierRecommended: L("Aanbevolen", "Recommended", "Empfohlen", "Recommandé"),
+  pdpTierOptional: L("Optioneel", "Optional", "Optional", "Optionnel"),
+  pdpTierCompliance: L("Compliance", "Compliance", "Compliance", "Conformité"),
+  pdpTierRequiredInfo: L("Verplichte informatie", "Required information", "Pflichtinformationen", "Informations obligatoires"),
+  pdpTierRecommendedInfo: L("Aanbevolen informatie", "Recommended information", "Empfohlene Informationen", "Informations recommandées"),
+  pdpTierOptionalInfo: L("Optionele informatie", "Optional information", "Optionale Informationen", "Informations optionnelles"),
+  pdpRequiredForPublication: L("vereist voor publicatie", "required for publication", "erforderlich für Veröffentlichung", "requis pour la publication"),
+  pdpMissingFields: L("Ontbreekt", "Missing", "Fehlt", "Manquant"),
+  pdpSaving: L("Opslaan…", "Saving…", "Speichern…", "Enregistrement…"),
+  pdpPublicationCheck: L("Publicatiecontrole", "Publication check", "Veröffentlichungsprüfung", "Contrôle de publication"),
+  pdpMadeInEuropeCompliance: L("Made in Europe & EU Compliance", "Made in Europe & EU Compliance", "Made in Europe & EU Compliance", "Made in Europe & EU Compliance"),
+  pdpManufacturer: L("Fabrikant", "Manufacturer", "Hersteller", "Fabricant"),
+  pdpManufacturerResponsible: L("Fabrikant / verantwoordelijke fabrikant", "Manufacturer / responsible manufacturer", "Hersteller / verantwortlicher Hersteller", "Fabricant / fabricant responsable"),
+  pdpBrandIsNotManufacturer: L(
+    "Het merk is niet de fabrikant / verantwoordelijke fabrikant",
+    "The brand is not the manufacturer / responsible manufacturer",
+    "Die Marke ist nicht der Hersteller / verantwortliche Hersteller",
+    "La marque n'est pas le fabricant / fabricant responsable"
+  ),
+  pdpSelectManufacturer: L("Selecteer fabrikant", "Select manufacturer", "Hersteller auswählen", "Sélectionner le fabricant"),
+  pdpAddManufacturer: L("+ Fabrikant toevoegen", "Add manufacturer", "+ Hersteller hinzufügen", "+ Ajouter un fabricant"),
+  pdpProductionLocation: L("Productielocatie", "Production location", "Produktionsstandort", "Lieu de production"),
+  pdpSelectLocation: L("Selecteer locatie", "Select location", "Standort auswählen", "Sélectionner un lieu"),
+  pdpNoLocations: L("Geen locaties gevonden", "No locations found", "Keine Standorte gefunden", "Aucun lieu trouvé"),
+  pdpMieStatus: L("Made in Europe-status", "Made in Europe status", "Made-in-Europe-Status", "Statut Made in Europe"),
+  pdpMieScore: L("Score", "Score", "Bewertung", "Score"),
+  pdpCeMarking: L("CE-markering", "CE marking", "CE-Kennzeichnung", "Marquage CE"),
+  pdpCeVisible: L("Zichtbaar", "Visible", "Sichtbar", "Visible"),
+  pdpCeNotVisible: L("Niet zichtbaar", "Not visible", "Nicht sichtbar", "Non visible"),
+  pdpDataUsage: L("Datagebruik", "Data usage", "Datennutzung", "Utilisation des données"),
+  pdpDataUsageYes: L("Ja", "Yes", "Ja", "Oui"),
+  pdpDataUsageNo: L("Nee", "No", "Nein", "Non"),
+  pdpEvidenceStatus: L("Bewijsstatus", "Evidence status", "Beweisstatus", "Statut des preuves"),
+  pdpGpsrLink: L("Meer uitleg over GPSR", "More about GPSR", "Mehr zu GPSR", "En savoir plus sur le RGPS"),
+  pdpAddress: L("Adres", "Address", "Adresse", "Adresse"),
+  pdpContact: L("Contact", "Contact", "Kontakt", "Contact"),
+  pdpCountry: L("Land", "Country", "Land", "Pays"),
+  pdpEuResponsible: L(
+    "Fabrikant gevestigd buiten de EU",
+    "Manufacturer located outside the EU",
+    "Hersteller außerhalb der EU ansässig",
+    "Fabricant situé hors de l'UE"
+  ),
+  pdpSaleLabel: L("Verkoop", "Sales", "Verkauf", "Vente"),
+  pdpPublicationLabel: L("Publicatie", "Publication", "Veröffentlichung", "Publication"),
+  pdpInfoLabel: L("Info", "Info", "Info", "Info"),
+  pdpComplianceLabel: L("Compliance", "Compliance", "Compliance", "Conformité"),
+  pdpPause: L("Pauzeren", "Pause", "Pausieren", "Mettre en pause"),
+  pdpResume: L("Hervatten", "Resume", "Fortsetzen", "Reprendre"),
+  pdpOpenArrow: L("Openen →", "Open →", "Öffnen →", "Ouvrir →"),
+  pdpNoOffer: L("Nog geen aanbod", "No offer yet", "Noch kein Angebot", "Pas encore d'offre"),
+  pdpVariantCount: L("{count} variant(en)", "{count} variant(s)", "{count} Variante(n)", "{count} variante(s)"),
+  pdpMediaCount: L("{count} item(s)", "{count} item(s)", "{count} Element(e)", "{count} élément(s)"),
+  pdpChangesCount: L("{count} wijziging(en)", "{count} change(s)", "{count} Änderung(en)", "{count} modification(s)"),
+
+  // —— P2.15: Product status labels (locale-aware) ——
+  qualityComplete: L("Compleet", "Complete", "Vollständig", "Complet"),
+  qualitySufficient: L("Voldoende", "Sufficient", "Ausreichend", "Suffisant"),
+  qualityInsufficient: L("Onvoldoende", "Insufficient", "Unzureichend", "Insuffisant"),
+  complianceApproved: L("Goedgekeurd", "Approved", "Genehmigt", "Approuvé"),
+  compliancePending: L("In beoordeling", "Under review", "In Prüfung", "En cours d'examen"),
+  compliancePrecheck: L("Pre-check waarschuwing", "Pre-check warning", "Vorprüfung Warnung", "Avertissement de pré-vérification"),
+  compliancePendingReview: L("In beoordeling", "Under review", "In Prüfung", "En cours d'examen"),
+  compliancePrecheckWarning: L("Pre-check waarschuwing", "Pre-check warning", "Vorprüfung Warnung", "Avertissement pré-vérification"),
+  complianceRejected: L("Afgekeurd", "Rejected", "Abgelehnt", "Refusé"),
+  complianceComplete: L("Compleet", "Complete", "Vollständig", "Complet"),
+  complianceNotApplicable: L("N.v.t.", "N/A", "N.z.", "N/A"),
+  complianceMissing: L("Ontbreekt", "Missing", "Fehlt", "Manquant"),
+  complianceIncomplete: L("Onvolledig", "Incomplete", "Unvollständig", "Incomplet"),
+  saleForSale: L("Te koop", "For sale", "Zu verkaufen", "En vente"),
+  salePaused: L("Gepauzeerd", "Paused", "Pausiert", "En pause"),
+  saleNoOffer: L("Geen aanbod", "No offer", "Kein Angebot", "Pas d'offre"),
+  saleNotPublished: L("Niet in winkel", "Not in store", "Nicht im Shop", "Pas en boutique"),
+  saleBlocked: L("Geblokkeerd", "Blocked", "Blockiert", "Bloqué"),
+  saleOfferActive: L("Offer actief", "Offer active", "Angebot aktiv", "Offre active"),
+  saleOfferPaused: L("Offer gepauzeerd", "Offer paused", "Angebot pausiert", "Offre en pause"),
+  pubPublished: L("Gepubliceerd", "Published", "Veröffentlicht", "Publié"),
+  pubPublishable: L("Publiceerbaar", "Publishable", "Veröffentlichbar", "Publiable"),
+  pubNotPublishable: L("Niet publiceerbaar", "Not publishable", "Nicht veröffentlichbar", "Non publiable"),
+  wfPublished: L("Gepubliceerd", "Published", "Veröffentlicht", "Publié"),
+  wfPendingApproval: L("Wacht op productgoedkeuring", "Awaiting product approval", "Wartet auf Produktfreigabe", "En attente d'approbation produit"),
+  wfRejected: L("Afgekeurd", "Rejected", "Abgelehnt", "Refusé"),
+  wfPendingEvidence: L("Wacht op bewijsgoedkeuring", "Awaiting evidence approval", "Wartet auf Nachweisgenehmigung", "En attente d'approbation des preuves"),
+  wfPaused: L("Gepauzeerd", "Paused", "Pausiert", "En pause"),
+  wfComplete: L("Compleet", "Complete", "Vollständig", "Complet"),
+  wfIncomplete: L("Incomplete", "Incomplete", "Unvollständig", "Incomplet"),
+  wfDraft: L("Concept", "Draft", "Entwurf", "Brouillon"),
+
+  // —— P2.15: Product list i18n ——
+  plLoadFailed: L("Producten konden niet worden geladen.", "Products could not be loaded.", "Produkte konnten nicht geladen werden.", "Les produits n'ont pas pu être chargés."),
+  plRetry: L("Opnieuw laden", "Reload", "Neu laden", "Recharger"),
+  plNoProducts: L("Je hebt nog geen producten.", "You don't have any products yet.", "Du hast noch keine Produkte.", "Vous n'avez pas encore de produits."),
+  plNoProductsHint: L(
+    "Maak een product aan via EAN-zoeken, of koppel een offer aan een bestaand catalogusproduct.",
+    "Create a product via EAN search, or link an offer to an existing catalogue product.",
+    "Erstelle ein Produkt über die EAN-Suche oder verknüpfe ein Angebot mit einem bestehenden Katalogprodukt.",
+    "Créez un produit via la recherche EAN ou liez une offre à un produit catalogue existant."
+  ),
+  plAddProduct: L("Product toevoegen", "Add product", "Produkt hinzufügen", "Ajouter un produit"),
+  plNoResults: L("Geen producten gevonden.", "No products found.", "Keine Produkte gefunden.", "Aucun produit trouvé."),
+  plNoResultsHint: L("Pas je zoekopdracht of filter aan.", "Adjust your search or filter.", "Passe deine Suche oder deinen Filter an.", "Ajustez votre recherche ou filtre."),
+  plProductCount: L("{count} producten", "{count} products", "{count} Produkte", "{count} produits"),
+  plProductCountFiltered: L("{count} van {total} producten", "{count} of {total} products", "{count} von {total} Produkten", "{count} sur {total} produits"),
+  plSelected: L("{count} geselecteerd", "{count} selected", "{count} ausgewählt", "{count} sélectionné(s)"),
+  plClearSelection: L("Selectie wissen", "Clear selection", "Auswahl aufheben", "Effacer la sélection"),
+  plBulkAction: L("Bulk actie", "Bulk action", "Massenaktion", "Action en lot"),
+  plCopy: L("Kopieer", "Copy", "Kopieren", "Copier"),
+
+  // —— P2.15: Manufacturer form labels ——
+  formName: L("Naam", "Name", "Name", "Nom"),
+  formCountryIso: L("Land (ISO-2)", "Country (ISO-2)", "Land (ISO-2)", "Pays (ISO-2)"),
+  formStreet: L("Straat", "Street", "Straße", "Rue"),
+  formHouseNumber: L("Huisnummer", "House number", "Hausnummer", "Numéro"),
+  formPostalCode: L("Postcode", "Postal code", "Postleitzahl", "Code postal"),
+  formCity: L("Plaats", "City", "Stadt", "Ville"),
+  brandFacilitiesHeading: L("Productielocaties van dit merk", "Production locations of this brand", "Produktionsstandorte dieser Marke", "Lieux de production de cette marque"),
+  brandFacilityInactive: L("(inactief)", "(inactive)", "(inaktiv)", "(inactif)"),
+  brandFacilityCountry: L("Land: ", "Country: ", "Land: ", "Pays : "),
+  brandFacilityCity: L("Plaats: ", "City: ", "Stadt: ", "Ville : "),
+  brandFacilityBrand: L("Merk: ", "Brand: ", "Marke: ", "Marque : "),
+  brandFacilityAddress: L("Adres: ", "Address: ", "Adresse: ", "Adresse : "),
+  brandCountryOnlyRequired: L("Alleen het land is verplicht. De overige gegevens zijn optioneel.", "Only the country is required. Other fields are optional.", "Nur das Land ist erforderlich. Die übrigen Felder sind optional.", "Seul le pays est obligatoire. Les autres champs sont facultatifs."),
+  brandCountryOnlyRequiredLong: L(
+    "Alleen het land is verplicht. De overige gegevens zijn optioneel en kunnen worden ingevuld wanneer deze beschikbaar zijn.",
+    "Only the country is required. Other fields are optional and can be filled in when available.",
+    "Nur das Land ist erforderlich. Die übrigen Felder sind optional und können ausgefüllt werden, wenn verfügbar.",
+    "Seul le pays est obligatoire. Les autres champs sont facultatifs et peuvent être remplis lorsque disponibles."
+  ),
+  brandViewDetails: L("Details bekijken", "View details", "Details ansehen", "Voir les détails"),
+  brandDeactivate: L("Deactiveren", "Deactivate", "Deaktivieren", "Désactiver"),
+  brandNoFacilities: L("Nog geen productielocaties.", "No production locations yet.", "Noch keine Produktionsstandorte.", "Pas encore de lieux de production."),
+  brandFacilityRealLocation: L(
+    "Daadwerkelijke productielocatie: de locatie waar het product daadwerkelijk wordt geproduceerd of geassembleerd.",
+    "Actual production location: the location where the product is actually produced or assembled.",
+    "Tatsächlicher Produktionsstandort: der Ort, an dem das Produkt tatsächlich produziert oder montiert wird.",
+    "Lieu de production réel : l'endroit où le produit est effectivement produit ou assemblé."
+  ),
+  brandNoEditRights: L("Je hebt geen rechten om productielocaties te wijzigen.", "You do not have permission to edit production locations.", "Du hast keine Berechtigung, Produktionsstandorte zu bearbeiten.", "Vous n'avez pas la permission de modifier les lieux de production."),
+  formEmailContact: L("E-mail / elektronisch contact", "Email / electronic contact", "E-Mail / elektronischer Kontakt", "E-mail / contact électronique"),
+  formPhoneOptional: L("Telefoon (optioneel)", "Phone (optional)", "Telefon (optional)", "Téléphone (optionnel)"),
+  formSaveNew: L("Opslaan (nieuw)", "Save (new)", "Speichern (neu)", "Enregistrer (nouveau)"),
+  formSaveChanges: L("Wijzigingen opslaan", "Save changes", "Änderungen speichern", "Enregistrer les modifications"),
+  pdpSelectBrandFirst: L("Selecteer eerst een merk.", "Select a brand first.", "Wähle zuerst eine Marke.", "Sélectionnez d'abord une marque."),
+  pdpNoManufacturer: L("Nog geen fabrikant toegevoegd.", "No manufacturer added yet.", "Noch kein Hersteller hinzugefügt.", "Aucun fabricant ajouté."),
+  pdpSelectLocation2: L("Selecteer productielocatie", "Select production location", "Produktionsstandort auswählen", "Sélectionner le lieu de production"),
+  pdpNoLocationsForBrand: L("Geen locaties voor dit merk.", "No locations for this brand.", "Keine Standorte für diese Marke.", "Aucun lieu pour cette marque."),
+  pdpCeQuestion: L("Is CE-markering op het product zichtbaar?", "Is CE marking visible on the product?", "Ist das CE-Zeichen auf dem Produkt sichtbar?", "Le marquage CE est-il visible sur le produit ?"),
+  pdpDataUsageQuestion: L("Maakt dit product gebruik van data van gebruikers?", "Does this product use user data?", "Verwendet dieses Produkt Nutzerdaten?", "Ce produit utilise-t-il des données utilisateur ?"),
+  pdpDataUsageDoc: L("Datagebruiksdocument (PDF, max 3 MB)", "Data usage document (PDF, max 3 MB)", "Datennutzungsdokument (PDF, max 3 MB)", "Document d'utilisation des données (PDF, max 3 Mo)"),
+  pdpMieStatusLabel: L("Made in Europe-status", "Made in Europe status", "Made-in-Europe-Status", "Statut Made in Europe"),
+  pdpScoreLabel: L("Score", "Score", "Bewertung", "Score"),
+  pdpEvidenceDocuments: L("Bewijs en documenten", "Evidence and documents", "Nachweise und Dokumente", "Preuves et documents"),
+  pdpEuResponsibleHint: L(
+    "Vermeld de afzonderlijke EU-verantwoordelijke persoon of economische operator. Dit is alleen nodig wanneer de fabrikant niet in de EU is gevestigd.",
+    "Enter the separate EU responsible person or economic operator. This is only required when the manufacturer is not established in the EU.",
+    "Geben Sie die separate verantwortliche EU-Person oder den Wirtschaftsakteur an. Dies ist nur erforderlich, wenn der Hersteller nicht in der EU ansässig ist.",
+    "Indiquez la personne responsable de l'UE ou l'opérateur économique distinct. Ceci n'est requis que lorsque le fabricant n'est pas établi dans l'UE."
+  ),
+  pdpQualifies: L("Kwalificeert", "Qualifies", "Qualifiziert", "Qualifié"),
+  pdpQualifiesNot: L("Kwalificeert niet", "Does not qualify", "Qualifiziert nicht", "Ne se qualifie pas"),
+  pdpVerified: L("Verified", "Verified", "Verifiziert", "Vérifié"),
+  pdpYes: L("ja", "yes", "ja", "oui"),
+  pdpNo: L("nee", "no", "nein", "non"),
+  pdpDeactivated: L("Gedeactiveerd", "Deactivated", "Deaktiviert", "Désactivé"),
+  pdpNoBrandLocations: L(
+    "Dit merk heeft nog geen productielocaties. Voeg eerst een productielocatie toe bij",
+    "This brand has no production locations yet. First add a production location at",
+    "Diese Marke hat noch keine Produktionsstandorte. Fügen Sie zuerst einen Produktionsstandort bei",
+    "Cette marque n'a pas encore de lieux de production. Ajoutez d'abord un lieu de production dans"
+  ),
+  // —— P2.15: Product detail notifications ——
+  pdpLoadFailed: L("Product kon niet worden geladen.", "Product could not be loaded.", "Produkt konnte nicht geladen werden.", "Le produit n'a pas pu être chargé."),
+  pdpManufacturerSaved: L("Fabrikant opgeslagen en geselecteerd.", "Manufacturer saved and selected.", "Hersteller gespeichert und ausgewählt.", "Fabricant enregistré et sélectionné."),
+  pdpManufacturerSaveFailed: L("Fabrikant opslaan mislukt.", "Failed to save manufacturer.", "Hersteller konnte nicht gespeichert werden.", "Échec de l'enregistrement du fabricant."),
+  pdpManufacturerUpdated: L("Fabrikant bijgewerkt.", "Manufacturer updated.", "Hersteller aktualisiert.", "Fabricant mis à jour."),
+  pdpManufacturerUpdateFailed: L("Fabrikant bijwerken mislukt.", "Failed to update manufacturer.", "Hersteller konnte nicht aktualisiert werden.", "Échec de la mise à jour du fabricant."),
+  pdpInfoSaved: L("Productinformatie opgeslagen.", "Product information saved.", "Produktinformationen gespeichert.", "Informations produit enregistrées."),
+  pdpSaveFailed: L("Opslaan mislukt.", "Save failed.", "Speichern fehlgeschlagen.", "Échec de l'enregistrement."),
+  pdpOfferSaved: L("Verkoopaanbod opgeslagen.", "Sales offer saved.", "Verkaufsangebot gespeichert.", "Offre de vente enregistrée."),
+  pdpOfferSaveFailed: L("Offer opslaan mislukt.", "Failed to save offer.", "Angebot konnte nicht gespeichert werden.", "Échec de l'enregistrement de l'offre."),
+  pdpOfferPaused: L("Aanbod gepauzeerd.", "Offer paused.", "Angebot pausiert.", "Offre en pause."),
+  pdpOfferResumed: L("Aanbod hervat.", "Offer resumed.", "Angebot fortgesetzt.", "Offre reprise."),
+  pdpStatusChangeFailed: L("Statuswijziging mislukt.", "Status change failed.", "Statusänderung fehlgeschlagen.", "Échec du changement de statut."),
+  pdpSubmitNotReady: L("Product is nog niet compleet genoeg om ter goedkeuring aan te bieden.", "Product is not yet complete enough to submit for approval.", "Produkt ist noch nicht vollständig genug für die Einreichung.", "Le produit n'est pas encore assez complet pour être soumis."),
+  pdpSubmitSuccess: L("Product ter goedkeuring aangeboden. Het is nog niet publiek zichtbaar.", "Product submitted for approval. It is not yet publicly visible.", "Produkt zur Genehmigung eingereicht. Es ist noch nicht öffentlich sichtbar.", "Produit soumis pour approbation. Il n'est pas encore visible publiquement."),
+  pdpSubmitFailed: L("Indienen mislukt.", "Submission failed.", "Einreichung fehlgeschlagen.", "Échec de la soumission."),
+  pdpFileTooLarge: L("Bestand is groter dan 3MB. Kies een kleiner bestand.", "File is larger than 3MB. Choose a smaller file.", "Datei ist größer als 3MB. Wähle eine kleinere Datei.", "Le fichier dépasse 3 Mo. Choisissez un fichier plus petit."),
+  pdpMediaUploaded: L("Media geüpload.", "Media uploaded.", "Medien hochgeladen.", "Média téléversé."),
+  pdpUploadFailed: L("Upload mislukt.", "Upload failed.", "Upload fehlgeschlagen.", "Échec du téléversement."),
+  pdpMediaUrlEmpty: L("Vul een media-URL in.", "Enter a media URL.", "Gib eine Medien-URL ein.", "Entrez une URL de média."),
+  pdpMediaUrlAdded: L("Media via URL toegevoegd.", "Media added via URL.", "Medien über URL hinzugefügt.", "Média ajouté via URL."),
+  pdpMediaAddFailed: L("Media toevoegen mislukt.", "Failed to add media.", "Medien konnten nicht hinzugefügt werden.", "Échec de l'ajout de média."),
+  pdpMediaDeleteConfirm: L("Deze media verwijderen?", "Delete this media?", "Dieses Medium löschen?", "Supprimer ce média ?"),
+  pdpMediaDeleted: L("Media verwijderd.", "Media deleted.", "Medien gelöscht.", "Média supprimé."),
+  pdpMediaDeleteFailed: L("Verwijderen mislukt.", "Delete failed.", "Löschen fehlgeschlagen.", "Échec de la suppression."),
+  pdpPrimaryUpdated: L("Hoofdafbeelding bijgewerkt.", "Primary image updated.", "Hauptbild aktualisiert.", "Image principale mise à jour."),
+  pdpActionPriceInvalid: L("Actieprijs moet een geldig getal zijn.", "Promotional price must be a valid number.", "Aktionspreis muss eine gültige Zahl sein.", "Le prix promotionnel doit être un nombre valide."),
+  pdpActionPriceNegative: L("Actieprijs mag niet lager zijn dan 0.", "Promotional price cannot be less than 0.", "Aktionspreis darf nicht kleiner als 0 sein.", "Le prix promotionnel ne peut pas être inférieur à 0."),
+  pdpConfirmPause: L("Dit aanbod wordt niet meer actief verkocht. Wil je pauzeren?", "This offer will no longer be actively sold. Pause?", "Dieses Angebot wird nicht mehr aktiv verkauft. Pausieren?", "Cette offre ne sera plus vendue activement. Mettre en pause ?"),
+  pdpMarketAddFailed: L("Markt toevoegen mislukt.", "Failed to add market.", "Markt konnte nicht hinzugefügt werden.", "Échec de l'ajout du marché."),
+  pdpPrimaryImage: L("Hoofdafbeelding", "Primary image", "Hauptbild", "Image principale"),
+  pdpOtherImage: L("Overige afbeelding", "Additional image", "Weiteres Bild", "Image supplémentaire"),
+  pdpVideo: L("Video", "Video", "Video", "Vidéo"),
+
+  pdpUnsavedConfirm: L(
+    "Je hebt niet-opgeslagen wijzigingen. Als je naar Merken gaat, gaan die verloren. Toch doorgaan?",
+    "You have unsaved changes. If you go to Brands, they will be lost. Continue?",
+    "Du hast ungespeicherte Änderungen. Wenn du zu Marken gehst, gehen sie verloren. Trotzdem fortfahren?",
+    "Vous avez des modifications non enregistrées. Si vous accédez aux Marques, elles seront perdues. Continuer ?"
+  ),
+
+  // —— P2.15.1: Variants panel ——
+  vpAxisColor: L("Kleur", "Color", "Farbe", "Couleur"),
+  vpAxisSize: L("Maat", "Size", "Größe", "Taille"),
+  vpAxisContent: L("Inhoud", "Content", "Inhalt", "Contenu"),
+  vpAxisPower: L("Vermogen", "Power", "Leistung", "Puissance"),
+  vpAxisVoltage: L("Spanning", "Voltage", "Spannung", "Tension"),
+  vpAxisMaterial: L("Materiaal", "Material", "Material", "Matériau"),
+  vpAxisVariant: L("Uitvoering", "Variant", "Ausführung", "Variante"),
+  vpAxisBundle: L("Bundel", "Bundle", "Bundle", "Lot"),
+  vpNoOffer: L("Geen aanbod", "No offer", "Kein Angebot", "Pas d'offre"),
+  vpFillAxis: L("Vul minstens één aswaarde in.", "Fill in at least one axis value.", "Gib mindestens einen Achsenwert ein.", "Remplissez au moins une valeur d'axe."),
+  vpEanRequired: L("EAN/GTIN is verplicht.", "EAN/GTIN is required.", "EAN/GTIN ist erforderlich.", "EAN/GTIN est obligatoire."),
+  vpCreated: L("Variant aangemaakt.", "Variant created.", "Variante erstellt.", "Variante créée."),
+  vpCreateFailed: L("Variant aanmaken mislukt.", "Failed to create variant.", "Variante konnte nicht erstellt werden.", "Échec de la création de la variante."),
+  vpUpdated: L("Variant bijgewerkt.", "Variant updated.", "Variante aktualisiert.", "Variante mise à jour."),
+  vpUpdateFailed: L("Variant bijwerken mislukt.", "Failed to update variant.", "Variante konnte nicht aktualisiert werden.", "Échec de la mise à jour de la variante."),
+  vpDeleteConfirmOffer: L(
+    "Variant verwijderen?\n\nDeze variant en het bijbehorende verkoopaanbod worden ingetrokken/verwijderd. Dit kan niet zomaar ongedaan worden gemaakt.",
+    "Delete variant?\n\nThis variant and its sales offer will be withdrawn/deleted. This cannot easily be undone.",
+    "Variante löschen?\n\nDiese Variante und das zugehörige Verkaufsangebot werden zurückgezogen/gelöscht. Dies kann nicht einfach rückgängig gemacht werden.",
+    "Supprimer la variante ?\n\nCette variante et son offre de vente seront retirées/supprimées. Cela ne peut pas être facilement annulé."
+  ),
+  vpDeleteConfirm: L(
+    "Variant verwijderen?\n\nDit kan niet zomaar ongedaan worden gemaakt.",
+    "Delete variant?\n\nThis cannot easily be undone.",
+    "Variante löschen?\n\nDies kann nicht einfach rückgängig gemacht werden.",
+    "Supprimer la variante ?\n\nCela ne peut pas être facilement annulé."
+  ),
+  vpDeleted: L("Variant verwijderd.", "Variant deleted.", "Variante gelöscht.", "Variante supprimée."),
+  vpDeleteFailed: L("Verwijderen mislukt.", "Delete failed.", "Löschen fehlgeschlagen.", "Échec de la suppression."),
+  vpShippingInvalid: L("Verzendkosten ongeldig.", "Shipping costs invalid.", "Versandkosten ungültig.", "Frais de livraison invalides."),
+  vpPriceGteShipping: L("Klantprijs moet ≥ verzendkosten zijn.", "Customer price must be ≥ shipping costs.", "Kundenpreis muss ≥ Versandkosten sein.", "Le prix client doit être ≥ frais de livraison."),
+  vpPromoGteShipping: L("Actieprijs moet ≥ verzendkosten zijn.", "Promotional price must be ≥ shipping costs.", "Aktionspreis muss ≥ Versandkosten sein.", "Le prix promo doit être ≥ frais de livraison."),
+  vpPromoLtRegular: L("Actieprijs moet lager zijn dan de reguliere klantprijs.", "Promotional price must be lower than regular customer price.", "Aktionspreis muss niedriger als der reguläre Kundenpreis sein.", "Le prix promo doit être inférieur au prix client régulier."),
+  vpOfferSaved: L("Verkoopaanbod opgeslagen.", "Sales offer saved.", "Verkaufsangebot gespeichert.", "Offre de vente enregistrée."),
+  vpOfferSaveFailed: L("Offer opslaan mislukt.", "Failed to save offer.", "Angebot konnte nicht gespeichert werden.", "Échec de l'enregistrement de l'offre."),
+  vpStructureHint: L(
+    "Structuur: Product → Variant → EAN → Offer. Prijs en voorraad horen bij het offer. Voorgestelde assen: ",
+    "Structure: Product → Variant → EAN → Offer. Price and stock belong to the offer. Suggested axes: ",
+    "Struktur: Produkt → Variante → EAN → Angebot. Preis und Bestand gehören zum Angebot. Vorgeschlagene Achsen: ",
+    "Structure : Produit → Variante → EAN → Offre. Le prix et le stock appartiennent à l'offre. Axes suggérés : "
+  ),
+  vpAddVariant: L("+ Variant toevoegen", "+ Add variant", "+ Variante hinzufügen", "+ Ajouter une variante"),
+  vpAxes: L("Variantassen", "Variant axes", "Variantenachsen", "Axes de variantes"),
+  vpValueFor: L("Waarde voor", "Value for", "Wert für", "Valeur pour"),
+  vpDuplicateFrom: L("Dupliceer van (optioneel)", "Duplicate from (optional)", "Duplizieren von (optional)", "Dupliquer de (optionnel)"),
+  vpAddVariantBtn: L("Variant toevoegen", "Add variant", "Variante hinzufügen", "Ajouter une variante"),
+  vpVariant: L("Variant", "Variant", "Variante", "Variante"),
+  vpPromoPrice: L("Actieprijs", "Promo price", "Aktionspreis", "Prix promo"),
+  vpDeliveryTime: L("Levertijd", "Delivery time", "Lieferzeit", "Délai de livraison"),
+  vpNoVariants: L("Nog geen varianten.", "No variants yet.", "Noch keine Varianten.", "Pas encore de variantes."),
+  vpNotActive: L("(niet actief)", "(not active)", "(nicht aktiv)", "(non actif)"),
+  vpOfferPrefix: L("Offer: ", "Offer: ", "Angebot: ", "Offre : "),
+  vpSalePrefix: L("Verkoop: ", "Sales: ", "Verkauf: ", "Vente : "),
+  vpEditOffer: L("Offer bewerken", "Edit offer", "Angebot bearbeiten", "Modifier l'offre"),
+  vpGoToOffer: L("Naar Verkoopaanbod", "Go to Sales offer", "Zum Verkaufsangebot", "Aller à l'offre de vente"),
+  vpOfferLabel: L("Offer (klantprijs incl. verzending)", "Offer (customer price incl. shipping)", "Angebot (Kundenpreis inkl. Versand)", "Offre (prix client incl. livraison)"),
+  vpRegularPrice: L("Reguliere klantprijs (€)", "Regular customer price (€)", "Regulärer Kundenpreis (€)", "Prix client régulier (€)"),
+  vpPromoPriceLabel: L("Actieprijs (€)", "Promo price (€)", "Aktionspreis (€)", "Prix promo (€)"),
+  vpPromoStart: L("Actie start", "Promo start", "Aktion Start", "Début promo"),
+  vpPromoEnd: L("Actie eind", "Promo end", "Aktion Ende", "Fin promo"),
+  vpClearPromo: L("Actieprijs wissen", "Clear promo price", "Aktionspreis löschen", "Effacer le prix promo"),
+  vpShippingCosts: L("Verzendkosten (€)", "Shipping costs (€)", "Versandkosten (€)", "Frais de livraison (€)"),
+  vpSaleStatus: L("Verkoopstatus", "Sales status", "Verkaufsstatus", "Statut de vente"),
+  vpActiveForSale: L("Actief / te koop", "Active / for sale", "Aktiv / zu verkaufen", "Actif / en vente"),
+  vpMarket: L("Markt: ", "Market: ", "Markt: ", "Marché : "),
+  vpEffectivePrice: L("Effectieve klantprijs: ", "Effective customer price: ", "Effektiver Kundenpreis: ", "Prix client effectif : "),
+  vpClose: L("Sluiten", "Close", "Schließen", "Fermer"),
+  vpDelete: L("Verwijderen", "Delete", "Löschen", "Supprimer"),
+
+  // —— P2.15.1: Offer tab (product detail) ——
+  offerPriceHint: L(
+    "Voer de prijs in die de klant betaalt inclusief verzending. Buy Box-score en marge gebruiken klantprijs − verzending (productcomponent).",
+    "Enter the price the customer pays including shipping. Buy Box score and margin use customer price − shipping (product component).",
+    "Geben Sie den Preis ein, den der Kunde inklusive Versand zahlt. Buy-Box-Score und Marge verwenden Kundenpreis − Versand (Produktkomponente).",
+    "Entrez le prix que le client paie, livraison incluse. Le score Buy Box et la marge utilisent le prix client − livraison (composante produit)."
+  ),
+  offerPriceExplain: L("Uitleg reguliere klantprijs", "Regular customer price info", "Info zum regulären Kundenpreis", "Info prix client régulier"),
+  offerSinglePriceHint: L(
+    "Eén centrale productprijs voor alle EU-markten. Geen land-specifieke basisprijs. Verzend- en extra leveringskosten mogen per land verschillen.",
+    "One central product price for all EU markets. No country-specific base price. Shipping and extra delivery costs may vary per country.",
+    "Ein zentraler Produktpreis für alle EU-Märkte. Kein länderspezifischer Grundpreis. Versand- und Lieferkosten dürfen je Land variieren.",
+    "Un prix produit central pour tous les marchés européens. Pas de prix de base par pays. Les frais de livraison peuvent varier par pays."
+  ),
+  offerPromoLabel: L("Actieprijs (excl. verzending, deze markt)", "Promo price (excl. shipping, this market)", "Aktionspreis (exkl. Versand, dieser Markt)", "Prix promo (hors livraison, ce marché)"),
+  offerShippingLabel: L("Verzendkosten (deze markt)", "Shipping costs (this market)", "Versandkosten (dieser Markt)", "Frais de livraison (ce marché)"),
+  offerHandlingLabel: L("Extra leverings-/handlingkosten (deze markt)", "Extra delivery/handling costs (this market)", "Extra Liefer-/Handlingskosten (dieser Markt)", "Frais de livraison/traitement supplémentaires (ce marché)"),
+  offerEffectivePrice: L("Effectieve klantprijs: ", "Effective customer price: ", "Effektiver Kundenpreis: ", "Prix client effectif : "),
+  offerPromoTag: L(" (actie)", " (promo)", " (Aktion)", " (promo)"),
+  offerRegularTag: L(" (regulier)", " (regular)", " (regulär)", " (régulier)"),
+  offerDiscount: L("Korting: ", "Discount: ", "Rabatt: ", "Remise : "),
+  offerNetComponent: L("Netto productcomponent (centrale reguliere prijs of actieprijs): ", "Net product component (central regular or promo price): ", "Netto-Produktkomponente (zentraler regulärer Preis oder Aktionspreis): ", "Composante produit nette (prix régulier central ou prix promo) : "),
+  offerBuyBoxHint: L("Buy Box-score en marge gebruiken klantprijs − verzending.", "Buy Box score and margin use customer price − shipping.", "Buy-Box-Score und Marge verwenden Kundenpreis − Versand.", "Le score Buy Box et la marge utilisent le prix client − livraison."),
+  offerStock: L("Voorraad", "Stock", "Bestand", "Stock"),
+  offerDeliveryDays: L("Levertijd (dagen)", "Delivery time (days)", "Lieferzeit (Tage)", "Délai de livraison (jours)"),
+  offerRegionMarket: L("Regio / markt", "Region / market", "Region / Markt", "Région / marché"),
+  offerSaveBtn: L("Offer opslaan", "Save offer", "Angebot speichern", "Enregistrer l'offre"),
+  offerPauseHint: L(
+    "Pauzeren verwijdert het product niet en wijzigt de publicatiestatus niet. Actieprijs wordt opgeslagen met start/eind als ISO-tijdstempels.",
+    "Pausing does not delete the product and does not change the publication status. Promo price is saved with start/end as ISO timestamps.",
+    "Pausieren löscht das Produkt nicht und ändert den Veröffentlichungsstatus nicht. Aktionspreis wird mit Start/Ende als ISO-Zeitstempel gespeichert.",
+    "Mettre en pause ne supprime pas le produit et ne modifie pas le statut de publication. Le prix promo est enregistré avec début/fin en horodatage ISO."
+  ),
+  offerPriceInvalid: L("Prijs, verzendkosten en voorraad moeten geldige getallen zijn.", "Price, shipping costs and stock must be valid numbers.", "Preis, Versandkosten und Bestand müssen gültige Zahlen sein.", "Le prix, les frais de livraison et le stock doivent être des nombres valides."),
+  offerLocationMismatch: L(
+    "De productielocatie hoort niet bij dit merk. Kies een nieuwe productielocatie.",
+    "The production location does not belong to this brand. Choose a new production location.",
+    "Der Produktionsstandort gehört nicht zu dieser Marke. Wähle einen neuen Produktionsstandort.",
+    "Le lieu de production n'appartient pas à cette marque. Choisissez un nouveau lieu de production."
+  ),
+
+  // —— P2.15.1: Media tab ——
+  mediaGuidelines: L("Richtlijnen", "Guidelines", "Richtlinien", "Directives"),
+  mediaImageHint: L("Afbeeldingen: 1:1 verhouding, min. 1200×1200 px aanbevolen", "Images: 1:1 ratio, min. 1200×1200 px recommended", "Bilder: 1:1-Verhältnis, min. 1200×1200 px empfohlen", "Images : format 1:1, min. 1200×1200 px recommandé"),
+  mediaMaxSize: L("Max. 3MB per bestand · JPG / PNG / WebP", "Max. 3MB per file · JPG / PNG / WebP", "Max. 3MB pro Datei · JPG / PNG / WebP", "Max. 3 Mo par fichier · JPG / PNG / WebP"),
+  mediaVideoHint: L("Video: MP4 of WebM, liefst kleiner dan 3MB", "Video: MP4 or WebM, preferably under 3MB", "Video: MP4 oder WebM, vorzugsweise unter 3MB", "Vidéo : MP4 ou WebM, de préférence moins de 3 Mo"),
+  mediaUploadFile: L("Bestand uploaden", "Upload file", "Datei hochladen", "Téléverser un fichier"),
+  mediaAddUrl: L("Toevoegen via URL", "Add via URL", "Über URL hinzufügen", "Ajouter via URL"),
+  mediaNoMedia: L("Nog geen media.", "No media yet.", "Noch keine Medien.", "Pas encore de médias."),
+  mediaOrderSaved: L("Foto-volgorde opgeslagen.", "Photo order saved.", "Bildreihenfolge gespeichert.", "Ordre des photos enregistré."),
+  mediaOrderFailed: L("Volgorde opslaan mislukt.", "Failed to save order.", "Reihenfolge konnte nicht gespeichert werden.", "Échec de l'enregistrement de l'ordre."),
+
+  // —— P2.15.1: Publication tab ——
+  pubStatusLabel: L("Publicatiestatus: ", "Publication status: ", "Veröffentlichungsstatus: ", "Statut de publication : "),
+  pubCatalogHint: L(
+    "Cataloguspublicatie is iets anders dan offer-verkoopstatus (",
+    "Catalogue publication is different from offer sales status (",
+    "Katalogveröffentlichung unterscheidet sich vom Angebotsverkaufsstatus (",
+    "La publication catalogue est différente du statut de vente de l'offre ("
+  ),
+  pubInfoQuality: L("Informatiekwaliteit: ", "Information quality: ", "Informationsqualität: ", "Qualité de l'information : "),
+  pubPublishableLabel: L("Publiceerbaar: ", "Publishable: ", "Veröffentlichbar: ", "Publiable : "),
+  pubYes: L("JA", "YES", "JA", "OUI"),
+  pubNo: L("NEE", "NO", "NEIN", "NON"),
+  pubRejectedLabel: L("Afgewezen: ", "Rejected: ", "Abgelehnt: ", "Refusé : "),
+  pubAwaitingApproval: L("Wacht op productgoedkeuring. Nog niet zichtbaar in de storefront.", "Awaiting product approval. Not yet visible in the storefront.", "Wartet auf Produktfreigabe. Noch nicht in der Storefront sichtbar.", "En attente d'approbation produit. Pas encore visible dans la boutique."),
+  pubSaleBlocked: L("Verkoop geblokkeerd", "Sales blocked", "Verkauf blockiert", "Vente bloquée"),
+  pubWhyNotPublishable: L("Waarom niet publiceerbaar", "Why not publishable", "Warum nicht veröffentlichbar", "Pourquoi non publiable"),
+  pubAllGreen: L(
+    "Alle publicatiechecks zijn groen. Bied het product ter goedkeuring aan — alleen EuropMade-admin mag publiceren.",
+    "All publication checks are green. Submit the product for approval — only EuropMade admin may publish.",
+    "Alle Veröffentlichungsprüfungen sind grün. Reiche das Produkt zur Genehmigung ein — nur EuropMade-Admin darf veröffentlichen.",
+    "Tous les contrôles de publication sont au vert. Soumettez le produit pour approbation — seul l'admin EuropMade peut publier."
+  ),
+  pubSubmitting: L("Indienen…", "Submitting…", "Einreichen…", "Soumission…"),
+  pubSubmitBtn: L("Ter goedkeuring aanbieden", "Submit for approval", "Zur Genehmigung einreichen", "Soumettre pour approbation"),
+
+  // —— P2.15.1: History tab ——
+  historyHint: L("Inclusief productvelden en Commerce Cloud-wijzigingen (offer.*).", "Including product fields and Commerce Cloud changes (offer.*).", "Einschließlich Produktfelder und Commerce Cloud-Änderungen (offer.*).", "Y compris les champs produit et les modifications Commerce Cloud (offer.*)."),
+  historyAll: L("Alles", "All", "Alle", "Tout"),
+  historyPrice: L("Prijs", "Price", "Preis", "Prix"),
+  historyVariants: L("Varianten", "Variants", "Varianten", "Variantes"),
+  historyRest: L("Rest", "Other", "Rest", "Autre"),
+
+  // —— P2.15.1: Translations tab ——
+  transPlaceholderCreated: L("Placeholders aangemaakt (geen AI-vertaling — provider uit).", "Placeholders created (no AI translation — provider off).", "Platzhalter erstellt (keine KI-Übersetzung — Provider aus).", "Espaces réservés créés (pas de traduction IA — fournisseur désactivé)."),
+  transPlaceholderBtn: L("Placeholders aanmaken (geen AI)", "Create placeholders (no AI)", "Platzhalter erstellen (keine KI)", "Créer des espaces réservés (sans IA)"),
+  transOpenLink: L("Open vertalingen", "Open translations", "Übersetzungen öffnen", "Ouvrir les traductions"),
+  transHint: L("gebeurt op de aparte vertalingenpagina.", "happens on the separate translations page.", "erfolgt auf der separaten Übersetzungsseite.", "se fait sur la page de traductions séparée."),
+
+  // —— P2.15.1: Compliance evidence section ——
+  evCeProof: L("CE-bewijs", "CE evidence", "CE-Nachweis", "Preuve CE"),
+  evDataUsageInfo: L("Informatie datagebruik", "Data usage information", "Informationen zur Datennutzung", "Informations sur l'utilisation des données"),
+  evNotRequired: L("Niet nodig", "Not required", "Nicht erforderlich", "Non requis"),
+  evMissing: L("Ontbreekt", "Missing", "Fehlt", "Manquant"),
+  evUrlOrFile: L("Vul een URL in of kies een bestand.", "Enter a URL or choose a file.", "Gib eine URL ein oder wähle eine Datei.", "Entrez une URL ou choisissez un fichier."),
+  evAddedPending: L("toegevoegd — wacht op controle.", "added — awaiting review.", "hinzugefügt — wartet auf Überprüfung.", "ajouté — en attente de vérification."),
+  evUploadFailed: L("Upload mislukt.", "Upload failed.", "Upload fehlgeschlagen.", "Échec du téléversement."),
+  evPdfOnly: L("Alleen PDF is toegestaan voor dit document.", "Only PDF is allowed for this document.", "Nur PDF ist für dieses Dokument erlaubt.", "Seul le PDF est autorisé pour ce document."),
+  evRegisteredPending: L("geregistreerd — wacht op controle.", "registered — awaiting review.", "registriert — wartet auf Überprüfung.", "enregistré — en attente de vérification."),
+  evFileUploadFailed: L("Bestand uploaden mislukt.", "File upload failed.", "Datei-Upload fehlgeschlagen.", "Échec du téléversement du fichier."),
+  evDeleteConfirm: L("Dit bewijs verwijderen?", "Delete this evidence?", "Diesen Nachweis löschen?", "Supprimer cette preuve ?"),
+  evDeleted: L("Bewijs verwijderd.", "Evidence deleted.", "Nachweis gelöscht.", "Preuve supprimée."),
+  evDeleteFailed: L("Verwijderen mislukt.", "Delete failed.", "Löschen fehlgeschlagen.", "Échec de la suppression."),
+  evMinOne: L("minimaal 1 bewijs verplicht", "at least 1 evidence required", "mindestens 1 Nachweis erforderlich", "au moins 1 preuve requise"),
+  evFirstApproved: L("eerste goedgekeurde", "first approved", "erster genehmigter", "premier approuvé"),
+  evOpenDoc: L("Document openen", "Open document", "Dokument öffnen", "Ouvrir le document"),
+  evAddFile: L("Bestand toevoegen", "Add file", "Datei hinzufügen", "Ajouter un fichier"),
+  evOrUrl: L("Of bewijs-URL", "Or evidence URL", "Oder Nachweis-URL", "Ou URL de preuve"),
+  evAddUrl: L("URL toevoegen", "Add URL", "URL hinzufügen", "Ajouter une URL"),
+  evAutoReviewHint: L("Upload wordt nooit automatisch goedgekeurd — status wordt In beoordeling.", "Upload is never automatically approved — status becomes Under review.", "Upload wird nie automatisch genehmigt — Status wird In Prüfung.", "Le téléversement n'est jamais approuvé automatiquement — le statut devient En cours d'examen."),
+  evHeading: L("Bewijs en documenten", "Evidence and documents", "Nachweise und Dokumente", "Preuves et documents"),
+  evExplain: L(
+    "Upload documenten of foto's die aantonen dat het product voldoet aan de relevante eisen, bijvoorbeeld productie/assemblage in Europa, CE-markering, fabrikantgegevens of andere compliance-informatie. Eén document is genoeg wanneer daar meerdere zaken op zichtbaar zijn.",
+    "Upload documents or photos proving the product meets relevant requirements, e.g. production/assembly in Europe, CE marking, manufacturer data or other compliance information. One document suffices when it shows multiple items.",
+    "Laden Sie Dokumente oder Fotos hoch, die belegen, dass das Produkt die relevanten Anforderungen erfüllt, z.B. Produktion/Montage in Europa, CE-Kennzeichnung, Herstellerdaten oder andere Compliance-Informationen. Ein Dokument reicht, wenn darauf mehrere Punkte sichtbar sind.",
+    "Téléversez des documents ou photos prouvant que le produit répond aux exigences pertinentes, par ex. production/assemblage en Europe, marquage CE, données fabricant ou autres informations de conformité. Un seul document suffit s'il montre plusieurs éléments."
+  ),
+  evMinOneShort: L("minimaal 1 bewijs", "at least 1 evidence", "mindestens 1 Nachweis", "au moins 1 preuve"),
+  evCeVisible: L("CE zichtbaar", "CE visible", "CE sichtbar", "CE visible"),
+  evCeNotRequired: L("CE-bewijs niet nodig", "CE evidence not required", "CE-Nachweis nicht erforderlich", "Preuve CE non requise"),
+  evDataUsageDocLabel: L("Datagebruikdocument: ", "Data usage document: ", "Datennutzungsdokument: ", "Document d'utilisation des données : "),
+  evDataUsagePdf: L("PDF met uitleg over datagebruik", "PDF explaining data usage", "PDF mit Erläuterung zur Datennutzung", "PDF expliquant l'utilisation des données"),
+  evNoDataUsageNeeded: L("Geen datagebruikdocument nodig.", "No data usage document needed.", "Kein Datennutzungsdokument erforderlich.", "Pas de document d'utilisation des données nécessaire."),
+
+  // —— P2.15.1: Product list remaining ——
+  plSearchPlaceholder: L("Zoek op naam, EAN, SKU, product-ID…", "Search by name, EAN, SKU, product ID…", "Suche nach Name, EAN, SKU, Produkt-ID…", "Rechercher par nom, EAN, SKU, ID produit…"),
+  plSelectAll: L("Selecteer alle producten op deze pagina", "Select all products on this page", "Alle Produkte auf dieser Seite auswählen", "Sélectionner tous les produits de cette page"),
+  plSelectProduct: L("Selecteer", "Select", "Auswählen", "Sélectionner"),
+  plHeaderProduct: L("Product", "Product", "Produkt", "Produit"),
+  plHeaderVariants: L("Varianten", "Variants", "Varianten", "Variantes"),
+  plHeaderStock: L("Voorraad", "Stock", "Bestand", "Stock"),
+  plHeaderPrice: L("Prijs", "Price", "Preis", "Prix"),
+  plHeaderDelivery: L("Levertijd", "Delivery time", "Lieferzeit", "Délai de livraison"),
+  plHeaderSale: L("Verkoop", "Sales", "Verkauf", "Vente"),
+  plEuComplianceHeading: L("EU Compliance invullen", "Fill in EU Compliance", "EU Compliance ausfüllen", "Remplir la conformité UE"),
+  plBulkOnlyEu: L(
+    "Alleen ingevulde velden worden toegepast. Bulk ondersteunt alleen EU Compliance (GPSR). Merk/categorie/structuurvelden zijn niet beschikbaar in bulk.",
+    "Only filled fields will be applied. Bulk only supports EU Compliance (GPSR). Brand/category/structure fields are not available in bulk.",
+    "Nur ausgefüllte Felder werden angewendet. Bulk unterstützt nur EU Compliance (GPSR). Marken-/Kategorie-/Strukturfelder sind nicht im Bulk verfügbar.",
+    "Seuls les champs remplis seront appliqués. Le traitement en lot ne prend en charge que la conformité UE (RGPS). Les champs marque/catégorie/structure ne sont pas disponibles en lot."
+  ),
+  plBulkBrandFailed: L("Bulk merk-koppeling mislukt.", "Bulk brand linking failed.", "Bulk-Markenverknüpfung fehlgeschlagen.", "Échec de la liaison de marque en lot."),
+  plBulkEuFailed: L("Bulk EU Compliance mislukt.", "Bulk EU Compliance failed.", "Bulk-EU-Compliance fehlgeschlagen.", "Échec de la conformité UE en lot."),
+  plBulkActionFailed: L("Actie mislukt.", "Action failed.", "Aktion fehlgeschlagen.", "Action échouée."),
+  plChooseBrandFirst: L("Kies eerst een merk en productielocatie.", "Choose a brand and production location first.", "Wähle zuerst eine Marke und einen Produktionsstandort.", "Choisissez d'abord une marque et un lieu de production."),
+  plFillOneField: L("Vul minstens één EU Compliance-veld in.", "Fill in at least one EU Compliance field.", "Gib mindestens ein EU-Compliance-Feld ein.", "Remplissez au moins un champ de conformité UE."),
+  plManufacturerName: L("Fabrikantnaam", "Manufacturer name", "Herstellername", "Nom du fabricant"),
+  plManufacturerAddress: L("Fabrikantadres (straat + nr)", "Manufacturer address (street + nr)", "Herstelleradresse (Straße + Nr.)", "Adresse du fabricant (rue + n°)"),
+  plManufacturerPostal: L("Fabrikant postcode + plaats", "Manufacturer postal code + city", "Hersteller PLZ + Stadt", "Code postal + ville du fabricant"),
+  plManufacturerCountry: L("Fabrikant land", "Manufacturer country", "Hersteller Land", "Pays du fabricant"),
+  plManufacturerEmail: L("Fabrikant e-mail", "Manufacturer email", "Hersteller E-Mail", "E-mail du fabricant"),
+  plEuResponsibleName: L("EU-verantwoordelijke — naam", "EU responsible — name", "EU-Verantwortlicher — Name", "Responsable UE — nom"),
+  plEuResponsibleAddress: L("EU-verantwoordelijke — adres", "EU responsible — address", "EU-Verantwortlicher — Adresse", "Responsable UE — adresse"),
+  plEuResponsiblePostal: L("EU-verantwoordelijke — postcode + plaats", "EU responsible — postal code + city", "EU-Verantwortlicher — PLZ + Stadt", "Responsable UE — code postal + ville"),
+  plEuResponsibleCountry: L("EU-verantwoordelijke — land", "EU responsible — country", "EU-Verantwortlicher — Land", "Responsable UE — pays"),
+  plEuResponsibleContact: L("EU-verantwoordelijke — contact", "EU responsible — contact", "EU-Verantwortlicher — Kontakt", "Responsable UE — contact"),
+
+  // —— P2.15.1: Brands ——
+  brandNoDescription: L("Geen beschrijving", "No description", "Keine Beschreibung", "Pas de description"),
+  brandNamePlaceholder: L("Merknaam", "Brand name", "Markenname", "Nom de marque"),
+  brandDescPlaceholder: L("Merkbeschrijving", "Brand description", "Markenbeschreibung", "Description de la marque"),
+  brandDescOptional: L("Merkbeschrijving (optioneel)", "Brand description (optional)", "Markenbeschreibung (optional)", "Description de la marque (optionnel)"),
+  brandDetailLoadFailed: L("Merkdetails laden mislukt.", "Failed to load brand details.", "Markendetails konnten nicht geladen werden.", "Échec du chargement des détails de la marque."),
+  brandProductsLoadFailed: L("Producten laden mislukt.", "Failed to load products.", "Produkte konnten nicht geladen werden.", "Échec du chargement des produits."),
+  brandCreated: L("Merk aangemaakt.", "Brand created.", "Marke erstellt.", "Marque créée."),
+  brandCreateFailed: L("Merk aanmaken mislukt.", "Failed to create brand.", "Marke konnte nicht erstellt werden.", "Échec de la création de la marque."),
+  brandSaved: L("Merk opgeslagen.", "Brand saved.", "Marke gespeichert.", "Marque enregistrée."),
+  brandSaveFailed: L("Merk opslaan mislukt.", "Failed to save brand.", "Marke konnte nicht gespeichert werden.", "Échec de l'enregistrement de la marque."),
+  brandFacilitySaved: L("Productielocatie opgeslagen.", "Production location saved.", "Produktionsstandort gespeichert.", "Lieu de production enregistré."),
+  brandFacilitySaveFailed: L("Productielocatie opslaan mislukt.", "Failed to save production location.", "Produktionsstandort konnte nicht gespeichert werden.", "Échec de l'enregistrement du lieu de production."),
+  brandFacilityDeactivateConfirm: L(
+    "Deze productielocatie deactiveren? Bestaande productkoppelingen blijven behouden.",
+    "Deactivate this production location? Existing product links will be preserved.",
+    "Diesen Produktionsstandort deaktivieren? Bestehende Produktverknüpfungen bleiben erhalten.",
+    "Désactiver ce lieu de production ? Les liens produits existants seront conservés."
+  ),
+  brandFacilityDeactivated: L("Productielocatie gedeactiveerd.", "Production location deactivated.", "Produktionsstandort deaktiviert.", "Lieu de production désactivé."),
+  brandFacilityDeactivateFailed: L("Deactiveren mislukt.", "Deactivation failed.", "Deaktivierung fehlgeschlagen.", "Échec de la désactivation."),
+  brandNoAddress: L("Geen adresgegevens", "No address data", "Keine Adressdaten", "Pas de données d'adresse"),
+  brandFacilityNamePlaceholder: L("Naam productielocatie (optioneel)", "Production location name (optional)", "Name Produktionsstandort (optional)", "Nom du lieu de production (optionnel)"),
+  brandCountryRequired: L("Land (verplicht)", "Country (required)", "Land (erforderlich)", "Pays (obligatoire)"),
+  brandStatusPrefix: L("Status: ", "Status: ", "Status: ", "Statut : "),
+  brandLoadFailed: L("Merk laden mislukt.", "Failed to load brand.", "Marke konnte nicht geladen werden.", "Échec du chargement de la marque."),
+  brandCountryIsRequired: L("Land is verplicht.", "Country is required.", "Land ist erforderlich.", "Le pays est obligatoire."),
+  brandFacilityUpdateFailed: L("Facility opslaan mislukt.", "Failed to save facility.", "Facility konnte nicht gespeichert werden.", "Échec de l'enregistrement de la facility."),
+  brandFacilityDeactivateError: L("Facility deactiveren mislukt.", "Failed to deactivate facility.", "Facility konnte nicht deaktiviert werden.", "Échec de la désactivation de la facility."),
+  brandFacilityUpdate: L("Productielocatie bijwerken", "Update production location", "Produktionsstandort aktualisieren", "Mettre à jour le lieu de production"),
+  brandFacilityAdd: L("+ Productielocatie toevoegen", "+ Add production location", "+ Produktionsstandort hinzufügen", "+ Ajouter un lieu de production"),
+  brandCountryIsoLabel: L("Land (ISO-2, verplicht)", "Country (ISO-2, required)", "Land (ISO-2, erforderlich)", "Pays (ISO-2, obligatoire)"),
+  brandProductsOf: L("Producten van", "Products of", "Produkte von", "Produits de"),
+  // —— P2.15.1: Made-in-Europe page ——
+  mieBrandCountryRequired: L("Merk en land zijn verplicht.", "Brand and country are required.", "Marke und Land sind erforderlich.", "La marque et le pays sont obligatoires."),
+  mieFacilitySavedSelected: L("Productielocatie opgeslagen en geselecteerd.", "Production location saved and selected.", "Produktionsstandort gespeichert und ausgewählt.", "Lieu de production enregistré et sélectionné."),
+  mieFacilityCreateFailed: L("Productielocatie aanmaken mislukt.", "Failed to create production location.", "Produktionsstandort konnte nicht erstellt werden.", "Échec de la création du lieu de production."),
+  mieFacilityProfileSaved: L("Profiel van productielocatie opgeslagen.", "Production location profile saved.", "Profil des Produktionsstandorts gespeichert.", "Profil du lieu de production enregistré."),
+  mieFacilitySaveFailed: L("Opslaan productielocatie mislukt.", "Failed to save production location.", "Produktionsstandort konnte nicht gespeichert werden.", "Échec de l'enregistrement du lieu de production."),
+
+  // —— P2.15.1: Import page ——
+  importChooseFile: L("Kies eerst een CSV- of XLSX-bestand.", "Choose a CSV or XLSX file first.", "Wähle zuerst eine CSV- oder XLSX-Datei.", "Choisissez d'abord un fichier CSV ou XLSX."),
+  importPreviewFailed: L("Preview mislukt.", "Preview failed.", "Vorschau fehlgeschlagen.", "Échec de l'aperçu."),
+  importBlockedErrors: L("Importeren is geblokkeerd zolang er foute regels zijn.", "Import is blocked while there are invalid rows.", "Import ist blockiert, solange fehlerhafte Zeilen vorhanden sind.", "L'importation est bloquée tant qu'il y a des lignes erronées."),
+  importFailed: L("Import mislukt.", "Import failed.", "Import fehlgeschlagen.", "Échec de l'importation."),
+  importBreadcrumb: L("Importeren", "Import", "Importieren", "Importer"),
+  importDownloadFailed: L("Download mislukt.", "Download failed.", "Download fehlgeschlagen.", "Échec du téléchargement."),
+
+  // —— P2.15.1: Manufacturer form validation ——
+  formNameCountryEmailRequired: L("Naam, land en elektronisch contact zijn verplicht.", "Name, country and electronic contact are required.", "Name, Land und elektronischer Kontakt sind erforderlich.", "Le nom, le pays et le contact électronique sont obligatoires."),
 } as const satisfies Record<string, LocalizedString>
 
 export type StorefrontMessageKey = keyof typeof M
@@ -7338,10 +8937,18 @@ export function countryDisplayLabel(
 }
 
 export function t(
-  key: StorefrontMessageKey,
-  locale: StorefrontLocale
+  key: StorefrontMessageKey | string | null | undefined,
+  locale?: StorefrontLocale | string | null
 ): string {
-  return pickLocalized(M[key], locale)
+  if (!key) return ""
+  const row = (M as Record<string, LocalizedString | undefined>)[String(key)]
+  const loc = (
+    typeof locale === "string" && locale
+      ? locale
+      : DEFAULT_STOREFRONT_LOCALE
+  ) as StorefrontLocale
+  if (!row) return String(key)
+  return pickLocalized(row, loc) || String(key)
 }
 
 /** Replace `{name}` placeholders in a message. */

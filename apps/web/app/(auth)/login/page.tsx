@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, CodeInput, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
-import { createSession, login, verifyMfaChallenge } from "../_lib/medusa-auth";
+import { createSession, loginWithMfa, MedusaAuthError, storeMfaTrustToken, verifyMfaChallenge } from "../_lib/medusa-auth";
 import { claimPendingGuestOrder, mergeGuestCart } from "../../_lib/order-service-api";
 import { getOnboarding } from "../../partner-onboarding/_lib/partner-onboarding-api";
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
@@ -65,7 +65,7 @@ function LoginPageContent() {
     setError(null);
     setIsSubmitting(true);
     try {
-      const result = await login(email, password);
+      const result = await loginWithMfa(email, password);
       if (result.mfa_required && result.mfa_challenge) {
         setStep({ name: "mfa", challengeId: result.mfa_challenge.id, useRecoveryCode: false });
         return;
@@ -75,8 +75,14 @@ function LoginPageContent() {
         return;
       }
       setError(t("authLoginError", locale));
-    } catch {
-      setError(t("authLoginError", locale));
+    } catch (err) {
+      if (err instanceof MedusaAuthError && err.status === 401) {
+        setError(t("authLoginError", locale));
+      } else if (err instanceof MedusaAuthError) {
+        setError(err.message);
+      } else {
+        setError(t("authLoginUnavailable", locale));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -92,7 +98,11 @@ function LoginPageContent() {
         step.challengeId,
         step.useRecoveryCode ? "recovery_code" : "totp",
         code,
+        trustDevice,
       );
+      if (result.trust_token) {
+        storeMfaTrustToken(result.trust_token);
+      }
       await finishLogin(result.token);
     } catch {
       setError(

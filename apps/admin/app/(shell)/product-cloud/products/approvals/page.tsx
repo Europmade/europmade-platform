@@ -9,6 +9,7 @@ import {
   listProductApprovals,
   type ApprovalProductRow,
 } from "../../../../../lib/product-approval-admin-api"
+import { displayMediaUrl } from "../../../../../lib/media-url"
 
 type ConfirmState =
   | null
@@ -128,10 +129,10 @@ export default function ProductApprovalsPage() {
               key={row.id}
               className="flex flex-wrap gap-3 rounded-lg border border-wf-300 bg-white p-4"
             >
-              {row.primary_image_url ? (
+              {displayMediaUrl(row.primary_image_url) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={row.primary_image_url}
+                  src={displayMediaUrl(row.primary_image_url) ?? ""}
                   alt=""
                   className="h-16 w-16 rounded object-cover"
                 />
