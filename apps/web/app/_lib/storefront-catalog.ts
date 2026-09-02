@@ -18,10 +18,8 @@ import { type ListingProduct } from "./listing-products"
 import { findMarketplaceCategory } from "./marketplace-categories"
 import { categorySlugFromName, localizeCategoryNames } from "./localize-category-names"
 import { type PdpDetail, type PdpOffer, type PdpReview } from "./pdp-seed"
-import {
-  FREE_SHIPPING_SENTINEL,
-  resolveOfferDeliveryLabel,
-} from "./offer-delivery"
+import { resolveMediaUrl } from "@europmade/utils"
+import { getPageBackendOrigin } from "./page-backend-origin"
 import {
   DEFAULT_STOREFRONT_LOCALE,
   type StorefrontLocale,
@@ -32,6 +30,7 @@ import {
   t,
   tFormat,
 } from "./i18n/messages"
+import { resolveOfferDeliveryLabel } from "./offer-delivery"
 
 export type DataSource = "api"
 
@@ -83,7 +82,8 @@ function categorySlugsFromNames(names: string[]): string[] {
 
 function mapListItem(
   item: CatalogListProduct,
-  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
+  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE,
+  backendOrigin: string
 ): ListingProduct {
   const countryCode = (item.country_code ?? "EU").toUpperCase()
   const priceEuros = item.from_price ?? 0
@@ -117,6 +117,7 @@ function mapListItem(
       ...item.category_names,
       item.identifier_value ?? "",
     ].filter(Boolean),
+    imageUrl: resolveMediaUrl(item.image_url ?? null, backendOrigin),
   }
 }
 
@@ -128,6 +129,7 @@ async function toStorefrontProducts(
   items: CatalogListProduct[],
   locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
 ): Promise<ListingProduct[]> {
+  const backendOrigin = await getPageBackendOrigin()
   const coarse = items.filter(hasValidCommerceOffer)
   const checks = await Promise.all(
     coarse.map(async (item) => {
@@ -143,7 +145,7 @@ async function toStorefrontProducts(
             break
           }
         }
-        return hasUsableOffer ? mapListItem(item, locale) : null
+        return hasUsableOffer ? mapListItem(item, locale, backendOrigin) : null
       } catch {
         return null
       }
@@ -171,12 +173,10 @@ export async function resolveListingProducts(opts?: {
   locale?: StorefrontLocale
 }): Promise<{ products: ListingProduct[]; count: number; source: DataSource }> {
   const locale = opts?.locale ?? DEFAULT_STOREFRONT_LOCALE
+  const backendOrigin = await getPageBackendOrigin()
   try {
-    const categoryLabel = opts?.categorySlug
-      ? findMarketplaceCategory(opts.categorySlug)?.label
-      : undefined
     const res = await listCatalogProducts({
-      category: categoryLabel,
+      category: opts?.categorySlug,
       q: opts?.query,
       brand: opts?.brand,
       manufacturer: opts?.manufacturer,
@@ -191,7 +191,7 @@ export async function resolveListingProducts(opts?: {
     return {
       products: res.products
         .filter(hasValidCommerceOffer)
-        .map((item) => mapListItem(item, locale)),
+        .map((item) => mapListItem(item, locale, backendOrigin)),
       count: res.count,
       source: "api",
     }
@@ -232,11 +232,12 @@ export async function resolveBrandPage(
       region_code: "NL",
       locale,
     })
+    const backendOrigin = await getPageBackendOrigin()
     return {
       brand: page.brand,
       products: page.products
         .filter(hasValidCommerceOffer)
-        .map((item) => mapListItem(item, locale)),
+        .map((item) => mapListItem(item, locale, backendOrigin)),
     }
   } catch (err) {
     if (err instanceof CatalogApiError && err.status === 404) return null
@@ -253,11 +254,12 @@ export async function resolveProducerPage(
 ): Promise<ProducerPageData | null> {
   try {
     const page = await getCatalogManufacturer(slug)
+    const backendOrigin = await getPageBackendOrigin()
     return {
       manufacturer: page.manufacturer,
       products: page.products
         .filter(hasValidCommerceOffer)
-        .map((item) => mapListItem(item, locale)),
+        .map((item) => mapListItem(item, locale, backendOrigin)),
     }
   } catch (err) {
     if (err instanceof CatalogApiError && err.status === 404) return null
@@ -357,6 +359,7 @@ async function mapApiDetail(
   locale: StorefrontLocale
 ): Promise<PdpDetail> {
   const p = detail.product
+  const backendOrigin = await getPageBackendOrigin()
   const listing = mapListItem(
     {
       id: p.id,
@@ -383,7 +386,8 @@ async function mapApiDetail(
           : null,
       review_count: detail.reviews.length,
     },
-    locale
+    locale,
+    backendOrigin
   )
   listing.countryLabel = countryDisplayLabel(listing.countryCode, locale)
 
@@ -406,7 +410,7 @@ async function mapApiDetail(
     const relatedList = await listCatalogProducts({
       category: p.category_names[0],
     })
-    related = await toStorefrontProducts(relatedList.products, locale)
+    related = (await toStorefrontProducts(relatedList.products, locale))
       .filter((x) => x.slug !== p.id && x.categorySlugs.includes(catSlug))
       .slice(0, 5)
   } catch {
@@ -521,11 +525,14 @@ async function mapApiDetail(
     })),
     relatedSlugs: related.map((r) => r.slug),
     galleryCount: 1,
+    galleryImages: resolveMediaUrl(p.image_url ?? null, backendOrigin)
+      ? [resolveMediaUrl(p.image_url ?? null, backendOrigin) as string]
+      : [],
   }
 }
 
 /**
- * PDP: product-id → catalog API; anders seed-slug.
+ * PDP: product-id → catalog API met geldige Commerce Cloud-offers.
  */
 export async function resolvePdpDetail(
   slug: string,

@@ -9,13 +9,13 @@ import { resolveOfferDeliveryLabel } from "./offer-delivery"
 import type { StorefrontLocale } from "./i18n/locales"
 import { readLocaleFromBrowser } from "./i18n/use-storefront-locale"
 import { t } from "./i18n/messages"
+import { resolveMediaUrl } from "@europmade/utils"
+import { medusaBackendUrl } from "./medusa-backend-url"
 
 function browserStorefrontLocale(): StorefrontLocale {
   return readLocaleFromBrowser()
 }
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 type CatalogListProduct = {
@@ -27,6 +27,7 @@ type CatalogListProduct = {
   offer_count: number
   from_price: number | null
   average_review_score: number | null
+  image_url?: string | null
 }
 
 type CatalogOffer = {
@@ -38,7 +39,7 @@ type CatalogOffer = {
 }
 
 async function catalogFetch<T>(path: string): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     credentials: "omit",
     headers: {
       "Content-Type": "application/json",
@@ -73,6 +74,7 @@ function toListing(item: CatalogListProduct): ListingProduct {
     verified: true,
     features: item.category_names.slice(0, 2),
     keywords: [item.title, item.brand_name ?? ""].filter(Boolean),
+    imageUrl: resolveMediaUrl(item.image_url ?? null, medusaBackendUrl()),
   }
 }
 
