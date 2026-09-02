@@ -17,6 +17,7 @@ import {
 import { applyGpsrComplianceAttributes } from "../../../modules/product-cloud/gpsr-manufacturer"
 import type { ManufacturerGpsrSource } from "../../../modules/product-cloud/gpsr-manufacturer"
 import { resolveCatalogGtinValue } from "../../../modules/product-cloud/concept-identifier"
+import { resolveEffectiveManufacturerId } from "../../../modules/product-cloud/manufacturer-completeness"
 import { buildDocumentInputs, evidenceKindOf, type EvidenceRow } from "../../../modules/product-cloud/compliance-gates"
 import type VerificationModuleService from "../../../modules/verification/service"
 import { VERIFICATION_MODULE } from "../../../modules/verification"
@@ -182,6 +183,14 @@ export type SellerProductManagerRow = {
   completeness: CompletenessReport
   /** @deprecated use offer.seller_sku / offers.sku_display */
   sku_hint: string | null
+  shipping_profile_id: string | null
+  shipping_profile: {
+    id: string
+    name: string
+    status: string
+    active_country_count: number
+    min_shipping_cost: number | null
+  } | null
   actions: ReturnType<typeof resolveProductActions>
 }
 
@@ -581,6 +590,13 @@ export async function buildSellerProductManagerRow(
     offerSummaries[0] ||
     emptyOffer(preview.identifier_id)
 
+  const resolvedManufacturer = await resolveManufacturerForCompleteness(
+    opts?.partner ?? null,
+    product.manufacturer_id,
+    opts?.container ?? null,
+    product.id
+  )
+
   const attributes = applyGpsrComplianceAttributes(
     defs.map((d) => ({
       code: d.code || d.id,
@@ -589,12 +605,7 @@ export async function buildSellerProductManagerRow(
         (d.is_required ? "category_required" : "optional")) as RequirementTier,
       value: valueByDef.get(d.id) ?? null,
     })),
-    await resolveManufacturerForCompleteness(
-      opts?.partner ?? null,
-      product.manufacturer_id,
-      opts?.container ?? null,
-      product.id
-    )
+    resolvedManufacturer
   )
   const ceValue =
     attributes.find((a) => a.code === "ce_marking")?.value?.trim() || null
@@ -608,6 +619,7 @@ export async function buildSellerProductManagerRow(
   )
 
   let mieClaimed = false
+  let mieFacilityId: string | null = null
   let evidenceRows: Array<Record<string, unknown>> = []
   if (opts?.verification) {
     try {
@@ -622,8 +634,14 @@ export async function buildSellerProductManagerRow(
     try {
       const mie = await loadMadeInEuropeForProduct(opts.container, product.id)
       mieClaimed = Boolean(mie?.score?.is_made_in_europe)
+      mieFacilityId =
+        (mie as { production_facility_id?: string | null })
+          ?.production_facility_id ??
+        (mie as { facility?: { id?: string } | null })?.facility?.id ??
+        null
     } catch {
       mieClaimed = false
+      mieFacilityId = null
     }
   }
   if (
@@ -633,11 +651,44 @@ export async function buildSellerProductManagerRow(
     mieClaimed = true
   }
 
+  const effectiveManufacturerId = resolveEffectiveManufacturerId({
+    manufacturer_id: product.manufacturer_id,
+    mie_facility_id: mieFacilityId,
+    resolved_manufacturer_name: resolvedManufacturer?.name ?? null,
+  })
+
+  const shippingProfileId =
+    (product as { shipping_profile_id?: string | null }).shipping_profile_id ??
+    null
+  let shippingProfileSummary: SellerProductManagerRow["shipping_profile"] = null
+  if (shippingProfileId && commerce) {
+    try {
+      const [profile] = await commerce.listSellerShippingProfiles({
+        id: shippingProfileId,
+      })
+      if (profile && profile.seller_id === sellerId) {
+        const { enrichShippingProfile } = await import(
+          "../../../modules/commerce-cloud/shipping-profile-engine"
+        )
+        const enriched = enrichShippingProfile(profile, 0)
+        shippingProfileSummary = {
+          id: enriched.id,
+          name: enriched.name,
+          status: enriched.status,
+          active_country_count: enriched.active_country_count,
+          min_shipping_cost: enriched.min_shipping_cost,
+        }
+      }
+    } catch {
+      shippingProfileSummary = null
+    }
+  }
+
   const completeness = computeProductCompleteness({
     basis: {
       title: working?.title ?? preview.title,
       brand_id: product.brand_id,
-      manufacturer_id: product.manufacturer_id,
+      manufacturer_id: effectiveManufacturerId,
       category_names: preview.category_names,
       identifier_value: preview.identifier_value,
       has_primary_image: !!primary,
@@ -648,7 +699,10 @@ export async function buildSellerProductManagerRow(
       has_price: offersAgg.price != null && offersAgg.price > 0,
       has_stock_configured: offersAgg.stock_total != null,
       has_delivery:
-        offersAgg.delivery_days_max != null || offer.shipping_cost != null,
+        Boolean(shippingProfileId) ||
+        offersAgg.delivery_days_max != null ||
+        offer.shipping_cost != null,
+      has_shipping_profile: Boolean(shippingProfileId),
       sales_status: offersAgg.sales_status,
       is_sellable: offersAgg.is_sellable,
     },
@@ -713,6 +767,8 @@ export async function buildSellerProductManagerRow(
     offers: offersAgg,
     completeness,
     sku_hint: offersAgg.sku_display,
+    shipping_profile_id: shippingProfileId,
+    shipping_profile: shippingProfileSummary,
   }
 
   return {

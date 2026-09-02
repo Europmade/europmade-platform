@@ -3,8 +3,8 @@
  * Zelfde fetch-patroon als partner-onboarding-api (credentials + publishable key).
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { medusaBackendUrl } from "../../_lib/medusa-backend-url"
+
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export class ProductCloudApiError extends Error {
@@ -18,7 +18,7 @@ export class ProductCloudApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     ...init,
     credentials: "include",
     headers: {
@@ -112,6 +112,7 @@ export type SellerOfferSummary = {
   identifier_id: string | null
   price: number | null
   shipping_cost: number | null
+  extra_delivery_cost?: number | null
   stock: number | null
   region_code: string | null
   seller_sku?: string | null
@@ -119,6 +120,10 @@ export type SellerOfferSummary = {
   delivery_days_max?: number | null
   is_sellable?: boolean
   has_offer: boolean
+  promo_price?: number | null
+  promo_starts_at?: string | null
+  promo_ends_at?: string | null
+  promo_active?: boolean
   effective_unit_price?: number | null
   total_customer_price?: number | null
 }
@@ -160,6 +165,14 @@ export type CatalogProduct = {
   offers?: SellerOffersAggregate
   completeness?: CompletenessReport
   sku_hint?: string | null
+  shipping_profile_id?: string | null
+  shipping_profile?: {
+    id: string
+    name: string
+    status: string
+    active_country_count: number
+    min_shipping_cost: number | null
+  } | null
   actions?: Record<string, boolean>
 }
 
@@ -469,12 +482,8 @@ export async function uploadProductMediaFile(
   if (opts?.media_type) form.append("media_type", opts.media_type)
   if (opts?.version_id) form.append("version_id", opts.version_id)
 
-  const BACKEND_URL =
-    process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
-  const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
-
   const response = await fetch(
-    `${BACKEND_URL}/store/product-cloud/products/${productId}/media/upload`,
+    `${medusaBackendUrl()}/store/product-cloud/products/${productId}/media/upload`,
     {
       method: "POST",
       credentials: "include",
@@ -599,6 +608,33 @@ export function bulkLinkBrandLocation(body: {
   }>("/store/product-cloud/products/bulk-brand-location", {
     method: "POST",
     body: JSON.stringify(body),
+  })
+}
+
+export function bulkAssignShippingProfile(body: {
+  product_ids: string[]
+  shipping_profile_id: string | null
+}) {
+  return request<{
+    message: string
+    results: Array<{ product_id: string; ok: boolean; error?: string }>
+  }>("/store/product-cloud/products/bulk-shipping-profile", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
+export function assignProductShippingProfile(
+  productId: string,
+  shipping_profile_id: string | null
+) {
+  return request<{
+    product_id: string
+    shipping_profile_id: string | null
+    offers_updated: number
+  }>(`/store/product-cloud/products/${productId}/shipping-profile`, {
+    method: "PATCH",
+    body: JSON.stringify({ shipping_profile_id }),
   })
 }
 
@@ -793,7 +829,7 @@ export async function previewProductImportFile(
   form.append("file", file)
   if (mapping) form.append("mapping", JSON.stringify(mapping))
   const response = await fetch(
-    `${BACKEND_URL}/store/product-cloud/import/preview`,
+    `${medusaBackendUrl()}/store/product-cloud/import/preview`,
     {
       method: "POST",
       credentials: "include",
@@ -821,7 +857,7 @@ export async function commitProductImportFile(
   const form = new FormData()
   form.append("file", file)
   form.append("mapping", JSON.stringify(mapping))
-  const response = await fetch(`${BACKEND_URL}/store/product-cloud/import`, {
+  const response = await fetch(`${medusaBackendUrl()}/store/product-cloud/import`, {
     method: "POST",
     credentials: "include",
     headers: PUBLISHABLE_KEY
@@ -841,7 +877,7 @@ export async function commitProductImportFile(
 }
 
 export function productImportTemplateUrl(format: "xlsx" | "csv") {
-  return `${BACKEND_URL}/store/product-cloud/import/template?format=${format}`
+  return `${medusaBackendUrl()}/store/product-cloud/import/template?format=${format}`
 }
 
 export async function downloadProductImportTemplate(format: "xlsx" | "csv") {

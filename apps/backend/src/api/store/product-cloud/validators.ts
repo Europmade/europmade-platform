@@ -158,3 +158,18 @@ export const StoreBulkBrandLocationBody = z.object({
 export type StoreBulkBrandLocationBodyInput = z.infer<
   typeof StoreBulkBrandLocationBody
 >
+
+export const StoreBulkShippingProfileBody = z.object({
+  product_ids: z.array(z.string().trim().min(1)).min(1).max(500),
+  shipping_profile_id: z.string().trim().min(1).nullable(),
+})
+export type StoreBulkShippingProfileBodyInput = z.infer<
+  typeof StoreBulkShippingProfileBody
+>
+
+export const StoreProductShippingProfileBody = z.object({
+  shipping_profile_id: z.string().trim().min(1).nullable(),
+})
+export type StoreProductShippingProfileBodyInput = z.infer<
+  typeof StoreProductShippingProfileBody
+>

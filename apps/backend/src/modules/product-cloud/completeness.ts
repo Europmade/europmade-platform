@@ -98,6 +98,7 @@ export type OfferGateInput = {
   has_price: boolean
   has_stock_configured: boolean
   has_delivery: boolean
+  has_shipping_profile?: boolean
   sales_status?: "active" | "paused" | "mixed" | null
   is_sellable?: boolean
 }
@@ -284,6 +285,9 @@ export function computeProductCompleteness(input: {
       }
       if (!input.offer.has_delivery) {
         publication_blocked_reasons.push("Levertijd/verzending niet ingesteld")
+      }
+      if (input.offer.has_shipping_profile === false) {
+        publication_blocked_reasons.push("Verzendprofiel ontbreekt")
       }
     }
   }

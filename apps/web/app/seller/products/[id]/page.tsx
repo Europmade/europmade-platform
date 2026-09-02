@@ -46,6 +46,14 @@ import type { StorefrontLocale } from "../../../_lib/i18n/locales"
 import { t } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
 import { SellerVariantsPanel } from "./_components/variants-panel"
+import { ProductWizardProgress } from "./_components/product-wizard-progress"
+import { PublicationReadinessCards } from "./_components/publication-readiness-cards"
+import { ProductShippingStep } from "./_components/product-shipping-step"
+import {
+  nextWizardStep,
+  resolveWizardStep,
+  type WizardStepKey,
+} from "./_lib/product-wizard"
 import { UnifiedComplianceEvidenceSection } from "../../_components/compliance-evidence-section"
 import {
   createSellerManufacturer,
@@ -98,30 +106,7 @@ const VARIANT_AXIS_KEYS = [
 
 type HistoryFilter = "all" | "compliance" | "price" | "variants" | "media" | "rest"
 
-type TabKey =
-  | "overview"
-  | "information"
-  | "variants"
-  | "offer"
-  | "media"
-  | "translations"
-  | "publication"
-  | "history"
-
-const TAB_KEYS: Record<TabKey, string> = {
-  overview: "pdpTabOverview",
-  information: "pdpTabInformation",
-  variants: "pdpTabVariants",
-  offer: "pdpTabOffer",
-  media: "pdpTabMedia",
-  translations: "pdpTabTranslations",
-  publication: "pdpTabPublication",
-  history: "pdpTabHistory",
-}
-const TAB_ORDER: TabKey[] = [
-  "overview", "information", "variants", "offer",
-  "media", "translations", "publication", "history",
-]
+type TabKey = WizardStepKey | "history"
 
 const MEDIA_MAX_BYTES = 3 * 1024 * 1024
 
@@ -434,7 +419,7 @@ function historyCategory(fieldCode: string): HistoryFilter {
 
 function tabForFieldCode(fieldCode: string): TabKey {
   if (fieldCode.startsWith("offer.")) return "offer"
-  if (fieldCode.startsWith("variant.")) return "variants"
+  if (fieldCode.startsWith("variant.")) return "information"
   if (
     fieldCode.startsWith("media.") ||
     fieldCode.includes("media") ||
@@ -463,6 +448,7 @@ type OfferDraft = {
   quantity_available: string
   seller_sku: string
   delivery_days_max: string
+  vat_rate: string
   region_code: string
   sales_status: "active" | "paused"
   clear_promo: boolean
@@ -513,6 +499,10 @@ function draftFromOffer(
     seller_sku: offer.seller_sku || "",
     delivery_days_max:
       offer.delivery_days_max != null ? String(offer.delivery_days_max) : "",
+    vat_rate:
+      offer.vat_rate != null && Number.isFinite(Number(offer.vat_rate))
+        ? String(Number(offer.vat_rate))
+        : "0.21",
     region_code: offer.region_code || "NL",
     sales_status: offer.sales_status === "paused" ? "paused" : "active",
     clear_promo: false,
@@ -532,6 +522,7 @@ function emptyOfferDraft(identifierId: string, region = "NL"): OfferDraft {
     quantity_available: "0",
     seller_sku: "",
     delivery_days_max: "",
+    vat_rate: "0.21",
     region_code: region,
     sales_status: "active",
     clear_promo: false,
@@ -547,11 +538,11 @@ export default function SellerProductDetailPage() {
   const params = useParams<{ id: string }>()
   const search = useSearchParams()
   const productId = params.id
-  const initialTab = (search.get("tab") as TabKey) || "overview"
-
-  const [tab, setTabState] = useState<TabKey>(
-    TAB_ORDER.includes(initialTab) ? initialTab : "overview"
+  const initialStep = resolveWizardStep(
+    search.get("step") || search.get("tab")
   )
+
+  const [tab, setTabState] = useState<TabKey>(initialStep)
   const [product, setProduct] = useState<ProductManagerDetail | "loading" | null>(
     "loading"
   )
@@ -624,7 +615,12 @@ export default function SellerProductDetailPage() {
     (next: TabKey, section?: string | null) => {
       setTabState(next)
       const qs = new URLSearchParams(search.toString())
-      qs.set("tab", next)
+      if (next === "history") {
+        qs.set("tab", "history")
+      } else {
+        qs.set("step", next)
+        qs.delete("tab")
+      }
       if (section) qs.set("section", section)
       else qs.delete("section")
       router.replace(`/seller/products/${productId}?${qs.toString()}`, {
@@ -707,8 +703,13 @@ export default function SellerProductDetailPage() {
   }, [load])
 
   useEffect(() => {
-    const next = search.get("tab") as TabKey | null
-    if (next && TAB_ORDER.includes(next)) setTabState(next)
+    const next = search.get("tab")
+    if (next === "history") {
+      setTabState("history")
+      return
+    }
+    const step = search.get("step") || search.get("tab")
+    if (step) setTabState(resolveWizardStep(step))
   }, [search])
 
   useEffect(() => {
@@ -1142,6 +1143,8 @@ export default function SellerProductDetailPage() {
       setProduct(res.product)
       await refreshCompliance()
       setNotice(t("pdpInfoSaved", locale))
+      const next = nextWizardStep("information")
+      if (tab === "information" && next) setTab(next)
     } catch (err: unknown) {
       setError(
         err instanceof ProductCloudApiError ? err.message : t("pdpSaveFailed", locale)
@@ -1151,7 +1154,7 @@ export default function SellerProductDetailPage() {
     }
   }
 
-  async function saveOffer() {
+  async function persistOfferDraft(opts?: { advanceFrom?: WizardStepKey }) {
     if (!offerDraft) return
     setOfferSaving(true)
     setNotice(null)
@@ -1159,20 +1162,16 @@ export default function SellerProductDetailPage() {
     try {
       // UI fields are customer prices incl. shipping; API stores product component.
       const regular = Number(regularPriceDraft || offerDraft.base_price)
-      const shipping_cost = Number(offerDraft.shipping_cost)
+      const shipping_cost = Number(offerDraft.shipping_cost || 0)
       const extra_delivery_cost = Number(offerDraft.extra_delivery_cost || 0)
-      const quantity_available = Number(offerDraft.quantity_available)
+      const quantity_available = Number(offerDraft.quantity_available || 0)
       const delivery_days_max =
         offerDraft.delivery_days_max.trim() === ""
           ? null
           : Number(offerDraft.delivery_days_max)
+      const vat_rate = Number(offerDraft.vat_rate || "0.21")
 
-      if (
-        !Number.isFinite(regular) ||
-        !Number.isFinite(shipping_cost) ||
-        !Number.isFinite(extra_delivery_cost) ||
-        !Number.isFinite(quantity_available)
-      ) {
+      if (!Number.isFinite(regular) || !Number.isFinite(vat_rate)) {
         throw new Error(t("offerPriceInvalid", locale))
       }
       const base_price = Math.round(regular * 100) / 100
@@ -1216,6 +1215,7 @@ export default function SellerProductDetailPage() {
           shipping_cost,
           extra_delivery_cost,
           quantity_available,
+          vat_rate,
           seller_sku: offerDraft.seller_sku.trim() || null,
           delivery_days_max,
           sales_status: offerDraft.sales_status,
@@ -1230,6 +1230,7 @@ export default function SellerProductDetailPage() {
           shipping_cost,
           extra_delivery_cost,
           quantity_available,
+          vat_rate,
           seller_sku: offerDraft.seller_sku.trim() || null,
           delivery_days_max,
           sales_status: offerDraft.sales_status,
@@ -1238,6 +1239,10 @@ export default function SellerProductDetailPage() {
       }
       setNotice(t("pdpOfferSaved", locale))
       load()
+      if (opts?.advanceFrom) {
+        const next = nextWizardStep(opts.advanceFrom)
+        if (next) setTab(next)
+      }
     } catch (err: unknown) {
       setError(
         err instanceof CommerceCloudApiError || err instanceof Error
@@ -1247,6 +1252,30 @@ export default function SellerProductDetailPage() {
     } finally {
       setOfferSaving(false)
     }
+  }
+
+  async function saveOffer() {
+    if (!offerDraft) return
+    const regular = Number(regularPriceDraft || offerDraft.base_price)
+    if (!Number.isFinite(regular) || regular <= 0) {
+      setError(t("offerPriceInvalid", locale))
+      return
+    }
+    await persistOfferDraft({ advanceFrom: "offer" })
+  }
+
+  async function saveShipping() {
+    if (!offerDraft) return
+    const shipping_cost = Number(offerDraft.shipping_cost)
+    const quantity_available = Number(offerDraft.quantity_available)
+    if (
+      !Number.isFinite(shipping_cost) ||
+      !Number.isFinite(quantity_available)
+    ) {
+      setError("Vul voorraad en verzendkosten in.")
+      return
+    }
+    await persistOfferDraft({ advanceFrom: "shipping" })
   }
 
   async function pauseOrResume(next: "paused" | "active") {
@@ -1670,7 +1699,7 @@ export default function SellerProductDetailPage() {
         {product.primary_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={product.primary_image_url}
+            src={resolveSellerMediaUrl(product.primary_image_url)}
             alt=""
             className="h-20 w-20 rounded object-cover"
           />
@@ -1762,23 +1791,27 @@ export default function SellerProductDetailPage() {
       ) : null}
 
       <div className="mb-4 flex flex-wrap gap-1 border-b border-wf-200 pb-2">
-        {TAB_ORDER.map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`rounded px-2.5 py-1.5 text-[11px] font-semibold ${
-              tab === key
-                ? "bg-wf-900 text-white"
-                : "bg-wf-100 text-wf-700 hover:bg-wf-200"
-            }`}
-          >
-            {t(TAB_KEYS[key], locale)}
-          </button>
-        ))}
+        {product && product !== "loading" ? (
+          <ProductWizardProgress
+            product={product}
+            current={tab === "history" ? "information" : tab}
+            onSelect={(step) => setTab(step)}
+          />
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setTab("history")}
+          className={`ml-auto rounded px-2.5 py-1.5 text-[11px] font-semibold ${
+            tab === "history"
+              ? "bg-wf-900 text-white"
+              : "bg-wf-100 text-wf-700 hover:bg-wf-200"
+          }`}
+        >
+          {t("pdpTabHistory", locale)}
+        </button>
       </div>
 
-      {tab === "overview" ? (
+      {false && tab === "overview" ? (
         <div className="grid gap-3 tablet:grid-cols-2">
           {overviewCards.map((card) => (
             <button
@@ -1919,6 +1952,40 @@ export default function SellerProductDetailPage() {
             )
           })}
 
+          <SellerVariantsPanel
+            productId={productId}
+            product={product}
+            suggestedAxes={suggestedAxes}
+            allowedAxes={allowedVariantTypes}
+            locale={locale}
+            onReload={load}
+            onNotice={setNotice}
+            onError={setError}
+            onOpenOfferTab={(offer) => {
+              selectOffer(offer)
+              setTab("offer")
+            }}
+          />
+
+          <div className="sticky bottom-0 z-10 -mx-1 border-t border-wf-300 bg-white/95 px-1 py-2 backdrop-blur">
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={saveInformation} disabled={saving}>
+                {saving ? t("pdpSaving", locale) : t("commonSave", locale)}
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setTab("offer")}
+              >
+                Volgende: verkoopinformatie
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {tab === "compliance" ? (
+        <div className="space-y-4 pb-16">
           <section
             id="section-compliance"
             className="space-y-3 rounded border border-wf-300 bg-white p-3"
@@ -2382,9 +2449,12 @@ export default function SellerProductDetailPage() {
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={() => setTab("publication")}
+                onClick={() => {
+                  void saveInformation()
+                  setTab("translations")
+                }}
               >
-                {t("pdpPublicationCheck", locale)}
+                Volgende: vertalingen
               </Button>
             </div>
           </div>
@@ -2505,20 +2575,6 @@ export default function SellerProductDetailPage() {
             </div>
           )}
         </div>
-      ) : null}
-
-      {tab === "variants" ? (
-        <SellerVariantsPanel
-          productId={productId}
-          product={product}
-          suggestedAxes={suggestedAxes}
-          allowedAxes={allowedVariantTypes}
-          locale={locale}
-          onReload={load}
-          onNotice={setNotice}
-          onError={setError}
-          onOpenOfferTab={(offer) => selectOffer(offer)}
-        />
       ) : null}
 
       {tab === "offer" ? (
@@ -2678,23 +2734,23 @@ export default function SellerProductDetailPage() {
                 </div>
 
                 <Input
-                  label={t("offerShippingLabel", locale)}
-                  value={offerDraft.shipping_cost}
-                  onChange={(e) =>
+                  label="BTW (%)"
+                  value={String(Math.round(Number(offerDraft.vat_rate || 0.21) * 100))}
+                  onChange={(e) => {
+                    const pct = Number(e.target.value)
                     setOfferDraft({
                       ...offerDraft,
-                      shipping_cost: e.target.value,
+                      vat_rate: Number.isFinite(pct)
+                        ? String(Math.round(pct) / 100)
+                        : "0.21",
                     })
-                  }
+                  }}
                 />
                 <Input
-                  label={t("offerHandlingLabel", locale)}
-                  value={offerDraft.extra_delivery_cost}
+                  label="Seller SKU"
+                  value={offerDraft.seller_sku}
                   onChange={(e) =>
-                    setOfferDraft({
-                      ...offerDraft,
-                      extra_delivery_cost: e.target.value,
-                    })
+                    setOfferDraft({ ...offerDraft, seller_sku: e.target.value })
                   }
                 />
                 <div className="rounded border border-wf-200 bg-wf-50 p-2 text-[11px] text-wf-700 tablet:col-span-2">
@@ -2729,33 +2785,6 @@ export default function SellerProductDetailPage() {
                   </p>
                 </div>
 
-                <Input
-                  label={t("offerStock", locale)}
-                  value={offerDraft.quantity_available}
-                  onChange={(e) =>
-                    setOfferDraft({
-                      ...offerDraft,
-                      quantity_available: e.target.value,
-                    })
-                  }
-                />
-                <Input
-                  label="Seller SKU"
-                  value={offerDraft.seller_sku}
-                  onChange={(e) =>
-                    setOfferDraft({ ...offerDraft, seller_sku: e.target.value })
-                  }
-                />
-                <Input
-                  label={t("offerDeliveryDays", locale)}
-                  value={offerDraft.delivery_days_max}
-                  onChange={(e) =>
-                    setOfferDraft({
-                      ...offerDraft,
-                      delivery_days_max: e.target.value,
-                    })
-                  }
-                />
                 <div>
                   <Input
                     label={t("offerRegionMarket", locale)}
@@ -2855,6 +2884,13 @@ export default function SellerProductDetailPage() {
                 <Button size="sm" onClick={saveOffer} disabled={offerSaving}>
                   {offerSaving ? `${t("commonSave", locale)}…` : t("offerSaveBtn", locale)}
                 </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setTab("shipping")}
+                >
+                  Volgende: voorraad & verzending
+                </Button>
                 {offerDraft.offer_id && offerDraft.sales_status === "active" ? (
                   <Button
                     size="sm"
@@ -2882,6 +2918,17 @@ export default function SellerProductDetailPage() {
             </div>
           )}
         </div>
+      ) : null}
+
+      {tab === "shipping" && product && product !== "loading" ? (
+        <ProductShippingStep
+          product={product}
+          productId={productId}
+          offerDraft={offerDraft}
+          onReload={load}
+          onSaveStock={saveShipping}
+          stockSaving={offerSaving}
+        />
       ) : null}
 
       {tab === "media" ? (
@@ -3050,107 +3097,98 @@ export default function SellerProductDetailPage() {
               </section>
             ) : null}
           </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setTab("compliance")}>
+              Volgende: compliance
+            </Button>
+          </div>
         </div>
       ) : null}
 
       {tab === "translations" ? (
         <div className="rounded border border-wf-300 bg-white p-3 text-xs">
-          <p className="text-wf-600">
-            {t("transHint", locale)}
+          <div className="flex items-start gap-2">
+            <p className="flex-1 text-wf-700">
+              Vertalingen maken je product vindbaar in andere Europese markten.
+              Vul per taal een titel en beschrijving in, of laat teksten
+              automatisch vertalen zodra dat beschikbaar is.
+            </p>
+            <button
+              type="button"
+              title="Vertalingen worden per taal opgeslagen naast de Nederlandse brontekst. AI-vertaling vult lege velden aan; je kunt alles handmatig aanpassen."
+              className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-wf-400 text-[10px] font-bold text-wf-600"
+            >
+              i
+            </button>
+          </div>
+          <p className="mt-2 text-[11px] text-wf-500">
+            Vertalingen worden beschikbaar zodra DeepL gekoppeld is.
           </p>
           <Link
             href={`/seller/products/${product.id}/translations`}
             className="mt-3 inline-flex h-8 items-center rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white"
           >
-            {t("transOpenLink", locale)}
+            Vertalingen beheren
           </Link>
+          <div className="mt-3">
+            <Button size="sm" variant="secondary" onClick={() => setTab("publish")}>
+              Volgende: publiceren
+            </Button>
+          </div>
         </div>
       ) : null}
 
-      {tab === "publication" ? (
-        <div className="space-y-3">
-          <div className="rounded border border-wf-300 bg-white p-3 text-xs">
-            <p className="font-semibold text-wf-900">
-              {t("pubStatusLabel", locale)}{pub.label}
+      {tab === "publish" ? (
+        <div className="space-y-4">
+          <PublicationReadinessCards
+            product={product}
+            onOpenStep={(step) => setTab(step)}
+          />
+
+          {product.completeness?.publishable ? (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900">
+              Je product is compleet.
             </p>
-            <p className="mt-1 text-wf-600">
-              {t("pubCatalogHint", locale)}
-              {sales.label}).
+          ) : null}
+
+          {product.approval_rejection_reason ? (
+            <p className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-900">
+              {t("pubRejectedLabel", locale)}{product.approval_rejection_reason}
             </p>
-            <p className="mt-2 text-wf-600">
-              {t("pubInfoQuality", locale)}
-              <span className={quality.className}>{quality.label}</span> ·{" "}
-              {product.completeness?.percent ?? 0}%
+          ) : null}
+
+          {product.publication_status === "In review" ? (
+            <p className="rounded border border-blue-200 bg-blue-50 p-2 text-xs text-blue-900">
+              {t("pubAwaitingApproval", locale)}
             </p>
-            <p className="mt-1 text-wf-600">
-              {t("pubPublishableLabel", locale)}{product.completeness?.publishable ? t("pubYes", locale) : t("pubNo", locale)}
-            </p>
-            <p className="mt-1 text-wf-600">
-              {workflowStatusLabel(product, locale)}
-            </p>
-            {product.approval_rejection_reason ? (
-              <p className="mt-2 rounded border border-red-200 bg-red-50 p-2 text-red-900">
-                {t("pubRejectedLabel", locale)}{product.approval_rejection_reason}
-              </p>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
+            {product.actions?.submit_for_approval && product.version_id ? (
+              <Button
+                size="sm"
+                disabled={publishBusy || !product.completeness?.publishable}
+                onClick={() => void handleSubmitForApproval()}
+              >
+                {publishBusy ? t("pubSubmitting", locale) : "Product publiceren"}
+              </Button>
             ) : null}
-            {product.publication_status === "In review" ? (
-              <p className="mt-2 rounded border border-blue-200 bg-blue-50 p-2 text-blue-900">
-                {t("pubAwaitingApproval", locale)}
-              </p>
-            ) : null}
-          </div>
-            {(product.completeness?.sale_blocked_reasons || []).length ? (
-              <div className="rounded border border-red-200 bg-red-50 p-3 text-xs">
-                <p className="font-semibold text-red-900">{t("pubSaleBlocked", locale)}</p>
-                <ul className="mt-2 list-disc space-y-1 pl-4 text-red-900">
-                  {(product.completeness?.sale_blocked_reasons || []).map(
-                    (reason) => (
-                      <li key={reason}>{reason}</li>
-                    )
-                  )}
-                </ul>
-              </div>
-            ) : null}
-          {(product.completeness?.publication_blocked_reasons || []).length ? (
-            <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs">
-              <p className="font-semibold text-amber-900">
-                {t("pubWhyNotPublishable", locale)}
-              </p>
-              <ul className="mt-2 list-disc space-y-1 pl-4 text-amber-900">
-                {(product.completeness?.publication_blocked_reasons || []).map(
-                  (reason) => (
-                    <li key={reason}>
-                      <button
-                        type="button"
-                        className="underline"
-                        onClick={() => setTab("information")}
-                      >
-                        {reason}
-                      </button>
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          ) : (
-            <p className="rounded border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-              {t("pubAllGreen", locale)}
-            </p>
-          )}
-          {product.actions?.submit_for_approval && product.version_id ? (
             <Button
               size="sm"
-              disabled={publishBusy || !product.completeness?.publishable}
-              onClick={() => void handleSubmitForApproval()}
+              variant="secondary"
+              onClick={() => router.push("/seller/products/new")}
             >
-              {publishBusy ? t("pubSubmitting", locale) : t("pubSubmitBtn", locale)}
+              Nog een product toevoegen
             </Button>
-          ) : null}
-          {product.version_id ? (
-            <p className="text-[10px] text-wf-500">
-              Working version: {product.version_id}
-            </p>
-          ) : null}
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => router.push("/seller/products")}
+            >
+              Terug naar productoverzicht
+            </Button>
+          </div>
         </div>
       ) : null}
     </SellerGate>

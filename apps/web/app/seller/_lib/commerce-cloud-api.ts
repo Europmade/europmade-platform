@@ -50,6 +50,9 @@ export type OfferRow = {
   seller_id: string
   identifier_id: string
   region_code: string
+  seller_sku?: string | null
+  sales_status?: "active" | "paused"
+  delivery_days_max?: number | null
 }
 
 export type InventoryRow = {
@@ -64,6 +67,7 @@ export type PriceRow = {
   base_price: string | number
   shipping_cost: string | number
   vat_rate: number
+  extra_delivery_cost?: string | number | null
 }
 
 export type OfferListItem = {
@@ -71,6 +75,7 @@ export type OfferListItem = {
   inventory: InventoryRow | null
   price: PriceRow | null
   total_price: number | null
+  is_sellable?: boolean
 }
 
 export type BuyBoxWeights = {
@@ -102,6 +107,15 @@ export type UpsertOfferInput = {
   base_price: number
   shipping_cost: number
   vat_rate?: number
+  seller_sku?: string | null
+  sales_status?: "active" | "paused"
+  delivery_days_max?: number | null
+  extra_delivery_cost?: number | null
+  regular_customer_price?: number | null
+  promo_price?: number | null
+  promo_starts_at?: string | null
+  promo_ends_at?: string | null
+  clear_promo?: boolean
 }
 
 export type UpsertOfferResult = {
@@ -127,6 +141,15 @@ export type PatchOfferInput = {
   base_price?: number
   shipping_cost?: number
   vat_rate?: number
+  seller_sku?: string | null
+  sales_status?: "active" | "paused"
+  delivery_days_max?: number | null
+  extra_delivery_cost?: number | null
+  regular_customer_price?: number | null
+  promo_price?: number | null
+  promo_starts_at?: string | null
+  promo_ends_at?: string | null
+  clear_promo?: boolean
 }
 
 export type OfferDetailResponse = {
@@ -134,6 +157,7 @@ export type OfferDetailResponse = {
   inventory: InventoryRow | null
   price: PriceRow | null
   total_price: number | null
+  is_sellable?: boolean
   product_preview: {
     product_id: string
     title: string | null
@@ -188,4 +212,116 @@ export function withdrawOffer(id: string) {
   }>(`/store/commerce-cloud/offers/${id}`, {
     method: "DELETE",
   })
+}
+
+export type DeliveryTimeCode =
+  | "same_day"
+  | "next_day"
+  | "1_2"
+  | "2_3"
+  | "3_5"
+  | "5_plus"
+
+export type ShippingCountryConfig = {
+  active: boolean
+  shipping_cost: number
+  free_shipping: boolean
+  free_shipping_threshold?: number | null
+  delivery_time_code: DeliveryTimeCode
+  delivery_days_max?: number | null
+  delivery_weekdays?: number[]
+  carrier_ref?: { carrier_id: string; service_id?: string | null } | null
+}
+
+export type HandoverDaySetting = {
+  enabled: boolean
+  cutoff_time: string
+  processing_time_code: DeliveryTimeCode
+}
+
+export type ProcessingSettings = {
+  same_for_all_weekdays: boolean
+  default_handover: HandoverDaySetting
+  weekdays?: Partial<Record<string, HandoverDaySetting>>
+}
+
+export type SellerShippingProfile = {
+  id: string
+  seller_id: string
+  name: string
+  description?: string | null
+  status: "draft" | "active" | "inactive"
+  country_rates: Record<string, ShippingCountryConfig>
+  processing_settings: ProcessingSettings
+  carrier_mode: "own" | "carrier"
+  carrier_ref?: { carrier_id: string; service_id?: string | null } | null
+  linked_product_count?: number
+  active_country_count?: number
+  min_shipping_cost?: number | null
+  created_at?: string
+  updated_at?: string
+}
+
+export function listShippingProfiles() {
+  return request<{ shipping_profiles: SellerShippingProfile[] }>(
+    "/store/commerce-cloud/shipping-profiles"
+  )
+}
+
+export function getShippingProfile(id: string) {
+  return request<{ shipping_profile: SellerShippingProfile }>(
+    `/store/commerce-cloud/shipping-profiles/${id}`
+  )
+}
+
+export function createShippingProfile(
+  body: Partial<SellerShippingProfile> & { name: string }
+) {
+  return request<{ shipping_profile: SellerShippingProfile }>(
+    "/store/commerce-cloud/shipping-profiles",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
+export function patchShippingProfile(
+  id: string,
+  body: Partial<
+    Pick<
+      SellerShippingProfile,
+      | "name"
+      | "description"
+      | "status"
+      | "country_rates"
+      | "processing_settings"
+      | "carrier_mode"
+      | "carrier_ref"
+    >
+  >
+) {
+  return request<{ shipping_profile: SellerShippingProfile }>(
+    `/store/commerce-cloud/shipping-profiles/${id}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
+export function deleteShippingProfile(id: string) {
+  return request<void>(`/store/commerce-cloud/shipping-profiles/${id}`, {
+    method: "DELETE",
+  })
+}
+
+export function duplicateShippingProfile(id: string, name: string) {
+  return request<{ shipping_profile: SellerShippingProfile }>(
+    `/store/commerce-cloud/shipping-profiles/${id}/duplicate`,
+    {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }
+  )
 }

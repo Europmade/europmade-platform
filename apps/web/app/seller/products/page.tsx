@@ -1,244 +1,459 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
-import { Badge, Button, FileUpload, Input, Notice } from "@europmade/ui"
+import { useSearchParams, useRouter } from "next/navigation"
+import { Badge, Input, Notice } from "@europmade/ui"
 import { SellerGate } from "../_components/seller-gate"
 import { EmptyState } from "../_components/empty-state"
 import { formatEuro } from "../../_components/storefront-shell"
 import {
-  type DemoProduct,
-  type ProductCloudStatus,
-} from "../_lib/demo-data"
-import { useDemoProducts } from "../_lib/demo-store"
+  bulkLinkBrandLocation,
+  bulkUpdateProductInformation,
+  bulkAssignShippingProfile,
+  listOwnProducts,
+  ProductCloudApiError,
+  type CatalogProduct,
+} from "../_lib/product-cloud-api"
+import { patchOffer, CommerceCloudApiError } from "../_lib/commerce-cloud-api"
+import {
+  listShippingProfiles,
+  type SellerShippingProfile,
+} from "../_lib/commerce-cloud-api"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
-import { t, tFormat } from "../../_lib/i18n/messages"
+import type { StorefrontLocale } from "../../_lib/i18n/locales"
+import { t } from "../../_lib/i18n/messages"
 import { statusLabel } from "../../_lib/i18n/status-labels"
-import { SellerCloudTranslationsPanel } from "./_components/cloud-translations-panel"
+import { gpsrHint } from "../_lib/gpsr-hints"
+import { listSellerBrands, listSellerFacilities } from "../_lib/brands-api"
 
-type ListingFilter = "all" | "live" | "concept"
-type StockFilter = "all" | "in_stock" | "out_of_stock" | "no_offer"
-type LifecycleFilter =
+type ListFilter =
   | "all"
-  | "Actief"
-  | "Concept gecontroleerd"
-  | "Retailer Created"
-  | "Gearchiveerd"
+  | "for_sale"
+  | "paused"
+  | "no_stock"
+  | "incomplete"
+  | "sufficient"
+  | "complete"
+  | "published"
+  | "unpublished"
+  | "pending_approval"
 
-type CsvPreviewRow = {
-  title: string
-  ean: string
-  price: number | null
-  stock: number | null
-  category: string
-  error?: string
+type ListSort = "newest" | "title" | "stock" | "price"
+
+type BulkAction = "" | "eu_compliance" | "brand_location" | "shipping_profile"
+
+const EU_COMPLIANCE_FIELDS = [
+  { code: "gpsr_manufacturer_name", labelKey: "plManufacturerName" as const },
+  { code: "gpsr_manufacturer_address", labelKey: "plManufacturerAddress" as const },
+  { code: "gpsr_manufacturer_postal_city", labelKey: "plManufacturerPostal" as const },
+  { code: "gpsr_manufacturer_country", labelKey: "plManufacturerCountry" as const },
+  { code: "gpsr_manufacturer_email", labelKey: "plManufacturerEmail" as const },
+  { code: "gpsr_eu_responsible_name", labelKey: "plEuResponsibleName" as const },
+  { code: "gpsr_eu_responsible_address", labelKey: "plEuResponsibleAddress" as const },
+  { code: "gpsr_eu_responsible_postal_city", labelKey: "plEuResponsiblePostal" as const },
+  { code: "gpsr_eu_responsible_country", labelKey: "plEuResponsibleCountry" as const },
+  { code: "gpsr_eu_responsible_contact", labelKey: "plEuResponsibleContact" as const },
+] as const
+
+type EuComplianceForm = Record<
+  (typeof EU_COMPLIANCE_FIELDS)[number]["code"],
+  string
+>
+
+function emptyEuForm(): EuComplianceForm {
+  return {
+    gpsr_manufacturer_name: "",
+    gpsr_manufacturer_address: "",
+    gpsr_manufacturer_postal_city: "",
+    gpsr_manufacturer_country: "",
+    gpsr_manufacturer_email: "",
+    gpsr_eu_responsible_name: "",
+    gpsr_eu_responsible_address: "",
+    gpsr_eu_responsible_postal_city: "",
+    gpsr_eu_responsible_country: "",
+    gpsr_eu_responsible_contact: "",
+  }
 }
 
-type BulkField =
-  | "price"
-  | "stock"
-  | "category"
-  | "status"
-  | "publish"
-  | "offline"
+function qualityLabel(q: CatalogProduct["completeness"], locale: StorefrontLocale = "nl") {
+  const level = q?.information_quality
+  if (level === "complete")
+    return { label: t("qualityComplete", locale), className: "text-emerald-700", pct: q?.percent }
+  if (level === "sufficient")
+    return { label: t("qualitySufficient", locale), className: "text-wf-800", pct: q?.percent }
+  if (level === "insufficient")
+    return { label: t("qualityInsufficient", locale), className: "text-amber-700 font-semibold", pct: q?.percent }
+  const pct = q?.percent ?? 0
+  if (pct >= 100) return { label: t("qualityComplete", locale), className: "text-emerald-700", pct }
+  if (q?.publishable) return { label: t("qualitySufficient", locale), className: "text-wf-800", pct }
+  return { label: t("qualityInsufficient", locale), className: "text-amber-700 font-semibold", pct }
+}
+
+import {
+  complianceReviewLabel,
+  salePresentationLabel,
+  publicationGateLabel,
+} from "../_lib/product-status-labels"
+
+function CopyButton({ value }: { value: string }) {
+  const locale = useStorefrontLocale()
+  const [done, setDone] = useState(false)
+  return (
+    <button
+      type="button"
+      title={t("plCopy", locale)}
+      className="ml-1 rounded px-1 text-[10px] text-wf-500 hover:bg-wf-100 hover:text-wf-800"
+      onClick={async (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        try {
+          await navigator.clipboard.writeText(value)
+          setDone(true)
+          setTimeout(() => setDone(false), 1200)
+        } catch {
+          /* ignore */
+        }
+      }}
+    >
+      {done ? "✓" : "⧉"}
+    </button>
+  )
+}
 
 /**
- * Productbeheer — CSV-import, bulk wijzigen, Product Cloud Status (MVP).
+ * Seller Product Manager list — P1B (real Product Cloud + Commerce Cloud).
+ * stock_total = som van quantity_available over seller offers op dit product.
  */
 export default function SellerProductsPage() {
   const locale = useStorefrontLocale()
-  const [products, setProducts] = useDemoProducts()
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialFilter = (searchParams.get("filter") || "all") as ListFilter
+  const [rows, setRows] = useState<CatalogProduct[] | "loading">("loading")
+  const [totalUnfiltered, setTotalUnfiltered] = useState(0)
+  const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
-  const [listingFilter, setListingFilter] = useState<ListingFilter>("all")
-  const [stockFilter, setStockFilter] = useState<StockFilter>("all")
-  const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>("all")
-  const [notice, setNotice] = useState<string | null>(null)
+  const [debouncedQ, setDebouncedQ] = useState("")
+  const [filter, setFilter] = useState<ListFilter>(
+    [
+      "all",
+      "for_sale",
+      "paused",
+      "no_stock",
+      "incomplete",
+      "sufficient",
+      "complete",
+      "published",
+      "unpublished",
+      "pending_approval",
+    ].includes(initialFilter)
+      ? initialFilter
+      : "all"
+  )
+  const [sort, setSort] = useState<ListSort>("newest")
+  const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const [actionBusy, setActionBusy] = useState<string | null>(null)
+  const [actionNotice, setActionNotice] = useState<string | null>(null)
+  const [selection, setSelection] = useState<Set<string>>(() => new Set())
+  const [bulkAction, setBulkAction] = useState<BulkAction>("")
+  const [bulkBrandId, setBulkBrandId] = useState("")
+  const [bulkFacilityId, setBulkFacilityId] = useState("")
+  const [brandOptions, setBrandOptions] = useState<Array<{ id: string; name: string }>>([])
+  const [facilityOptions, setFacilityOptions] = useState<
+    Array<{ id: string; name: string; brand_id: string }>
+  >([])
+  const [euPanelOpen, setEuPanelOpen] = useState(false)
+  const [brandPanelOpen, setBrandPanelOpen] = useState(false)
+  const [shippingPanelOpen, setShippingPanelOpen] = useState(false)
+  const [shippingProfiles, setShippingProfiles] = useState<SellerShippingProfile[]>([])
+  const [bulkShippingProfileId, setBulkShippingProfileId] = useState("")
+  const [euForm, setEuForm] = useState<EuComplianceForm>(() => emptyEuForm())
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const [csvOpen, setCsvOpen] = useState(false)
-  const [csvFile, setCsvFile] = useState<File | null>(null)
-  const [csvPreview, setCsvPreview] = useState<CsvPreviewRow[]>([])
-  const [csvError, setCsvError] = useState<string | null>(null)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setDebouncedQ(query), 280)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [query])
 
-  const [bulkOpen, setBulkOpen] = useState(false)
-  const [bulkField, setBulkField] = useState<BulkField>("price")
-  const [bulkValue, setBulkValue] = useState("")
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return products.filter((p) => {
-      if (listingFilter !== "all" && p.listing !== listingFilter) return false
-      if (lifecycleFilter !== "all" && p.lifecycle_status !== lifecycleFilter)
-        return false
-      if (stockFilter === "no_offer" && p.stock != null) return false
-      if (
-        stockFilter === "in_stock" &&
-        !(typeof p.stock === "number" && p.stock > 0)
-      )
-        return false
-      if (
-        stockFilter === "out_of_stock" &&
-        !(typeof p.stock === "number" && p.stock <= 0)
-      )
-        return false
-      if (!q) return true
-      return [p.title, p.ean, p.lifecycle_status, p.listing, p.category, p.product_cloud_status]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
+  const load = useCallback(() => {
+    setError(null)
+    listOwnProducts({
+      q: debouncedQ || undefined,
+      filter: filter === "all" ? undefined : filter,
+      sort,
     })
-  }, [products, query, listingFilter, stockFilter, lifecycleFilter])
+      .then((res) => {
+        setRows(res.products)
+        setTotalUnfiltered(res.total_unfiltered ?? res.count)
+      })
+      .catch((err: unknown) => {
+        setRows([])
+        setTotalUnfiltered(0)
+        setError(
+          err instanceof ProductCloudApiError
+            ? err.message
+            : t("plLoadFailed", locale)
+        )
+      })
+  }, [debouncedQ, filter, sort])
 
-  function toggleAll(checked: boolean) {
-    if (checked) setSelected(new Set(filtered.map((p) => p.id)))
-    else setSelected(new Set())
-  }
+  useEffect(() => {
+    load()
+  }, [load])
 
-  function toggleOne(id: string, checked: boolean) {
-    setSelected((prev) => {
+  useEffect(() => {
+    void (async () => {
+      try {
+        const [brandsRes, facRes] = await Promise.all([
+          listSellerBrands(),
+          listSellerFacilities(),
+        ])
+        setBrandOptions(brandsRes.brands.map((b) => ({ id: b.id, name: b.name })))
+        setFacilityOptions(
+          facRes.facilities
+            .filter((f) => f.is_active !== false)
+            .map((f) => ({
+              id: f.id,
+              name: f.name,
+              brand_id: f.brand_id,
+            }))
+        )
+      } catch {
+        // ignore; regular list stays functional
+      }
+    })()
+  }, [])
+
+  useEffect(() => {
+    setSelection(new Set())
+    setBulkAction("")
+    setEuPanelOpen(false)
+    setBrandPanelOpen(false)
+  }, [debouncedQ, filter, sort])
+
+  useEffect(() => {
+    function onDocClick() {
+      setOpenMenu(null)
+    }
+    if (openMenu) {
+      document.addEventListener("click", onDocClick)
+      return () => document.removeEventListener("click", onDocClick)
+    }
+  }, [openMenu])
+
+  const pageIds = useMemo(
+    () => (Array.isArray(rows) ? rows.map((p) => p.id) : []),
+    [rows]
+  )
+
+  const allPageSelected =
+    pageIds.length > 0 && pageIds.every((id) => selection.has(id))
+  const somePageSelected =
+    pageIds.some((id) => selection.has(id)) && !allPageSelected
+
+  function toggleSelectAllPage() {
+    setSelection((prev) => {
       const next = new Set(prev)
-      if (checked) next.add(id)
-      else next.delete(id)
+      if (allPageSelected) {
+        for (const id of pageIds) next.delete(id)
+      } else {
+        for (const id of pageIds) next.add(id)
+      }
       return next
     })
   }
 
-  async function parseCsvFile(file: File) {
-    setCsvError(null)
-    const text = await file.text()
-    const lines = text
-      .split(/\r?\n/)
-      .map((l) => l.trim())
-      .filter(Boolean)
-    if (lines.length < 2) {
-      setCsvError(t("sellerProductsCsvHeaderError", locale))
-      setCsvPreview([])
-      return
-    }
-    const header = lines[0]!.toLowerCase().split(/[;,]/).map((h) => h.trim())
-    const idx = {
-      title: header.findIndex((h) => h === "title" || h === "titel"),
-      ean: header.findIndex((h) => h === "ean" || h === "sku"),
-      price: header.findIndex((h) => h === "price" || h === "prijs"),
-      stock: header.findIndex((h) => h === "stock" || h === "voorraad"),
-      category: header.findIndex((h) => h === "category" || h === "categorie"),
-    }
-    if (idx.title < 0 || idx.ean < 0) {
-      setCsvError(t("sellerProductsCsvColumnsError", locale))
-      setCsvPreview([])
-      return
-    }
-    const rows: CsvPreviewRow[] = []
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i]!.split(/[;,]/).map((c) => c.trim().replace(/^"|"$/g, ""))
-      const title = cols[idx.title] ?? ""
-      const ean = cols[idx.ean] ?? ""
-      const priceRaw = idx.price >= 0 ? cols[idx.price] : ""
-      const stockRaw = idx.stock >= 0 ? cols[idx.stock] : ""
-      const category = idx.category >= 0 ? cols[idx.category] ?? "" : ""
-      const price =
-        priceRaw && Number.isFinite(Number(priceRaw.replace(",", ".")))
-          ? Number(priceRaw.replace(",", "."))
-          : null
-      const stock =
-        stockRaw && Number.isFinite(Number(stockRaw)) ? Number(stockRaw) : null
-      let error: string | undefined
-      if (!title) error = t("sellerProductsCsvTitleMissing", locale)
-      else if (!ean || ean.length < 8) error = t("sellerProductsCsvEanInvalid", locale)
-      else if (products.some((p) => p.ean === ean))
-        error = t("sellerProductsCsvEanExists", locale)
-      else if (rows.some((r) => r.ean === ean))
-        error = t("sellerProductsCsvEanDuplicate", locale)
-      rows.push({ title, ean, price, stock, category, error })
-    }
-    setCsvPreview(rows)
+  function toggleRow(id: string) {
+    setSelection((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
-  function runCsvImport() {
-    const valid = csvPreview.filter((r) => !r.error)
-    if (valid.length === 0) {
-      setCsvError(t("sellerProductsCsvNoValid", locale))
+  function clearSelection() {
+    setSelection(new Set())
+    setBulkAction("")
+    setEuPanelOpen(false)
+    setBrandPanelOpen(false)
+    setShippingPanelOpen(false)
+    setEuForm(emptyEuForm())
+    setBulkBrandId("")
+    setBulkFacilityId("")
+    setBulkShippingProfileId("")
+  }
+
+  function onBulkActionChange(value: string) {
+    const next = value as BulkAction
+    setBulkAction(next)
+    if (next === "eu_compliance") {
+      setEuForm(emptyEuForm())
+      setEuPanelOpen(true)
+      setBrandPanelOpen(false)
+    } else if (next === "brand_location") {
+      setEuPanelOpen(false)
+      setBrandPanelOpen(true)
+      setShippingPanelOpen(false)
+    } else if (next === "shipping_profile") {
+      setEuPanelOpen(false)
+      setBrandPanelOpen(false)
+      setShippingPanelOpen(true)
+      void listShippingProfiles()
+        .then((res) => setShippingProfiles(res.shipping_profiles))
+        .catch(() => setShippingProfiles([]))
+    } else {
+      setEuPanelOpen(false)
+      setBrandPanelOpen(false)
+      setShippingPanelOpen(false)
+    }
+  }
+
+  async function submitBulkShippingProfile() {
+    if (!bulkShippingProfileId) {
+      setActionNotice("Kies een verzendprofiel.")
       return
     }
-    const imported: DemoProduct[] = valid.map((r, i) => ({
-      id: `prod_csv_${Date.now()}_${i}`,
-      title: r.title,
-      ean: r.ean,
-      lifecycle_status: "Retailer Created",
-      listing: "concept",
-      stock: r.stock,
-      price: r.price,
-      category: r.category || t("sellerProductsUncategorized", locale),
-      product_cloud_status: "Niet gekoppeld" as ProductCloudStatus,
-    }))
-    setProducts((prev) => [...imported, ...prev])
-    setNotice(
-      tFormat("sellerProductsCsvImported", locale, { count: imported.length })
+    const count = selection.size
+    const ok = window.confirm(
+      `${count} geselecteerde product${count === 1 ? "" : "en"} koppelen aan dit verzendprofiel?`
     )
-    setCsvOpen(false)
-    setCsvFile(null)
-    setCsvPreview([])
-  }
-
-  function applyBulk() {
-    if (selected.size === 0) {
-      setNotice(t("sellerProductsSelectFirst", locale))
-      return
-    }
-    setProducts((prev) =>
-      prev.map((p) => {
-        if (!selected.has(p.id)) return p
-        const next = { ...p }
-        if (bulkField === "price") {
-          const n = Number(bulkValue.replace(",", "."))
-          if (Number.isFinite(n)) next.price = n
-        } else if (bulkField === "stock") {
-          const n = Number(bulkValue)
-          if (Number.isFinite(n)) next.stock = n
-        } else if (bulkField === "category") {
-          if (bulkValue.trim()) next.category = bulkValue.trim()
-        } else if (bulkField === "status") {
-          if (bulkValue.trim()) next.lifecycle_status = bulkValue.trim()
-        } else if (bulkField === "publish") {
-          next.listing = "live"
-          next.lifecycle_status = "Actief"
-        } else if (bulkField === "offline") {
-          next.listing = "concept"
-        }
-        return next
+    if (!ok) return
+    setBulkBusy(true)
+    setActionNotice(null)
+    try {
+      const res = await bulkAssignShippingProfile({
+        product_ids: Array.from(selection),
+        shipping_profile_id: bulkShippingProfileId,
       })
-    )
-    setNotice(
-      tFormat("sellerProductsUpdated", locale, { count: selected.size })
-    )
-    setBulkOpen(false)
-    setBulkValue("")
-    setSelected(new Set())
+      setActionNotice(res.message)
+      clearSelection()
+      load()
+    } catch (err: unknown) {
+      setActionNotice(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : "Bulk koppelen mislukt."
+      )
+    } finally {
+      setBulkBusy(false)
+    }
   }
 
-  const selectClass =
-    "h-9 rounded-[5px] border border-wf-400 bg-white px-3 text-xs text-wf-800"
-  const validCsvCount = csvPreview.filter((r) => !r.error).length
+  async function submitBulkBrandLocation() {
+    if (!bulkBrandId || !bulkFacilityId) {
+      setActionNotice(t("plChooseBrandFirst", locale))
+      return
+    }
+    setBulkBusy(true)
+    setActionNotice(null)
+    try {
+      const res = await bulkLinkBrandLocation({
+        product_ids: Array.from(selection),
+        brand_id: bulkBrandId,
+        production_facility_id: bulkFacilityId,
+      })
+      setActionNotice(res.message)
+      clearSelection()
+      load()
+    } catch (err: unknown) {
+      setActionNotice(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : t("plBulkBrandFailed", locale)
+      )
+    } finally {
+      setBulkBusy(false)
+    }
+  }
 
-  const csvHeaders = [
-    t("commonTitle", locale),
-    "EAN",
-    t("commonPrice", locale),
-    t("commonStock", locale),
-    t("commonCategory", locale),
-    t("commonStatus", locale),
-  ]
+  async function submitEuCompliance() {
+    const attributes = EU_COMPLIANCE_FIELDS.map((f) => ({
+      code: f.code,
+      value: euForm[f.code].trim(),
+    })).filter((a) => a.value.length > 0)
 
-  const tableHeaders = [
-    t("commonTitle", locale),
-    t("sellerProductsEanId", locale),
-    t("sellerProductsLifecycle", locale),
-    t("sellerProductsListing", locale),
-    t("sellerProductsCloudStatus", locale),
-    t("commonStock", locale),
-    t("commonPrice", locale),
-    t("commonCategory", locale),
-  ]
+    if (attributes.length === 0) {
+      setActionNotice(t("plFillOneField", locale))
+      return
+    }
+
+    const count = selection.size
+    const ok = window.confirm(
+      `EU Compliance bijwerken voor ${count} product${count === 1 ? "" : "en"}? Alleen ingevulde velden worden gezet.`
+    )
+    if (!ok) return
+
+    setBulkBusy(true)
+    setActionNotice(null)
+    try {
+      const res = await bulkUpdateProductInformation({
+        product_ids: Array.from(selection),
+        attributes,
+        confirm: true,
+      })
+      const okCount = res.results.filter((r) => r.ok).length
+      const failCount = res.results.length - okCount
+      setActionNotice(
+        `Bulk EU Compliance: ${okCount} geslaagd, ${failCount} mislukt.`
+      )
+      if (failCount === 0) {
+        clearSelection()
+      }
+      load()
+    } catch (err: unknown) {
+      setActionNotice(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : t("plBulkEuFailed", locale)
+      )
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  async function pauseOrResume(
+    p: CatalogProduct,
+    next: "paused" | "active"
+  ) {
+    const offerId = p.offers?.primary_offer_id || p.offer?.offer_id
+    if (!offerId) return
+    if (next === "paused") {
+      const ok = window.confirm(
+        "Dit aanbod wordt niet meer actief verkocht. Wil je pauzeren?"
+      )
+      if (!ok) return
+    }
+    setActionBusy(p.id)
+    setActionNotice(null)
+    try {
+      await patchOffer(offerId, { sales_status: next })
+      setActionNotice(
+        next === "paused" ? "Aanbod gepauzeerd." : "Aanbod hervat."
+      )
+      setOpenMenu(null)
+      load()
+    } catch (err: unknown) {
+      setActionNotice(
+        err instanceof CommerceCloudApiError
+          ? err.message
+          : t("plBulkActionFailed", locale)
+      )
+    } finally {
+      setActionBusy(null)
+    }
+  }
+
+  const brandDisplay = (p: CatalogProduct) => {
+    if (p.brand_name) return p.brand_name
+    if (p.brand_id && !p.brand_id.startsWith("brand_")) return p.brand_id
+    return "—"
+  }
 
   return (
     <SellerGate
@@ -247,422 +462,817 @@ export default function SellerProductsPage() {
         { label: t("sellerNavProducts", locale) },
       ]}
     >
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-[19px] font-bold text-wf-900">
             {t("sellerNavProducts", locale)}
           </h1>
-          <p className="mt-1.5 text-xs text-wf-600">
-            {t("sellerProductsIntro", locale)}
+          <p className="mt-1 text-xs text-wf-600">
+            Catalogusproducten en je eigen verkoopaanbiedingen.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="secondary" onClick={() => setCsvOpen(true)}>
-            {t("sellerProductsCsvImport", locale)}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              if (selected.size === 0) {
-                setNotice(t("sellerProductsSelectBulk", locale))
-                return
-              }
-              setBulkOpen(true)
-            }}
-          >
-            {t("sellerProductsBulkEdit", locale)}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              if (selected.size === 0) {
-                setNotice(t("sellerProductsSelectPublish", locale))
-                return
-              }
-              setBulkField("publish")
-              setProducts((prev) =>
-                prev.map((p) =>
-                  selected.has(p.id)
-                    ? { ...p, listing: "live", lifecycle_status: "Actief" }
-                    : p
-                )
-              )
-              setNotice(
-                tFormat("sellerProductsPublished", locale, {
-                  count: selected.size,
-                })
-              )
-              setSelected(new Set())
-            }}
-          >
-            {t("sellerProductsBulkPublish", locale)}
-          </Button>
-          <Link
-            href="/seller/made-in-europe"
-            className="inline-flex items-center justify-center rounded-wf border border-wf-300 bg-white px-[18px] py-[9px] text-sm font-semibold text-wf-900 hover:bg-wf-50"
-          >
-            {t("sellerMieTitle", locale)}
-          </Link>
           <Link
             href="/seller/products/add"
-            className="inline-flex items-center justify-center rounded-wf border border-transparent bg-wf-900 px-[18px] py-[9px] text-sm font-semibold text-white hover:bg-wf-800"
+            className="inline-flex h-8 items-center rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white"
           >
-            {t("sellerProductsNew", locale)}
+            Nieuw product
+          </Link>
+          <Link
+            href="/seller/products/import"
+            className="inline-flex h-8 items-center rounded-[5px] border border-wf-400 bg-white px-3 text-xs font-semibold text-wf-800"
+          >
+            Importeren
           </Link>
         </div>
       </div>
 
-      {notice ? (
+      {error ? (
+        <Notice variant="warning" className="mb-4">
+          {error}
+        </Notice>
+      ) : null}
+      {actionNotice ? (
         <Notice variant="info" className="mb-4">
-          {notice}
+          {actionNotice}
         </Notice>
       ) : null}
 
-      <SellerCloudTranslationsPanel />
-
-      {csvOpen ? (
-        <section className="mb-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
-          <h2 className="text-xs font-semibold text-wf-900">
-            {t("sellerProductsCsvImport", locale)}
-          </h2>
-          <p className="mt-1 text-[11.5px] text-wf-600">
-            {t("sellerProductsCsvHint", locale)}
-          </p>
-          <div className="mt-3 max-w-md">
-            <FileUpload
-              label={t("sellerProductsCsvFile", locale)}
-              requirementLabel={t("sellerProductsCsvRequirement", locale)}
-              accept=".csv,text/csv"
-              value={csvFile}
-              onChange={(file) => {
-                setCsvFile(file)
-                if (file) void parseCsvFile(file)
-                else setCsvPreview([])
-              }}
-            />
-          </div>
-          {csvError ? (
-            <Notice variant="warning" className="mt-3">
-              {csvError}
-            </Notice>
-          ) : null}
-          {csvPreview.length > 0 ? (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full border-collapse text-xs">
-                <thead>
-                  <tr>
-                    {csvHeaders.map((h) => (
-                      <th
-                        key={h}
-                        className="border-b border-wf-400 px-3 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {csvPreview.map((row) => (
-                    <tr key={row.ean} className="border-b border-wf-200">
-                      <td className="px-3 py-2">{row.title}</td>
-                      <td className="px-3 py-2">{row.ean}</td>
-                      <td className="px-3 py-2">
-                        {row.price == null ? "—" : formatEuro(row.price)}
-                      </td>
-                      <td className="px-3 py-2">
-                        {row.stock == null ? "—" : row.stock}
-                      </td>
-                      <td className="px-3 py-2">{row.category || "—"}</td>
-                      <td className="px-3 py-2">
-                        {row.error ? (
-                          <span className="text-wf-800">{row.error}</span>
-                        ) : (
-                          <Badge variant="outline">OK</Badge>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="mt-2 text-[11px] text-wf-500">
-                {tFormat("sellerProductsCsvValidRows", locale, {
-                  valid: validCsvCount,
-                  total: csvPreview.length,
-                })}
-              </p>
-            </div>
-          ) : null}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              onClick={runCsvImport}
-              disabled={validCsvCount === 0}
-            >
-              {t("sellerProductsCsvRun", locale)}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => {
-                setCsvOpen(false)
-                setCsvFile(null)
-                setCsvPreview([])
-                setCsvError(null)
-              }}
-            >
-              {t("commonCancel", locale)}
-            </Button>
-          </div>
-        </section>
-      ) : null}
-
-      {bulkOpen ? (
-        <section className="mb-5 rounded-lg border border-wf-300 bg-white px-5 py-4">
-          <h2 className="text-xs font-semibold text-wf-900">
-            {tFormat("sellerProductsBulkTitle", locale, {
-              count: selected.size,
-            })}
-          </h2>
-          <div className="mt-3 grid grid-cols-1 gap-3 tablet:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-                {t("commonField", locale)}
-              </label>
-              <select
-                className={selectClass + " w-full"}
-                value={bulkField}
-                onChange={(e) => setBulkField(e.target.value as BulkField)}
-              >
-                <option value="price">{t("sellerProductsBulkPrice", locale)}</option>
-                <option value="stock">{t("sellerProductsBulkStock", locale)}</option>
-                <option value="category">
-                  {t("sellerProductsBulkCategory", locale)}
-                </option>
-                <option value="status">
-                  {t("sellerProductsBulkStatus", locale)}
-                </option>
-                <option value="publish">
-                  {t("sellerProductsBulkPublishOption", locale)}
-                </option>
-                <option value="offline">
-                  {t("sellerProductsBulkOffline", locale)}
-                </option>
-              </select>
-            </div>
-            {bulkField !== "publish" && bulkField !== "offline" ? (
-              <Input
-                label={t("commonNewValue", locale)}
-                value={bulkValue}
-                onChange={(e) => setBulkValue(e.target.value)}
-                placeholder={
-                  bulkField === "status"
-                    ? t("sellerProductsPlaceholderStatus", locale)
-                    : bulkField === "category"
-                      ? t("sellerProductsPlaceholderCategory", locale)
-                      : t("sellerProductsPlaceholderPrice", locale)
-                }
-              />
-            ) : (
-              <p className="self-end text-xs text-wf-600">
-                {bulkField === "publish"
-                  ? t("sellerProductsBulkPublishHint", locale)
-                  : t("sellerProductsBulkOfflineHint", locale)}
-              </p>
-            )}
-          </div>
-          <div className="mt-4 flex gap-2">
-            <Button type="button" onClick={applyBulk}>
-              {t("commonConfirm", locale)}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setBulkOpen(false)}
-            >
-              {t("commonCancel", locale)}
-            </Button>
-          </div>
-        </section>
-      ) : null}
-
-      <div className="mb-4 flex flex-wrap items-end gap-2.5">
-        <div className="min-w-[180px] flex-1">
-          <Input
-            label={t("commonSearch", locale)}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("sellerProductsSearchPlaceholder", locale)}
-          />
-        </div>
+      <div className="mb-3 grid grid-cols-1 gap-2 tablet:grid-cols-[1fr_180px_160px]">
+        <Input
+          label={t("commonSearch", locale)}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("plSearchPlaceholder", locale)}
+        />
         <div>
           <label
-            htmlFor="listing-filter"
+            htmlFor="pm-filter"
             className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500"
           >
-            {t("sellerProductsListing", locale)}
+            Filter
           </label>
           <select
-            id="listing-filter"
-            className={selectClass}
-            value={listingFilter}
-            onChange={(e) => setListingFilter(e.target.value as ListingFilter)}
+            id="pm-filter"
+            className="h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as ListFilter)}
           >
-            <option value="all">{t("commonAll", locale)}</option>
-            <option value="live">{statusLabel("Live", locale)}</option>
-            <option value="concept">{statusLabel("Concept", locale)}</option>
+            <option value="all">Alle</option>
+            <option value="for_sale">Te koop</option>
+            <option value="paused">Gepauzeerd</option>
+            <option value="no_stock">Geen voorraad</option>
+            <option value="incomplete">Onvoldoende info</option>
+            <option value="sufficient">Voldoende info</option>
+            <option value="complete">Compleet</option>
+            <option value="published">Gepubliceerd</option>
+            <option value="unpublished">Niet gepubliceerd</option>
+            <option value="pending_approval">Wacht op productgoedkeuring</option>
           </select>
         </div>
         <div>
           <label
-            htmlFor="lifecycle-filter"
+            htmlFor="pm-sort"
             className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500"
           >
-            {t("sellerProductsLifecycle", locale)}
+            Sortering
           </label>
           <select
-            id="lifecycle-filter"
-            className={selectClass}
-            value={lifecycleFilter}
-            onChange={(e) =>
-              setLifecycleFilter(e.target.value as LifecycleFilter)
-            }
+            id="pm-sort"
+            className="h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as ListSort)}
           >
-            <option value="all">{t("commonAll", locale)}</option>
-            <option value="Actief">{statusLabel("Actief", locale)}</option>
-            <option value="Concept gecontroleerd">
-              {statusLabel("Concept gecontroleerd", locale)}
-            </option>
-            <option value="Retailer Created">
-              {statusLabel("Retailer Created", locale)}
-            </option>
-            <option value="Gearchiveerd">
-              {statusLabel("Gearchiveerd", locale)}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label
-            htmlFor="stock-filter"
-            className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500"
-          >
-            {t("commonStock", locale)}
-          </label>
-          <select
-            id="stock-filter"
-            className={selectClass}
-            value={stockFilter}
-            onChange={(e) => setStockFilter(e.target.value as StockFilter)}
-          >
-            <option value="all">{t("commonAll", locale)}</option>
-            <option value="in_stock">{t("sellerProductsInStock", locale)}</option>
-            <option value="out_of_stock">
-              {t("sellerProductsOutOfStock", locale)}
-            </option>
-            <option value="no_offer">{t("sellerProductsNoOffer", locale)}</option>
+            <option value="newest">Nieuwste</option>
+            <option value="title">Productnaam</option>
+            <option value="stock">Voorraad</option>
+            <option value="price">Prijs</option>
           </select>
         </div>
       </div>
 
-      {products.length === 0 ? (
+      {rows === "loading" ? (
+        <div className="space-y-2 rounded-lg border border-wf-300 bg-white p-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-10 animate-pulse rounded bg-wf-100" />
+          ))}
+        </div>
+      ) : error && rows.length === 0 ? (
         <EmptyState
-          title={t("sellerProductsEmptyTitle", locale)}
-          description={t("sellerProductsEmptyDesc", locale)}
+          title={t("plLoadFailed", locale)}
+          description=""
+          primaryAction={{ label: t("plRetry", locale), onClick: () => load() }}
+        />
+      ) : totalUnfiltered === 0 ? (
+        <EmptyState
+          title={t("plNoProducts", locale)}
+          description={t("plNoProductsHint", locale)}
           primaryAction={{
-            label: t("sellerProductsCsvImportAction", locale),
-            onClick: () => setCsvOpen(true),
-          }}
-          secondaryAction={{
-            label: t("sellerProductsNew", locale),
+            label: t("plAddProduct", locale),
             href: "/seller/products/add",
           }}
         />
-      ) : filtered.length === 0 ? (
+      ) : rows.length === 0 ? (
         <EmptyState
-          title={t("commonEmptyFilter", locale)}
-          description={t("commonEmptyFilterHint", locale)}
+          title={t("plNoResults", locale)}
+          description={t("plNoResultsHint", locale)}
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-wf-300 bg-white">
-          <table className="w-full border-collapse text-xs">
-            <thead>
-              <tr>
-                <th className="border-b border-wf-400 px-3 py-2.5 text-left">
-                  <input
-                    type="checkbox"
-                    aria-label={t("sellerProductsSelectAll", locale)}
-                    checked={
-                      filtered.length > 0 &&
-                      filtered.every((p) => selected.has(p.id))
-                    }
-                    onChange={(e) => toggleAll(e.target.checked)}
-                  />
-                </th>
-                {tableHeaders.map((h) => (
-                  <th
-                    key={h}
-                    className="border-b border-wf-400 px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+        <>
+          <p className="mb-2 text-[11px] text-wf-600">
+            {rows.length === totalUnfiltered
+              ? t("plProductCount", locale).replace("{count}", String(rows.length))
+              : t("plProductCountFiltered", locale).replace("{count}", String(rows.length)).replace("{total}", String(totalUnfiltered))}
+          </p>
+
+          {selection.size > 0 ? (
+            <div className="sticky top-0 z-20 mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-wf-400 bg-white px-3 py-2 shadow-sm">
+              <span className="text-xs font-semibold text-wf-900">
+                {t("plSelected", locale).replace("{count}", String(selection.size))}
+              </span>
+              <button
+                type="button"
+                className="text-xs font-semibold text-wf-700 underline-offset-2 hover:underline"
+                onClick={clearSelection}
+              >
+                {t("plClearSelection", locale)}
+              </button>
+              <label className="flex items-center gap-2 text-xs text-wf-700">
+                <span className="font-semibold">{t("plBulkAction", locale)}</span>
+                <select
+                  className="h-8 rounded-[5px] border border-wf-400 bg-white px-2 text-xs"
+                  value={bulkAction}
+                  onChange={(e) => onBulkActionChange(e.target.value)}
+                  disabled={bulkBusy}
+                >
+                  <option value="">Kies actie…</option>
+                  <option value="eu_compliance">EU Compliance invullen</option>
+                  <option value="brand_location">Merk koppelen</option>
+                  <option value="shipping_profile">Verzendprofiel wijzigen</option>
+                  <option value="category" disabled>
+                    Categorie wijzigen (niet beschikbaar)
+                  </option>
+                </select>
+              </label>
+              <p className="basis-full text-[11px] text-wf-600">
+                Bulkacties: EU Compliance, merk koppelen of verzendprofiel wijzigen.
+              </p>
+            </div>
+          ) : null}
+
+          {euPanelOpen ? (
+            <div
+              className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="eu-bulk-title"
+              onClick={() => {
+                if (!bulkBusy) {
+                  setEuPanelOpen(false)
+                  setBulkAction("")
+                }
+              }}
+            >
+              <div
+                className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg border border-wf-300 bg-white p-4 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2
+                  id="eu-bulk-title"
+                  className="text-sm font-bold text-wf-900"
+                >
+                  EU Compliance invullen
+                </h2>
+                <p className="mt-1 text-[11px] text-wf-600">
+                  Alleen ingevulde velden worden toegepast op {selection.size}{" "}
+                  geselecteerde product{selection.size === 1 ? "" : "en"}. Bulk
+                  ondersteunt alleen EU Compliance (GPSR). Merk/categorie/structuurvelden
+                  zijn niet beschikbaar in bulk.
+                </p>
+                <div className="mt-3 space-y-3">
+                  {EU_COMPLIANCE_FIELDS.map((field) => {
+                    const hint = gpsrHint(field.code)
+                    return (
+                    <div key={field.code}>
+                      <label
+                        htmlFor={`bulk-${field.code}`}
+                        className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-wf-700"
+                      >
+                        {t(field.labelKey, locale)}
+                        {hint ? (
+                          <span
+                            title={hint}
+                            className="cursor-help text-wf-500"
+                            aria-label={hint}
+                          >
+                            ⓘ
+                          </span>
+                        ) : null}
+                      </label>
+                      <input
+                        id={`bulk-${field.code}`}
+                        type="text"
+                        className="h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs"
+                        value={euForm[field.code]}
+                        disabled={bulkBusy}
+                        onChange={(e) =>
+                          setEuForm((prev) => ({
+                            ...prev,
+                            [field.code]: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    )
+                  })}
+                </div>
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  <button
+                    type="button"
+                    className="inline-flex h-8 items-center rounded-[5px] border border-wf-400 bg-white px-3 text-xs font-semibold text-wf-800 disabled:opacity-50"
+                    disabled={bulkBusy}
+                    onClick={() => {
+                      setEuPanelOpen(false)
+                      setBulkAction("")
+                    }}
                   >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <tr key={p.id} className="border-b border-wf-200 last:border-b-0">
-                  <td className="px-3 py-2.5">
+                    {t("commonCancel", locale)}
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex h-8 items-center rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white disabled:opacity-50"
+                    disabled={bulkBusy}
+                    onClick={() => void submitEuCompliance()}
+                  >
+                    {bulkBusy ? t("commonBusy", locale) : t("commonSave", locale)}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {brandPanelOpen ? (
+            <div className="mb-3 rounded-lg border border-wf-300 bg-white p-3">
+              <h2 className="text-sm font-bold text-wf-900">{t("commonBrand", locale)}</h2>
+              <p className="mt-1 text-[11px] text-wf-600">
+                {t("pdpSelectBrandFirst", locale)}
+              </p>
+              <div className="mt-2 grid gap-2 tablet:grid-cols-2">
+                <label className="text-xs font-semibold text-wf-700">
+                  {t("commonBrand", locale)}
+                  <select
+                    className="mt-1 h-9 w-full rounded-[5px] border border-wf-400 bg-white px-2 text-xs"
+                    value={bulkBrandId}
+                    onChange={(e) => {
+                      setBulkBrandId(e.target.value)
+                      setBulkFacilityId("")
+                    }}
+                  >
+                    <option value="">{t("commonBrand", locale)}</option>
+                    {brandOptions.map((brand) => (
+                      <option key={brand.id} value={brand.id}>
+                        {brand.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-xs font-semibold text-wf-700">
+                  {t("pdpProductionLocation", locale)}
+                  <select
+                    className="mt-1 h-9 w-full rounded-[5px] border border-wf-400 bg-white px-2 text-xs"
+                    value={bulkFacilityId}
+                    onChange={(e) => setBulkFacilityId(e.target.value)}
+                    disabled={!bulkBrandId}
+                  >
+                    <option value="">
+                      {!bulkBrandId
+                        ? t("pdpSelectBrandFirst", locale)
+                        : t("pdpSelectLocation2", locale)}
+                    </option>
+                    {facilityOptions
+                      .filter((facility) => facility.brand_id === bulkBrandId)
+                      .map((facility) => (
+                        <option key={facility.id} value={facility.id}>
+                          {facility.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+              {bulkBrandId &&
+              facilityOptions.filter((f) => f.brand_id === bulkBrandId).length ===
+                0 ? (
+                <p className="mt-2 text-[11px] text-wf-600">
+                  {t("pdpNoBrandLocations", locale)} {t("sellerNavBrands", locale)}.
+                </p>
+              ) : null}
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center rounded-[5px] border border-wf-400 bg-white px-3 text-xs font-semibold text-wf-800"
+                  onClick={() => {
+                    setBrandPanelOpen(false)
+                    setBulkAction("")
+                  }}
+                >
+                  {t("commonCancel", locale)}
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white disabled:opacity-50"
+                  disabled={bulkBusy || !bulkBrandId || !bulkFacilityId}
+                  onClick={() => void submitBulkBrandLocation()}
+                >
+                  {bulkBusy ? t("commonBusy", locale) : t("commonSave", locale)}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {shippingPanelOpen ? (
+            <div className="mb-3 rounded-lg border border-wf-300 bg-white p-3">
+              <h2 className="text-sm font-bold text-wf-900">
+                Verzendprofiel wijzigen
+              </h2>
+              <p className="mt-1 text-[11px] text-wf-600">
+                {selection.size} geselecteerde product
+                {selection.size === 1 ? "" : "en"} koppelen aan hetzelfde
+                verzendprofiel.
+              </p>
+              <label className="mt-3 block text-xs font-semibold text-wf-700">
+                Verzendprofiel
+                <select
+                  className="mt-1 h-9 w-full max-w-md rounded border border-wf-400 bg-white px-2 text-xs"
+                  value={bulkShippingProfileId}
+                  onChange={(e) => setBulkShippingProfileId(e.target.value)}
+                >
+                  <option value="">Kies profiel…</option>
+                  {shippingProfiles
+                    .filter((p) => p.status === "active")
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center rounded-[5px] border border-wf-400 bg-white px-3 text-xs font-semibold text-wf-800"
+                  onClick={() => {
+                    setShippingPanelOpen(false)
+                    setBulkAction("")
+                  }}
+                >
+                  {t("commonCancel", locale)}
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white disabled:opacity-50"
+                  disabled={bulkBusy || !bulkShippingProfileId}
+                  onClick={() => void submitBulkShippingProfile()}
+                >
+                  {bulkBusy ? t("commonBusy", locale) : t("commonSave", locale)}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="grid gap-3">
+            {rows.map((p) => {
+              const info = qualityLabel(p.completeness, locale)
+              const sales = salePresentationLabel(p.completeness, {
+                sales_status: p.offers?.sales_status ?? p.offer?.sales_status,
+                has_offer: Boolean(p.offers?.offer_count || p.offer?.has_offer),
+              }, locale)
+              const stock = p.offers?.stock_total ?? p.offer?.stock
+              const price = p.offers?.price ?? p.offer?.price
+              const sku =
+                p.offers?.sku_display ??
+                p.offer?.seller_sku ??
+                p.sku_hint
+              const actions = p.actions || {}
+              const pub = publicationGateLabel(p, locale)
+
+              return (
+                <article
+                  key={p.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => router.push(`/seller/products/${p.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      router.push(`/seller/products/${p.id}`)
+                    }
+                  }}
+                  className="relative cursor-pointer rounded-lg border border-wf-300 bg-white p-3 text-left transition hover:border-wf-500"
+                >
+                  <div className="flex gap-3">
+                    {p.primary_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.primary_image_url}
+                        alt=""
+                        className="h-16 w-16 shrink-0 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded bg-wf-100 text-[10px] text-wf-500">
+                        —
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-wf-500">
+                        {brandDisplay(p)}
+                      </p>
+                      <h3 className="truncate text-sm font-bold text-wf-900">
+                        {p.title || t("pdpUntitledProduct", locale)}
+                      </h3>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${pub.className}`}>
+                          {pub.label}
+                        </span>
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${sales.className}`}>
+                          {sales.label}
+                        </span>
+                        <span className={`text-[10px] font-semibold ${info.className}`}>
+                          {info.pct ?? 0}% compleet
+                        </span>
+                      </div>
+                      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-wf-700 tablet:grid-cols-4">
+                        <div>
+                          <dt className="text-wf-500">Prijs</dt>
+                          <dd>{price != null ? formatEuro(price) : "—"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-wf-500">Voorraad</dt>
+                          <dd>{typeof stock === "number" ? stock : "—"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-wf-500">SKU</dt>
+                          <dd className="truncate font-mono">{sku || "—"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-wf-500">GTIN</dt>
+                          <dd className="truncate font-mono">
+                            {p.identifier_value || "—"}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={t("commonActions", locale)}
+                      className="h-8 shrink-0 rounded border border-wf-400 px-2 text-[12px] font-bold leading-none"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setOpenMenu((cur) => (cur === p.id ? null : p.id))
+                      }}
+                    >
+                      ⋯
+                    </button>
+                  </div>
+                  {openMenu === p.id ? (
+                    <div
+                      className="absolute right-3 top-12 z-30 w-56 rounded border border-wf-300 bg-white py-1 shadow-md"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link
+                        href={`/seller/products/${p.id}`}
+                        className="block px-3 py-1.5 hover:bg-wf-50"
+                      >
+                        Beheer product
+                      </Link>
+                      {actions.edit_information !== false ? (
+                        <Link
+                          href={`/seller/products/${p.id}?step=information`}
+                          className="block px-3 py-1.5 hover:bg-wf-50"
+                        >
+                          Bewerk productinformatie
+                        </Link>
+                      ) : null}
+                      <Link
+                        href={`/seller/products/${p.id}?step=offer`}
+                        className="block px-3 py-1.5 hover:bg-wf-50"
+                      >
+                        Verkoopinformatie
+                      </Link>
+                      <Link
+                        href={`/seller/products/${p.id}?tab=history`}
+                        className="block px-3 py-1.5 hover:bg-wf-50"
+                      >
+                        Geschiedenis
+                      </Link>
+                      {actions.pause_offer ? (
+                        <button
+                          type="button"
+                          className="block w-full px-3 py-1.5 text-left hover:bg-wf-50"
+                          disabled={actionBusy === p.id}
+                          onClick={() => pauseOrResume(p, "paused")}
+                        >
+                          Pauzeren
+                        </button>
+                      ) : null}
+                      {actions.resume_offer ? (
+                        <button
+                          type="button"
+                          className="block w-full px-3 py-1.5 text-left hover:bg-wf-50"
+                          disabled={actionBusy === p.id}
+                          onClick={() => pauseOrResume(p, "active")}
+                        >
+                          Hervatten
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </article>
+              )
+            })}
+          </div>
+
+          <div className="hidden">
+            <table className="w-full border-collapse text-left text-xs">
+              <thead>
+                <tr>
+                  <th className="border-b border-wf-400 px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500">
                     <input
                       type="checkbox"
-                      aria-label={tFormat("sellerProductsSelectOne", locale, {
-                        title: p.title,
-                      })}
-                      checked={selected.has(p.id)}
-                      onChange={(e) => toggleOne(p.id, e.target.checked)}
+                      aria-label={t("plSelectAll", locale)}
+                      checked={allPageSelected}
+                      ref={(el) => {
+                        if (el) el.indeterminate = somePageSelected
+                      }}
+                      onChange={toggleSelectAllPage}
                     />
-                  </td>
-                  <td className="px-4 py-2.5 text-wf-800">{p.title}</td>
-                  <td className="px-4 py-2.5 text-wf-800">{p.ean}</td>
-                  <td className="px-4 py-2.5">
-                    <Badge variant="outline">
-                      {statusLabel(p.lifecycle_status, locale)}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <Badge>
-                      {statusLabel(
-                        p.listing === "live" ? "Live" : "Concept",
-                        locale
-                      )}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <Badge variant="outline">
-                      {statusLabel(p.product_cloud_status, locale)}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2.5 text-wf-800">
-                    {p.stock == null ? "—" : p.stock}
-                  </td>
-                  <td className="px-4 py-2.5 text-wf-800">
-                    {p.price == null ? "—" : formatEuro(p.price)}
-                  </td>
-                  <td className="px-4 py-2.5 text-wf-800">{p.category}</td>
+                  </th>
+                  {[
+                    "",
+                    t("plHeaderProduct", locale),
+                    "EAN",
+                    "SKU",
+                    t("commonBrand", locale),
+                    t("commonCategory", locale),
+                    t("plHeaderVariants", locale),
+                    "Info",
+                    "Compliance",
+                    t("plHeaderStock", locale),
+                    t("plHeaderPrice", locale),
+                    t("plHeaderDelivery", locale),
+                    t("plHeaderSale", locale),
+                    t("pdpPublicationLabel", locale),
+                    "",
+                  ].map((h, i) => (
+                    <th
+                      key={`${h}-${i}`}
+                      className="border-b border-wf-400 px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.04em] text-wf-500"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-4 py-3.5 text-[11px] text-wf-500">
-            {tFormat("sellerProductsCount", locale, {
-              filtered: filtered.length,
-              total: products.length,
-            })}
-            {selected.size > 0
-              ? ` · ${tFormat("commonSelected", locale, { count: selected.size })}`
-              : null}
+              </thead>
+              <tbody>
+                {rows.map((p) => {
+                  const info = qualityLabel(p.completeness, locale)
+                  const comp = complianceReviewLabel(p.completeness, locale)
+                  const sales = salePresentationLabel(p.completeness, {
+                    sales_status: p.offers?.sales_status ?? p.offer?.sales_status,
+                    has_offer: Boolean(p.offers?.offer_count || p.offer?.has_offer),
+                  }, locale)
+                  const stock = p.offers?.stock_total ?? p.offer?.stock
+                  const price = p.offers?.price ?? p.offer?.price
+                  const sku =
+                    p.offers?.sku_display ??
+                    p.offer?.seller_sku ??
+                    p.sku_hint
+                  const delivery =
+                    p.offers?.delivery_days_max ?? p.offer?.delivery_days_max
+                  const variants = p.variant_count ?? 0
+                  const actions = p.actions || {}
+                  const selected = selection.has(p.id)
+
+                  return (
+                    <tr
+                      key={p.id}
+                      className="border-b border-wf-200 text-wf-800 last:border-b-0"
+                    >
+                      <td className="px-2 py-2">
+                        <input
+                          type="checkbox"
+                          aria-label={`Selecteer ${p.title || "product"}`}
+                          checked={selected}
+                          onChange={() => toggleRow(p.id)}
+                        />
+                      </td>
+                      <td className="px-2 py-2">
+                        {p.primary_image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={p.primary_image_url}
+                            alt=""
+                            className="h-9 w-9 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-9 w-9 items-center justify-center rounded bg-wf-100 text-[10px] text-wf-500">
+                            —
+                          </div>
+                        )}
+                      </td>
+                      <td className="max-w-[13rem] px-2 py-2">
+                        <Link
+                          href={`/seller/products/${p.id}`}
+                          className="font-semibold text-wf-900 underline-offset-2 hover:underline"
+                        >
+                          {p.title || t("pdpUntitledProduct", locale)}
+                        </Link>
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-2 font-mono text-[11px]">
+                        {p.identifier_value ? (
+                          <span className="inline-flex items-center">
+                            {p.identifier_value}
+                            <CopyButton value={p.identifier_value} />
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="max-w-[7rem] truncate px-2 py-2 font-mono text-[11px]">
+                        {sku || "—"}
+                      </td>
+                      <td className="max-w-[7rem] truncate px-2 py-2">
+                        {brandDisplay(p)}
+                      </td>
+                      <td className="max-w-[8rem] truncate px-2 py-2">
+                        {(p.category_names || []).join(", ") || "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-2">
+                        {variants > 0 ? (
+                          <Link
+                            href={`/seller/products/${p.id}?tab=variants`}
+                            className="text-wf-800 underline-offset-2 hover:underline"
+                          >
+                            {variants === 1
+                              ? "1 variant"
+                              : `${variants} varianten`}
+                          </Link>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                      <td className="px-2 py-2">
+                        <Link
+                          href={`/seller/products/${p.id}?tab=information`}
+                          className={info.className}
+                        >
+                          {info.label}
+                          {typeof info.pct === "number" ? (
+                            <span className="ml-1 font-normal text-wf-500">
+                              {info.pct}%
+                            </span>
+                          ) : null}
+                        </Link>
+                      </td>
+                      <td className={`px-2 py-2 ${comp.className}`}>
+                        <Link href={`/seller/products/${p.id}?tab=information`}>
+                          {comp.label}
+                        </Link>
+                      </td>
+                      <td
+                        className={`whitespace-nowrap px-2 py-2 ${
+                          typeof stock === "number" && stock <= 0
+                            ? "font-bold text-red-700"
+                            : ""
+                        }`}
+                      >
+                        {typeof stock === "number"
+                          ? p.offers && p.offers.offer_count > 1
+                            ? `${stock} totaal`
+                            : String(stock)
+                          : "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-2">
+                        {price != null ? formatEuro(price) : "—"}
+                      </td>
+                      <td className="whitespace-nowrap px-2 py-2">
+                        {delivery != null ? `${delivery}d` : "—"}
+                      </td>
+                      <td className="px-2 py-2">
+                        <span
+                          className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${sales.className}`}
+                          title={sales.offerHint || undefined}
+                        >
+                          {sales.label}
+                          {sales.offerHint ? (
+                            <span className="ml-1 font-normal opacity-80">
+                              ({sales.offerHint})
+                            </span>
+                          ) : null}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2">
+                        {(() => {
+                          const pub = publicationGateLabel(p, locale)
+                          return (
+                            <span
+                              className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${pub.className}`}
+                            >
+                              {pub.label}
+                            </span>
+                          )
+                        })()}
+                      </td>
+                      <td className="relative px-2 py-2">
+                        <button
+                          type="button"
+                          aria-label={t("commonActions", locale)}
+                          className="rounded border border-wf-400 px-2 py-1 text-[12px] font-bold leading-none"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setOpenMenu((cur) => (cur === p.id ? null : p.id))
+                          }}
+                        >
+                          ⋯
+                        </button>
+                        {openMenu === p.id ? (
+                          <div
+                            className="absolute right-2 z-30 mt-1 w-56 rounded border border-wf-300 bg-white py-1 shadow-md"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Link
+                              href={`/seller/products/${p.id}`}
+                              className="block px-3 py-1.5 hover:bg-wf-50"
+                            >
+                              Beheer product
+                            </Link>
+                            {actions.edit_information !== false ? (
+                              <Link
+                                href={`/seller/products/${p.id}?tab=information`}
+                                className="block px-3 py-1.5 hover:bg-wf-50"
+                              >
+                                Bewerk productinformatie
+                              </Link>
+                            ) : null}
+                            <Link
+                              href={`/seller/products/${p.id}?tab=variants`}
+                              className="block px-3 py-1.5 hover:bg-wf-50"
+                            >
+                              Varianten
+                            </Link>
+                            <Link
+                              href={`/seller/products/${p.id}?tab=offer`}
+                              className="block px-3 py-1.5 hover:bg-wf-50"
+                            >
+                              Verkoopaanbod
+                            </Link>
+                            <Link
+                              href={`/seller/products/${p.id}?tab=changes`}
+                              className="block px-3 py-1.5 hover:bg-wf-50"
+                            >
+                              Gewijzigde productinformatie
+                            </Link>
+                            <Link
+                              href={`/seller/products/${p.id}?tab=media`}
+                              className="block px-3 py-1.5 hover:bg-wf-50"
+                            >
+                              Media
+                            </Link>
+                            {actions.pause_offer ? (
+                              <button
+                                type="button"
+                                disabled={actionBusy === p.id}
+                                className="block w-full px-3 py-1.5 text-left hover:bg-wf-50 disabled:opacity-50"
+                                onClick={() => pauseOrResume(p, "paused")}
+                              >
+                                Pauzeren
+                              </button>
+                            ) : null}
+                            {actions.resume_offer ? (
+                              <button
+                                type="button"
+                                disabled={actionBusy === p.id}
+                                className="block w-full px-3 py-1.5 text-left hover:bg-wf-50 disabled:opacity-50"
+                                onClick={() => pauseOrResume(p, "active")}
+                              >
+                                Hervatten
+                              </button>
+                            ) : null}
+                            <Link
+                              href={`/seller/products/${p.id}?tab=history`}
+                              className="block px-3 py-1.5 hover:bg-wf-50"
+                            >
+                              Geschiedenis
+                            </Link>
+                          </div>
+                        ) : null}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </>
       )}
     </SellerGate>
   )

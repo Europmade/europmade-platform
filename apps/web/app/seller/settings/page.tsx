@@ -1,14 +1,22 @@
 "use client"
 
-import { useState } from "react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 import { Badge, Button, FileUpload, Input } from "@europmade/ui"
 import { SellerGate } from "../_components/seller-gate"
 import { DEMO_COMPANY } from "../_lib/demo-data"
+import {
+  getPartnerAccount,
+  type PartnerAccountResponse,
+} from "../_lib/partner-account-api"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
 import { t, tFormat, type StorefrontMessageKey } from "../../_lib/i18n/messages"
 
 type SettingsSectionId =
   | "company"
+  | "roles"
+  | "users"
+  | "permissions"
   | "bank"
   | "vat"
   | "logo"
@@ -24,6 +32,9 @@ const SECTION_KEYS: Array<{
   titleKey: StorefrontMessageKey
 }> = [
   { id: "company", titleKey: "sellerSettingsCompany" },
+  { id: "roles", titleKey: "sellerSettingsRoles" },
+  { id: "users", titleKey: "sellerSettingsUsers" },
+  { id: "permissions", titleKey: "sellerSettingsPermissions" },
   { id: "bank", titleKey: "sellerSettingsBank" },
   { id: "vat", titleKey: "sellerSettingsVat" },
   { id: "logo", titleKey: "sellerSettingsLogo" },
@@ -35,8 +46,14 @@ const SECTION_KEYS: Array<{
   { id: "api_keys", titleKey: "sellerSettingsApiKeys" },
 ]
 
+const ROLE_LABEL: Record<string, StorefrontMessageKey> = {
+  RETAILER: "sellerSettingsRoleRetailer",
+  BRAND_OWNER: "sellerRoleBrandOwner",
+  PRODUCER: "sellerRoleProducerOnly",
+}
+
 /**
- * Instellingen — submenu links + secties met demo bedrijfsgegevens.
+ * Partner-instellingen — bedrijfsgegevens, rollen, gebruikers, rechten.
  */
 export default function SellerSettingsPage() {
   const locale = useStorefrontLocale()
@@ -44,13 +61,21 @@ export default function SellerSettingsPage() {
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [account, setAccount] = useState<PartnerAccountResponse | null>(null)
   const [returnAddress, setReturnAddress] = useState(
     DEMO_COMPANY.return_address
   )
   const [shippingAddress, setShippingAddress] = useState(
     DEMO_COMPANY.shipping_address
   )
-  const company = DEMO_COMPANY
+  const company = account?.partner.company
+  const demo = DEMO_COMPANY
+
+  useEffect(() => {
+    void getPartnerAccount()
+      .then(setAccount)
+      .catch(() => setAccount(null))
+  }, [])
 
   function markSaved(labelKey: StorefrontMessageKey) {
     setActionNote(
@@ -76,6 +101,19 @@ export default function SellerSettingsPage() {
       <p className="mt-1.5 text-xs text-wf-600">
         {t("sellerSettingsIntro", locale)}
       </p>
+
+      <div className="mt-4 rounded-lg border border-wf-300 bg-wf-50 p-3 text-xs">
+        <p className="font-semibold text-wf-900">Verzending</p>
+        <p className="mt-1 text-wf-600">
+          Beheer verzendprofielen centraal en koppel ze aan meerdere producten.
+        </p>
+        <Link
+          href="/seller/settings/shipping"
+          className="mt-2 inline-flex text-[11px] font-semibold underline"
+        >
+          Naar verzendprofielen →
+        </Link>
+      </div>
 
       {actionNote ? (
         <p className="mt-4 text-xs text-wf-600">{actionNote}</p>
@@ -119,57 +157,89 @@ export default function SellerSettingsPage() {
                 <dt className="text-[10.5px] uppercase tracking-[0.04em] text-wf-500">
                   {t("sellerSettingsCompanyName", locale)}
                 </dt>
-                <dd>{company.legal_name}</dd>
+                <dd>{company?.legal_name || demo.legal_name}</dd>
               </div>
               <div>
                 <dt className="text-[10.5px] uppercase tracking-[0.04em] text-wf-500">
                   {t("sellerSettingsKvk", locale)}
                 </dt>
-                <dd>{company.chamber_of_commerce_number}</dd>
+                <dd>
+                  {company?.chamber_of_commerce_number ||
+                    demo.chamber_of_commerce_number}
+                </dd>
               </div>
               <div>
                 <dt className="text-[10.5px] uppercase tracking-[0.04em] text-wf-500">
                   {t("commonCountry", locale)}
                 </dt>
-                <dd>{company.country_code}</dd>
+                <dd>{company?.country_code || demo.country_code}</dd>
               </div>
               <div>
                 <dt className="text-[10.5px] uppercase tracking-[0.04em] text-wf-500">
                   {t("sellerSettingsRoles", locale)}
                 </dt>
-                <dd>{t("sellerSettingsRoleRetailer", locale)}</dd>
+                <dd>
+                  {(account?.partner.roles || [])
+                    .map((role) =>
+                      ROLE_LABEL[role] ? t(ROLE_LABEL[role], locale) : role
+                    )
+                    .join(", ") || "—"}
+                </dd>
               </div>
             </dl>
           ) : null}
 
+          {active === "roles" ? (
+            <ul className="space-y-1 text-xs text-wf-800">
+              {(account?.partner.roles || []).map((role) => (
+                <li key={role}>
+                  {ROLE_LABEL[role] ? t(ROLE_LABEL[role], locale) : role}
+                </li>
+              ))}
+              {(account?.partner.roles || []).length === 0 ? <li>—</li> : null}
+            </ul>
+          ) : null}
+
+          {active === "users" ? (
+            <ul className="space-y-2 text-xs text-wf-800">
+              {(account?.users || []).map((user) => (
+                <li key={user.id} className="rounded border border-wf-200 p-2">
+                  <p className="font-semibold">
+                    {user.email || user.customer_id}
+                    {user.is_current ? " (jij)" : ""}
+                  </p>
+                  <p className="text-wf-500">{user.roles.join(", ") || "—"}</p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {active === "permissions" ? (
+            <ul className="space-y-1 text-xs text-wf-800">
+              {(account?.partner.permissions || []).map((permission) => (
+                <li key={permission}>{permission}</li>
+              ))}
+            </ul>
+          ) : null}
+
           {active === "bank" ? (
             <p className="text-xs text-wf-800">
-              IBAN: {company.iban.replace(/^(.{4}).+(.{4})$/, "$1••••••••$2")}
+              IBAN:{" "}
+              {(company?.iban || demo.iban).replace(
+                /^(.{4}).+(.{4})$/,
+                "$1••••••••$2"
+              )}
             </p>
           ) : null}
 
           {active === "vat" ? (
-            <p className="text-xs text-wf-800">{company.vat_number}</p>
+            <p className="text-xs text-wf-800">
+              {company?.vat_number || demo.vat_number}
+            </p>
           ) : null}
 
           {active === "logo" ? (
             <div className="max-w-md">
-              <div className="mb-4 rounded-[5px] border border-wf-200 bg-wf-50 px-4 py-3 text-[11.5px] text-wf-700">
-                <p className="font-semibold text-wf-800">
-                  {t("sellerSettingsRecommendedFormat", locale)}
-                </p>
-                <p className="mt-1">1000 × 1000 px</p>
-                <p>{t("sellerSettingsPngSvg", locale)}</p>
-                <p>{t("sellerSettingsMax5mb", locale)}</p>
-                <p className="mt-2 font-semibold text-wf-800">
-                  {t("sellerSettingsUsage", locale)}
-                </p>
-                <ul className="mt-1 list-disc pl-4">
-                  <li>{t("sellerSettingsLogoUseProfile", locale)}</li>
-                  <li>{t("sellerSettingsLogoUsePdp", locale)}</li>
-                  <li>{t("sellerSettingsLogoUseSearch", locale)}</li>
-                </ul>
-              </div>
               <FileUpload
                 label={t("sellerSettingsLogoUpload", locale)}
                 requirementLabel={t("sellerSettingsLogoReq", locale)}
@@ -190,22 +260,6 @@ export default function SellerSettingsPage() {
 
           {active === "banner" ? (
             <div className="max-w-md">
-              <div className="mb-4 rounded-[5px] border border-wf-200 bg-wf-50 px-4 py-3 text-[11.5px] text-wf-700">
-                <p className="font-semibold text-wf-800">
-                  {t("sellerSettingsRecommendedFormat", locale)}
-                </p>
-                <p className="mt-1">2400 × 600 px</p>
-                <p>{t("sellerSettingsPngJpg", locale)}</p>
-                <p>{t("sellerSettingsMax10mb", locale)}</p>
-                <p className="mt-2 font-semibold text-wf-800">
-                  {t("sellerSettingsUsage", locale)}
-                </p>
-                <ul className="mt-1 list-disc pl-4">
-                  <li>{t("sellerSettingsBannerUseHome", locale)}</li>
-                  <li>{t("sellerSettingsBannerUseShop", locale)}</li>
-                  <li>{t("sellerSettingsBannerUseMarketing", locale)}</li>
-                </ul>
-              </div>
               <FileUpload
                 label={t("sellerSettingsBannerUpload", locale)}
                 requirementLabel={t("sellerSettingsBannerReq", locale)}
@@ -266,14 +320,6 @@ export default function SellerSettingsPage() {
                 <input type="checkbox" defaultChecked />
                 {t("sellerSettingsNotifyOrder", locale)}
               </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" defaultChecked />
-                {t("sellerSettingsNotifyMessage", locale)}
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" defaultChecked />
-                {t("sellerSettingsNotifyReturn", locale)}
-              </label>
               <div className="mt-3">
                 <Button
                   type="button"
@@ -288,7 +334,6 @@ export default function SellerSettingsPage() {
           {active === "security" ? (
             <div className="space-y-3 text-xs text-wf-800">
               <p>{t("sellerSettingsPasswordChanged", locale)}</p>
-              <p>{t("sellerSettings2faOff", locale)}</p>
               <Button
                 type="button"
                 onClick={() => markSaved("sellerSettingsSecurity")}

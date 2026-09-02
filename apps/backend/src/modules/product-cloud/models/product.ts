@@ -35,6 +35,8 @@ const Product = model
      * Offer.base_price is een sync-kopie; verzendkosten/actie blijven markt-specifiek.
      */
     regular_customer_price: model.bigNumber().nullable(),
+    /** Seller shipping profile — all offers sync from this profile. */
+    shipping_profile_id: model.text().nullable(),
     lifecycle_status: model.enum([
       "Retailer Created",
       "Concept gecontroleerd",
@@ -89,6 +91,7 @@ const Product = model
     { on: ["brand_id"] },
     { on: ["manufacturer_id"] },
     { on: ["current_owner_seller_id"] },
+    { on: ["shipping_profile_id"] },
   ])
 
 export default Product

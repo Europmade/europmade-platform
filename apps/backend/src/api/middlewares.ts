@@ -12,6 +12,7 @@ import {
 import {
   AdminRejectPartnerOnboarding,
   AdminRequestPartnerOnboardingInfo,
+  AdminPatchPartnerRolesBody,
 } from "./admin/partners/validators"
 import {
   AdminEanMatchBody,
@@ -33,9 +34,13 @@ import {
   StoreAssignMadeInEuropeBody,
   StoreBulkMadeInEuropeBody,
   StoreCsvMadeInEuropeBody,
+  StoreBulkBrandLocationBody,
+  StoreBulkShippingProfileBody,
+  StoreProductShippingProfileBody,
 } from "./store/product-cloud/validators"
-import { StoreUpsertOfferBody, StorePatchOfferBody } from "./store/commerce-cloud/validators"
+import { StoreUpsertOfferBody, StorePatchOfferBody, StoreShippingProfileBody, StorePatchShippingProfileBody, StoreDuplicateShippingProfileBody } from "./store/commerce-cloud/validators"
 import {
+  StoreCreateBrandBody,
   StorePatchBrandBody,
   StorePatchBrandMarketBody,
   StoreUpsertProductionFacilityBody,
@@ -70,6 +75,12 @@ const documentUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 })
 
+/** Product images — keep storefront light (~2–3 MB). */
+const productMediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 3 * 1024 * 1024 },
+})
+
 const customerAuth = authenticate("customer", ["session", "bearer"])
 const customerAuthOptional = authenticate("customer", ["session", "bearer"], {
   allowUnauthenticated: true,
@@ -84,6 +95,26 @@ const adminAuth = authenticate("user", ["session", "bearer"])
  */
 export default defineMiddlewares({
   routes: [
+    {
+      matcher: "/store/mfa",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/mfa/enroll",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/mfa/confirm",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/mfa/challenges",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
     {
       matcher: "/store/partner-onboarding",
       methods: ["GET"],
@@ -130,6 +161,26 @@ export default defineMiddlewares({
     },
     {
       matcher: "/store/product-cloud/products",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/import/template",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/import/preview",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/store/product-cloud/import",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/store/product-cloud/facilities",
       methods: ["GET"],
       middlewares: [customerAuth],
     },
@@ -183,9 +234,53 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/product-cloud/products/:id/media/reorder",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/product-cloud/products/:id/media",
       methods: ["POST"],
       middlewares: [customerAuth, validateAndTransformBody(StoreAddMediaBody)],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/media/upload",
+      methods: ["POST"],
+      middlewares: [customerAuth, productMediaUpload.single("file")],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/media/:mediaId",
+      methods: ["PATCH", "DELETE"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/bulk-information",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/bulk-brand-location",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreBulkBrandLocationBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/products/bulk-shipping-profile",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreBulkShippingProfileBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/shipping-profile",
+      methods: ["PATCH"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreProductShippingProfileBody),
+      ],
     },
     {
       matcher: "/store/product-cloud/products/:id/lifecycle",
@@ -194,6 +289,27 @@ export default defineMiddlewares({
         customerAuth,
         validateAndTransformBody(StoreOwnerLifecycleBody),
       ],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/made-in-europe/evidence",
+      methods: ["GET", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher:
+        "/store/product-cloud/products/:id/made-in-europe/evidence/:evidenceId",
+      methods: ["DELETE"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/variants",
+      methods: ["GET", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/variants/:variantId",
+      methods: ["PATCH", "DELETE"],
+      middlewares: [customerAuth],
     },
     {
       matcher: "/store/product-cloud/products/:id/made-in-europe",
@@ -300,6 +416,45 @@ export default defineMiddlewares({
       middlewares: [],
     },
     {
+      matcher: "/store/commerce-cloud/shipping-profiles",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/commerce-cloud/shipping-profiles",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreShippingProfileBody),
+      ],
+    },
+    {
+      matcher: "/store/commerce-cloud/shipping-profiles/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/commerce-cloud/shipping-profiles/:id",
+      methods: ["PATCH"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StorePatchShippingProfileBody),
+      ],
+    },
+    {
+      matcher: "/store/commerce-cloud/shipping-profiles/:id",
+      methods: ["DELETE"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/commerce-cloud/shipping-profiles/:id/duplicate",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreDuplicateShippingProfileBody),
+      ],
+    },
+    {
       matcher: "/store/catalog/products",
       methods: ["GET"],
       middlewares: [],
@@ -378,6 +533,16 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/order-service/conversations/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/conversations/:id",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.array("files", 5)],
+    },
+    {
       matcher: "/store/order-service/orders/:id/messages",
       methods: ["GET"],
       middlewares: [customerAuth],
@@ -385,10 +550,7 @@ export default defineMiddlewares({
     {
       matcher: "/store/order-service/orders/:id/messages",
       methods: ["POST"],
-      middlewares: [
-        customerAuth,
-        validateAndTransformBody(StoreSendMessageBody),
-      ],
+      middlewares: [customerAuth, documentUpload.array("files", 5)],
     },
     {
       matcher: "/store/order-service/messages",
@@ -399,6 +561,41 @@ export default defineMiddlewares({
       matcher: "/store/order-service/seller/messages",
       methods: ["GET"],
       middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/messages/reads",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/messages/:conversationId/read",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/customers",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/orders/lookup",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/conversations",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.array("files", 5)],
+    },
+    {
+      matcher: "/store/order-service/seller/conversations/:id",
+      methods: ["GET", "PATCH"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/conversations/:id",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.array("files", 5)],
     },
     {
       matcher: "/admin/order-service/orders",
@@ -457,8 +654,44 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/order-service/seller/orders/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/orders/:id/shipment",
+      methods: ["PUT", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/orders/:id/documents",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.array("files", 1)],
+    },
+    {
+      matcher:
+        "/store/order-service/seller/orders/:id/documents/packing-slip/generate",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/orders/:id/message",
+      methods: ["GET", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/order-service/seller/returns",
       methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/returns",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/order-service/seller/returns/:id/tracking",
+      methods: ["PATCH"],
       middlewares: [customerAuth],
     },
     {
@@ -490,6 +723,11 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/order-service/returns/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/order-service/returns/:id/force-refund",
       methods: ["POST"],
       middlewares: [
@@ -506,6 +744,14 @@ export default defineMiddlewares({
       matcher: "/admin/partners/:id",
       methods: ["GET"],
       middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/partners/:id/roles",
+      methods: ["PATCH"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminPatchPartnerRolesBody),
+      ],
     },
     {
       matcher: "/admin/partners/:id/approve",
@@ -558,7 +804,37 @@ export default defineMiddlewares({
     },
     {
       matcher: "/admin/product-cloud/categories/:id/attributes",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/categories/:id/attributes/:attrId",
+      methods: ["PATCH"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/categories/:id/attribute-suggestions",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/categories/:id/redirects",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/categories/:id",
+      methods: ["GET", "PATCH"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/category-proposals",
       methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/category-proposals/:id",
+      methods: ["POST"],
       middlewares: [adminAuth],
     },
     {
@@ -607,6 +883,16 @@ export default defineMiddlewares({
       middlewares: [],
     },
     {
+      matcher: "/store/product-cloud/category-redirects",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/product-cloud/category-proposals",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/product-cloud/translations",
       methods: ["GET", "POST"],
       middlewares: [],
@@ -617,12 +903,22 @@ export default defineMiddlewares({
       middlewares: [adminAuth, validateAndTransformBody(AdminEanMatchBody)],
     },
     {
+      matcher: "/admin/product-cloud/compliance/evidence",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/product-cloud/approvals",
       methods: ["GET"],
       middlewares: [adminAuth],
     },
     {
       matcher: "/admin/product-cloud/products/:id/approval",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/:id/evidence/:evidenceId/review",
       methods: ["POST"],
       middlewares: [adminAuth],
     },
@@ -721,6 +1017,11 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/brands",
+      methods: ["POST"],
+      middlewares: [customerAuth, validateAndTransformBody(StoreCreateBrandBody)],
+    },
+    {
       matcher: "/store/brands/:id",
       methods: ["GET"],
       middlewares: [customerAuth],
@@ -740,11 +1041,31 @@ export default defineMiddlewares({
     },
     {
       matcher: "/store/brands/:id/facilities",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/brands/:id/facilities",
       methods: ["POST"],
       middlewares: [
         customerAuth,
         validateAndTransformBody(StoreUpsertProductionFacilityBody),
       ],
+    },
+    {
+      matcher: "/store/brands/:id/facilities/:facilityId",
+      methods: ["DELETE"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/brands/:id/facilities/:facilityId/products",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/partner/account",
+      methods: ["GET"],
+      middlewares: [customerAuth],
     },
     {
       matcher: "/store/partner/manufacturers",
@@ -821,12 +1142,22 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/affiliate/commission-settings",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/admin/affiliates",
       methods: ["GET"],
       middlewares: [adminAuth],
     },
     {
       matcher: "/admin/affiliates/performance",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/affiliates/:id",
       methods: ["GET"],
       middlewares: [adminAuth],
     },
@@ -942,6 +1273,26 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/finance/reprocess",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/store/finance/seller/invoices",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/finance/seller/invoices/:id",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/finance/seller/sales",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/finance/seller/settlements",
       methods: ["GET"],
       middlewares: [customerAuth],
@@ -958,6 +1309,126 @@ export default defineMiddlewares({
         adminAuth,
         validateAndTransformBody(AdminGenerateAiRecommendationBody),
       ],
+    },
+    {
+      matcher: "/admin/cms/meta",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/homepage",
+      methods: ["GET", "PUT"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/theme",
+      methods: ["GET", "PUT"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/banners",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/banners/:id",
+      methods: ["GET", "PUT", "DELETE"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/pages",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/pages/:id",
+      methods: ["GET", "PUT", "DELETE"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug",
+      methods: ["GET", "PUT"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/products",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/products/:id",
+      methods: ["GET", "PUT"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/translate",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/media",
+      methods: ["POST"],
+      middlewares: [adminAuth, documentUpload.single("file")],
+    },
+
+    // ── Advertising (seller) ──
+    {
+      matcher: "/store/advertising/campaigns",
+      methods: ["GET", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/advertising/campaigns/:id",
+      methods: ["GET", "PATCH"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/advertising/availability",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/advertising/media",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/store/advertising/live-slots",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/advertising/public/sellers/:sellerSlug",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher:
+        "/store/advertising/public/sellers/:sellerSlug/campaigns/:campaignSlug",
+      methods: ["GET"],
+      middlewares: [],
+    },
+
+    // ── Advertising (admin) ──
+    {
+      matcher: "/admin/advertising/campaigns",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/advertising/campaigns/:id",
+      methods: ["GET", "PATCH"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/advertising/pricing",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
     },
   ],
 })
