@@ -7,8 +7,8 @@ import type CommerceCloudModuleService from "../../../../../../modules/commerce-
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
 import { assertPermission } from "../../../../../../modules/partner/permissions"
-import { resolveApprovedSeller } from "../../resolve-seller"
-import type { StoreProductShippingProfileBodyInput } from "../../validators"
+import { resolveApprovedSeller } from "../../../resolve-seller"
+import type { StoreProductShippingProfileBodyInput } from "../../../validators"
 import { syncProfileToProductOffers } from "../../../../../../modules/commerce-cloud/shipping-profile-engine"
 
 type RouteParams = { id: string }
