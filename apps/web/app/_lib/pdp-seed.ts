@@ -80,7 +80,24 @@ export type PdpDetail = {
   pairsWellWith: { slug: string; title: string; priceCents: number }[]
   relatedSlugs: string[]
   galleryCount: number
+  galleryImages?: string[]
+  gallerySlides?: PdpGallerySlide[]
 }
+
+export type PdpGallerySlide =
+  | {
+      kind: "image"
+      url: string
+      srcSet?: string | null
+      avifSrcSet?: string | null
+      isPrimary?: boolean
+      loading?: "eager" | "lazy"
+    }
+  | {
+      kind: "video"
+      embedUrl: string
+      provider?: string | null
+    }
 
 function baseOffers(_product: ListingProduct): PdpOffer[] {
   // Geen placeholder Offer-ID's — Buy Box/cart alleen met echte Commerce Cloud offr_* (ADR-0022).

@@ -11,7 +11,6 @@ import {
 } from "../../_lib/pdp-seed"
 import {
   discountPercent,
-  findListingProduct,
   starsForRating,
   type ListingProduct,
 } from "../../_lib/listing-products"
@@ -132,7 +131,7 @@ export function ProductDetailPage({
   const relatedFromDetail = useMemo(
     () =>
       detail.relatedSlugs
-        .map((slug) => catalogPool.find((p) => p.slug === slug) ?? findListingProduct(slug))
+        .map((slug) => catalogPool.find((p) => p.slug === slug))
         .filter((p): p is ListingProduct => p != null),
     [catalogPool, detail.relatedSlugs]
   )
@@ -155,8 +154,7 @@ export function ProductDetailPage({
     const fromPairs = detail.pairsWellWith
       .map(
         (item) =>
-          catalogPool.find((p) => p.slug === item.slug) ??
-          findListingProduct(item.slug)
+          catalogPool.find((p) => p.slug === item.slug)
       )
       .filter((p): p is ListingProduct => p != null)
     const seen = new Set<string>()
@@ -260,15 +258,17 @@ export function ProductDetailPage({
 
       {/* Hero grid: gallery | info | buybox */}
       <div className="grid items-start gap-4 px-4 pt-4 pb-3 tablet:grid-cols-2 tablet:gap-4 tablet:px-8 tablet:pt-5 tablet:pb-3 desktop:grid-cols-[1fr_1fr_300px] desktop:gap-5">
-        <div className="min-w-0 self-start">
+        <div className="min-w-0 self-start" data-cms-section="gallery">
           <ProductGallery
             title={detail.fullTitle}
             seed={detail.slug}
             count={detail.galleryCount}
+            images={detail.galleryImages}
+            slides={detail.gallerySlides}
           />
         </div>
 
-        <div className="min-w-0 self-start">
+        <div className="min-w-0 self-start" data-cms-section="intro">
           <div className="flex items-start gap-2">
             <h1 className="m-0 min-w-0 flex-1 text-[22px] font-bold leading-tight tracking-tight text-wf-900 tablet:text-[24px]">
               {detail.fullTitle}
@@ -452,7 +452,10 @@ export function ProductDetailPage({
         </div>
 
         {/* Buy Box — desktop/tablet kolom; mobiel onder info */}
-        <div className="desktop:sticky desktop:top-5 desktop:self-start">
+        <div
+          className="desktop:sticky desktop:top-5 desktop:self-start"
+          data-cms-section="buybox"
+        >
           <BuyBox
             selected={selected}
             offerCount={offers.length}
@@ -610,7 +613,7 @@ export function ProductDetailPage({
       </section>
 
       {/* Tabs */}
-      <section id="product-tabs" className="px-4 pb-8 tablet:px-8 tablet:pb-10">
+      <section id="product-tabs" className="px-4 pb-8 tablet:px-8 tablet:pb-10" data-cms-section="description">
         <div
           className="mb-5 flex gap-0 overflow-x-auto border-b border-wf-300 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
@@ -837,7 +840,7 @@ export function ProductDetailPage({
       </section>
 
       {/* FAQ */}
-      <section className="px-4 pb-8 tablet:px-8 tablet:pb-10">
+      <section className="px-4 pb-8 tablet:px-8 tablet:pb-10" data-cms-section="faq">
         <h2 className="mb-3.5 border-b border-wf-200 pb-2.5 text-[17px] font-bold text-wf-900">
           {t("faqHeading", locale)}
         </h2>

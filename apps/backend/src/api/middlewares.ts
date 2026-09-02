@@ -75,10 +75,10 @@ const documentUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 })
 
-/** Product images — keep storefront light (~2–3 MB). */
+/** Product images — server processes variants; 10 MB upload cap. */
 const productMediaUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 3 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 },
 })
 
 const customerAuth = authenticate("customer", ["session", "bearer"])

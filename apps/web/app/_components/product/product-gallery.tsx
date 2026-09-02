@@ -1,12 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import type { PdpGallerySlide } from "../../_lib/pdp-seed"
 import { hashHue } from "../../_lib/cart-line-meta"
 
 type ProductGalleryProps = {
   title: string
   seed: string
   count: number
+  images?: string[]
+  slides?: PdpGallerySlide[]
 }
 
 function slideGradient(seed: string, index: number) {
@@ -14,12 +17,86 @@ function slideGradient(seed: string, index: number) {
   return `linear-gradient(145deg, hsl(${hue} 32% 90%), hsl(${(hue + 48) % 360} 26% 72%))`
 }
 
-export function ProductGallery({ title, seed, count }: ProductGalleryProps) {
-  const slots = Math.min(Math.max(count, 1), 6)
+function normalizeSlides(
+  slides: PdpGallerySlide[] | undefined,
+  images: string[] | undefined,
+  count: number
+): PdpGallerySlide[] {
+  if (slides && slides.length > 0) return slides
+  const urls = (images ?? []).filter(Boolean)
+  if (urls.length > 0) {
+    return urls.map((url, i) => ({
+      kind: "image" as const,
+      url,
+      isPrimary: i === 0,
+      loading: i === 0 ? ("eager" as const) : ("lazy" as const),
+    }))
+  }
+  return Array.from({ length: Math.min(Math.max(count, 1), 6) }).map(() => ({
+    kind: "image" as const,
+    url: "",
+    loading: "lazy" as const,
+  }))
+}
+
+function GalleryImage({
+  slide,
+  title,
+  className,
+}: {
+  slide: Extract<PdpGallerySlide, { kind: "image" }>
+  title: string
+  className?: string
+}) {
+  const avifSrcSet = slide.avifSrcSet
+  const webpSrcSet = slide.srcSet
+
+  if (avifSrcSet || webpSrcSet) {
+    return (
+      <picture className={className}>
+        {avifSrcSet ? <source srcSet={avifSrcSet} type="image/avif" /> : null}
+        {webpSrcSet ? <source srcSet={webpSrcSet} type="image/webp" /> : null}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={slide.url}
+          alt={title}
+          loading={slide.loading ?? "lazy"}
+          decoding="async"
+          className="h-full w-full object-contain"
+        />
+      </picture>
+    )
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={slide.url}
+      srcSet={slide.srcSet ?? undefined}
+      sizes="(min-width: 1024px) 50vw, 100vw"
+      alt={title}
+      loading={slide.loading ?? "lazy"}
+      decoding="async"
+      className={className ?? "h-full w-full object-contain"}
+    />
+  )
+}
+
+export function ProductGallery({
+  title,
+  seed,
+  count,
+  images,
+  slides: slidesProp,
+}: ProductGalleryProps) {
+  const slides = normalizeSlides(slidesProp, images, count)
+  const slots = slides.length
   const [active, setActive] = useState(0)
   const [zooming, setZooming] = useState(false)
   const [origin, setOrigin] = useState("50% 50%")
   const [lightbox, setLightbox] = useState(false)
+
+  const activeSlide = slides[active] ?? slides[0]
 
   useEffect(() => {
     if (!lightbox) return
@@ -39,6 +116,117 @@ export function ProductGallery({ title, seed, count }: ProductGalleryProps) {
     setOrigin(`${x}% ${y}%`)
   }
 
+  function renderThumb(i: number) {
+    const slide = slides[i]
+    const isActive = active === i
+    if (!slide) return null
+
+    if (slide.kind === "video") {
+      return (
+        <button
+          key={i}
+          type="button"
+          onClick={() => setActive(i)}
+          className={`relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 text-[10px] font-bold transition ${
+            isActive
+              ? "border-wf-900 bg-wf-900 text-white shadow-sm"
+              : "border-wf-200 bg-wf-100 text-wf-700 hover:border-wf-400"
+          }`}
+          aria-label={`Video ${i + 1}`}
+          aria-pressed={isActive}
+        >
+          ▶
+        </button>
+      )
+    }
+
+    if (slide.url) {
+      return (
+        <button
+          key={i}
+          type="button"
+          onClick={() => setActive(i)}
+          className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 bg-wf-50 transition ${
+            isActive
+              ? "border-wf-900 shadow-sm"
+              : "border-wf-200 hover:border-wf-400"
+          }`}
+          aria-label={`Miniatuur ${i + 1}`}
+          aria-pressed={isActive}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={slide.url}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        </button>
+      )
+    }
+
+    return (
+      <button
+        key={i}
+        type="button"
+        onClick={() => setActive(i)}
+        className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition ${
+          isActive
+            ? "border-wf-900 shadow-sm"
+            : "border-wf-200 hover:border-wf-400"
+        }`}
+        style={{ background: slideGradient(seed, i) }}
+        aria-label={`Miniatuur ${i + 1}`}
+        aria-pressed={isActive}
+      />
+    )
+  }
+
+  function renderMain() {
+    if (!activeSlide) return null
+
+    if (activeSlide.kind === "video") {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center bg-black p-2">
+          <iframe
+            src={activeSlide.embedUrl}
+            title={`${title} video`}
+            className="aspect-video h-full max-h-full w-full rounded-lg"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      )
+    }
+
+    if (activeSlide.url) {
+      return (
+        <div className="absolute inset-0 p-4">
+          <GalleryImage
+            slide={activeSlide}
+            title={title}
+            className="h-full w-full object-contain"
+          />
+        </div>
+      )
+    }
+
+    return (
+      <div
+        className="absolute inset-0 transition-transform duration-300 ease-out"
+        style={{
+          background: slideGradient(seed, active),
+          transform: zooming ? "scale(1.35)" : "scale(1)",
+          transformOrigin: origin,
+        }}
+        aria-hidden
+      />
+    )
+  }
+
+  const canLightbox =
+    activeSlide?.kind === "image" && Boolean(activeSlide.url)
+
   return (
     <>
       <div className="flex flex-col gap-2.5 desktop:flex-row desktop:items-start desktop:gap-3">
@@ -57,67 +245,35 @@ export function ProductGallery({ title, seed, count }: ProductGalleryProps) {
         </div>
 
         <div className="order-1 hidden shrink-0 flex-col gap-2 desktop:order-none desktop:flex">
-          {Array.from({ length: slots }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setActive(i)}
-              className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition ${
-                active === i
-                  ? "border-wf-900 shadow-sm"
-                  : "border-wf-200 hover:border-wf-400"
-              }`}
-              style={{ background: slideGradient(seed, i) }}
-              aria-label={`Miniatuur ${i + 1}`}
-              aria-pressed={active === i}
-            />
-          ))}
+          {Array.from({ length: slots }).map((_, i) => renderThumb(i))}
         </div>
 
         <button
           type="button"
           className="group relative aspect-square w-full max-h-[460px] overflow-hidden rounded-2xl border border-wf-200 bg-wf-50 shadow-sm desktop:max-h-[400px] desktop:flex-1"
-          style={{ cursor: zooming ? "zoom-out" : "zoom-in" }}
+          style={{ cursor: canLightbox ? (zooming ? "zoom-out" : "zoom-in") : "default" }}
           aria-label={`Hoofdafbeelding ${title} — klik voor fullscreen`}
-          onClick={() => setLightbox(true)}
+          onClick={() => {
+            if (canLightbox) setLightbox(true)
+          }}
           onMouseEnter={() => setZooming(true)}
           onMouseLeave={() => setZooming(false)}
           onMouseMove={onMove}
         >
-          <div
-            className="absolute inset-0 transition-transform duration-300 ease-out"
-            style={{
-              background: slideGradient(seed, active),
-              transform: zooming ? "scale(1.35)" : "scale(1)",
-              transformOrigin: origin,
-            }}
-            aria-hidden
-          />
-          <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
-            Vergroten
-          </span>
+          {renderMain()}
+          {canLightbox ? (
+            <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
+              Vergroten
+            </span>
+          ) : null}
         </button>
 
         <div className="order-3 hidden gap-2 tablet:flex desktop:hidden">
-          {Array.from({ length: slots }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setActive(i)}
-              className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 transition ${
-                active === i
-                  ? "border-wf-900 shadow-sm"
-                  : "border-wf-200 hover:border-wf-400"
-              }`}
-              style={{ background: slideGradient(seed, i) }}
-              aria-label={`Miniatuur ${i + 1}`}
-              aria-pressed={active === i}
-            />
-          ))}
+          {Array.from({ length: slots }).map((_, i) => renderThumb(i))}
         </div>
       </div>
 
-      {lightbox ? (
+      {lightbox && activeSlide?.kind === "image" && activeSlide.url ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4">
           <button
             type="button"
@@ -126,12 +282,13 @@ export function ProductGallery({ title, seed, count }: ProductGalleryProps) {
             onClick={() => setLightbox(false)}
           />
           <div className="relative z-10 w-full max-w-3xl">
-            <div
-              className="aspect-square w-full rounded-2xl shadow-2xl transition"
-              style={{ background: slideGradient(seed, active) }}
-              role="img"
-              aria-label={`${title} fullscreen`}
-            />
+            <div className="aspect-square w-full overflow-hidden rounded-2xl bg-black shadow-2xl">
+              <GalleryImage
+                slide={activeSlide}
+                title={title}
+                className="h-full w-full object-contain"
+              />
+            </div>
             <div className="mt-3 flex items-center justify-between gap-3">
               <button
                 type="button"

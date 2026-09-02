@@ -1,3 +1,4 @@
+import { persistMediaReference } from "@europmade/utils"
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { COMMERCE_CLOUD_MODULE } from "../../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../../modules/commerce-cloud/service"
@@ -9,8 +10,11 @@ import { REVIEW_MODULE } from "../../../modules/review"
 import type ReviewModuleService from "../../../modules/review/service"
 import { buildProductCloudPreview } from "../product-cloud/product-preview"
 import { loadBuyBoxForIdentifier } from "../commerce-cloud/buy-box-helpers"
-import { slugifyCategoryName } from "../../../modules/product-cloud/category-attributes"
+import {
+  productMatchesCategoryFilter,
+} from "../../../modules/product-cloud/category-attributes"
 import { loadMadeInEuropeForProduct } from "../product-cloud/made-in-europe-helpers"
+import { buildEffectivePriceView } from "../../../modules/commerce-cloud/offer-pricing"
 
 type PublishedVersion = {
   id: string
@@ -38,6 +42,17 @@ export type CatalogListItem = {
   from_price: number | null
   average_review_score: number | null
   review_count: number
+  image_url: string | null
+}
+
+export type CatalogMediaItem = {
+  id: string
+  media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
+  storage_reference: string | null
+  sort_order: number
+  metadata?: Record<string, unknown> | null
+  embed_url?: string | null
+  video_provider?: string | null
 }
 
 export type CatalogManufacturerProfile = {
@@ -72,6 +87,60 @@ export type CatalogOfferView = {
   score: number
 }
 
+type IdentifierHit = {
+  id: string
+  product_variant_id: string
+  identifier_type: string
+  identifier_value: string
+}
+
+type VariantHit = {
+  id: string
+  product_id: string
+}
+
+async function listProductIdentifiers(
+  productCloud: ProductCloudModuleService,
+  productId: string
+): Promise<IdentifierHit[]> {
+  const variants = (await productCloud.listProductVariants({
+    product_id: productId,
+  })) as VariantHit[]
+  const nested = await Promise.all(
+    variants.map(
+      (variant) =>
+        productCloud.listIdentifiers({
+          product_variant_id: variant.id,
+        }) as Promise<IdentifierHit[]>
+    )
+  )
+  return nested.flat()
+}
+
+async function findPublishedProductIdsByQuery(
+  productCloud: ProductCloudModuleService,
+  q: string
+): Promise<Set<string>> {
+  const ids = new Set<string>()
+  const digits = q.replace(/\s+/g, "")
+  if (!/^\d{8,14}$/.test(digits)) return ids
+  const rows = (await productCloud.listIdentifiers(
+    { identifier_value: digits },
+    { take: 50 }
+  )) as IdentifierHit[]
+  for (const row of rows) {
+    try {
+      const variant = (await productCloud.retrieveProductVariant(
+        row.product_variant_id
+      )) as VariantHit
+      ids.add(variant.product_id)
+    } catch {
+      continue
+    }
+  }
+  return ids
+}
+
 /**
  * Gepubliceerde Product Cloud-producten (guest-read, Blueprint API-model §3).
  * Hergebruikt bestaande listProductVersions + buildProductCloudPreview.
@@ -99,7 +168,7 @@ export async function listPublishedCatalogProducts(
       | "name_asc"
       | "name_desc"
   } = {}
-): Promise<CatalogListItem[]> {
+): Promise<{ products: CatalogListItem[]; count: number }> {
   const productCloud = scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
@@ -110,11 +179,14 @@ export async function listPublishedCatalogProducts(
   const reviews = scope.resolve(REVIEW_MODULE) as ReviewModuleService
 
   const region = (opts.region_code ?? "NL").toUpperCase()
-  const take = Math.max(opts.take ?? 400, (opts.offset ?? 0) + (opts.limit ?? 24))
+  const limit = Math.max(1, opts.limit ?? 24)
+  const offset = Math.max(0, opts.offset ?? 0)
+  const q = opts.q?.trim().toLowerCase() ?? ""
+  const scanTake = q ? 8000 : Math.max(opts.take ?? 400, offset + limit)
 
   const versions = (await productCloud.listProductVersions(
     { publication_status: "Gepubliceerd" },
-    { order: { version_number: "DESC" }, take: take * 3 }
+    { order: { version_number: "DESC" }, take: scanTake }
   )) as PublishedVersion[]
 
   const seen = new Set<string>()
@@ -123,30 +195,76 @@ export async function listPublishedCatalogProducts(
     if (seen.has(v.product_id)) continue
     seen.add(v.product_id)
     published.push(v)
-    if (published.length >= take) break
+    if (published.length >= scanTake) break
   }
 
   const categoryFilter = opts.category?.trim().toLowerCase() ?? ""
-  const q = opts.q?.trim().toLowerCase() ?? ""
   const brandFilter = opts.brand_id?.trim().toLowerCase() ?? ""
   const manufacturerFilter = opts.manufacturer_id?.trim().toLowerCase() ?? ""
 
+  const qProductIds = q ? await findPublishedProductIdsByQuery(productCloud, q) : new Set<string>()
+
+  const brandNameById = new Map<string, string | null>()
+  const manufacturerNameById = new Map<string, string | null>()
+  const brandCountryById = new Map<string, string | null>()
+  const versionIdByProduct = new Map<string, string>()
+  const brandIdByProduct = new Map<string, string>()
+  const needsNamesDuringScan = Boolean(brandFilter || manufacturerFilter || q)
+  const needsCountryDuringScan = Boolean(opts.country_code)
+
+  async function cachedBrandName(brandId: string): Promise<string | null> {
+    if (brandNameById.has(brandId)) return brandNameById.get(brandId) ?? null
+    const name = await resolveBrandName(partner, brandId)
+    brandNameById.set(brandId, name)
+    return name
+  }
+  async function cachedManufacturerName(
+    manufacturerId: string
+  ): Promise<string | null> {
+    if (manufacturerNameById.has(manufacturerId)) {
+      return manufacturerNameById.get(manufacturerId) ?? null
+    }
+    const name = await resolveManufacturerName(partner, manufacturerId)
+    manufacturerNameById.set(manufacturerId, name)
+    return name
+  }
+  async function cachedBrandCountry(brandId: string): Promise<string | null> {
+    if (brandCountryById.has(brandId)) return brandCountryById.get(brandId) ?? null
+    const country = await resolveBrandCountry(partner, brandId)
+    brandCountryById.set(brandId, country)
+    return country
+  }
+
   const items: CatalogListItem[] = []
-  const seenProductIds = new Set<string>()
   for (const version of published) {
-    const preview = await buildProductCloudPreview(
+    const identifierBundle = await listProductIdentifiers(
       productCloud,
       version.product_id
+    )
+    const preferred = identifierBundle[0]
+    const preview = await buildProductCloudPreview(
+      productCloud,
+      version.product_id,
+      preferred
+        ? {
+            identifier_id: preferred.id,
+            identifier_type: preferred.identifier_type,
+            identifier_value: preferred.identifier_value,
+          }
+        : undefined
     )
     // Alleen actieve producten in de publieke catalogus (lifecycle ≠ gearchiveerd).
     if (preview.lifecycle_status === "Gearchiveerd") continue
 
-    const brand = await resolveBrandName(partner, preview.brand_id)
-    const manufacturer_name = await resolveManufacturerName(
-      partner,
-      preview.manufacturer_id
-    )
-    const country_code = await resolveBrandCountry(partner, preview.brand_id)
+    const brand = needsNamesDuringScan
+      ? await cachedBrandName(preview.brand_id)
+      : null
+    const manufacturer_name = needsNamesDuringScan
+      ? await cachedManufacturerName(preview.manufacturer_id)
+      : null
+    const country_code = needsCountryDuringScan
+      ? await cachedBrandCountry(preview.brand_id)
+      : null
     const brandHay = [preview.brand_id, brand, slugifyCatalogEntityName(brand ?? "")]
       .filter(Boolean)
       .join(" ")
@@ -160,33 +278,46 @@ export async function listPublishedCatalogProducts(
       .join(" ")
       .toLowerCase()
     if (brandFilter && !brandHay.includes(brandFilter)) continue
-    if (manufacturerFilter && !manufacturerHay.includes(manufacturerFilter)) continue
+    if (manufacturerFilter && !manufacturerHay.includes(manufacturerFilter)) {
+      continue
+    }
 
-    if (categoryFilter) {
-      const match = preview.category_names.some((name) => {
-        const n = name.toLowerCase()
-        const slug = slugifyCategoryName(name)
-        return (
-          n === categoryFilter ||
-          n.includes(categoryFilter) ||
-          slug === categoryFilter ||
-          slug.includes(categoryFilter)
-        )
-      })
-      if (!match) continue
+    if (
+      categoryFilter &&
+      !productMatchesCategoryFilter(preview.category_names, categoryFilter)
+    ) {
+      continue
+    }
+
+    const identifierValues = identifierBundle.map((i) => i.identifier_value)
+    const identifierIds = identifierBundle.map((i) => i.id)
+    if (!preview.identifier_value && identifierValues[0]) {
+      preview.identifier_id = identifierBundle[0]?.id ?? preview.identifier_id
+      preview.identifier_type =
+        identifierBundle[0]?.identifier_type ?? preview.identifier_type
+      preview.identifier_value = identifierValues[0]
     }
 
     if (q) {
       const hay = [
         preview.title ?? "",
+        version.title ?? "",
+        version.description ?? "",
         brand ?? "",
         manufacturer_name ?? "",
         ...preview.category_names,
-        preview.identifier_value ?? "",
+        ...identifierValues,
+        version.product_id,
       ]
         .join(" ")
         .toLowerCase()
-      if (!hay.includes(q)) continue
+      const hit =
+        qProductIds.has(version.product_id) ||
+        hay.includes(q) ||
+        identifierValues.some((v) =>
+          v.toLowerCase().includes(q.replace(/\s/g, ""))
+        )
+      if (!hit) continue
     }
 
     if (opts.country_code) {
@@ -198,27 +329,24 @@ export async function listPublishedCatalogProducts(
       continue
     }
 
+    const idsForOffers =
+      identifierIds.length > 0
+        ? identifierIds
+        : preview.identifier_id
+          ? [preview.identifier_id]
+          : []
     let offer_count = 0
     let from_price: number | null = null
-    if (preview.identifier_id) {
-      const pricing = await minOfferPricing(
-        commerce,
-        preview.identifier_id,
-        region
-      )
-      offer_count = pricing.offer_count
-      from_price = pricing.from_price
+    for (const identifierId of idsForOffers) {
+      const pricing = await minOfferPricing(commerce, identifierId, region)
+      offer_count += pricing.offer_count
+      if (
+        pricing.from_price != null &&
+        (from_price == null || pricing.from_price < from_price)
+      ) {
+        from_price = pricing.from_price
+      }
     }
-
-    const productReviews = await reviews.listReviews(
-      { product_id: version.product_id, review_type: "Productreview" },
-      { take: 200 }
-    )
-    const review_count = productReviews.length
-    const average_review_score =
-      review_count > 0
-        ? productReviews.reduce((s, r) => s + Number(r.score), 0) / review_count
-        : null
 
     if (opts.price_min != null && (from_price == null || from_price < opts.price_min)) {
       continue
@@ -227,8 +355,8 @@ export async function listPublishedCatalogProducts(
       continue
     }
 
-    if (seenProductIds.has(version.product_id)) continue
-    seenProductIds.add(version.product_id)
+    versionIdByProduct.set(version.product_id, version.id)
+    brandIdByProduct.set(version.product_id, preview.brand_id)
 
     items.push({
       id: version.product_id,
@@ -245,12 +373,29 @@ export async function listPublishedCatalogProducts(
       country_code,
       offer_count,
       from_price,
-      average_review_score,
-      review_count,
+      average_review_score: null,
+      review_count: 0,
+      image_url: null,
     })
   }
 
   const sort = opts.sort ?? "popularity"
+  if (sort === "rating_desc") {
+    await Promise.all(
+      items.map(async (item) => {
+        const productReviews = await reviews.listReviews(
+          { product_id: item.id, review_type: "Productreview" },
+          { take: 200 }
+        )
+        item.review_count = productReviews.length
+        item.average_review_score =
+          item.review_count > 0
+            ? productReviews.reduce((s, r) => s + Number(r.score), 0) /
+              item.review_count
+            : null
+      })
+    )
+  }
   items.sort((a, b) => {
     switch (sort) {
       case "price_asc":
@@ -269,9 +414,51 @@ export async function listPublishedCatalogProducts(
     }
   })
 
-  const offset = Math.max(0, opts.offset ?? 0)
-  const limit = Math.max(1, opts.limit ?? 24)
-  return items.slice(offset, offset + limit)
+  const count = items.length
+  const paged = items.slice(offset, offset + limit)
+  await Promise.all(
+    paged.map(async (item) => {
+      const brandId = brandIdByProduct.get(item.id) ?? ""
+      const [productReviews, image_url, brand_name, manufacturer_name, country_code] =
+        await Promise.all([
+          item.review_count > 0 ||
+          item.average_review_score != null ||
+          sort === "rating_desc"
+            ? Promise.resolve(null)
+            : reviews.listReviews(
+                { product_id: item.id, review_type: "Productreview" },
+                { take: 200 }
+              ),
+          resolvePrimaryImageUrl(
+            productCloud,
+            versionIdByProduct.get(item.id) ?? ""
+          ),
+          needsNamesDuringScan
+            ? Promise.resolve(item.brand_name)
+            : cachedBrandName(brandId),
+          needsNamesDuringScan
+            ? Promise.resolve(item.manufacturer_name)
+            : cachedManufacturerName(item.manufacturer_id ?? ""),
+          needsCountryDuringScan
+            ? Promise.resolve(item.country_code)
+            : cachedBrandCountry(brandId),
+        ])
+      if (productReviews) {
+        item.review_count = productReviews.length
+        item.average_review_score =
+          item.review_count > 0
+            ? productReviews.reduce((s, r) => s + Number(r.score), 0) /
+              item.review_count
+            : null
+      }
+      item.image_url = image_url
+      item.brand_name = brand_name
+      item.manufacturer_name = manufacturer_name
+      item.country_code = country_code
+    })
+  )
+
+  return { products: paged, count }
 }
 
 /**
@@ -337,7 +524,7 @@ export async function loadManufacturerCatalogPage(
   }
   if (!match) return null
 
-  const products = await listPublishedCatalogProducts(scope, {
+  const { products } = await listPublishedCatalogProducts(scope, {
     manufacturer_id: match.id,
     region_code,
     take: 200,
@@ -486,6 +673,8 @@ export async function loadCatalogProductDetail(
       identifier_type: preview.identifier_type,
       identifier_value: preview.identifier_value,
       country_code: made_in_europe?.primary_assembly_country ?? country_code,
+      image_url: await resolvePrimaryImageUrl(productCloud, version.id),
+      media: await resolveProductMediaItems(productCloud, version.id),
     },
     made_in_europe,
     buy_box: buy_box
@@ -509,6 +698,54 @@ export async function loadCatalogProductDetail(
     })),
     seller_reviews,
     seller_review_aggregate,
+  }
+}
+
+async function resolvePrimaryImageUrl(
+  productCloud: ProductCloudModuleService,
+  versionId: string
+): Promise<string | null> {
+  const items = await resolveProductMediaItems(productCloud, versionId)
+  const primary =
+    items.find((m) => m.media_type === "Hoofdafbeelding") ||
+    items.find((m) => m.media_type !== "Video")
+  return primary?.storage_reference ?? null
+}
+
+export async function resolveProductMediaItems(
+  productCloud: ProductCloudModuleService,
+  versionId: string
+): Promise<CatalogMediaItem[]> {
+  try {
+    const media = (await productCloud.listProductMedias(
+      { product_version_id: versionId },
+      { order: { sort_order: "ASC" }, take: 40 }
+    )) as Array<{
+      id: string
+      media_type?: string
+      storage_reference?: string
+      sort_order?: number
+      metadata?: Record<string, unknown> | null
+    }>
+
+    return media.map((m) => {
+      const ref = persistMediaReference(m.storage_reference?.trim())
+      const videoMeta = m.metadata?.video as
+        | { embed_url?: string; provider?: string }
+        | undefined
+      const isVideo = m.media_type === "Video"
+      return {
+        id: m.id,
+        media_type: (m.media_type || "Overige afbeelding") as CatalogMediaItem["media_type"],
+        storage_reference: ref,
+        sort_order: Number(m.sort_order ?? 0),
+        metadata: m.metadata ?? null,
+        embed_url: isVideo ? videoMeta?.embed_url ?? ref : null,
+        video_provider: isVideo ? videoMeta?.provider ?? null : null,
+      }
+    })
+  } catch {
+    return []
   }
 }
 
@@ -593,17 +830,37 @@ async function minOfferPricing(
     identifier_id: identifierId,
     region_code: regionCode,
   })
+  const active = offers.filter(
+    (offer) => (offer.sales_status ?? "active") === "active"
+  )
+  const priced = await Promise.all(
+    active.map(async (offer) => {
+      const [[inventory], [price]] = await Promise.all([
+        commerce.listOfferInventories({ offer_id: offer.id }),
+        commerce.listOfferPrices({ offer_id: offer.id }),
+      ])
+      if (!inventory || !price) return null
+      if (Number(inventory.quantity_available) <= 0) return null
+      const view = buildEffectivePriceView({
+        base_price: Number(price.base_price),
+        shipping_cost: Number(price.shipping_cost),
+        extra_delivery_cost:
+          price.extra_delivery_cost != null
+            ? Number(price.extra_delivery_cost)
+            : null,
+        promo_price:
+          price.promo_price != null ? Number(price.promo_price) : null,
+        promo_starts_at: price.promo_starts_at ?? null,
+        promo_ends_at: price.promo_ends_at ?? null,
+      })
+      return view.total_customer_price
+    })
+  )
   let from_price: number | null = null
   let offer_count = 0
-  for (const offer of offers) {
-    const [inventory] = await commerce.listOfferInventories({
-      offer_id: offer.id,
-    })
-    const [price] = await commerce.listOfferPrices({ offer_id: offer.id })
-    if (!inventory || !price) continue
-    if (Number(inventory.quantity_available) <= 0) continue
+  for (const total of priced) {
+    if (total == null) continue
     offer_count += 1
-    const total = Number(price.base_price) + Number(price.shipping_cost)
     if (from_price == null || total < from_price) from_price = total
   }
   return { offer_count, from_price }
@@ -620,13 +877,28 @@ async function enrichRankedOffers(
       offer_id: ranked.offer_id,
     })
     const seller_name = await resolveSellerDisplayName(partner, ranked.seller_id)
+    const view =
+      price != null
+        ? buildEffectivePriceView({
+            base_price: Number(price.base_price),
+            shipping_cost: Number(price.shipping_cost),
+            extra_delivery_cost:
+              price.extra_delivery_cost != null
+                ? Number(price.extra_delivery_cost)
+                : null,
+            promo_price:
+              price.promo_price != null ? Number(price.promo_price) : null,
+            promo_starts_at: price.promo_starts_at ?? null,
+            promo_ends_at: price.promo_ends_at ?? null,
+          })
+        : null
     views.push({
       offer_id: ranked.offer_id,
       seller_id: ranked.seller_id,
       seller_name,
-      base_price: price ? Number(price.base_price) : ranked.total_price,
-      shipping_cost: price ? Number(price.shipping_cost) : 0,
-      total_price: ranked.total_price,
+      base_price: view ? view.unit_price : ranked.total_price,
+      shipping_cost: view ? view.shipping_cost + view.extra_delivery_cost : 0,
+      total_price: view ? view.total_customer_price : ranked.total_price,
       quantity_available: ranked.quantity_available,
       rank: ranked.rank,
       is_winner: ranked.is_winner,

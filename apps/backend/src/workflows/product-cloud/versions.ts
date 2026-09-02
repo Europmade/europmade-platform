@@ -346,6 +346,7 @@ export type AddMediaInput = {
   seller_id: string
   media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
   storage_reference: string
+  metadata?: Record<string, unknown> | null
 }
 
 export const addMediaStep = createStep(
@@ -389,6 +390,7 @@ export const addMediaStep = createStep(
       media_type: input.media_type,
       storage_reference: input.storage_reference,
       sort_order: maxOrder + 1,
+      metadata: input.metadata ?? null,
     })
     return new StepResponse(media)
   }

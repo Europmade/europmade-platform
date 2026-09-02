@@ -35,6 +35,20 @@ export {
   rewriteMediaStrings,
 } from "./media/public-url.ts"
 export {
+  parseProductMediaMetadata,
+  resolveOptimizedImageUrl,
+  buildImageSrcSet,
+  type ProductMediaMetadata,
+  type ImageFormatVariants,
+  type ImageVariantWidth,
+} from "./media/media-metadata.ts"
+export {
+  parseVideoEmbedUrl,
+  isVideoEmbedReference,
+  type ParsedVideoEmbed,
+  type VideoProvider,
+} from "./media/video-embed.ts"
+export {
   RETURN_PERIOD_DAYS,
   computeReturnPeriod,
   resolveReturnAnchor,

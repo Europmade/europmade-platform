@@ -8,6 +8,13 @@
 /** Ondersteunde landen bij MVP-lancering (Blueprint H14.10). */
 export type SupportedCountry = "NL" | "BE" | "DE" | "FR" | "ES" | "IT"
 
+export type {
+  MediaTransparencyPolicy,
+  MediaSizePx,
+  MediaPlacement,
+  MediaRequirements,
+} from "./media"
+
 /** Generieke, discriminated-union resultaatwrapper. */
 export type Result<TData, TError = string> =
   | { success: true; data: TData }

@@ -20,6 +20,7 @@ const ProductMedia = model
     ]),
     storage_reference: model.text(),
     sort_order: model.number().default(0),
+    metadata: model.json().nullable(),
   })
   .indexes([{ on: ["product_version_id"] }])
 

@@ -2,8 +2,8 @@
  * Publieke Store Catalog-client (Product Cloud + Buy Box + reviews).
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { medusaBackendUrl } from "./medusa-backend-url"
+
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export class CatalogApiError extends Error {
@@ -32,7 +32,7 @@ async function request<T>(
   if (externalSignal?.aborted) controller.abort()
   else externalSignal?.addEventListener("abort", onExternalAbort)
   try {
-    const response = await fetch(`${BACKEND_URL}${path}`, {
+    const response = await fetch(`${medusaBackendUrl()}${path}`, {
       headers: {
         "Content-Type": "application/json",
         ...(PUBLISHABLE_KEY
@@ -89,6 +89,16 @@ export type CatalogListProduct = {
   average_review_score: number | null
   review_count: number
   image_url?: string | null
+}
+
+export type CatalogMediaItem = {
+  id: string
+  media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
+  storage_reference: string | null
+  sort_order: number
+  metadata?: Record<string, unknown> | null
+  embed_url?: string | null
+  video_provider?: string | null
 }
 
 export type CatalogOffer = {
@@ -200,6 +210,7 @@ export type CatalogProductDetail = {
     identifier_value: string | null
     country_code: string | null
     image_url?: string | null
+    media?: CatalogMediaItem[]
   }
   made_in_europe?: CatalogMadeInEurope | null
   buy_box: {

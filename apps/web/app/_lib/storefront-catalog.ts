@@ -17,8 +17,12 @@ import { slugifyForManufacturer } from "./manufacturer-slug"
 import { type ListingProduct } from "./listing-products"
 import { findMarketplaceCategory } from "./marketplace-categories"
 import { categorySlugFromName, localizeCategoryNames } from "./localize-category-names"
-import { type PdpDetail, type PdpOffer, type PdpReview } from "./pdp-seed"
+import { type PdpDetail, type PdpGallerySlide, type PdpOffer, type PdpReview } from "./pdp-seed"
 import { resolveMediaUrl } from "@europmade/utils"
+import {
+  buildImageSrcSet,
+  resolveOptimizedImageUrl,
+} from "@europmade/utils"
 import { getPageBackendOrigin } from "./page-backend-origin"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -524,11 +528,72 @@ async function mapApiDetail(
       priceCents: r.priceCents,
     })),
     relatedSlugs: related.map((r) => r.slug),
-    galleryCount: 1,
-    galleryImages: resolveMediaUrl(p.image_url ?? null, backendOrigin)
-      ? [resolveMediaUrl(p.image_url ?? null, backendOrigin) as string]
-      : [],
+    ...(() => {
+      const gallerySlides = buildGallerySlides(detail, backendOrigin)
+      return {
+        galleryCount: Math.max(gallerySlides.length, 1),
+        galleryImages: [],
+        gallerySlides,
+      }
+    })(),
   }
+}
+
+function buildGallerySlides(
+  detail: CatalogProductDetail,
+  backendOrigin: string
+): PdpGallerySlide[] {
+  const media = detail.product.media ?? []
+  const slides: PdpGallerySlide[] = []
+
+  for (const item of media) {
+    if (item.media_type === "Video" && item.embed_url) {
+      slides.push({
+        kind: "video",
+        embedUrl: item.embed_url,
+        provider: item.video_provider ?? null,
+      })
+      continue
+    }
+    const url = resolveOptimizedImageUrl(
+      item.storage_reference,
+      item.metadata,
+      backendOrigin,
+      { preferTransparent: item.media_type === "Hoofdafbeelding" }
+    )
+    if (!url) continue
+    const webpSrcSet =
+      buildImageSrcSet(
+        item.storage_reference,
+        item.metadata,
+        backendOrigin,
+        "webp"
+      ) || undefined
+    const avifSrcSet =
+      buildImageSrcSet(
+        item.storage_reference,
+        item.metadata,
+        backendOrigin,
+        "avif"
+      ) || undefined
+    slides.push({
+      kind: "image",
+      url,
+      srcSet: webpSrcSet,
+      avifSrcSet,
+      isPrimary: item.media_type === "Hoofdafbeelding",
+      loading: item.media_type === "Hoofdafbeelding" ? "eager" : "lazy",
+    })
+  }
+
+  if (slides.length === 0) {
+    const fallback = resolveMediaUrl(detail.product.image_url ?? null, backendOrigin)
+    if (fallback) {
+      slides.push({ kind: "image", url: fallback, isPrimary: true, loading: "eager" })
+    }
+  }
+
+  return slides
 }
 
 /**

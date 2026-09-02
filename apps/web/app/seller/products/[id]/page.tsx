@@ -108,7 +108,7 @@ type HistoryFilter = "all" | "compliance" | "price" | "variants" | "media" | "re
 
 type TabKey = WizardStepKey | "history"
 
-const MEDIA_MAX_BYTES = 3 * 1024 * 1024
+const MEDIA_MAX_BYTES = 10 * 1024 * 1024
 
 function tierBadge(tier: string, locale: StorefrontLocale = "nl") {
   if (tier === "compliance_required") return t("pdpTierCompliance", locale)
@@ -429,11 +429,25 @@ function tabForFieldCode(fieldCode: string): TabKey {
   return "information"
 }
 
-function isVideoMedia(mediaType: string, ref: string, mime?: string | null) {
+function isVideoMedia(
+  mediaType: string,
+  ref: string,
+  mime?: string | null,
+  metadata?: Record<string, unknown> | null
+) {
+  const videoMeta = metadata?.video as { embed_url?: string } | undefined
+  if (videoMeta?.embed_url) return true
   const m = (mime || "").toLowerCase()
   if (m.startsWith("video/")) return true
   if (mediaType === "Video") return true
   return /\.(mp4|webm)(\?|$)/i.test(ref)
+}
+
+function videoEmbedUrl(
+  metadata?: Record<string, unknown> | null
+): string | null {
+  const video = metadata?.video as { embed_url?: string } | undefined
+  return video?.embed_url ?? null
 }
 
 type OfferDraft = {
@@ -558,8 +572,8 @@ export default function SellerProductDetailPage() {
   const [regularPriceDraft, setRegularPriceDraft] = useState("")
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
   const [mediaUrl, setMediaUrl] = useState("")
-  const [mediaType, setMediaType] = useState<
-    "Hoofdafbeelding" | "Overige afbeelding" | "Video"
+  const [uploadMediaType, setUploadMediaType] = useState<
+    "Hoofdafbeelding" | "Overige afbeelding"
   >("Overige afbeelding")
   const [openHintCode, setOpenHintCode] = useState<string | null>(null)
   const [addMarketCode, setAddMarketCode] = useState("")
@@ -1383,7 +1397,9 @@ export default function SellerProductDetailPage() {
     setError(null)
     setNotice(null)
     try {
-      await uploadProductMediaFile(productId, file)
+      await uploadProductMediaFile(productId, file, {
+        media_type: uploadMediaType,
+      })
       setNotice(t("pdpMediaUploaded", locale))
       load()
     } catch (err: unknown) {
@@ -1407,7 +1423,7 @@ export default function SellerProductDetailPage() {
     try {
       await addProductMediaByUrl(productId, {
         storage_reference: url,
-        media_type: mediaType,
+        media_type: "Video",
       })
       setMediaUrl("")
       setNotice(t("pdpMediaUrlAdded", locale))
@@ -2936,7 +2952,8 @@ export default function SellerProductDetailPage() {
           <div className="rounded border border-wf-200 bg-wf-50 p-3 text-[11px] text-wf-700">
             <p className="font-semibold text-wf-900">{t("mediaGuidelines", locale)}</p>
             <ul className="mt-1 list-disc space-y-0.5 pl-4">
-              <li>{t("mediaImageHint", locale)}</li>
+              <li>{t("mediaPrimaryHint", locale)}</li>
+              <li>{t("mediaGalleryHint", locale)}</li>
               <li>{t("mediaMaxSize", locale)}</li>
               <li>{t("mediaVideoHint", locale)}</li>
             </ul>
@@ -2944,9 +2961,31 @@ export default function SellerProductDetailPage() {
 
           <div className="rounded border border-wf-300 bg-white p-3">
             <h2 className="text-xs font-bold text-wf-900">{t("mediaUploadFile", locale)}</h2>
+            <div className="mt-2 grid gap-2 tablet:grid-cols-[1fr_auto]">
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+                  {t("mediaUploadType", locale)}
+                </label>
+                <select
+                  className="h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
+                  value={uploadMediaType}
+                  onChange={(e) =>
+                    setUploadMediaType(
+                      e.target.value as "Hoofdafbeelding" | "Overige afbeelding"
+                    )
+                  }
+                >
+                  <option value="Hoofdafbeelding">{t("pdpPrimaryImage", locale)}</option>
+                  <option value="Overige afbeelding">{t("pdpOtherImage", locale)}</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <p className="text-[10px] text-wf-600">{t("mediaAutoOptimize", locale)}</p>
+              </div>
+            </div>
             <input
               type="file"
-              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.jpg,.jpeg,.png,.webp,.mp4,.webm"
+              accept="image/jpeg,image/png,image/webp,image/avif,.jpg,.jpeg,.png,.webp,.avif"
               className="mt-2 block w-full text-xs"
               disabled={mediaBusy}
               onChange={(e) => {
@@ -2958,35 +2997,14 @@ export default function SellerProductDetailPage() {
           </div>
 
           <div className="rounded border border-wf-300 bg-white p-3">
-            <h2 className="text-xs font-bold text-wf-900">{t("mediaAddUrl", locale)}</h2>
-            <div className="mt-2 grid gap-2 tablet:grid-cols-[1fr_auto_auto]">
+            <h2 className="text-xs font-bold text-wf-900">{t("mediaAddVideo", locale)}</h2>
+            <div className="mt-2 grid gap-2 tablet:grid-cols-[1fr_auto]">
               <Input
-                label="URL"
+                label={t("mediaVideoUrlLabel", locale)}
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
-                placeholder="https://…"
+                placeholder="https://www.youtube.com/watch?v=…"
               />
-              <div>
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-                  Type
-                </label>
-                <select
-                  className="h-9 rounded border border-wf-400 bg-white px-2 text-xs"
-                  value={mediaType}
-                  onChange={(e) =>
-                    setMediaType(
-                      e.target.value as
-                        | "Hoofdafbeelding"
-                        | "Overige afbeelding"
-                        | "Video"
-                    )
-                  }
-                >
-                  <option value="Hoofdafbeelding">{t("pdpPrimaryImage", locale)}</option>
-                  <option value="Overige afbeelding">{t("pdpOtherImage", locale)}</option>
-                  <option value="Video">{t("pdpVideo", locale)}</option>
-                </select>
-              </div>
               <div className="flex items-end">
                 <Button
                   size="sm"
@@ -2997,6 +3015,7 @@ export default function SellerProductDetailPage() {
                 </Button>
               </div>
             </div>
+            <p className="mt-1 text-[10px] text-wf-600">{t("mediaVideoHint", locale)}</p>
           </div>
 
           <div className="grid gap-2 tablet:grid-cols-3">
@@ -3010,7 +3029,11 @@ export default function SellerProductDetailPage() {
                 const video = isVideoMedia(
                   m.media_type,
                   m.storage_reference,
-                  m.mime_type
+                  m.mime_type,
+                  (m as { metadata?: Record<string, unknown> | null }).metadata
+                )
+                const embedUrl = videoEmbedUrl(
+                  (m as { metadata?: Record<string, unknown> | null }).metadata
                 )
                 return (
                   <div
@@ -3025,12 +3048,22 @@ export default function SellerProductDetailPage() {
                   >
                     {video ? (
                       <div className="aspect-square w-full overflow-hidden rounded bg-wf-50">
-                        <video
-                          src={resolveSellerMediaUrl(m.storage_reference)}
-                          className="h-full w-full object-contain"
-                          controls
-                          muted
-                        />
+                        {embedUrl ? (
+                          <iframe
+                            src={embedUrl}
+                            title="Productvideo"
+                            className="h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        ) : (
+                          <video
+                            src={resolveSellerMediaUrl(m.storage_reference)}
+                            className="h-full w-full object-contain"
+                            controls
+                            muted
+                          />
+                        )}
                       </div>
                     ) : (
                       <div className="aspect-square w-full overflow-hidden rounded bg-wf-50">
@@ -3043,8 +3076,12 @@ export default function SellerProductDetailPage() {
                       </div>
                     )}
                     <p className="mt-1 text-[10px] text-wf-600">
-                      {m.media_type}
-                      {isPrimary ? " · primair" : ""}
+                      {m.media_type === "Hoofdafbeelding"
+                        ? t("pdpPrimaryImage", locale)
+                        : m.media_type === "Overige afbeelding"
+                          ? t("pdpOtherImage", locale)
+                          : t("pdpVideo", locale)}
+                      {isPrimary ? ` · ${t("mediaPrimaryBadge", locale)}` : ""}
                       {m.mime_type ? ` · ${m.mime_type}` : video ? " · video" : ""}
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">

@@ -109,7 +109,23 @@ export default function AdminProductDetailPage() {
     id?: string
     media_type?: string
     storage_reference?: string
+    metadata?: Record<string, unknown> | null
+    sort_order?: number
   }>
+  const sortedMedia = [...media].sort(
+    (a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+  )
+
+  function mediaLabel(type?: string) {
+    if (type === "Hoofdafbeelding") return "Hoofdafbeelding"
+    if (type === "Video") return "Video"
+    return "Overige afbeelding"
+  }
+
+  function videoEmbedFromMetadata(metadata?: Record<string, unknown> | null) {
+    const video = metadata?.video as { embed_url?: string } | undefined
+    return video?.embed_url ?? null
+  }
   const claims = data.claims || []
   const evidence = data.evidence || []
   const fieldChanges = (product.field_changes || []) as Array<{
@@ -318,45 +334,62 @@ export default function AdminProductDetailPage() {
           </Section>
 
           <Section title="C. Media">
-            {media.length === 0 ? (
+            {sortedMedia.length === 0 ? (
               <p className="text-xs text-wf-600">Geen media aanwezig.</p>
             ) : (
               <div className="grid grid-cols-2 gap-3 tablet:grid-cols-3">
-                {media.map((m) => (
-                  <div
-                    key={m.id || m.storage_reference}
-                    className="rounded border border-wf-200 p-2"
-                  >
-                    {displayMediaUrl(m.storage_reference) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={displayMediaUrl(m.storage_reference) ?? ""}
-                        alt={m.media_type || "media"}
-                        className="mb-2 h-24 w-full rounded object-cover"
-                      />
-                    ) : (
-                      <div className="mb-2 flex h-24 items-center justify-center rounded bg-wf-100 text-[10px] text-wf-500">
-                        Preview n.v.t.
-                      </div>
-                    )}
-                    <p className="text-[10px] text-wf-600">
-                      {m.media_type || "media"}
-                    </p>
-                    <p className="truncate font-mono text-[9px] text-wf-500">
-                      {m.storage_reference || m.id}
-                    </p>
-                  </div>
-                ))}
+                {sortedMedia.map((m) => {
+                  const isPrimary = m.media_type === "Hoofdafbeelding"
+                  const embedUrl =
+                    m.media_type === "Video"
+                      ? videoEmbedFromMetadata(m.metadata)
+                      : null
+                  const previewUrl = displayMediaUrl(m.storage_reference)
+                  return (
+                    <div
+                      key={m.id || m.storage_reference}
+                      className="rounded border border-wf-200 p-2"
+                    >
+                      {embedUrl ? (
+                        <iframe
+                          src={embedUrl}
+                          title="Productvideo"
+                          className="mb-2 h-24 w-full rounded"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      ) : previewUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={previewUrl}
+                          alt={mediaLabel(m.media_type)}
+                          className="mb-2 h-24 w-full rounded object-contain bg-wf-50"
+                        />
+                      ) : (
+                        <div className="mb-2 flex h-24 items-center justify-center rounded bg-wf-100 text-[10px] text-wf-500">
+                          Preview n.v.t.
+                        </div>
+                      )}
+                      <p className="text-[10px] font-semibold text-wf-800">
+                        {mediaLabel(m.media_type)}
+                        {isPrimary ? " · primair" : ""}
+                      </p>
+                      <p className="truncate font-mono text-[9px] text-wf-500">
+                        {m.storage_reference || m.id}
+                      </p>
+                    </div>
+                  )
+                })}
               </div>
             )}
             {product.primary_image_url ? (
               <div className="mt-3">
-                <p className="mb-1 text-[11px] text-wf-500">Primaire afbeelding</p>
+                <p className="mb-1 text-[11px] text-wf-500">Primaire afbeelding (catalogus)</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={displayMediaUrl(product.primary_image_url) ?? ""}
                   alt=""
-                  className="h-32 rounded object-cover"
+                  className="h-32 rounded object-contain bg-wf-50"
                 />
               </div>
             ) : null}

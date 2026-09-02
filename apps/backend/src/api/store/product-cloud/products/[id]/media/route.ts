@@ -3,6 +3,7 @@ import type {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
+import { parseVideoEmbedUrl } from "@europmade/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
 import { addMediaWorkflow } from "../../../../../../workflows/product-cloud"
@@ -31,7 +32,7 @@ function assertHttpUrl(url: string) {
   }
 }
 
-/** Add media by remote URL / storage reference. */
+/** Add media by remote URL / storage reference / YouTube-Vimeo embed. */
 export async function POST(
   req: AuthenticatedMedusaRequest<StoreAddMediaBodyInput>,
   res: MedusaResponse
@@ -42,37 +43,6 @@ export async function POST(
   )
   const { id } = req.params as RouteParams
   const body = req.validatedBody
-
-  assertHttpUrl(body.storage_reference)
-
-  // Light HEAD/GET probe — fail fast on unreachable URLs
-  try {
-    const probe = await fetch(body.storage_reference, {
-      method: "HEAD",
-      redirect: "follow",
-      signal: AbortSignal.timeout(5000),
-    })
-    if (!probe.ok) {
-      // Some CDNs block HEAD — try GET range
-      const getProbe = await fetch(body.storage_reference, {
-        method: "GET",
-        headers: { Range: "bytes=0-0" },
-        signal: AbortSignal.timeout(5000),
-      })
-      if (!getProbe.ok && getProbe.status !== 206) {
-        throw new MedusaError(
-          MedusaError.Types.INVALID_DATA,
-          "Afbeeldings-URL is niet bereikbaar."
-        )
-      }
-    }
-  } catch (err) {
-    if (err instanceof MedusaError) throw err
-    throw new MedusaError(
-      MedusaError.Types.INVALID_DATA,
-      "Afbeeldings-URL kon niet worden gecontroleerd."
-    )
-  }
 
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
@@ -103,6 +73,57 @@ export async function POST(
     )
   }
 
+  let storage_reference = body.storage_reference
+  let metadata: Record<string, unknown> | null = null
+
+  if (body.media_type === "Video") {
+    const embed = parseVideoEmbedUrl(body.storage_reference)
+    if (!embed) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Ongeldige video-URL. Gebruik een YouTube- of Vimeo-link."
+      )
+    }
+    storage_reference = embed.embed_url
+    metadata = {
+      video: {
+        provider: embed.provider,
+        video_id: embed.video_id,
+        embed_url: embed.embed_url,
+        source_url: embed.source_url,
+        thumbnail_url: embed.thumbnail_url,
+      },
+    }
+  } else {
+    assertHttpUrl(body.storage_reference)
+    try {
+      const probe = await fetch(body.storage_reference, {
+        method: "HEAD",
+        redirect: "follow",
+        signal: AbortSignal.timeout(5000),
+      })
+      if (!probe.ok) {
+        const getProbe = await fetch(body.storage_reference, {
+          method: "GET",
+          headers: { Range: "bytes=0-0" },
+          signal: AbortSignal.timeout(5000),
+        })
+        if (!getProbe.ok && getProbe.status !== 206) {
+          throw new MedusaError(
+            MedusaError.Types.INVALID_DATA,
+            "Afbeeldings-URL is niet bereikbaar."
+          )
+        }
+      }
+    } catch (err) {
+      if (err instanceof MedusaError) throw err
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Afbeeldings-URL kon niet worden gecontroleerd."
+      )
+    }
+  }
+
   if (body.media_type === "Hoofdafbeelding") {
     const existing = await productCloud.listProductMedias({
       product_version_id: versionId,
@@ -122,7 +143,8 @@ export async function POST(
       version_id: versionId,
       seller_id: seller.id,
       media_type: body.media_type,
-      storage_reference: body.storage_reference,
+      storage_reference,
+      metadata,
     },
   })
 

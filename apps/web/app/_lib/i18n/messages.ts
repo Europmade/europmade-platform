@@ -8700,8 +8700,25 @@ const M = {
   // —— P2.15.1: Media tab ——
   mediaGuidelines: L("Richtlijnen", "Guidelines", "Richtlinien", "Directives"),
   mediaImageHint: L("Afbeeldingen: 1:1 verhouding, min. 1200×1200 px aanbevolen", "Images: 1:1 ratio, min. 1200×1200 px recommended", "Bilder: 1:1-Verhältnis, min. 1200×1200 px empfohlen", "Images : format 1:1, min. 1200×1200 px recommandé"),
-  mediaMaxSize: L("Max. 3MB per bestand · JPG / PNG / WebP", "Max. 3MB per file · JPG / PNG / WebP", "Max. 3MB pro Datei · JPG / PNG / WebP", "Max. 3 Mo par fichier · JPG / PNG / WebP"),
-  mediaVideoHint: L("Video: MP4 of WebM, liefst kleiner dan 3MB", "Video: MP4 or WebM, preferably under 3MB", "Video: MP4 oder WebM, vorzugsweise unter 3MB", "Vidéo : MP4 ou WebM, de préférence moins de 3 Mo"),
+  mediaPrimaryHint: L(
+    "Hoofdafbeelding: gebruik een duidelijke productafbeelding. EuropMade optimaliseert het bestand automatisch.",
+    "Primary image: use a clear product image. EuropMade optimizes the file automatically.",
+    "Hauptbild: verwenden Sie ein klares Produktbild. EuropMade optimiert die Datei automatisch.",
+    "Image principale : utilisez une image produit claire. EuropMade optimise le fichier automatiquement."
+  ),
+  mediaGalleryHint: L(
+    "Overige afbeeldingen: voeg product-, detail- en sfeerafbeeldingen toe. Een achtergrond is toegestaan.",
+    "Additional images: add product, detail and lifestyle photos. A background is allowed.",
+    "Weitere Bilder: fügen Sie Produkt-, Detail- und Lifestylefotos hinzu. Ein Hintergrund ist erlaubt.",
+    "Images supplémentaires : ajoutez des photos produit, détail et ambiance. Un arrière-plan est autorisé."
+  ),
+  mediaMaxSize: L("Max. 10MB per bestand · JPG / JPEG / PNG / WebP / AVIF", "Max. 10MB per file · JPG / JPEG / PNG / WebP / AVIF", "Max. 10MB pro Datei · JPG / JPEG / PNG / WebP / AVIF", "Max. 10 Mo par fichier · JPG / JPEG / PNG / WebP / AVIF"),
+  mediaVideoHint: L("Video: voeg een YouTube- of Vimeo-link toe.", "Video: add a YouTube or Vimeo link.", "Video: fügen Sie einen YouTube- oder Vimeo-Link hinzu.", "Vidéo : ajoutez un lien YouTube ou Vimeo."),
+  mediaUploadType: L("Type upload", "Upload type", "Upload-Typ", "Type de téléversement"),
+  mediaAutoOptimize: L("EuropMade maakt automatisch geoptimaliseerde webvarianten.", "EuropMade automatically creates optimized web variants.", "EuropMade erstellt automatisch optimierte Webvarianten.", "EuropMade crée automatiquement des variantes web optimisées."),
+  mediaAddVideo: L("Video toevoegen", "Add video", "Video hinzufügen", "Ajouter une vidéo"),
+  mediaVideoUrlLabel: L("YouTube- of Vimeo-URL", "YouTube or Vimeo URL", "YouTube- oder Vimeo-URL", "URL YouTube ou Vimeo"),
+  mediaPrimaryBadge: L("primair", "primary", "primär", "principal"),
   mediaUploadFile: L("Bestand uploaden", "Upload file", "Datei hochladen", "Téléverser un fichier"),
   mediaAddUrl: L("Toevoegen via URL", "Add via URL", "Über URL hinzufügen", "Ajouter via URL"),
   mediaNoMedia: L("Nog geen media.", "No media yet.", "Noch keine Medien.", "Pas encore de médias."),
