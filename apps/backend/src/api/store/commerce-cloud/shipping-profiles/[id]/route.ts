@@ -14,6 +14,7 @@ import {
   countProductsForProfile,
   deleteShippingProfileSafe,
   enrichShippingProfile,
+  resyncOffersForShippingProfile,
 } from "../../../../../modules/commerce-cloud/shipping-profile-engine"
 import {
   normalizeCountryRates,
@@ -94,12 +95,24 @@ export async function PATCH(
       country_rates: body.country_rates != null ? nextRates : undefined,
     },
   ])
+
+  const sync = await resyncOffersForShippingProfile(commerce, productCloud, {
+    sellerId: seller.id,
+    profileId: updated.id,
+  })
+
   const linked = await countProductsForProfile(
     productCloud,
     seller.id,
     updated.id
   )
-  res.json({ shipping_profile: enrichShippingProfile(updated, linked) })
+  res.json({
+    shipping_profile: enrichShippingProfile(updated, linked),
+    sync: {
+      products_synced: sync.products_synced,
+      offers_updated: sync.offers_updated,
+    },
+  })
 }
 
 export async function DELETE(

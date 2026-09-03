@@ -210,6 +210,64 @@ export async function syncProfileToProductOffers(
   return { offers_updated }
 }
 
+export type ProfileResyncResult = {
+  products_synced: number
+  offers_updated: number
+  errors: Array<{ product_id: string; message: string }>
+}
+
+/**
+ * After a shipping profile is updated, re-apply rates to every linked product's offers.
+ * Reuses syncProfileToProductOffers — does not create a second sync engine.
+ */
+export async function resyncOffersForShippingProfile(
+  commerce: CommerceCloudModuleService,
+  productCloud: ProductCloudModuleService,
+  opts: { sellerId: string; profileId: string }
+): Promise<ProfileResyncResult> {
+  const products = await productCloud.listProducts({
+    current_owner_seller_id: opts.sellerId,
+    shipping_profile_id: opts.profileId,
+  })
+
+  let products_synced = 0
+  let offers_updated = 0
+  const errors: Array<{ product_id: string; message: string }> = []
+
+  for (const product of products as Array<{ id: string }>) {
+    try {
+      const result = await syncProfileToProductOffers(
+        commerce,
+        productCloud,
+        {
+          sellerId: opts.sellerId,
+          productId: product.id,
+          profileId: opts.profileId,
+        }
+      )
+      products_synced += 1
+      offers_updated += result.offers_updated
+    } catch (err: unknown) {
+      errors.push({
+        product_id: product.id,
+        message:
+          err instanceof Error ? err.message : "Offer-sync mislukt.",
+      })
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new MedusaError(
+      MedusaError.Types.UNEXPECTED_STATE,
+      `Verzendprofiel is opgeslagen, maar offer-sync mislukte voor ${errors.length} product(en): ${errors
+        .map((e) => `${e.product_id} (${e.message})`)
+        .join("; ")}`
+    )
+  }
+
+  return { products_synced, offers_updated, errors }
+}
+
 export async function duplicateShippingProfile(
   commerce: CommerceCloudModuleService,
   opts: { sellerId: string; profileId: string; newName: string }
