@@ -8387,15 +8387,30 @@ const M = {
   pdpPublicationCheck: L("Publicatiecontrole", "Publication check", "Veröffentlichungsprüfung", "Contrôle de publication"),
   pdpMadeInEuropeCompliance: L("Made in Europe & EU Compliance", "Made in Europe & EU Compliance", "Made in Europe & EU Compliance", "Made in Europe & EU Compliance"),
   pdpManufacturer: L("Fabrikant", "Manufacturer", "Hersteller", "Fabricant"),
-  pdpManufacturerResponsible: L("Fabrikant / verantwoordelijke fabrikant", "Manufacturer / responsible manufacturer", "Hersteller / verantwortlicher Hersteller", "Fabricant / fabricant responsable"),
-  pdpBrandIsNotManufacturer: L(
-    "Het merk is niet de fabrikant / verantwoordelijke fabrikant",
-    "The brand is not the manufacturer / responsible manufacturer",
-    "Die Marke ist nicht der Hersteller / verantwortliche Hersteller",
-    "La marque n'est pas le fabricant / fabricant responsable"
+  pdpManufacturerResponsible: L(
+    "Verantwoordelijke marktdeelnemer (EU verantwoordelijke fabrikant)",
+    "Responsible economic operator (EU responsible manufacturer)",
+    "Verantwortlicher Wirtschaftsakteur (EU verantwortlicher Hersteller)",
+    "Opérateur économique responsable (fabricant responsable UE)"
   ),
-  pdpSelectManufacturer: L("Selecteer fabrikant", "Select manufacturer", "Hersteller auswählen", "Sélectionner le fabricant"),
-  pdpAddManufacturer: L("+ Fabrikant toevoegen", "Add manufacturer", "+ Hersteller hinzufügen", "+ Ajouter un fabricant"),
+  pdpBrandIsNotManufacturer: L(
+    "Het merk is een andere juridische entiteit dan de fabrikant / verantwoordelijke marktdeelnemer (EU verantwoordelijke fabrikant)",
+    "The brand is a different legal entity from the manufacturer / responsible economic operator (EU responsible manufacturer)",
+    "Die Marke ist eine andere juristische Person als der Hersteller / verantwortliche Wirtschaftsakteur (EU verantwortlicher Hersteller)",
+    "La marque est une entité juridique distincte du fabricant / opérateur économique responsable (fabricant responsable UE)"
+  ),
+  pdpSelectManufacturer: L(
+    "Selecteer verantwoordelijke marktdeelnemer (EU verantwoordelijke fabrikant)",
+    "Select responsible economic operator (EU responsible manufacturer)",
+    "Verantwortlichen Wirtschaftsakteur (EU verantwortlicher Hersteller) auswählen",
+    "Sélectionner l'opérateur économique responsable (fabricant responsable UE)"
+  ),
+  pdpAddManufacturer: L(
+    "+ Verantwoordelijke marktdeelnemer toevoegen",
+    "Add responsible economic operator",
+    "+ Verantwortlichen Wirtschaftsakteur hinzufügen",
+    "+ Ajouter un opérateur économique responsable"
+  ),
   pdpProductionLocation: L("Productielocatie", "Production location", "Produktionsstandort", "Lieu de production"),
   pdpSelectLocation: L("Selecteer locatie", "Select location", "Standort auswählen", "Sélectionner un lieu"),
   pdpNoLocations: L("Geen locaties gevonden", "No locations found", "Keine Standorte gefunden", "Aucun lieu trouvé"),
@@ -8437,7 +8452,12 @@ const M = {
   complianceApproved: L("Goedgekeurd", "Approved", "Genehmigt", "Approuvé"),
   compliancePending: L("In beoordeling", "Under review", "In Prüfung", "En cours d'examen"),
   compliancePrecheck: L("Pre-check waarschuwing", "Pre-check warning", "Vorprüfung Warnung", "Avertissement de pré-vérification"),
-  compliancePendingReview: L("In beoordeling", "Under review", "In Prüfung", "En cours d'examen"),
+  compliancePendingReview: L(
+    "Wachten op goedkeuring",
+    "Awaiting approval",
+    "Wartet auf Freigabe",
+    "En attente d'approbation"
+  ),
   compliancePrecheckWarning: L("Pre-check waarschuwing", "Pre-check warning", "Vorprüfung Warnung", "Avertissement pré-vérification"),
   complianceRejected: L("Afgekeurd", "Rejected", "Abgelehnt", "Refusé"),
   complianceComplete: L("Compleet", "Complete", "Vollständig", "Complet"),
@@ -8449,6 +8469,43 @@ const M = {
   saleNoOffer: L("Geen aanbod", "No offer", "Kein Angebot", "Pas d'offre"),
   saleNotPublished: L("Niet in winkel", "Not in store", "Nicht im Shop", "Pas en boutique"),
   saleBlocked: L("Geblokkeerd", "Blocked", "Blockiert", "Bloqué"),
+  saleBlockedFull: L("Verkoop geblokkeerd", "Sales blocked", "Verkauf blockiert", "Vente bloquée"),
+  saleNeedOffer: L("Nog nodig: verkoopaanbieding aanmaken", "Still needed: create a sales offer", "Noch nötig: Verkaufsangebot erstellen", "Encore nécessaire : créer une offre"),
+  saleNeedPublish: L("Nog nodig: product publiceren", "Still needed: publish the product", "Noch nötig: Produkt veröffentlichen", "Encore nécessaire : publier le produit"),
+  saleBlockedNeedList: L("Nog nodig", "Still needed", "Noch nötig", "Encore nécessaire"),
+  vatAutoByMarket: L("BTW automatisch bepaald op basis van markt", "VAT set automatically by market", "MwSt. automatisch anhand des Marktes", "TVA déterminée automatiquement selon le marché"),
+  mediaPrimaryBadge: L("primair", "primary", "primär", "principal"),
+  mediaMakePrimary: L("Primair", "Primary", "Primär", "Principal"),
+  mediaThumbsHint: L("Sleep om te ordenen. Klik op een afbeelding om te vergroten.", "Drag to reorder. Click an image to enlarge.", "Ziehen zum Sortieren. Klicken zum Vergrößern.", "Glisser pour réordonner. Cliquer pour agrandir."),
+  mediaImageUrlLabel: L("Afbeeldings-URL", "Image URL", "Bild-URL", "URL de l’image"),
+  mediaImageTypeLabel: L("Type", "Type", "Typ", "Type"),
+  complianceCeColumn: L("CE-bewijs", "CE evidence", "CE-Nachweis", "Preuve CE"),
+  complianceCeHint: L("Upload een CE-document of voeg een URL toe.", "Upload a CE document or add a URL.", "Laden Sie ein CE-Dokument hoch oder fügen Sie eine URL hinzu.", "Téléversez un document CE ou ajoutez une URL."),
+  complianceMieColumn: L("Made in Europe-bewijs", "Made in Europe evidence", "Made-in-Europe-Nachweis", "Preuve Made in Europe"),
+  complianceMieHint: L("Bewijs van productielocatie/producent in Europa.", "Evidence of production location/producer in Europe.", "Nachweis des Produktionsorts/Herstellers in Europa.", "Preuve du lieu de production/producteur en Europe."),
+  complianceCeAlsoLocation: L("CE-bewijs geeft ook productielocatie (minimaal land) weer.", "CE evidence also shows production location (at least country).", "CE-Nachweis zeigt auch den Produktionsort (mindestens Land).", "La preuve CE indique aussi le lieu de production (au moins le pays)."),
+  complianceCeAlsoLocationHint: L(
+    "Met deze optie telt een CE-upload ook als Made in Europe-bewijs. Zet uit als je apart productielocatiebewijs wilt uploaden.",
+    "With this option a CE upload also counts as Made in Europe evidence. Turn off to upload production location evidence separately.",
+    "Mit dieser Option zählt ein CE-Upload auch als Made-in-Europe-Nachweis. Deaktivieren für separaten Produktionsort-Nachweis.",
+    "Avec cette option, un envoi CE compte aussi comme preuve Made in Europe. Désactivez pour un envoi séparé du lieu de production."
+  ),
+  complianceDataColumn: L("Gegevensverwerking", "Data processing", "Datenverarbeitung", "Traitement des données"),
+  complianceDataQuestion: L("Verwerkt dit product gegevens van gebruikers?", "Does this product process user data?", "Verarbeitet dieses Produkt Nutzerdaten?", "Ce produit traite-t-il des données utilisateurs ?"),
+  complianceDataHint: L(
+    "Alleen verplicht wanneer het product gegevens van gebruikers verwerkt, bijvoorbeeld via een app, account, camera, microfoon, locatieverwerking of cloudverbinding. Elektronisch zijn is op zichzelf niet voldoende.",
+    "Only required when the product processes user data, e.g. via an app, account, camera, microphone, location or cloud connection. Being electronic alone is not enough.",
+    "Nur erforderlich, wenn das Produkt Nutzerdaten verarbeitet, z. B. über App, Konto, Kamera, Mikrofon, Standort oder Cloud. Elektronisch allein reicht nicht.",
+    "Obligatoire seulement si le produit traite des données utilisateurs (app, compte, caméra, micro, localisation ou cloud). Être électronique ne suffit pas."
+  ),
+  evChooseFile: L("Bestand kiezen", "Choose file", "Datei wählen", "Choisir un fichier"),
+  evEnterUrl: L("URL invoeren", "Enter URL", "URL eingeben", "Saisir l’URL"),
+  evAdd: L("Toevoegen", "Add", "Hinzufügen", "Ajouter"),
+  evMadeInEurope: L("Made in Europe-bewijs", "Made in Europe evidence", "Made-in-Europe-Nachweis", "Preuve Made in Europe"),
+  evStatusLabel: L("Status:", "Status:", "Status:", "Statut :"),
+  evDataUsageDocTitle: L("Datagebruikdocument", "Data usage document", "Datennutzungsdokument", "Document d'utilisation des données"),
+  pdpTierRecommendedInfoOptionalSafety: L("Aanbevolen productinformatie", "Recommended product information", "Empfohlene Produktinformationen", "Informations produit recommandées"),
+
   saleOfferActive: L("Offer actief", "Offer active", "Angebot aktiv", "Offre active"),
   saleOfferPaused: L("Offer gepauzeerd", "Offer paused", "Angebot pausiert", "Offre en pause"),
   pubPublished: L("Gepubliceerd", "Published", "Veröffentlicht", "Publié"),
@@ -8518,7 +8575,12 @@ const M = {
   formSaveNew: L("Opslaan (nieuw)", "Save (new)", "Speichern (neu)", "Enregistrer (nouveau)"),
   formSaveChanges: L("Wijzigingen opslaan", "Save changes", "Änderungen speichern", "Enregistrer les modifications"),
   pdpSelectBrandFirst: L("Selecteer eerst een merk.", "Select a brand first.", "Wähle zuerst eine Marke.", "Sélectionnez d'abord une marque."),
-  pdpNoManufacturer: L("Nog geen fabrikant toegevoegd.", "No manufacturer added yet.", "Noch kein Hersteller hinzugefügt.", "Aucun fabricant ajouté."),
+  pdpNoManufacturer: L(
+    "Nog geen verantwoordelijke marktdeelnemer (EU verantwoordelijke fabrikant) toegevoegd.",
+    "No responsible economic operator (EU responsible manufacturer) added yet.",
+    "Noch kein verantwortlicher Wirtschaftsakteur (EU verantwortlicher Hersteller) hinzugefügt.",
+    "Aucun opérateur économique responsable (fabricant responsable UE) ajouté."
+  ),
   pdpSelectLocation2: L("Selecteer productielocatie", "Select production location", "Produktionsstandort auswählen", "Sélectionner le lieu de production"),
   pdpNoLocationsForBrand: L("Geen locaties voor dit merk.", "No locations for this brand.", "Keine Standorte für diese Marke.", "Aucun lieu pour cette marque."),
   pdpCeQuestion: L("Is CE-markering op het product zichtbaar?", "Is CE marking visible on the product?", "Ist das CE-Zeichen auf dem Produkt sichtbar?", "Le marquage CE est-il visible sur le produit ?"),
@@ -8561,7 +8623,7 @@ const M = {
   pdpSubmitNotReady: L("Product is nog niet compleet genoeg om ter goedkeuring aan te bieden.", "Product is not yet complete enough to submit for approval.", "Produkt ist noch nicht vollständig genug für die Einreichung.", "Le produit n'est pas encore assez complet pour être soumis."),
   pdpSubmitSuccess: L("Product ter goedkeuring aangeboden. Het is nog niet publiek zichtbaar.", "Product submitted for approval. It is not yet publicly visible.", "Produkt zur Genehmigung eingereicht. Es ist noch nicht öffentlich sichtbar.", "Produit soumis pour approbation. Il n'est pas encore visible publiquement."),
   pdpSubmitFailed: L("Indienen mislukt.", "Submission failed.", "Einreichung fehlgeschlagen.", "Échec de la soumission."),
-  pdpFileTooLarge: L("Bestand is groter dan 3MB. Kies een kleiner bestand.", "File is larger than 3MB. Choose a smaller file.", "Datei ist größer als 3MB. Wähle eine kleinere Datei.", "Le fichier dépasse 3 Mo. Choisissez un fichier plus petit."),
+  pdpFileTooLarge: L("Bestand is groter dan 10MB. Kies een kleiner bestand.", "File is larger than 10MB. Choose a smaller file.", "Datei ist größer als 10MB. Wähle eine kleinere Datei.", "Le fichier dépasse 10 Mo. Choisissez un fichier plus petit."),
   pdpMediaUploaded: L("Media geüpload.", "Media uploaded.", "Medien hochgeladen.", "Média téléversé."),
   pdpUploadFailed: L("Upload mislukt.", "Upload failed.", "Upload fehlgeschlagen.", "Échec du téléversement."),
   pdpMediaUrlEmpty: L("Vul een media-URL in.", "Enter a media URL.", "Gib eine Medien-URL ein.", "Entrez une URL de média."),
@@ -8713,12 +8775,22 @@ const M = {
     "Images supplémentaires : ajoutez des photos produit, détail et ambiance. Un arrière-plan est autorisé."
   ),
   mediaMaxSize: L("Max. 10MB per bestand · JPG / JPEG / PNG / WebP / AVIF", "Max. 10MB per file · JPG / JPEG / PNG / WebP / AVIF", "Max. 10MB pro Datei · JPG / JPEG / PNG / WebP / AVIF", "Max. 10 Mo par fichier · JPG / JPEG / PNG / WebP / AVIF"),
-  mediaVideoHint: L("Video: voeg een YouTube- of Vimeo-link toe.", "Video: add a YouTube or Vimeo link.", "Video: fügen Sie einen YouTube- oder Vimeo-Link hinzu.", "Vidéo : ajoutez un lien YouTube ou Vimeo."),
+  mediaVideoHint: L(
+    "Plak een YouTube- of Vimeo-URL (geen embed-code).",
+    "Paste a YouTube or Vimeo URL (not embed code).",
+    "YouTube- oder Vimeo-URL einfügen (kein Embed-Code).",
+    "Collez une URL YouTube ou Vimeo (pas de code d’intégration)."
+  ),
   mediaUploadType: L("Type upload", "Upload type", "Upload-Typ", "Type de téléversement"),
   mediaAutoOptimize: L("EuropMade maakt automatisch geoptimaliseerde webvarianten.", "EuropMade automatically creates optimized web variants.", "EuropMade erstellt automatisch optimierte Webvarianten.", "EuropMade crée automatiquement des variantes web optimisées."),
   mediaAddVideo: L("Video toevoegen", "Add video", "Video hinzufügen", "Ajouter une vidéo"),
   mediaVideoUrlLabel: L("YouTube- of Vimeo-URL", "YouTube or Vimeo URL", "YouTube- oder Vimeo-URL", "URL YouTube ou Vimeo"),
-  mediaPrimaryBadge: L("primair", "primary", "primär", "principal"),
+  mediaVideoInvalidUrl: L(
+    "Voer een geldige YouTube- of Vimeo-URL in.",
+    "Enter a valid YouTube or Vimeo URL.",
+    "Gib eine gültige YouTube- oder Vimeo-URL ein.",
+    "Saisissez une URL YouTube ou Vimeo valide."
+  ),
   mediaUploadFile: L("Bestand uploaden", "Upload file", "Datei hochladen", "Téléverser un fichier"),
   mediaAddUrl: L("Toevoegen via URL", "Add via URL", "Über URL hinzufügen", "Ajouter via URL"),
   mediaNoMedia: L("Nog geen media.", "No media yet.", "Noch keine Medien.", "Pas encore de médias."),

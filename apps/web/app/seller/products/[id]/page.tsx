@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Badge, Button, Input, Notice } from "@europmade/ui"
-import { isEuMarketCode } from "@europmade/types"
+import { resolveDestinationVatRate } from "@europmade/utils"
 import { SellerGate } from "../../_components/seller-gate"
 import { formatEuro } from "../../../_components/storefront-shell"
 import {
@@ -572,6 +572,7 @@ export default function SellerProductDetailPage() {
   const [regularPriceDraft, setRegularPriceDraft] = useState("")
   const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null)
   const [mediaUrl, setMediaUrl] = useState("")
+  const [videoUrl, setVideoUrl] = useState("")
   const [uploadMediaType, setUploadMediaType] = useState<
     "Hoofdafbeelding" | "Overige afbeelding"
   >("Overige afbeelding")
@@ -618,11 +619,22 @@ export default function SellerProductDetailPage() {
 
   const sortedMedia = useMemo(() => {
     if (!product || product === "loading") return []
-    return [...(product.media || [])].sort(
-      (a, b) =>
-        Number((a as { sort_order?: number }).sort_order ?? 0) -
-        Number((b as { sort_order?: number }).sort_order ?? 0)
-    )
+    return [...(product.media || [])]
+      .filter((m) => {
+        const meta = (m as { metadata?: Record<string, unknown> | null })
+          .metadata
+        const mime = String(meta?.mime_type || m.mime_type || "").toLowerCase()
+        const ref = String(m.storage_reference || "").toLowerCase()
+        const purpose = String(meta?.purpose || "")
+        if (purpose === "compliance_evidence") return false
+        if (mime.includes("pdf") || ref.includes(".pdf")) return false
+        return true
+      })
+      .sort(
+        (a, b) =>
+          Number((a as { sort_order?: number }).sort_order ?? 0) -
+          Number((b as { sort_order?: number }).sort_order ?? 0)
+      )
   }, [product])
 
   const setTab = useCallback(
@@ -1183,7 +1195,7 @@ export default function SellerProductDetailPage() {
         offerDraft.delivery_days_max.trim() === ""
           ? null
           : Number(offerDraft.delivery_days_max)
-      const vat_rate = Number(offerDraft.vat_rate || "0.21")
+      const vat_rate = resolveDestinationVatRate(offerDraft.region_code)
 
       if (!Number.isFinite(regular) || !Number.isFinite(vat_rate)) {
         throw new Error(t("offerPriceInvalid", locale))
@@ -1281,12 +1293,19 @@ export default function SellerProductDetailPage() {
   async function saveShipping() {
     if (!offerDraft) return
     const shipping_cost = Number(offerDraft.shipping_cost)
-    const quantity_available = Number(offerDraft.quantity_available)
+    const quantityRaw = offerDraft.quantity_available.trim()
+    if (quantityRaw === "" || !/^\d+$/.test(quantityRaw)) {
+      setError("Vul een geldige voorraad in (geheel getal, minimaal 0).")
+      return
+    }
+    const quantity_available = Number(quantityRaw)
     if (
       !Number.isFinite(shipping_cost) ||
-      !Number.isFinite(quantity_available)
+      !Number.isFinite(quantity_available) ||
+      quantity_available < 0 ||
+      !Number.isInteger(quantity_available)
     ) {
-      setError("Vul voorraad en verzendkosten in.")
+      setError("Vul een geldige voorraad in (geheel getal, minimaal 0).")
       return
     }
     await persistOfferDraft({ advanceFrom: "shipping" })
@@ -1411,8 +1430,36 @@ export default function SellerProductDetailPage() {
     }
   }
 
-  async function handleMediaUrlAdd() {
+  async function handleImageUrlAdd() {
     const url = mediaUrl.trim()
+    if (!url) {
+      setError(t("pdpMediaUrlEmpty", locale))
+      return
+    }
+    setMediaBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      await addProductMediaByUrl(productId, {
+        storage_reference: url,
+        media_type: uploadMediaType,
+      })
+      setMediaUrl("")
+      setNotice(t("pdpMediaUrlAdded", locale))
+      load()
+    } catch (err: unknown) {
+      setError(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : t("pdpMediaAddFailed", locale)
+      )
+    } finally {
+      setMediaBusy(false)
+    }
+  }
+
+  async function handleVideoUrlAdd() {
+    const url = videoUrl.trim()
     if (!url) {
       setError(t("pdpMediaUrlEmpty", locale))
       return
@@ -1425,14 +1472,14 @@ export default function SellerProductDetailPage() {
         storage_reference: url,
         media_type: "Video",
       })
-      setMediaUrl("")
+      setVideoUrl("")
       setNotice(t("pdpMediaUrlAdded", locale))
       load()
     } catch (err: unknown) {
       setError(
         err instanceof ProductCloudApiError
           ? err.message
-          : t("pdpMediaAddFailed", locale)
+          : t("mediaVideoInvalidUrl", locale)
       )
     } finally {
       setMediaBusy(false)
@@ -1585,14 +1632,8 @@ export default function SellerProductDetailPage() {
           contact: "—",
         }
       : null
-  const needsSeparateEuOperator = Boolean(
-    displayManufacturer && !isEuMarketCode(displayManufacturer.country_code)
-  )
   const ceMarkingField = (product.schema || []).find(
     (field) => field.code === "ce_marking"
-  )
-  const euResponsibleFields = (product.schema || []).filter((field) =>
-    GPSR_EU_RESPONSIBLE_FIELD_CODES.has(field.code || "")
   )
   const extraComplianceFields = (schemaByTier.compliance_required || []).filter(
     (field) => !COMPLIANCE_HANDLED_FIELD_CODES.has(field.code || "")
@@ -1717,13 +1758,24 @@ export default function SellerProductDetailPage() {
           <img
             src={resolveSellerMediaUrl(product.primary_image_url)}
             alt=""
-            className="h-20 w-20 rounded object-cover"
+            className="h-20 w-20 rounded bg-wf-50 object-contain"
+            onError={(e) => {
+              e.currentTarget.style.display = "none"
+              const fallback = e.currentTarget.nextElementSibling
+              if (fallback instanceof HTMLElement) {
+                fallback.classList.remove("hidden")
+                fallback.classList.add("flex")
+              }
+            }}
           />
-        ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded bg-wf-100 text-xs text-wf-500">
-            {t("pdpNoMedia", locale)}
-          </div>
-        )}
+        ) : null}
+        <div
+          className={`h-20 w-20 items-center justify-center rounded bg-wf-100 text-xs text-wf-500 ${
+            product.primary_image_url ? "hidden" : "flex"
+          }`}
+        >
+          {t("pdpNoMedia", locale)}
+        </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-[19px] font-bold text-wf-900">
             {product.title || t("pdpUntitledProduct", locale)}
@@ -1742,11 +1794,7 @@ export default function SellerProductDetailPage() {
             </Badge>
             <span
               className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${sales.className}`}
-              title={
-                product.completeness?.sale_blocked_reasons?.join(" · ") ||
-                sales.offerHint ||
-                undefined
-              }
+              title={sales.detail || sales.offerHint || undefined}
             >
               {t("pdpSaleLabel", locale)}: {sales.label}
               {sales.offerHint ? (
@@ -1755,6 +1803,11 @@ export default function SellerProductDetailPage() {
                 </span>
               ) : null}
             </span>
+            {sales.detail ? (
+              <span className="w-full text-[11px] text-red-700">
+                {t("saleBlockedNeedList", locale)}: {sales.detail}
+              </span>
+            ) : null}
             <span
               className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${pub.className}`}
             >
@@ -1941,7 +1994,9 @@ export default function SellerProductDetailPage() {
                     {filled} / {displayFields.length}
                   </span>
                 </div>
-                {missing.length > 0 && tier !== "optional" ? (
+                {missing.length > 0 &&
+                tier !== "optional" &&
+                tier !== "recommended" ? (
                   <p className="mt-1 text-[10px] text-amber-700">
                     {t("pdpMissingFields", locale)}: {missing.map((f) => f.name).join(", ")}
                   </p>
@@ -2047,10 +2102,17 @@ export default function SellerProductDetailPage() {
               <p className="text-[11px] font-semibold text-wf-800">
                 {t("pdpManufacturerResponsible", locale)}
               </p>
+              <p className="text-[11px] text-wf-600">
+                Merk, fabrikant, productielocatie en verantwoordelijke
+                marktdeelnemer (EU verantwoordelijke fabrikant) zijn
+                afzonderlijke gegevens. Het merk is niet automatisch dezelfde
+                juridische entiteit als de fabrikant of de verantwoordelijke
+                marktdeelnemer.
+              </p>
               {manufacturerLines ? (
                 <dl className="space-y-1 text-[11px] text-wf-800">
                   <div>
-                    <dt className="text-wf-500">{t("pdpManufacturer", locale)}</dt>
+                    <dt className="text-wf-500">{t("formName", locale)}</dt>
                     <dd className="font-semibold">{manufacturerLines.name}</dd>
                   </div>
                   <div>
@@ -2270,35 +2332,6 @@ export default function SellerProductDetailPage() {
               ) : null}
             </div>
 
-            {needsSeparateEuOperator ? (
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold text-wf-800">
-                  {t("pdpEuResponsible", locale)}
-                </p>
-                <p className="text-[11px] text-wf-600">
-                  {t("pdpEuResponsibleHint", locale)}
-                </p>
-                <div className="grid gap-2 tablet:grid-cols-2">
-                  {euResponsibleFields.map((field) => (
-                    <AttributeFieldEditor
-                      key={field.id}
-                      field={field}
-                      value={attrDraft[field.id] || ""}
-                      onChange={(next) =>
-                        setAttrDraft((prev) => ({
-                          ...prev,
-                          [field.id]: next,
-                        }))
-                      }
-                      openHintCode={openHintCode}
-                      onToggleHint={setOpenHintCode}
-                      locale={locale}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
             <label className="block text-[11px] font-semibold text-wf-700">
               {t("pdpProductionLocation", locale)}
               <select
@@ -2380,45 +2413,6 @@ export default function SellerProductDetailPage() {
                   onToggleHint={setOpenHintCode}
                 />
               ) : null}
-              {collectsDataField ? (
-                <div>
-                  <p className="text-[11px] font-semibold text-wf-800">
-                    Verwerkt dit product gegevens van gebruikers?
-                  </p>
-                  <p className="mt-1 text-[11px] text-wf-600">
-                    Alleen verplicht wanneer het product gegevens van
-                    gebruikers verwerkt, bijvoorbeeld via een app, account,
-                    camera, microfoon, locatieverwerking of
-                    cloudverbinding. Elektronisch zijn is op zichzelf niet
-                    voldoende.
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    {(["Nee", "Ja"] as const).map((opt) => {
-                      const selected =
-                        (attrDraft[collectsDataField.id] || "").trim() === opt
-                      return (
-                        <button
-                          key={opt}
-                          type="button"
-                          className={`h-8 rounded px-3 text-xs font-semibold ${
-                            selected
-                              ? "bg-wf-900 text-white"
-                              : "border border-wf-400 bg-white text-wf-800"
-                          }`}
-                          onClick={() =>
-                            setAttrDraft((prev) => ({
-                              ...prev,
-                              [collectsDataField.id]: opt,
-                            }))
-                          }
-                        >
-                          {opt}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ) : null}
             </div>
 
             <UnifiedComplianceEvidenceSection
@@ -2426,10 +2420,45 @@ export default function SellerProductDetailPage() {
               evidence={mie?.evidence}
               ceRequired={ceMarkingVisible}
               dataRequired={collectsDataYes}
+              mieRequired
               locale={locale}
               onChanged={() => void refreshCompliance()}
               onError={setError}
               onNotice={setNotice}
+              dataProcessingControl={
+                collectsDataField ? (
+                  <div className="mt-2">
+                    <p className="text-[11px] text-wf-600">
+                      {t("complianceDataHint", locale)}
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      {(["Nee", "Ja"] as const).map((opt) => {
+                        const selected =
+                          (attrDraft[collectsDataField.id] || "").trim() === opt
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            className={`h-8 rounded px-3 text-xs font-semibold ${
+                              selected
+                                ? "bg-wf-900 text-white"
+                                : "border border-wf-400 bg-white text-wf-800"
+                            }`}
+                            onClick={() =>
+                              setAttrDraft((prev) => ({
+                                ...prev,
+                                [collectsDataField.id]: opt,
+                              }))
+                            }
+                          >
+                            {opt}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : null
+              }
             />
 
             {extraComplianceFields.length > 0 ? (
@@ -2597,6 +2626,59 @@ export default function SellerProductDetailPage() {
         <div className="space-y-3">
           <div className="rounded border border-wf-300 bg-white p-3 text-xs">
             <p className="font-semibold text-wf-900">
+              {sales.label.toLowerCase().includes("geblokkeerd") ||
+              product.completeness?.sale_presentation === "blocked"
+                ? "Verkoop blokkeert publicatie"
+                : "Verkoopstatus"}
+            </p>
+            <ul className="mt-2 space-y-1 text-[11px]">
+              {(product.completeness?.sale_blocked_reasons || [])
+                .filter(
+                  (r) =>
+                    !r.toLowerCase().includes("veiligheid") &&
+                    !r.toLowerCase().includes("safety")
+                )
+                .map((reason) => (
+                  <li key={reason} className="text-red-800">
+                    ❌ {reason}
+                    {reason.toLowerCase().includes("verzend") ? (
+                      <button
+                        type="button"
+                        className="ml-2 underline"
+                        onClick={() => setTab("shipping")}
+                      >
+                        Naar verzending
+                      </button>
+                    ) : null}
+                    {reason.toLowerCase().includes("hoofdafbeelding") ||
+                    reason.toLowerCase().includes("media") ? (
+                      <button
+                        type="button"
+                        className="ml-2 underline"
+                        onClick={() => setTab("media")}
+                      >
+                        Naar media
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              {(product.completeness?.sale_blocked_reasons || []).filter(
+                (r) =>
+                  !r.toLowerCase().includes("veiligheid") &&
+                  !r.toLowerCase().includes("safety")
+              ).length === 0 ? (
+                <li className="text-emerald-800">✅ Verkoopvoorwaarden in orde</li>
+              ) : null}
+              {product.offer?.has_offer || (product.offers?.offer_count ?? 0) > 0 ? (
+                <li className="text-emerald-800">✅ Verkoopaanbod aanwezig</li>
+              ) : (
+                <li className="text-red-800">❌ Verkoopaanbod ontbreekt</li>
+              )}
+            </ul>
+          </div>
+
+          <div className="rounded border border-wf-300 bg-white p-3 text-xs">
+            <p className="font-semibold text-wf-900">
               Seller offer · gescheiden van cataloguspublicatie
             </p>
             <p className="mt-1 text-[11px] text-wf-600">
@@ -2749,19 +2831,20 @@ export default function SellerProductDetailPage() {
                   </Button>
                 </div>
 
-                <Input
-                  label="BTW (%)"
-                  value={String(Math.round(Number(offerDraft.vat_rate || 0.21) * 100))}
-                  onChange={(e) => {
-                    const pct = Number(e.target.value)
-                    setOfferDraft({
-                      ...offerDraft,
-                      vat_rate: Number.isFinite(pct)
-                        ? String(Math.round(pct) / 100)
-                        : "0.21",
-                    })
-                  }}
-                />
+                <div>
+                  <Input
+                    label="BTW (%)"
+                    value={String(
+                      Math.round(
+                        resolveDestinationVatRate(offerDraft.region_code) * 100
+                      )
+                    )}
+                    disabled
+                  />
+                  <p className="mt-0.5 text-[10px] text-wf-500">
+                    {t("vatAutoByMarket", locale)} ({offerDraft.region_code})
+                  </p>
+                </div>
                 <Input
                   label="Seller SKU"
                   value={offerDraft.seller_sku}
@@ -2941,6 +3024,11 @@ export default function SellerProductDetailPage() {
           product={product}
           productId={productId}
           offerDraft={offerDraft}
+          onQuantityChange={(value) =>
+            setOfferDraft((prev) =>
+              prev ? { ...prev, quantity_available: value } : prev
+            )
+          }
           onReload={load}
           onSaveStock={saveShipping}
           stockSaving={offerSaving}
@@ -2997,19 +3085,57 @@ export default function SellerProductDetailPage() {
           </div>
 
           <div className="rounded border border-wf-300 bg-white p-3">
+            <h2 className="text-xs font-bold text-wf-900">{t("mediaAddUrl", locale)}</h2>
+            <div className="mt-2 grid gap-2 tablet:grid-cols-[1fr_auto_auto]">
+              <Input
+                label={t("mediaImageUrlLabel", locale)}
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                placeholder="https://…"
+              />
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+                  {t("mediaImageTypeLabel", locale)}
+                </label>
+                <select
+                  className="h-9 rounded border border-wf-400 bg-white px-2 text-xs"
+                  value={uploadMediaType}
+                  onChange={(e) =>
+                    setUploadMediaType(
+                      e.target.value as "Hoofdafbeelding" | "Overige afbeelding"
+                    )
+                  }
+                >
+                  <option value="Hoofdafbeelding">{t("pdpPrimaryImage", locale)}</option>
+                  <option value="Overige afbeelding">{t("pdpOtherImage", locale)}</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  size="sm"
+                  disabled={mediaBusy}
+                  onClick={() => void handleImageUrlAdd()}
+                >
+                  {t("commonAdd", locale)}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded border border-wf-300 bg-white p-3">
             <h2 className="text-xs font-bold text-wf-900">{t("mediaAddVideo", locale)}</h2>
             <div className="mt-2 grid gap-2 tablet:grid-cols-[1fr_auto]">
               <Input
                 label={t("mediaVideoUrlLabel", locale)}
-                value={mediaUrl}
-                onChange={(e) => setMediaUrl(e.target.value)}
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder="https://www.youtube.com/watch?v=…"
               />
               <div className="flex items-end">
                 <Button
                   size="sm"
                   disabled={mediaBusy}
-                  onClick={() => void handleMediaUrlAdd()}
+                  onClick={() => void handleVideoUrlAdd()}
                 >
                   {t("commonAdd", locale)}
                 </Button>
@@ -3018,7 +3144,8 @@ export default function SellerProductDetailPage() {
             <p className="mt-1 text-[10px] text-wf-600">{t("mediaVideoHint", locale)}</p>
           </div>
 
-          <div className="grid gap-2 tablet:grid-cols-3">
+          <p className="text-[10px] text-wf-600">{t("mediaThumbsHint", locale)}</p>
+          <div className="grid max-w-xl grid-cols-5 gap-1 tablet:grid-cols-7 desktop:grid-cols-8">
             {sortedMedia.length === 0 ? (
               <p className="text-xs text-wf-600">{t("mediaNoMedia", locale)}</p>
             ) : (
@@ -3044,7 +3171,9 @@ export default function SellerProductDetailPage() {
                     onDrop={() => {
                       if (dragMediaId) void handleMediaReorder(dragMediaId, m.id)
                     }}
-                    className="rounded border border-wf-300 bg-white p-2"
+                    className={`rounded border bg-white p-1 ${
+                      isPrimary ? "border-em-green ring-1 ring-em-green/40" : "border-wf-300"
+                    }`}
                   >
                     {video ? (
                       <div className="aspect-square w-full overflow-hidden rounded bg-wf-50">
@@ -3058,7 +3187,11 @@ export default function SellerProductDetailPage() {
                           />
                         ) : (
                           <video
-                            src={resolveSellerMediaUrl(m.storage_reference)}
+                            src={resolveSellerMediaUrl(
+                              m.storage_reference,
+                              (m as { metadata?: Record<string, unknown> | null })
+                                .metadata
+                            )}
                             className="h-full w-full object-contain"
                             controls
                             muted
@@ -3066,42 +3199,59 @@ export default function SellerProductDetailPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="aspect-square w-full overflow-hidden rounded bg-wf-50">
+                      <button
+                        type="button"
+                        className="aspect-square w-full overflow-hidden rounded bg-wf-50"
+                        onClick={() =>
+                          window.open(
+                            resolveSellerMediaUrl(
+                              m.storage_reference,
+                              (m as { metadata?: Record<string, unknown> | null })
+                                .metadata
+                            ),
+                            "_blank",
+                            "noopener,noreferrer"
+                          )
+                        }
+                      >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={resolveSellerMediaUrl(m.storage_reference)}
+                          src={resolveSellerMediaUrl(
+                            m.storage_reference,
+                            (m as { metadata?: Record<string, unknown> | null })
+                              .metadata
+                          )}
                           alt=""
                           className="h-full w-full object-contain"
                         />
-                      </div>
+                      </button>
                     )}
-                    <p className="mt-1 text-[10px] text-wf-600">
+                    <p className="mt-0.5 truncate text-[9px] text-wf-600">
                       {m.media_type === "Hoofdafbeelding"
                         ? t("pdpPrimaryImage", locale)
                         : m.media_type === "Overige afbeelding"
                           ? t("pdpOtherImage", locale)
                           : t("pdpVideo", locale)}
                       {isPrimary ? ` · ${t("mediaPrimaryBadge", locale)}` : ""}
-                      {m.mime_type ? ` · ${m.mime_type}` : video ? " · video" : ""}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {!isPrimary ? (
+                    <div className="mt-0.5 flex flex-wrap gap-1">
+                      {!isPrimary && !video ? (
                         <button
                           type="button"
                           disabled={mediaBusy}
-                          className="text-[11px] font-semibold underline disabled:opacity-50"
+                          className="text-[9px] font-semibold underline disabled:opacity-50"
                           onClick={() => void handleMediaPrimary(m.id)}
                         >
-                          Maak primair
+                          {t("mediaMakePrimary", locale)}
                         </button>
                       ) : null}
                       <button
                         type="button"
                         disabled={mediaBusy}
-                        className="text-[11px] font-semibold text-red-700 underline disabled:opacity-50"
+                        className="text-[9px] font-semibold text-red-700 underline disabled:opacity-50"
                         onClick={() => void handleMediaDelete(m.id)}
                       >
-                        Verwijderen
+                        {t("vpDelete", locale)}
                       </button>
                     </div>
                   </div>
