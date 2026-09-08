@@ -140,6 +140,12 @@ export type CategoryCmsDocument = CmsPublishMeta & {
   dynamicBlocks: CategoryDynamicBlockCms[]
   /** Hide category from nav/index when product count below threshold (architecture). */
   hideWhenProductCountBelow?: number | null
+  /** CMS presentation for Product Cloud listing (not product data). */
+  listingPresentation?: {
+    title: LocalizedString
+    sort: "relevance" | "newest" | "price_asc" | "price_desc"
+    limit: number
+  }
   ai: CategoryAiHooks
 }
 

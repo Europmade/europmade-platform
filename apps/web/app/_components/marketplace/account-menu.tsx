@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { endSession } from "../../(auth)/_lib/medusa-auth"
 import type { StorefrontLocale } from "../../_lib/i18n/locales"
 import { t } from "../../_lib/i18n/messages"
+import { medusaBackendUrl } from "../../_lib/medusa-backend-url"
 
 type CustomerMe = {
   id: string
@@ -14,13 +15,11 @@ type CustomerMe = {
   last_name?: string | null
 }
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 async function fetchCustomer(): Promise<CustomerMe | null> {
   try {
-    const res = await fetch(`${BACKEND_URL}/store/customers/me`, {
+    const res = await fetch(`${medusaBackendUrl()}/store/customers/me`, {
       credentials: "include",
       headers: {
         ...(PUBLISHABLE_KEY

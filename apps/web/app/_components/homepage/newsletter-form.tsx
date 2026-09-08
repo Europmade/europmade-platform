@@ -33,10 +33,10 @@ export function NewsletterForm({
   }
 
   return (
-    <div className="mx-auto max-w-[420px]">
+    <div className="w-full max-w-xl">
       <form
         onSubmit={onSubmit}
-        className="flex flex-col gap-2 mobile:flex-row mobile:gap-2"
+        className="flex flex-col gap-2 mobile:flex-row mobile:items-stretch mobile:gap-2"
         noValidate
       >
         <label htmlFor="homepage-newsletter-email" className="sr-only">
@@ -52,7 +52,7 @@ export function NewsletterForm({
             setMessage(null)
           }}
           placeholder={placeholder}
-          className="h-[42px] flex-1 rounded-xl border border-wf-300 bg-white px-3 text-[13px] text-wf-900 placeholder:text-wf-500 focus:outline-none focus:ring-2 focus:ring-wf-900/20"
+          className="h-[42px] min-w-0 flex-1 rounded-xl border border-wf-300 bg-white px-3 text-[13px] text-wf-900 placeholder:text-wf-500 focus:outline-none focus:ring-2 focus:ring-wf-900/20"
           autoComplete="email"
           required
         />

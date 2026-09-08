@@ -65,8 +65,8 @@ export function SiteFooter({
               {t(col.titleKey, locale)}
             </h2>
             <ul className="space-y-1">
-              {col.links.map((link) => (
-                <li key={link.href}>
+              {col.links.map((link, linkIndex) => (
+                <li key={`${col.titleKey}-${link.labelKey}-${linkIndex}`}>
                   <Link
                     href={link.href}
                     className="text-[11.5px] text-wf-600 transition hover:text-wf-900 hover:underline"

@@ -31,8 +31,8 @@ export const DEFAULT_HOMEPAGE_HERO: HomepageHeroContent = {
   subtitle:
     "Koop rechtstreeks bij Europese producenten én officiële retailers. Vergelijk prijzen, ontdek Verified™ merken en houd waarde, innovatie en werkgelegenheid binnen Europa.",
   primaryCta: {
-    label: "Bekijk producten",
-    href: "/categorie",
+    label: "Waarom EuropMade?",
+    href: "/waarom-kopen",
   },
   secondaryCta: {
     label: "Word verkoper",

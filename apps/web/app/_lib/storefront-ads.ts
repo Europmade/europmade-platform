@@ -37,6 +37,8 @@ export type StorefrontAdCreative = {
   showVerifiedBadge?: boolean
   activeFrom?: string | null
   activeTo?: string | null
+  /** Paid seller campaign vs platform CMS banner. */
+  source?: "platform" | "seller"
 }
 
 const PUBLISHED_ADS: StorefrontAdCreative[] = [

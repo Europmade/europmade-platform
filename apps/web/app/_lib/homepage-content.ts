@@ -10,6 +10,8 @@ import {
 export type HomepageCategory = MarketplaceCategory & {
   /** Redactionele/geschatte productcount tot catalogus-counts beschikbaar zijn. */
   productCountHint: number
+  /** Optional CMS image; falls back to mock visual when absent. */
+  image?: string | null
 }
 
 export type HomepageRetailer = {

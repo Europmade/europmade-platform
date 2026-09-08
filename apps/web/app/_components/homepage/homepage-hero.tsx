@@ -7,12 +7,17 @@ import { productMockupSrc } from "../../_lib/product-mockup"
 
 type HomepageHeroProps = {
   content?: HomepageHeroContent & { backgroundGradient?: string }
+  /** CMS preview: empty media instead of the decorative composition. */
+  honestEmpty?: boolean
 }
 
 /**
  * Premium homepage hero — CMS content + European marketplace composition.
  */
-export function HomepageHero({ content = DEFAULT_HOMEPAGE_HERO }: HomepageHeroProps) {
+export function HomepageHero({
+  content = DEFAULT_HOMEPAGE_HERO,
+  honestEmpty = false,
+}: HomepageHeroProps) {
   const {
     headline,
     subtitle,
@@ -91,7 +96,7 @@ export function HomepageHero({ content = DEFAULT_HOMEPAGE_HERO }: HomepageHeroPr
             </ul>
           </div>
 
-          <HomepageHeroMedia image={image} />
+          <HomepageHeroMedia image={image} honestEmpty={honestEmpty} />
         </div>
       </div>
     </section>
@@ -100,8 +105,10 @@ export function HomepageHero({ content = DEFAULT_HOMEPAGE_HERO }: HomepageHeroPr
 
 function HomepageHeroMedia({
   image,
+  honestEmpty = false,
 }: {
   image: HomepageHeroContent["image"]
+  honestEmpty?: boolean
 }) {
   return (
     <div
@@ -117,6 +124,10 @@ function HomepageHeroMedia({
           className="h-full w-full object-cover"
           decoding="async"
         />
+      ) : honestEmpty ? (
+        <div className="flex h-full min-h-[160px] items-center justify-center bg-wf-50 text-[13px] text-wf-500">
+          Geen content ingesteld
+        </div>
       ) : (
         <HeroProductComposition />
       )}

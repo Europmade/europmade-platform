@@ -1,13 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { useId, useState } from "react"
+import { useEffect, useId, useState } from "react"
+import {
+  DEFAULT_CMS_HEADER,
+  parseCmsTheme,
+  resolveMediaUrl,
+} from "@europmade/utils"
 import {
   DEFAULT_STOREFRONT_LOCALE,
   type StorefrontLocale,
 } from "../../_lib/i18n/locales"
 import { categoryNavLabel, t } from "../../_lib/i18n/messages"
 import { MARKETPLACE_CATEGORIES } from "../../_lib/marketplace-categories"
+import { medusaBackendUrl } from "../../_lib/medusa-backend-url"
 import { SearchForm } from "../homepage/search-form"
 import { AccountMenu } from "./account-menu"
 import { BrandLogo } from "./brand-logo"
@@ -18,20 +24,104 @@ type PublicHeaderProps = {
   searchQuery?: string
   alwaysShowSearch?: boolean
   locale?: StorefrontLocale
+  /** CMS theme header logo (absolute or storage ref). */
+  logoSrc?: string | null
+  /** CMS theme header background (hex). */
+  backgroundColor?: string | null
+  /**
+   * When true (default), load published theme header if logo/bg props omitted.
+   * Preview/homepage can pass explicit props and set this to false.
+   */
+  loadThemeChrome?: boolean
+}
+
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+
+type HeaderChrome = {
+  logoSrc: string | null
+  backgroundColor: string
+}
+
+async function fetchPublishedHeaderChrome(): Promise<HeaderChrome> {
+  try {
+    const res = await fetch(`${medusaBackendUrl()}/store/cms/theme`, {
+      credentials: "omit",
+      headers: {
+        "Content-Type": "application/json",
+        ...(PUBLISHABLE_KEY
+          ? { "x-publishable-api-key": PUBLISHABLE_KEY }
+          : {}),
+      },
+    })
+    if (!res.ok) {
+      return {
+        logoSrc: null,
+        backgroundColor: DEFAULT_CMS_HEADER.backgroundColor,
+      }
+    }
+    const body = (await res.json()) as {
+      theme?: { document?: unknown; published?: boolean } | null
+    }
+    if (!body.theme?.published || !body.theme.document) {
+      return {
+        logoSrc: null,
+        backgroundColor: DEFAULT_CMS_HEADER.backgroundColor,
+      }
+    }
+    const theme = parseCmsTheme(body.theme.document)
+    return {
+      logoSrc: resolveMediaUrl(theme.header.logo, medusaBackendUrl()),
+      backgroundColor: theme.header.backgroundColor,
+    }
+  } catch {
+    return {
+      logoSrc: null,
+      backgroundColor: DEFAULT_CMS_HEADER.backgroundColor,
+    }
+  }
 }
 
 /**
  * CMP-001 Header — locale-aware UI chrome (storefront localization).
+ * Mega-menu gebruikt de 30-slug compatibility mapping; 404/bestaan komt uit pc_category.
  */
 export function PublicHeader({
   searchQuery = "",
   alwaysShowSearch = true,
   locale = DEFAULT_STOREFRONT_LOCALE,
+  logoSrc: logoSrcProp,
+  backgroundColor: backgroundColorProp,
+  loadThemeChrome = true,
 }: PublicHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [megaOpen, setMegaOpen] = useState(false)
   const megaId = useId()
   const mobileNavId = useId()
+  const [remoteChrome, setRemoteChrome] = useState<HeaderChrome | null>(null)
+
+  const propsProvided =
+    logoSrcProp !== undefined || backgroundColorProp !== undefined
+
+  useEffect(() => {
+    if (!loadThemeChrome || propsProvided) return
+    let cancelled = false
+    fetchPublishedHeaderChrome().then((chrome) => {
+      if (!cancelled) setRemoteChrome(chrome)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [loadThemeChrome, propsProvided])
+
+  const logoSrc =
+    logoSrcProp !== undefined
+      ? resolveMediaUrl(logoSrcProp, medusaBackendUrl())
+      : (remoteChrome?.logoSrc ?? null)
+  const backgroundColor =
+    backgroundColorProp &&
+    /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(backgroundColorProp)
+      ? backgroundColorProp
+      : (remoteChrome?.backgroundColor ?? DEFAULT_CMS_HEADER.backgroundColor)
 
   const navItems: Array<{ key: string; href: string; label: string }> = [
     { key: "categories", href: "/categorie", label: t("navCategories", locale) },
@@ -57,9 +147,11 @@ export function PublicHeader({
     <>
       <header
         role="banner"
+        data-em-header="chrome"
         className="flex items-center gap-3 border-b border-wf-300 px-4 py-3.5 tablet:gap-5 tablet:px-8"
+        style={{ backgroundColor }}
       >
-        <BrandLogo />
+        <BrandLogo imageSrc={logoSrc} />
 
         <div
           className={`min-w-0 flex-1 ${alwaysShowSearch ? "" : "hidden tablet:block"}`}

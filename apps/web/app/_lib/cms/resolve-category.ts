@@ -14,21 +14,19 @@ import type { StorefrontAdCreative } from "../storefront-ads"
 import { bannerProductMockupDataUri } from "../product-mockup"
 import { hashHue } from "../cart-line-meta"
 import {
-  getCategoryCmsDocument,
-  RELATED_CATEGORY_COUNT_HINTS,
   type CategoryAiHooks,
   type CategoryBannerCms,
   type CategoryBannerPriority,
   type CategoryCmsDocument,
   type CategoryDynamicBlockKey,
 } from "./category-cms"
+import { overlayCategoryEditorial } from "./overlay-category-editorial"
 import { isCmsEntryLive, sortByCmsOrder } from "./publish"
 import { findMarketplaceCategory } from "../marketplace-categories"
 import {
   CATEGORY_PRODUCT_KIND,
   type ProductMockKind,
 } from "../product-mockup"
-import { getAiContentDocument } from "../ai-content/store/content-store"
 import type { AiContentDocument } from "../ai-content/types"
 import { AI_CONTENT_PROMPT_VERSION } from "../ai-content/prompts/versions"
 import type { ProductCloudStoreCategory } from "../product-cloud-store"
@@ -265,6 +263,11 @@ export type ResolvedCategoryPage = {
   }
   canonicalPath: string
   structuredData: Record<string, unknown>
+  listingPresentation: {
+    title: string
+    sort: "relevance" | "newest" | "price_asc" | "price_desc"
+    limit: number
+  }
 }
 
 const BANNER_PRIORITY_ORDER: CategoryBannerPriority[] = [
@@ -388,31 +391,47 @@ export function resolveCategoryPage(
     ? (localeInput as StorefrontLocale)
     : DEFAULT_STOREFRONT_LOCALE
 
-  const taxonomy = findMarketplaceCategory(slug)
-  if (!taxonomy) return null
+  if (!productCloud || productCloud.slug !== slug) return null
 
-  const doc = document ?? getCategoryCmsDocument(slug)
+  const doc = document ?? overlayCategoryEditorial(slug, {})
   if (!isCmsEntryLive(doc, now)) return null
 
   const stats = computeStats(products)
-  const bannerPick = pickBanner(doc.banners, locale, now, slug)
+  const bannerPick =
+    products.length > 0
+      ? pickBanner(
+          doc.banners.filter((b) => b.priority === "default"),
+          locale,
+          now,
+          slug
+        )
+      : null
 
-  const filterGroups: ResolvedCategoryFilterGroup[] = sortByCmsOrder(
-    doc.filterGroups.filter((g) => isCmsEntryLive(g, now))
-  ).map((g) => ({
-    id: g.id,
-    attributeKey: g.attributeKey,
-    label: pickLocalized(g.label, locale),
-    type: g.type,
-    options: [...g.options]
-      .filter((o) => o.visible)
-      .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((o) => ({
-        id: o.id,
-        label: pickLocalized(o.label, locale),
-        value: o.value,
+  const filterGroups: ResolvedCategoryFilterGroup[] = []
+
+  const brands = [
+    ...new Set(products.map((p) => p.brand.trim()).filter(Boolean)),
+  ].sort((a, b) => a.localeCompare(b, "nl"))
+  if (brands.length > 0) {
+    filterGroups.push({
+      id: "live-brand",
+      attributeKey: "brand",
+      label:
+        locale === "en"
+          ? "Brand"
+          : locale === "de"
+            ? "Marke"
+            : locale === "fr"
+              ? "Marque"
+              : "Merk",
+      type: "checkbox",
+      options: brands.map((brand, i) => ({
+        id: `brand-${i}`,
+        label: brand,
+        value: brand.toLowerCase(),
       })),
-  }))
+    })
+  }
 
   // Product Cloud filterable attributes enrich CMS filters when present (no UI redesign).
   const pcFilters = productCloudFilterableAttributes(productCloud ?? null)
@@ -437,27 +456,29 @@ export function resolveCategoryPage(
     }
   }
 
-  const countries = sortByCmsOrder(
-    doc.countries.filter((c) => isCmsEntryLive(c, now))
-  ).map((c) => ({
-    id: c.id,
-    countryCode: c.countryCode,
-    label: pickLocalized(c.label, locale),
-  }))
+  const countryMap = new Map<string, string>()
+  for (const p of products) {
+    if (p.countryCode && !countryMap.has(p.countryCode)) {
+      countryMap.set(p.countryCode, p.countryLabel)
+    }
+  }
+  const countries: ResolvedCategoryCountry[] = [...countryMap.entries()].map(
+    ([countryCode, label]) => ({
+      id: `country-${countryCode}`,
+      countryCode,
+      label,
+    })
+  )
 
   const related: ResolvedCategoryRelated[] = doc.relatedCategorySlugs
     .map((relSlug): ResolvedCategoryRelated | null => {
       const cat = findMarketplaceCategory(relSlug)
       if (!cat) return null
-      const relDoc = getCategoryCmsDocument(relSlug)
-      const hint =
-        RELATED_CATEGORY_COUNT_HINTS[relSlug] ??
-        (120 + (relSlug.length * 37) % 400)
       return {
         slug: relSlug,
-        label: pickLocalized(relDoc.title, locale),
+        label: cat.label,
         href: `/categorie/${relSlug}`,
-        productCount: hint,
+        productCount: 0,
         imageKind: String(CATEGORY_PRODUCT_KIND[relSlug] ?? "coffee"),
       }
     })
@@ -482,29 +503,17 @@ export function resolveCategoryPage(
     products: resolveDynamicBlockProducts(b.key, products, b.countryCode),
   }))
 
-  const title = productCloud?.name?.trim()
-    ? productCloud.name
-    : pickLocalized(doc.title, locale)
-  const aiDoc: AiContentDocument | null = getAiContentDocument("category", slug)
-  const ai =
-    aiDoc && aiDoc.published && aiDoc.generationStatus === "ready"
-      ? aiDoc.payload
-      : null
-
-  const h1 = ai
-    ? pickLocalized(ai.h1, locale)
-    : productCloud?.name?.trim()
-      ? productCloud.name
-      : pickLocalized(doc.seo.h1, locale)
-  const intro = ai
-    ? pickLocalized(ai.intro, locale)
-    : pickLocalized(doc.seo.intro, locale)
-  const seoTitle = ai
-    ? pickLocalized(ai.seoTitle, locale)
-    : pickLocalized(doc.seo.title, locale)
-  const seoDescription = ai
-    ? pickLocalized(ai.metaDescription, locale)
-    : pickLocalized(doc.seo.metaDescription, locale)
+  const cmsTitle = pickLocalized(doc.title, locale).trim()
+  const title = cmsTitle || productCloud?.name?.trim() || slug
+  const cmsH1 = pickLocalized(doc.seo.h1, locale).trim()
+  const h1 = cmsH1 || title
+  const intro = pickLocalized(doc.seo.intro, locale)
+  const seoTitleRaw = pickLocalized(doc.seo.title, locale).trim()
+  const seoTitle = seoTitleRaw || `${title} | EuropMade`
+  const seoDescription =
+    pickLocalized(doc.seo.metaDescription, locale).trim() || intro
+  const aiDoc: AiContentDocument | null = null
+  const ai = null
 
   const faqFromAi =
     ai?.faq.map((f) => ({
@@ -521,9 +530,7 @@ export function resolveCategoryPage(
           slug: r.slug,
           label: pickLocalized(r.label, locale),
           href: r.href,
-          productCount:
-            RELATED_CATEGORY_COUNT_HINTS[r.slug] ??
-            120 + (r.slug.length * 37) % 400,
+          productCount: 0,
           imageKind: (CATEGORY_PRODUCT_KIND[r.slug] ?? "coffee") as string,
         }))
       : related
@@ -578,13 +585,7 @@ export function resolveCategoryPage(
     intro,
     seoTitle,
     seoDescription,
-    stats: {
-      productCount: stats.productCount || doc.stats.productCount,
-      producerCount: stats.producerCount || doc.stats.producerCount,
-      retailerCount: stats.retailerCount || doc.stats.retailerCount,
-      productionCountryCount:
-        stats.productionCountryCount || doc.stats.productionCountryCount,
-    },
+    stats,
     banner: bannerPick?.creative ?? null,
     bannerPriority: bannerPick?.priority ?? null,
     filterGroups,
@@ -854,6 +855,14 @@ export function resolveCategoryPage(
     },
     canonicalPath: ai?.canonicalPath ?? `/categorie/${slug}`,
     structuredData,
+    listingPresentation: {
+      title: pickLocalized(
+        doc.listingPresentation?.title ?? { nl: "", en: "", de: "", fr: "" },
+        locale
+      ).trim(),
+      sort: doc.listingPresentation?.sort ?? "relevance",
+      limit: doc.listingPresentation?.limit ?? 24,
+    },
   }
 }
 

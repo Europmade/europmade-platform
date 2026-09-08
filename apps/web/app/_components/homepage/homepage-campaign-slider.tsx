@@ -15,7 +15,7 @@ function CampaignVisual({ campaign }: { campaign: HomepageCampaign }) {
       <img
         src={campaign.imageSrc}
         alt={campaign.imageAlt}
-        className="h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover"
         loading="lazy"
         decoding="async"
       />

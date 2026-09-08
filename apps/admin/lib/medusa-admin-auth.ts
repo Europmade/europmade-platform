@@ -3,8 +3,7 @@
  * maar met actor_type "user" (Beheerder).
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000";
+import { medusaBackendUrl } from "./medusa-backend-url"
 
 export class MedusaAdminAuthError extends Error {
   status?: number;
@@ -20,7 +19,7 @@ async function request<T>(
   init: RequestInit & { auth?: string } = {},
 ): Promise<T> {
   const { auth, headers, ...rest } = init;
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     ...rest,
     credentials: "include",
     headers: {
@@ -58,6 +57,18 @@ export function createSession(token: string) {
     method: "POST",
     auth: token,
   });
+}
+
+/** GET /admin/users/me — huidige admin-gebruiker (sessiecookie). */
+export function getSession() {
+  return request<{
+    user?: {
+      email?: string
+      first_name?: string | null
+      last_name?: string | null
+      id?: string
+    } | null
+  }>("/admin/users/me", { method: "GET" })
 }
 
 /** DELETE /auth/session */

@@ -13,11 +13,13 @@ export function HomepageCarousel({
   subtitle,
   products,
   locale = DEFAULT_STOREFRONT_LOCALE,
+  hideWhenEmpty = true,
 }: {
   title: string
   subtitle?: string
   products: ListingProduct[]
   locale?: StorefrontLocale
+  hideWhenEmpty?: boolean
 }) {
   return (
     <ProductCarousel
@@ -26,7 +28,7 @@ export function HomepageCarousel({
       products={products}
       locale={locale}
       lazy
-      hideWhenEmpty
+      hideWhenEmpty={hideWhenEmpty}
       className="!mt-0"
     />
   )

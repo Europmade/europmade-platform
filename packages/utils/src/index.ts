@@ -2,6 +2,7 @@ export { cn } from "./cn.ts"
 export {
   CMS_PREVIEW_SOURCE,
   CMS_THEME_PRESETS,
+  DEFAULT_CMS_HEADER,
   applyCmsThemePreset,
   cmsThemeToCss,
   defaultCmsTheme,
@@ -13,6 +14,7 @@ export {
   type CmsPreviewSelectMessage,
   type CmsThemeColors,
   type CmsThemeDocument,
+  type CmsThemeHeader,
   type CmsThemePreset,
 } from "./cms-theme.ts"
 export {
@@ -22,6 +24,9 @@ export {
 } from "./media/requirements.ts"
 export {
   validateMedia,
+  normalizeMediaMimeType,
+  formatAllowedImageTypes,
+  mediaAcceptAttribute,
   readImageDimensions,
   detectPngHasAlpha,
   type MediaValidationInput,

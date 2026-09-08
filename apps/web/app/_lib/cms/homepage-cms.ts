@@ -50,22 +50,53 @@ export type HomepageBannerCms = CmsPublishMeta & {
   /** Active campaign window (also mirrored in publishAt/expiresAt). */
   activeFrom?: string | null
   activeTo?: string | null
+  /** Market targeting — independent of locale. */
+  marketScope?: "all" | "selected"
+  markets?: string[]
 }
+
+export const HOMEPAGE_SECTION_KEYS = [
+  "featured",
+  "newest",
+  "best_sellers",
+  "categories",
+  "campaigns",
+  "partners",
+  "why",
+  "newsletter",
+  "intro",
+  "editorial",
+  "faq",
+  "seller_cta",
+  "banner",
+] as const
+
+export type HomepageSectionKey = (typeof HOMEPAGE_SECTION_KEYS)[number]
 
 export type HomepageSectionCms = CmsPublishMeta & {
   id: string
-  key:
-    | "featured"
-    | "newest"
-    | "best_sellers"
-    | "categories"
-    | "campaigns"
-    | "partners"
-    | "why"
-    | "newsletter"
+  key: HomepageSectionKey
   title: LocalizedString
   subtitle: LocalizedString
   image?: string | null
+  body?: LocalizedString
+  href?: string
+  /** Product Cloud IDs / listing slugs for curated rails (featured). */
+  productIds?: string[]
+  /** Max products shown in catalog rails. */
+  limit?: number
+  /** Auto-sort when productIds empty. */
+  sortMode?:
+    | "offers"
+    | "newest"
+    | "rating"
+    | "price_asc"
+    | "price_desc"
+    | "random"
+  /** Seed for random sort (optional). */
+  sortSeed?: number
+  /** When false, hide optional section image while keeping the stored URL. */
+  showImage?: boolean
 }
 
 export type HomepageCategoryCms = CmsPublishMeta & {
@@ -100,7 +131,12 @@ export type HomepagePartnerSpotlightCms = CmsPublishMeta & {
   slug: string
   title: LocalizedString
   subtitle: LocalizedString
+  /** Cover / product visual (wide). */
   image?: string | null
+  /** Square logo (optional). */
+  logo?: string | null
+  /** Controlled brand-card background key. */
+  backgroundKey?: "light" | "dark" | "green" | "beige" | "earth"
   country: LocalizedString
   rating: number
   productCount: number
@@ -115,9 +151,113 @@ export type HomepageCmsDocument = {
   whyItems: HomepageWhyItemCms[]
   newsletter: HomepageNewsletterCms
   partnerSpotlight: HomepagePartnerSpotlightCms[]
+  faqItems?: HomepageWhyItemCms[]
+  /** Per-field locale origins (source | machine | manual). Admin CMS; ignored by storefront. */
+  _i18n?: Record<string, Record<string, string>>
 }
 
-/** Temporary mock payload — replace with Admin/CMS fetch later. */
+/**
+ * Storefront when no published cms_homepage exists.
+ * No fake brands, campaigns or product counts — layout only + live catalog sections.
+ */
+export const HOMEPAGE_CMS_UNPUBLISHED: HomepageCmsDocument = {
+  hero: {
+    id: "hero_unpublished",
+    visible: true,
+    sortOrder: 0,
+    title: L(
+      "EuropMade — Europese producten van Europese merken.",
+      "EuropMade — European products from European brands.",
+      "EuropMade — Europäische Produkte von europäischen Marken.",
+      "EuropMade — Produits européens de marques européennes."
+    ),
+    subtitle: L(
+      "Koop rechtstreeks bij Europese producenten en officiële retailers.",
+      "Buy directly from European producers and official retailers.",
+      "Kaufen Sie direkt bei europäischen Produzenten und offiziellen Händlern.",
+      "Achetez directement auprès de producteurs européens et de détaillants officiels."
+    ),
+    cta1: {
+      label: L("Waarom EuropMade?", "Why EuropMade?", "Warum EuropMade?", "Pourquoi EuropMade ?"),
+      href: "/waarom-kopen",
+    },
+    cta2: {
+      label: L("Word verkoper", "Become a seller", "Verkäufer werden", "Devenir vendeur"),
+      href: "/waarom-verkopen",
+    },
+    heroImage: null,
+    heroImageAlt: L("EuropMade", "EuropMade", "EuropMade", "EuropMade"),
+    backgroundGradient:
+      "linear-gradient(165deg, #ffffff 0%, #f7f8fa 42%, #f2f3f5 100%)",
+    trustBullets: [
+      L("Geproduceerd in Europa", "Made in Europe", "Hergestellt in Europa", "Fabriqué en Europe"),
+      L("Geverifieerde productinformatie", "Verified product information", "Verifizierte Produktinformationen", "Informations produit vérifiées"),
+    ],
+  },
+  campaigns: [],
+  banners: [],
+  sections: [
+    {
+      id: "sec_featured",
+      key: "featured",
+      visible: true,
+      sortOrder: 10,
+      title: L("Uitgelicht", "Featured", "Empfohlen", "À la une"),
+      subtitle: L("", "", "", ""),
+    },
+    {
+      id: "sec_newest",
+      key: "newest",
+      visible: true,
+      sortOrder: 20,
+      title: L("Nieuw binnen", "New arrivals", "Neu eingetroffen", "Nouveautés"),
+      subtitle: L("", "", "", ""),
+    },
+    {
+      id: "sec_newsletter",
+      key: "newsletter",
+      visible: true,
+      sortOrder: 30,
+      title: L("Blijf op de hoogte", "Stay in the loop", "Bleiben Sie informiert", "Restez informé"),
+      subtitle: L("", "", "", ""),
+    },
+  ],
+  categories: [],
+  whyItems: [],
+  newsletter: {
+    id: "newsletter_unpublished",
+    visible: true,
+    sortOrder: 0,
+    title: L("Blijf op de hoogte", "Stay in the loop", "Bleiben Sie informiert", "Restez informé"),
+    subtitle: L(
+      "Nieuwe Europese merken en producten, direct in je inbox.",
+      "New European brands and products, straight to your inbox.",
+      "Neue europäische Marken und Produkte direkt in Ihren Posteingang.",
+      "Nouvelles marques et produits européens, directement dans votre boîte mail."
+    ),
+    placeholder: L("naam@voorbeeld.nl", "name@example.com", "name@beispiel.de", "nom@exemple.fr"),
+    submitLabel: L("Aanmelden", "Subscribe", "Anmelden", "S’inscrire"),
+    invalidEmail: L(
+      "Vul een geldig e-mailadres in.",
+      "Enter a valid email address.",
+      "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "Saisissez une adresse e-mail valide."
+    ),
+    successMessage: L(
+      "Bedankt — nieuwsbrief-inschrijving volgt zodra de notificatieservice live is.",
+      "Thanks — newsletter signup will go live with the notification service.",
+      "Danke — die Newsletter-Anmeldung folgt, sobald der Benachrichtigungsdienst live ist.",
+      "Merci — l’inscription à la newsletter arrivera avec le service de notification."
+    ),
+  },
+  partnerSpotlight: [],
+  faqItems: [],
+}
+
+/**
+ * Editorial homepage layout when cms_homepage is not published.
+ * Product carousels still use the catalog API (may be empty until import).
+ */
 export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
   hero: {
     id: "hero_main",
@@ -139,12 +279,12 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
     ),
     cta1: {
       label: L(
-        "Bekijk producten",
-        "Browse products",
-        "Produkte ansehen",
-        "Voir les produits"
+        "Waarom EuropMade?",
+        "Why EuropMade?",
+        "Warum EuropMade?",
+        "Pourquoi EuropMade ?"
       ),
-      href: "/categorie",
+      href: "/waarom-kopen",
     },
     cta2: {
       label: L(

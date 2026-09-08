@@ -6,7 +6,35 @@ import {
   type ProductMockKind,
 } from "../../_lib/product-mockup"
 
-function CategoryVisual({ slug, label }: { slug: string; label: string }) {
+function CategoryVisual({
+  slug,
+  label,
+  image,
+}: {
+  slug: string
+  label: string
+  image?: string | null
+}) {
+  // Store/CMS fetch already rewrites media hosts; keep absolute or path as-is.
+  const src = image && image.trim() ? image.trim() : null
+  if (src) {
+    return (
+      <div
+        className="relative aspect-square w-full overflow-hidden rounded-lg bg-[#f5f6f8]"
+        role="img"
+        aria-label={label}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt=""
+          className="h-full w-full object-contain p-1.5"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    )
+  }
   const kind: ProductMockKind = CATEGORY_PRODUCT_KIND[slug] ?? "coffee"
   return (
     <div
@@ -41,7 +69,7 @@ export function HomepageCategoryGrid({
             href={`/categorie/${cat.slug}`}
             className="group flex h-full flex-col rounded-xl border border-wf-200 bg-white p-1.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-wf-300 hover:shadow-md"
           >
-            <CategoryVisual slug={cat.slug} label={cat.label} />
+            <CategoryVisual slug={cat.slug} label={cat.label} image={cat.image} />
             <p className="mt-1 truncate text-[12px] font-bold leading-tight text-wf-900">
               {cat.label}
             </p>
