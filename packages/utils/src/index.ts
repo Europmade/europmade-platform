@@ -17,6 +17,24 @@ export {
   type CmsThemeHeader,
   type CmsThemePreset,
 } from "./cms-theme.ts"
+export { sanitizeCmsHtml } from "./sanitize-html.ts"
+export {
+  CMS_PRODUCT_INTRO_MAX_CHARS,
+  PRODUCT_PAGE_SECTION_ORDER,
+  buildProductEditorialOverride,
+  emptyLocalized,
+  emptyProductEditorial,
+  mergeProductEditorial,
+  mergeProductEditorialFromRaw,
+  parseProductEditorial,
+  serializeProductEditorialForSave,
+  stripHtmlToPlainText,
+  truncateAtWordBoundary,
+  type CmsProductEditorial,
+  type GalleryThumbnailPosition,
+  type LocalizedCms,
+  type ProductPageSectionId,
+} from "./cms-product-editorial.ts"
 export {
   MEDIA_REQUIREMENTS,
   getMediaRequirements,

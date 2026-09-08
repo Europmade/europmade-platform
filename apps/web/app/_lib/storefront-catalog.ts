@@ -512,16 +512,9 @@ async function mapApiDetail(
           ],
     sellerReviewCount: detail.seller_review_aggregate.count,
     sellerReviewAvg: detail.seller_review_aggregate.average_score ?? 0,
-    faqs: [
-      {
-        q: t("howOfferChosen", locale),
-        a: t("howOfferChosenAnswer", locale),
-      },
-      {
-        q: t("whoSellsProduct", locale),
-        a: t("whoSellsProductAnswer", locale),
-      },
-    ],
+    // Seller-owned FAQ only — no EuropMade platform FAQ seed on the PDP.
+    faqs: [],
+    sellerFaqs: [],
     pairsWellWith: related.slice(0, 4).map((r) => ({
       slug: r.slug,
       title: r.title,

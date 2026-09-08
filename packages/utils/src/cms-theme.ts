@@ -338,6 +338,8 @@ export type CmsPreviewDraftMessage = {
   selectedId: string
   theme: CmsThemeDocument | null
   document?: unknown
+  /** Global product template document (for product override preview). */
+  templateDocument?: unknown
   banners?: unknown[]
   paidSlots?: unknown[]
   slug?: string

@@ -360,6 +360,24 @@ const M = {
     "Häufige Fragen",
     "Questions fréquentes"
   ),
+  whyHeading: L(
+    "Waarom dit product?",
+    "Why this product?",
+    "Warum dieses Produkt?",
+    "Pourquoi ce produit ?"
+  ),
+  usageHeading: L(
+    "Gebruik & toepassing",
+    "Usage & application",
+    "Verwendung & Anwendung",
+    "Usage et application"
+  ),
+  suitableComingSoon: L(
+    "Deze sectie wordt later door de verkoper beheerd.",
+    "This section will be managed by the seller later.",
+    "Dieser Bereich wird später vom Verkäufer verwaltet.",
+    "Cette section sera gérée plus tard par le vendeur."
+  ),
   buyGuideHeading: L("Koopgids", "Buying guide", "Kaufguide", "Guide d’achat"),
   keyFeaturesHeading: L(
     "Belangrijkste eigenschappen",
@@ -2264,6 +2282,12 @@ const M = {
     "2–4 business days",
     "2–4 Werktage",
     "2–4 jours ouvrables"
+  ),
+  delivery2to3BusinessDays: L(
+    "2–3 werkdagen",
+    "2–3 business days",
+    "2–3 Werktage",
+    "2–3 jours ouvrables"
   ),
   delivery5to7BusinessDays: L(
     "5–7 werkdagen",

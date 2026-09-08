@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import type { PdpGallerySlide } from "../../_lib/pdp-seed"
 import { hashHue } from "../../_lib/cart-line-meta"
 
@@ -10,6 +10,29 @@ type ProductGalleryProps = {
   count: number
   images?: string[]
   slides?: PdpGallerySlide[]
+  thumbnailPosition?: "left" | "under"
+  thumbnailCount?: number
+  visible?: boolean
+}
+
+/** Min horizontal movement (px) before treating a gesture as an image swipe. */
+export const GALLERY_SWIPE_MIN_DISTANCE = 48
+
+/**
+ * Resolve a touch/pointer gesture into a gallery step.
+ * - swipe left (dx < 0) → next
+ * - swipe right (dx > 0) → prev
+ * - too small / mostly vertical → null (keep page scroll)
+ */
+export function resolveGallerySwipe(
+  dx: number,
+  dy: number,
+  minDistance: number = GALLERY_SWIPE_MIN_DISTANCE
+): "next" | "prev" | null {
+  if (!Number.isFinite(dx) || !Number.isFinite(dy)) return null
+  if (Math.abs(dx) < minDistance) return null
+  if (Math.abs(dx) < Math.abs(dy) * 1.25) return null
+  return dx < 0 ? "next" : "prev"
 }
 
 function slideGradient(seed: string, index: number) {
@@ -88,15 +111,64 @@ export function ProductGallery({
   count,
   images,
   slides: slidesProp,
+  thumbnailPosition = "left",
+  thumbnailCount,
+  visible = true,
 }: ProductGalleryProps) {
-  const slides = normalizeSlides(slidesProp, images, count)
+  const slides = useMemo(() => {
+    const all = normalizeSlides(slidesProp, images, count)
+    if (
+      thumbnailCount != null &&
+      Number.isFinite(thumbnailCount) &&
+      thumbnailCount > 0
+    ) {
+      return all.slice(0, Math.floor(thumbnailCount))
+    }
+    return all
+  }, [slidesProp, images, count, thumbnailCount])
+
   const slots = slides.length
   const [active, setActive] = useState(0)
   const [zooming, setZooming] = useState(false)
   const [origin, setOrigin] = useState("50% 50%")
   const [lightbox, setLightbox] = useState(false)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const didSwipeRef = useRef(false)
+
+  useEffect(() => {
+    setActive((a) => (slots > 0 ? Math.min(a, slots - 1) : 0))
+  }, [slots])
 
   const activeSlide = slides[active] ?? slides[0]
+  const under = thumbnailPosition === "under"
+
+  function stepFromSwipe(direction: "next" | "prev") {
+    setActive((a) => {
+      if (direction === "next") return Math.min(slots - 1, a + 1)
+      return Math.max(0, a - 1)
+    })
+  }
+
+  function onMainTouchStart(e: React.TouchEvent) {
+    const t = e.changedTouches[0]
+    if (!t) return
+    touchStartRef.current = { x: t.clientX, y: t.clientY }
+    didSwipeRef.current = false
+  }
+
+  function onMainTouchEnd(e: React.TouchEvent) {
+    const start = touchStartRef.current
+    const t = e.changedTouches[0]
+    touchStartRef.current = null
+    if (!start || !t || slots <= 1) return
+    const direction = resolveGallerySwipe(
+      t.clientX - start.x,
+      t.clientY - start.y
+    )
+    if (!direction) return
+    didSwipeRef.current = true
+    stepFromSwipe(direction)
+  }
 
   useEffect(() => {
     if (!lightbox) return
@@ -227,51 +299,95 @@ export function ProductGallery({
   const canLightbox =
     activeSlide?.kind === "image" && Boolean(activeSlide.url)
 
+  if (visible === false) return null
+
+  const thumbsRow = (
+    <div
+      className={`flex flex-wrap gap-2 ${
+        under ? "justify-center" : "justify-start"
+      }`}
+      role="list"
+      aria-label="Productminiaturen"
+    >
+      {Array.from({ length: slots }).map((_, i) => renderThumb(i))}
+    </div>
+  )
+
+  const mainButton = (
+    <button
+      type="button"
+      className="group relative aspect-square w-full max-h-[460px] touch-pan-y overflow-hidden rounded-2xl border border-wf-200 bg-wf-50 shadow-sm desktop:max-h-[400px] desktop:flex-1"
+      style={{
+        cursor: canLightbox ? (zooming ? "zoom-out" : "zoom-in") : "default",
+      }}
+      aria-label={`Hoofdafbeelding ${title} — swipe voor meer, klik voor fullscreen`}
+      onClick={() => {
+        if (didSwipeRef.current) {
+          didSwipeRef.current = false
+          return
+        }
+        if (canLightbox) setLightbox(true)
+      }}
+      onTouchStart={onMainTouchStart}
+      onTouchEnd={onMainTouchEnd}
+      onTouchCancel={() => {
+        touchStartRef.current = null
+      }}
+      onMouseEnter={() => setZooming(true)}
+      onMouseLeave={() => setZooming(false)}
+      onMouseMove={onMove}
+    >
+      {renderMain()}
+      {canLightbox ? (
+        <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
+          Vergroten
+        </span>
+      ) : null}
+    </button>
+  )
+
   return (
     <>
-      <div className="flex flex-col gap-2.5 desktop:flex-row desktop:items-start desktop:gap-3">
-        <div className="order-2 flex justify-center gap-1.5 tablet:hidden" aria-hidden>
-          {Array.from({ length: slots }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setActive(i)}
-              className={`h-1.5 rounded-full transition ${
-                i === active ? "w-4 bg-wf-800" : "w-1.5 bg-wf-300"
-              }`}
-              aria-label={`Afbeelding ${i + 1}`}
-            />
-          ))}
+      {under ? (
+        <div className="flex flex-col gap-2.5">
+          {mainButton}
+          {thumbsRow}
         </div>
+      ) : (
+        <div className="flex flex-col gap-2.5 desktop:flex-row desktop:items-start desktop:gap-3">
+          {/* Mobile dots */}
+          <div
+            className="order-2 flex justify-center gap-1.5 tablet:hidden"
+            aria-hidden
+          >
+            {Array.from({ length: slots }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActive(i)}
+                className={`h-1.5 rounded-full transition ${
+                  i === active ? "w-4 bg-wf-800" : "w-1.5 bg-wf-300"
+                }`}
+                aria-label={`Afbeelding ${i + 1}`}
+              />
+            ))}
+          </div>
 
-        <div className="order-1 hidden shrink-0 flex-col gap-2 desktop:order-none desktop:flex">
-          {Array.from({ length: slots }).map((_, i) => renderThumb(i))}
+          {/* Desktop: thumbs left of main */}
+          <div className="hidden shrink-0 flex-col gap-2 desktop:flex">
+            {Array.from({ length: slots }).map((_, i) => renderThumb(i))}
+          </div>
+
+          <div className="order-1 min-w-0 flex-1 desktop:order-none">
+            {mainButton}
+          </div>
+
+          {/* Tablet: thumbs under main */}
+          <div className="order-3 hidden tablet:block desktop:hidden">
+            {thumbsRow}
+          </div>
         </div>
-
-        <button
-          type="button"
-          className="group relative aspect-square w-full max-h-[460px] overflow-hidden rounded-2xl border border-wf-200 bg-wf-50 shadow-sm desktop:max-h-[400px] desktop:flex-1"
-          style={{ cursor: canLightbox ? (zooming ? "zoom-out" : "zoom-in") : "default" }}
-          aria-label={`Hoofdafbeelding ${title} — klik voor fullscreen`}
-          onClick={() => {
-            if (canLightbox) setLightbox(true)
-          }}
-          onMouseEnter={() => setZooming(true)}
-          onMouseLeave={() => setZooming(false)}
-          onMouseMove={onMove}
-        >
-          {renderMain()}
-          {canLightbox ? (
-            <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-semibold text-white opacity-0 transition group-hover:opacity-100">
-              Vergroten
-            </span>
-          ) : null}
-        </button>
-
-        <div className="order-3 hidden gap-2 tablet:flex desktop:hidden">
-          {Array.from({ length: slots }).map((_, i) => renderThumb(i))}
-        </div>
-      </div>
+      )}
 
       {lightbox && activeSlide?.kind === "image" && activeSlide.url ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4">

@@ -1,8 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge, Button, Notice } from "@europmade/ui"
+import {
+  CMS_PRODUCT_INTRO_MAX_CHARS,
+  truncateAtWordBoundary,
+} from "@europmade/utils"
 import {
   formatEuroFromCents,
   lowestOfferPriceLabel,
@@ -35,6 +39,7 @@ import { MadeInEuropeScoreCard } from "./made-in-europe-score-card"
 import { partnerHref } from "../../_lib/partner-profiles"
 import {
   DEFAULT_STOREFRONT_LOCALE,
+  pickLocalized,
   type StorefrontLocale,
 } from "../../_lib/i18n/locales"
 import { t, tFormat } from "../../_lib/i18n/messages"
@@ -44,6 +49,10 @@ import {
   isFreeShippingValue,
   localizeDeliveryLabelIfKnown,
 } from "../../_lib/offer-delivery"
+import type { ResolvedProductPresentation } from "../../_lib/cms/resolve-product-page"
+import type { StoreCmsBanner } from "../../_lib/cms/fetch-store-cms"
+import { AdSlot } from "../homepage/ad-slot"
+import type { StorefrontAdCreative } from "../../_lib/storefront-ads"
 
 type TabId =
   | "description"
@@ -53,15 +62,49 @@ type TabId =
   | "product-reviews"
   | "seller-reviews"
 
+function bannerToCreative(
+  banner: StoreCmsBanner,
+  locale: StorefrontLocale
+): StorefrontAdCreative {
+  return {
+    id: banner.id,
+    position: 1,
+    location: "product",
+    title: pickLocalized(banner.title, locale),
+    headline: pickLocalized(banner.title, locale),
+    description: pickLocalized(banner.subtitle, locale),
+    ctaLabel: pickLocalized(banner.cta_label, locale) || t("viewProductCta", locale),
+    href: banner.destination_url || "/",
+    linkType:
+      banner.link_type === "product" ||
+      banner.link_type === "category" ||
+      banner.link_type === "partner" ||
+      banner.link_type === "collection" ||
+      banner.link_type === "external"
+        ? banner.link_type
+        : "external",
+    imageSrc: banner.image_url || "",
+    imageAlt: pickLocalized(banner.image_alt, locale),
+    status: "Actief",
+    background: banner.background ?? undefined,
+    logoSrc: banner.logo_url,
+    source: "platform",
+  }
+}
+
 /**
  * Productpagina + Buy Box — 1-op-1 sectiestructuur uit
  * sprint-1a/01-productpagina-buybox-{desktop,tablet,mobile}.html
  */
 export function ProductDetailPage({
   detail,
+  presentation,
+  banner = null,
   locale = DEFAULT_STOREFRONT_LOCALE,
 }: {
   detail: PdpDetail
+  presentation?: ResolvedProductPresentation
+  banner?: StoreCmsBanner | null
   locale?: StorefrontLocale
 }) {
   const { addLine } = useCart()
@@ -69,7 +112,12 @@ export function ProductDetailPage({
   const [sizeId, setSizeId] = useState(detail.selectedSizeId)
   const [offers, setOffers] = useState<PdpOffer[]>(detail.offers)
   const [offersOpen, setOffersOpen] = useState(true)
-  const [tab, setTab] = useState<TabId>("description")
+  const descriptionVisibleInitial = presentation
+    ? presentation.descriptionVisible
+    : true
+  const [tab, setTab] = useState<TabId>(
+    descriptionVisibleInitial ? "description" : "suitable"
+  )
   const [descExpanded, setDescExpanded] = useState(false)
   const [cartNote, setCartNote] = useState<string | null>(null)
   const [cartBusy, setCartBusy] = useState(false)
@@ -83,13 +131,67 @@ export function ProductDetailPage({
     [offers]
   )
 
+  const buybox = presentation?.buybox
+  const sections = presentation?.sections
+  const showPrice = buybox?.showPrice !== false
+  const showReviews = buybox?.showReviews !== false
+  const showStock = buybox?.showStock !== false
+  const showDelivery = buybox?.showDelivery !== false
+  const showBadges = buybox?.showBadges !== false
+  const showSellers = buybox?.showSellers !== false
+  const sellersVisible = sections?.sellersVisible !== false
+  const descriptionVisible = presentation
+    ? presentation.descriptionVisible
+    : true
+  const uspsVisible = sections?.uspsVisible !== false
+  const introVisible = presentation != null ? sections?.introVisible !== false : true
+  const faqVisible = presentation != null ? sections?.faqVisible !== false : true
+  const relatedVisible = sections?.relatedVisible !== false
+  const frequentlyBoughtVisible = sections?.frequentlyBoughtVisible !== false
+  const introText = presentation != null
+    ? introVisible
+      ? presentation.intro
+      : ""
+    : // Without presentation, still never render untruncated PC description as intro.
+      truncateAtWordBoundary(detail.intro || "", CMS_PRODUCT_INTRO_MAX_CHARS)
+  const highlights =
+    presentation != null
+      ? presentation.highlights
+      : detail.highlights
+  const faqs =
+    presentation != null
+      ? faqVisible
+        ? presentation.faqs
+        : []
+      : detail.faqs
+  const whyText = presentation?.why?.trim() ?? ""
+  const usageText = presentation?.usage?.trim() ?? ""
+  const descriptionHtml = presentation?.descriptionHtml ?? null
+
+  const tabListRef = useRef<HTMLDivElement>(null)
+  const tabButtonRefs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>(
+    {}
+  )
+
+  useEffect(() => {
+    const btn = tabButtonRefs.current[tab]
+    if (!btn) return
+    btn.scrollIntoView({
+      behavior: "smooth",
+      inline: "nearest",
+      block: "nearest",
+    })
+  }, [tab])
+
   function selectOffer(id: string) {
     if (!id.startsWith("offr_")) return
     setOffers((prev) => prev.map((o) => ({ ...o, selected: o.id === id })))
   }
 
   const tabs: { id: TabId; label: string }[] = [
-    { id: "description", label: t("tabDescription", locale) },
+    ...(descriptionVisible
+      ? [{ id: "description" as const, label: t("tabDescription", locale) }]
+      : []),
     { id: "suitable", label: t("tabSuitable", locale) },
     { id: "specs", label: t("tabSpecs", locale) },
     { id: "downloads", label: t("tabDownloads", locale) },
@@ -104,6 +206,12 @@ export function ProductDetailPage({
         : t("tabSellerReviews", locale),
     },
   ]
+
+  useEffect(() => {
+    if (!descriptionVisible && tab === "description") {
+      setTab("suitable")
+    }
+  }, [descriptionVisible, tab])
 
   const sellerReviewsForOffer = detail.sellerReviews.filter(
     (r) =>
@@ -265,6 +373,9 @@ export function ProductDetailPage({
             count={detail.galleryCount}
             images={detail.galleryImages}
             slides={detail.gallerySlides}
+            visible={presentation?.galleryVisible !== false}
+            thumbnailPosition={presentation?.thumbnailPosition ?? "left"}
+            thumbnailCount={presentation?.thumbnailCount}
           />
         </div>
 
@@ -287,78 +398,90 @@ export function ProductDetailPage({
             <p className="mt-1 text-[11px] text-wf-600">{wishlistNote}</p>
           ) : null}
 
-          <div className="mt-1.5 flex flex-wrap items-center gap-2">
-            <span className="text-base tracking-wide text-wf-900" aria-hidden>
-              {starsForRating(detail.listing.rating)}
-            </span>
-            <span className="text-sm font-bold text-wf-900">
-              {detail.listing.rating.toFixed(1).replace(".", ",")}
-            </span>
-            <button
-              type="button"
-              className="text-sm font-semibold text-wf-700 underline underline-offset-2"
-              onClick={() => {
-                setTab("product-reviews")
-                document
-                  .getElementById("product-tabs")
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }}
-            >
-              {tFormat("reviewsCount", locale, { count: detail.reviewCount })}
-            </button>
-          </div>
+          {showReviews ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
+              <span className="text-base tracking-wide text-wf-900" aria-hidden>
+                {starsForRating(detail.listing.rating)}
+              </span>
+              <span className="text-sm font-bold text-wf-900">
+                {detail.listing.rating.toFixed(1).replace(".", ",")}
+              </span>
+              <button
+                type="button"
+                className="text-sm font-semibold text-wf-700 underline underline-offset-2"
+                onClick={() => {
+                  setTab("product-reviews")
+                  document
+                    .getElementById("product-tabs")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }}
+              >
+                {tFormat("reviewsCount", locale, { count: detail.reviewCount })}
+              </button>
+            </div>
+          ) : null}
 
-          <div className="mt-2 flex flex-wrap items-baseline gap-2">
-            <p className="text-[26px] font-bold leading-none text-wf-900">
-              {selected
-                ? formatEuroFromCents(selected.priceCents)
-                : lowestOfferPriceLabel(detail)}
-            </p>
-            {detail.listing.originalPriceCents && pct != null ? (
-              <>
-                <span className="text-sm text-wf-500 line-through">
-                  {formatEuroFromCents(detail.listing.originalPriceCents)}
-                </span>
-                <span className="rounded bg-wf-900 px-1.5 py-0.5 text-[11px] font-bold text-white">
-                  −{pct}%
-                </span>
-              </>
-            ) : null}
-          </div>
-          <a
-            href="#aanbieders"
-            className="mt-1.5 inline-block text-[13px] font-semibold text-wf-700 underline-offset-2 hover:underline"
-          >
-            {tFormat("lowestPriceCompare", locale, {
-              price: lowestOfferPriceLabel(detail),
-              count: offers.length,
-            })}
-          </a>
+          {showPrice ? (
+            <>
+              <div className="mt-2 flex flex-wrap items-baseline gap-2">
+                <p className="text-[26px] font-bold leading-none text-wf-900">
+                  {selected
+                    ? formatEuroFromCents(selected.priceCents)
+                    : lowestOfferPriceLabel(detail)}
+                </p>
+                {detail.listing.originalPriceCents && pct != null ? (
+                  <>
+                    <span className="text-sm text-wf-500 line-through">
+                      {formatEuroFromCents(detail.listing.originalPriceCents)}
+                    </span>
+                    <span className="rounded bg-wf-900 px-1.5 py-0.5 text-[11px] font-bold text-white">
+                      −{pct}%
+                    </span>
+                  </>
+                ) : null}
+              </div>
+              {showSellers ? (
+                <a
+                  href="#aanbieders"
+                  className="mt-1.5 inline-block text-[13px] font-semibold text-wf-700 underline-offset-2 hover:underline"
+                >
+                  {tFormat("lowestPriceCompare", locale, {
+                    price: lowestOfferPriceLabel(detail),
+                    count: offers.length,
+                  })}
+                </a>
+              ) : null}
+            </>
+          ) : null}
 
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <Link
-              href="/verified"
-              className="inline-flex h-7 items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 text-[11px] font-bold leading-none text-white"
-            >
-              ✓ {t("euVerified", locale)}™
-            </Link>
-            <span className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800">
-              {t("madeInLabel", locale)} {detail.listing.countryLabel}
-            </span>
-            <Link
-              href={`/merk/${brandSlug}#productie`}
-              className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
-            >
-              {t("producerLabel", locale)} {detail.manufacturer} ›
-            </Link>
-          </div>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <Link href={`/merk/${brandSlug}`}>
-              <Badge variant="outline">
-                {t("brandLabel", locale)} {detail.listing.brand}
-              </Badge>
-            </Link>
-          </div>
+          {showBadges ? (
+            <>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <Link
+                  href="/verified"
+                  className="inline-flex h-7 items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 text-[11px] font-bold leading-none text-white"
+                >
+                  ✓ {t("euVerified", locale)}™
+                </Link>
+                <span className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800">
+                  {t("madeInLabel", locale)} {detail.listing.countryLabel}
+                </span>
+                <Link
+                  href={`/merk/${brandSlug}#productie`}
+                  className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
+                >
+                  {t("producerLabel", locale)} {detail.manufacturer} ›
+                </Link>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <Link href={`/merk/${brandSlug}`}>
+                  <Badge variant="outline">
+                    {t("brandLabel", locale)} {detail.listing.brand}
+                  </Badge>
+                </Link>
+              </div>
+            </>
+          ) : null}
           {detail.madeInEurope ? (
             <div className="mt-3 max-w-md">
               <MadeInEuropeScoreCard data={detail.madeInEurope} locale={locale} />
@@ -429,26 +552,33 @@ export function ProductDetailPage({
             </div>
           ) : null}
 
-          <p className="mt-2 text-[13px] leading-snug text-wf-700">
-            {detail.intro}
-          </p>
-
-          <div className="mt-2 border-t border-wf-200 pt-2">
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-              {t("keyFeatures", locale)}
+          {introText ? (
+            <p
+              className="mt-2 text-[13px] leading-snug text-wf-700"
+              data-cms-section="intro"
+            >
+              {introText}
             </p>
-            <ul className="space-y-0.5">
-              {detail.highlights.map((h) => (
-                <li
-                  key={h}
-                  className="flex items-center gap-2 text-[13px] text-wf-700"
-                >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-wf-500" />
-                  {h}
-                </li>
-              ))}
-            </ul>
-          </div>
+          ) : null}
+
+          {uspsVisible && highlights.length > 0 ? (
+            <div className="mt-2 border-t border-wf-200 pt-2" data-cms-section="usps">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+                {t("keyFeatures", locale)}
+              </p>
+              <ul className="space-y-0.5">
+                {highlights.map((h) => (
+                  <li
+                    key={h}
+                    className="flex items-center gap-2 text-[13px] text-wf-700"
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-wf-500" />
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
 
         {/* Buy Box — desktop/tablet kolom; mobiel onder info */}
@@ -463,6 +593,12 @@ export function ProductDetailPage({
             cartBusy={cartBusy}
             cartNote={cartNote}
             locale={locale}
+            showPrice={showPrice}
+            showReviews={showReviews}
+            showStock={showStock}
+            showDelivery={showDelivery}
+            showBadges={showBadges}
+            showSellers={showSellers}
             onAddToCart={() => void addToCart()}
             onToggleOffers={() => {
               setOffersOpen(true)
@@ -474,17 +610,65 @@ export function ProductDetailPage({
         </div>
       </div>
 
-      {/* Trustbalk over volledige contentbreedte */}
-      <section className="border-y border-wf-200 bg-wf-50/60 px-4 py-3 tablet:px-8">
-        <TrustStrip locale={locale} />
-      </section>
+      {/* Trustbalk — horizontale rij (scroll/carousel), geen 2×2 grid */}
+      {(() => {
+        const trust = presentation?.trust
+        const showTrust =
+          trust == null ||
+          trust.showSafePayment ||
+          trust.show30DayReturn ||
+          trust.showMadeInEurope ||
+          trust.showVerifiedInfo
+        if (!showTrust) return null
+        return (
+          <section className="min-w-0 max-w-full overflow-x-hidden border-y border-wf-200 bg-wf-50/60 px-4 py-3 tablet:px-8">
+            <TrustStrip locale={locale} trust={trust} />
+          </section>
+        )
+      })()}
+
+      {/* Why/Usage: alleen titel+sectie als visibility én seller-content aanwezig */}
+      {whyText ? (
+        <section
+          className="px-4 pt-4 tablet:px-8"
+          data-cms-section="why"
+        >
+          <h2 className="mb-2 border-b border-wf-200 pb-2 text-[17px] font-bold text-wf-900">
+            {t("whyHeading", locale)}
+          </h2>
+          <p className="max-w-[760px] text-[13.5px] leading-relaxed text-wf-700 whitespace-pre-line">
+            {whyText}
+          </p>
+        </section>
+      ) : null}
+
+      {usageText ? (
+        <section
+          className="px-4 pt-4 tablet:px-8"
+          data-cms-section="usage"
+        >
+          <h2 className="mb-2 border-b border-wf-200 pb-2 text-[17px] font-bold text-wf-900">
+            {t("usageHeading", locale)}
+          </h2>
+          <p className="max-w-[760px] text-[13.5px] leading-relaxed text-wf-700 whitespace-pre-line">
+            {usageText}
+          </p>
+        </section>
+      ) : null}
 
       {/* Alle aanbieders — direct onder trustbalk */}
-      <section id="aanbieders" className="px-4 pt-4 pb-5 tablet:px-8 tablet:pt-4 tablet:pb-6">
+      {sellersVisible ? (
+      <section
+        id="aanbieders"
+        className="px-4 pt-4 pb-5 tablet:px-8 tablet:pt-4 tablet:pb-6"
+        data-cms-section="sellers"
+      >
         <h2 className="mb-2.5 border-b border-wf-200 pb-2 text-[17px] font-bold text-wf-900">
           {tFormat("allSellersCount", locale, { count: offers.length })}
         </h2>
 
+        {showSellers ? (
+          <>
         {/* Desktop/tablet table */}
         <div className="hidden overflow-x-auto tablet:block">
           <table className="w-full border-collapse text-[13px]">
@@ -535,7 +719,7 @@ export function ProductDetailPage({
                     {formatEuroFromCents(o.priceCents)}
                   </td>
                   <td className="border-b border-wf-200 px-3 py-3">
-                    {o.delivery}
+                    {localizeDeliveryLabelIfKnown(o.delivery, locale)}
                   </td>
                   <td className="border-b border-wf-200 px-3 py-3">
                     {formatOfferShipping(o.shipping, locale)}
@@ -587,7 +771,9 @@ export function ProductDetailPage({
                 {formatEuroFromCents(o.priceCents)}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                <Badge variant="outline">{o.delivery}</Badge>
+                <Badge variant="outline">
+                  {localizeDeliveryLabelIfKnown(o.delivery, locale)}
+                </Badge>
                 <Badge variant="outline">
                   {formatOfferShipping(o.shipping, locale)}
                 </Badge>
@@ -609,13 +795,21 @@ export function ProductDetailPage({
             </li>
           ))}
         </ul>
+          </>
+        ) : null}
         {offersOpen ? null : null}
       </section>
+      ) : null}
 
       {/* Tabs */}
-      <section id="product-tabs" className="px-4 pb-8 tablet:px-8 tablet:pb-10" data-cms-section="description">
+      <section
+        id="product-tabs"
+        className="min-w-0 max-w-full overflow-x-hidden px-4 pb-8 tablet:px-8 tablet:pb-10"
+        data-cms-section="description"
+      >
         <div
-          className="mb-5 flex gap-0 overflow-x-auto border-b border-wf-300 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          ref={tabListRef}
+          className="mb-5 flex max-w-full min-w-0 snap-x snap-mandatory gap-0 overflow-x-auto overscroll-x-contain border-b border-wf-300 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           role="tablist"
           aria-label={t("productInfoAria", locale)}
         >
@@ -625,7 +819,10 @@ export function ProductDetailPage({
               type="button"
               role="tab"
               aria-selected={tab === tabItem.id}
-              className={`shrink-0 snap-start px-[18px] py-2.5 text-[13px] ${
+              ref={(el) => {
+                tabButtonRefs.current[tabItem.id] = el
+              }}
+              className={`shrink-0 snap-start whitespace-nowrap px-[18px] py-2.5 text-[13px] ${
                 tab === tabItem.id
                   ? "border-b-2 border-wf-900 font-bold text-wf-900"
                   : "border-b-2 border-transparent text-wf-500"
@@ -637,16 +834,23 @@ export function ProductDetailPage({
           ))}
         </div>
 
-        {tab === "description" ? (
+        {tab === "description" && descriptionVisible ? (
           <div>
             <div
               className={`max-w-[760px] space-y-3.5 text-[13.5px] leading-relaxed text-wf-700 ${
                 descExpanded ? "" : "relative max-h-[15.5em] overflow-hidden"
               }`}
             >
-              {detail.descriptionParagraphs.map((p) => (
-                <p key={p.slice(0, 40)}>{p}</p>
-              ))}
+              {descriptionHtml ? (
+                <div
+                  className="cms-html prose-sm max-w-none [&_a]:underline [&_p]:mb-3 [&_ul]:mb-3 [&_ul]:list-disc [&_ul]:pl-5"
+                  dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                />
+              ) : (
+                detail.descriptionParagraphs.map((p) => (
+                  <p key={p.slice(0, 40)}>{p}</p>
+                ))
+              )}
             </div>
             <button
               type="button"
@@ -659,17 +863,23 @@ export function ProductDetailPage({
         ) : null}
 
         {tab === "suitable" ? (
-          <ul className="space-y-2">
-            {detail.suitableFor.map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-2 text-[13px] text-wf-700"
-              >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-wf-500" />
-                {item}
-              </li>
-            ))}
-          </ul>
+          detail.suitableFor.length > 0 ? (
+            <ul className="space-y-2">
+              {detail.suitableFor.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-2 text-[13px] text-wf-700"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-wf-500" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13px] text-wf-600">
+              {t("suitableComingSoon", locale)}
+            </p>
+          )
         ) : null}
 
         {tab === "specs" ? (
@@ -805,22 +1015,30 @@ export function ProductDetailPage({
 
       {/* Commerciële carrousels — direct onder productomschrijving */}
       <section className="px-4 pb-2 tablet:px-8">
-        <ProductCarousel
-          title={t("similarProducts", locale)}
-          subtitle={t("similarSubtitle", locale)}
-          products={similar}
-          loading={!railsReady}
-          lazy={false}
-          locale={locale}
-        />
-        <ProductCarousel
-          title={t("frequentlyBought", locale)}
-          subtitle={t("frequentlySubtitle", locale)}
-          products={frequentlyTogether}
-          loading={!railsReady}
-          lazy={false}
-          locale={locale}
-        />
+        {relatedVisible ? (
+          <div data-cms-section="related">
+            <ProductCarousel
+              title={t("similarProducts", locale)}
+              subtitle={t("similarSubtitle", locale)}
+              products={similar}
+              loading={!railsReady}
+              lazy={false}
+              locale={locale}
+            />
+          </div>
+        ) : null}
+        {frequentlyBoughtVisible ? (
+          <div data-cms-section="frequently_bought">
+            <ProductCarousel
+              title={t("frequentlyBought", locale)}
+              subtitle={t("frequentlySubtitle", locale)}
+              products={frequentlyTogether}
+              loading={!railsReady}
+              lazy={false}
+              locale={locale}
+            />
+          </div>
+        ) : null}
         <ProductCarousel
           title={t("othersAlsoViewed", locale)}
           subtitle={t("othersSubtitle", locale)}
@@ -840,19 +1058,40 @@ export function ProductDetailPage({
       </section>
 
       {/* FAQ */}
-      <section className="px-4 pb-8 tablet:px-8 tablet:pb-10" data-cms-section="faq">
-        <h2 className="mb-3.5 border-b border-wf-200 pb-2.5 text-[17px] font-bold text-wf-900">
-          {t("faqHeading", locale)}
-        </h2>
-        <div className="max-w-[760px]">
-          {detail.faqs.map((f) => (
-            <div key={f.q} className="border-b border-wf-200 py-3 last:border-b-0">
-              <p className="mb-1 text-[13.5px] font-bold text-wf-800">{f.q}</p>
-              <p className="text-[13px] leading-relaxed text-wf-700">{f.a}</p>
-            </div>
-          ))}
+      {faqVisible && faqs.length > 0 ? (
+        <section
+          className="px-4 pb-8 tablet:px-8 tablet:pb-10"
+          data-cms-section="faq"
+        >
+          <h2 className="mb-3.5 border-b border-wf-200 pb-2.5 text-[17px] font-bold text-wf-900">
+            {t("faqHeading", locale)}
+          </h2>
+          <div className="max-w-[760px]">
+            {faqs.map((f) => (
+              <div
+                key={f.q}
+                className="border-b border-wf-200 py-3 last:border-b-0"
+              >
+                <p className="mb-1 text-[13.5px] font-bold text-wf-800">{f.q}</p>
+                <p className="text-[13px] leading-relaxed text-wf-700">{f.a}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {banner ? (
+        <div className="px-0 pb-8 tablet:pb-10" data-cms-section="banner">
+          <AdSlot
+            position={1}
+            location="product"
+            creative={bannerToCreative(banner, locale)}
+            locale={locale}
+            adLabel={t("advertisement", locale)}
+            compact
+          />
         </div>
-      </section>
+      ) : null}
 
       {/* Sticky bottom bar — mobiel (CMP-028) */}
       <div className="sticky bottom-0 z-30 flex items-center gap-2.5 border-t border-wf-400 bg-white px-3.5 py-2.5 shadow-[0_-2px_6px_rgba(0,0,0,0.06)] tablet:hidden">
@@ -860,10 +1099,15 @@ export function ProductDetailPage({
           {selected ? (
             <>
               <p className="text-base font-bold text-wf-900">
-                {formatEuroFromCents(selected.priceCents)}
+                {showPrice
+                  ? formatEuroFromCents(selected.priceCents)
+                  : selected.retailer}
               </p>
               <p className="text-[9.5px] text-wf-600">
-                {selected.retailer} · {selected.delivery.toLowerCase()}
+                {selected.retailer}
+                {showDelivery
+                  ? ` · ${shortDeliveryLabel(selected.delivery, locale)}`
+                  : ""}
               </p>
             </>
           ) : (
@@ -905,6 +1149,19 @@ function shortReturnsLabel(value: string, locale: StorefrontLocale) {
   return t("trust30DayReturn", locale)
 }
 
+function resolveBuyBoxNotice(notice: string, locale: StorefrontLocale): string {
+  const localized = t("buyBoxNotice", locale)
+  const trimmed = notice?.trim() ?? ""
+  if (!trimmed) return localized
+  if (locale !== "en") {
+    const en = t("buyBoxNotice", "en")
+    if (trimmed === en || /^Best overall offer/i.test(trimmed)) {
+      return localized
+    }
+  }
+  return trimmed
+}
+
 function BuyBox({
   selected,
   offerCount,
@@ -912,6 +1169,12 @@ function BuyBox({
   cartBusy,
   cartNote,
   locale,
+  showPrice = true,
+  showReviews = true,
+  showStock = true,
+  showDelivery = true,
+  showBadges = true,
+  showSellers = true,
   onAddToCart,
   onToggleOffers,
 }: {
@@ -921,9 +1184,17 @@ function BuyBox({
   cartBusy: boolean
   cartNote: string | null
   locale: StorefrontLocale
+  showPrice?: boolean
+  showReviews?: boolean
+  showStock?: boolean
+  showDelivery?: boolean
+  showBadges?: boolean
+  showSellers?: boolean
   onAddToCart: () => void
   onToggleOffers: () => void
 }) {
+  const noticeText = resolveBuyBoxNotice(notice, locale)
+
   if (!selected) {
     return (
       <aside
@@ -937,7 +1208,7 @@ function BuyBox({
           {t("noCommerceOfferBody", locale)}
         </p>
         <Notice variant="info" className="mt-3 text-[11px]">
-          ⓘ {notice || t("buyBoxNotice", locale)}{" "}
+          ⓘ {noticeText}{" "}
           <Link href="/buy-box" className="text-wf-800 underline">
             {t("moreExplanation", locale)}
           </Link>
@@ -970,29 +1241,55 @@ function BuyBox({
         >
           {selected.retailer}
         </Link>
-        <span className="text-wf-500">
-          ★ {selected.rating.toFixed(1).replace(".", ",")}
-        </span>
+        {showReviews ? (
+          <span className="text-wf-500">
+            ★ {selected.rating.toFixed(1).replace(".", ",")}
+          </span>
+        ) : null}
       </div>
-      <p className="mt-1.5 text-[28px] font-bold leading-none text-wf-900">
-        {formatEuroFromCents(selected.priceCents)}
-      </p>
-      <div className="my-2 grid grid-cols-2 gap-1.5">
-        <Badge variant="solid" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {shortDeliveryLabel(selected.delivery, locale)}
-        </Badge>
-        <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {isFreeShippingValue(selected.shipping)
-            ? t("freeShipping", locale)
-            : `${t("shipping", locale)} ${selected.shipping}`}
-        </Badge>
-        <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {shortStockLabel(selected.stock, locale)}
-        </Badge>
-        <Badge variant="outline" className="justify-center truncate px-2 py-1 text-[10.5px]">
-          {shortReturnsLabel(selected.returns, locale)}
-        </Badge>
-      </div>
+      {showPrice ? (
+        <p className="mt-1.5 text-[28px] font-bold leading-none text-wf-900">
+          {formatEuroFromCents(selected.priceCents)}
+        </p>
+      ) : null}
+      {(showDelivery || showStock || showBadges) ? (
+        <div className="my-2 grid grid-cols-2 gap-1.5">
+          {showDelivery ? (
+            <Badge
+              variant="solid"
+              className="justify-center truncate px-2 py-1 text-[10.5px]"
+            >
+              {shortDeliveryLabel(selected.delivery, locale)}
+            </Badge>
+          ) : null}
+          {showBadges ? (
+            <Badge
+              variant="outline"
+              className="justify-center truncate px-2 py-1 text-[10.5px]"
+            >
+              {isFreeShippingValue(selected.shipping)
+                ? t("freeShipping", locale)
+                : `${t("shipping", locale)} ${selected.shipping}`}
+            </Badge>
+          ) : null}
+          {showStock ? (
+            <Badge
+              variant="outline"
+              className="justify-center truncate px-2 py-1 text-[10.5px]"
+            >
+              {shortStockLabel(selected.stock, locale)}
+            </Badge>
+          ) : null}
+          {showBadges ? (
+            <Badge
+              variant="outline"
+              className="justify-center truncate px-2 py-1 text-[10.5px]"
+            >
+              {shortReturnsLabel(selected.returns, locale)}
+            </Badge>
+          ) : null}
+        </div>
+      ) : null}
       <Button
         type="button"
         variant="primary"
@@ -1013,18 +1310,20 @@ function BuyBox({
         </Notice>
       ) : null}
       <Notice variant="info" className="mt-2.5 text-[11px]">
-        ⓘ {notice || t("buyBoxNotice", locale)}{" "}
+        ⓘ {noticeText}{" "}
         <Link href="/buy-box" className="text-wf-800 underline">
           {t("moreExplanation", locale)}
         </Link>
       </Notice>
-      <button
-        type="button"
-        className="mt-3 w-full border-t border-dashed border-wf-300 pt-2.5 text-center text-xs text-wf-700"
-        onClick={onToggleOffers}
-      >
-        {tFormat("viewAllSellers", locale, { count: offerCount })}
-      </button>
+      {showSellers ? (
+        <button
+          type="button"
+          className="mt-3 w-full border-t border-dashed border-wf-300 pt-2.5 text-center text-xs text-wf-700"
+          onClick={onToggleOffers}
+        >
+          {tFormat("viewAllSellers", locale, { count: offerCount })}
+        </button>
+      ) : null}
     </aside>
   )
 }

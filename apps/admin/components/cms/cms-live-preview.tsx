@@ -24,6 +24,7 @@ export function CmsLivePreview({
   locale,
   selectedId,
   document,
+  templateDocument,
   banners,
   paidSlots,
   theme,
@@ -37,6 +38,7 @@ export function CmsLivePreview({
   locale: "nl" | "en" | "de" | "fr"
   selectedId: string
   document: unknown
+  templateDocument?: unknown
   banners?: unknown[]
   paidSlots?: unknown[]
   theme: CmsThemeDocument | null
@@ -58,11 +60,22 @@ export function CmsLivePreview({
       selectedId,
       theme,
       document,
+      templateDocument,
       banners,
       paidSlots,
       slug,
     }),
-    [banners, document, kind, locale, paidSlots, selectedId, slug, theme]
+    [
+      banners,
+      document,
+      kind,
+      locale,
+      paidSlots,
+      selectedId,
+      slug,
+      templateDocument,
+      theme,
+    ]
   )
   const payloadRef = useRef(payload)
   payloadRef.current = payload

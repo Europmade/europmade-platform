@@ -184,3 +184,47 @@ export async function fetchStoreCmsProduct(productId: string): Promise<{
     return null
   }
 }
+
+/** Published global product template (`product_id = "template"`). */
+export async function fetchStoreCmsProductTemplate(): Promise<{
+  product: {
+    product_id: string
+    document: unknown
+    published: boolean
+  } | null
+} | null> {
+  return fetchStoreCmsProduct("template")
+}
+
+export async function fetchStoreCmsBanners(opts?: {
+  location?: string
+  market?: string
+}): Promise<StoreCmsBanner[]> {
+  try {
+    const q = new URLSearchParams()
+    if (opts?.location) q.set("location", opts.location)
+    if (opts?.market) q.set("market", opts.market)
+    const qs = q.toString()
+    const res = await fetch(
+      `${medusaBackendUrl()}/store/cms/banners${qs ? `?${qs}` : ""}`,
+      {
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          ...(PUBLISHABLE_KEY
+            ? { "x-publishable-api-key": PUBLISHABLE_KEY }
+            : {}),
+        },
+      }
+    )
+    if (!res.ok) return []
+    const data = (await res.json()) as { banners?: StoreCmsBanner[] }
+    const rewritten = rewriteMediaStrings(
+      data,
+      await getPageBackendOrigin()
+    ) as { banners?: StoreCmsBanner[] }
+    return Array.isArray(rewritten.banners) ? rewritten.banners : []
+  } catch {
+    return []
+  }
+}

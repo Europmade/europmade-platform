@@ -10,16 +10,29 @@ export type OfferDeliveryLabelKey =
   | "deliveryTomorrow"
   | "deliveryOrderedToday"
   | "delivery1to2BusinessDays"
+  | "delivery2to3BusinessDays"
   | "delivery2to4BusinessDays"
   | "delivery5to7BusinessDays"
 
-const DELIVERY_KEYS: OfferDeliveryLabelKey[] = [
+const DELIVERY_ALIAS_KEYS: OfferDeliveryLabelKey[] = [
+  "deliveryTomorrow",
+  "deliveryOrderedToday",
+  "delivery1to2BusinessDays",
+  "delivery2to3BusinessDays",
+  "delivery2to4BusinessDays",
+  "delivery5to7BusinessDays",
+]
+
+/** Index-aligned with OFFER_DELIVERY_LABELS (NL legacy strings). */
+const NL_LEGACY_KEYS: OfferDeliveryLabelKey[] = [
   "deliveryTomorrow",
   "deliveryOrderedToday",
   "delivery1to2BusinessDays",
   "delivery2to4BusinessDays",
   "delivery5to7BusinessDays",
 ]
+
+const LOCALES: StorefrontLocale[] = ["nl", "en", "de", "fr"]
 
 /** @deprecated NL-only list kept for callers that still compare raw strings. */
 export const OFFER_DELIVERY_LABELS = [
@@ -31,6 +44,38 @@ export const OFFER_DELIVERY_LABELS = [
 ] as const
 
 export type OfferDeliveryLabel = (typeof OFFER_DELIVERY_LABELS)[number]
+
+function normalizeDeliveryLookup(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, " ")
+}
+
+/** Known NL/EN/DE/FR delivery strings → i18n key (built once). */
+const DELIVERY_ALIAS_TO_KEY: Map<string, OfferDeliveryLabelKey> = (() => {
+  const map = new Map<string, OfferDeliveryLabelKey>()
+  function add(key: OfferDeliveryLabelKey, label: string) {
+    const n = normalizeDeliveryLookup(label)
+    if (n) map.set(n, key)
+  }
+  for (const key of DELIVERY_ALIAS_KEYS) {
+    for (const loc of LOCALES) {
+      add(key, t(key as StorefrontMessageKey, loc))
+    }
+  }
+  // Explicit EN hyphen / alternate phrasings (catalog may store ASCII hyphens)
+  add("delivery1to2BusinessDays", "1-2 business days")
+  add("delivery1to2BusinessDays", "1–2 business days")
+  add("delivery2to4BusinessDays", "2-4 business days")
+  add("delivery2to4BusinessDays", "2–4 business days")
+  add("delivery2to3BusinessDays", "2-3 business days")
+  add("delivery2to3BusinessDays", "2–3 business days")
+  add("delivery5to7BusinessDays", "5-7 business days")
+  add("delivery5to7BusinessDays", "5–7 business days")
+  return map
+})()
 
 function resolveOfferDeliveryKey(input: {
   shipping_cost: number
@@ -106,6 +151,10 @@ export function localizeDeliveryLabelIfKnown(
     return defaultDeliveryLabel(locale)
   }
   const nlLegacy = OFFER_DELIVERY_LABELS.indexOf(v as OfferDeliveryLabel)
-  if (nlLegacy >= 0) return t(DELIVERY_KEYS[nlLegacy], locale)
+  if (nlLegacy >= 0) return t(NL_LEGACY_KEYS[nlLegacy], locale)
+
+  const aliasKey = DELIVERY_ALIAS_TO_KEY.get(normalizeDeliveryLookup(v))
+  if (aliasKey) return t(aliasKey as StorefrontMessageKey, locale)
+
   return v
 }

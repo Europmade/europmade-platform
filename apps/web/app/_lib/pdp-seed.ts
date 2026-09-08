@@ -76,12 +76,31 @@ export type PdpDetail = {
   sellerReviews: PdpReview[]
   sellerReviewCount: number
   sellerReviewAvg: number
+  /**
+   * Legacy flat FAQ list — prefer `sellerFaqs`. Kept for seed/compat;
+   * resolve uses sellerFaqs + product CMS FAQ, not platform copy.
+   */
   faqs: { q: string; a: string }[]
+  /**
+   * Seller-owned FAQ items for future seller BO:
+   * - general: reusable across products
+   * - product: product-specific
+   * Storefront merges both into one "Veelgestelde vragen" section.
+   */
+  sellerFaqs?: PdpSellerFaq[]
   pairsWellWith: { slug: string; title: string; priceCents: number }[]
   relatedSlugs: string[]
   galleryCount: number
   galleryImages?: string[]
   gallerySlides?: PdpGallerySlide[]
+}
+
+/** Seller FAQ for PDP resolve (general and/or product-scoped). */
+export type PdpSellerFaq = {
+  id: string
+  scope: "general" | "product"
+  q: string
+  a: string
 }
 
 export type PdpGallerySlide =
@@ -209,20 +228,8 @@ function buildDefaultDetail(product: ListingProduct): PdpDetail {
     ],
     sellerReviewCount: 1204,
     sellerReviewAvg: 4.6,
-    faqs: [
-      {
-        q: `Is de ${product.title} geschikt voor dagelijks gebruik?`,
-        a: "Ja. Zie het tabblad Geschikt voor voor de aanbevolen toepassingen.",
-      },
-      {
-        q: "Hoe lang duurt de levering?",
-        a: "Levertijd verschilt per aanbieder — zie Alle aanbieders hierboven.",
-      },
-      {
-        q: "Geldt de garantie ongeacht bij welke aanbieder ik koop?",
-        a: "Ja, de producentgarantie geldt ongeacht de gekozen aanbieder.",
-      },
-    ],
+    faqs: [],
+    sellerFaqs: [],
     pairsWellWith: (accessories.length ? accessories : related)
       .slice(0, 4)
       .map((p) => ({
@@ -321,20 +328,8 @@ function robotmaaierDetail(product: ListingProduct): PdpDetail {
         retailer: "Retailer Z",
       },
     ],
-    faqs: [
-      {
-        q: "Is de Robotmaaier X200 geschikt voor een tuin met veel obstakels?",
-        a: "Ja. Via de app markeer je begrenzingen en obstakels.",
-      },
-      {
-        q: "Hoe lang duurt de levering?",
-        a: 'Levertijd verschilt per aanbieder — zie "Alle aanbieders" hierboven.',
-      },
-      {
-        q: "Geldt de garantie ongeacht bij welke aanbieder ik koop?",
-        a: "Ja, de 2 jaar producentgarantie geldt ongeacht de gekozen aanbieder.",
-      },
-    ],
+    faqs: [],
+    sellerFaqs: [],
     pairsWellWith: [
       { slug: "tuinslang-20m", title: "Vervangmes-set (2 stuks)", priceCents: 2495 },
       { slug: "robotmaaier-compact", title: "Begrenzingskabel 100m", priceCents: 3450 },
