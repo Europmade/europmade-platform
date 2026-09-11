@@ -7,8 +7,12 @@ import { SellerGate } from "../_components/seller-gate"
 import { DEMO_COMPANY } from "../_lib/demo-data"
 import {
   getPartnerAccount,
+  patchPartnerAccount,
+  PartnerAccountApiError,
   type PartnerAccountResponse,
 } from "../_lib/partner-account-api"
+import { uploadSellerBrandMedia, BrandApiError } from "../_lib/brands-api"
+import { resolveSellerMediaUrl } from "../_lib/media-url"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
 import { t, tFormat, type StorefrontMessageKey } from "../../_lib/i18n/messages"
 
@@ -61,7 +65,13 @@ export default function SellerSettingsPage() {
   const [actionNote, setActionNote] = useState<string | null>(null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [bannerFile, setBannerFile] = useState<File | null>(null)
+  const [logoLocalPreview, setLogoLocalPreview] = useState<string | null>(null)
+  const [bannerLocalPreview, setBannerLocalPreview] = useState<string | null>(
+    null
+  )
   const [account, setAccount] = useState<PartnerAccountResponse | null>(null)
+  const [brandingBusy, setBrandingBusy] = useState(false)
+  const [brandingError, setBrandingError] = useState<string | null>(null)
   const [returnAddress, setReturnAddress] = useState(
     DEMO_COMPANY.return_address
   )
@@ -77,12 +87,112 @@ export default function SellerSettingsPage() {
       .catch(() => setAccount(null))
   }, [])
 
+  useEffect(() => {
+    if (!logoFile) {
+      setLogoLocalPreview(null)
+      return
+    }
+    const url = URL.createObjectURL(logoFile)
+    setLogoLocalPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [logoFile])
+
+  useEffect(() => {
+    if (!bannerFile) {
+      setBannerLocalPreview(null)
+      return
+    }
+    const url = URL.createObjectURL(bannerFile)
+    setBannerLocalPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [bannerFile])
+
   function markSaved(labelKey: StorefrontMessageKey) {
     setActionNote(
       tFormat("sellerSettingsSavedDemo", locale, {
         label: t(labelKey, locale),
       })
     )
+  }
+
+  async function saveBranding(kind: "logo" | "banner") {
+    const file = kind === "logo" ? logoFile : bannerFile
+    if (!file) {
+      setBrandingError("Kies eerst een bestand.")
+      setActionNote(null)
+      return
+    }
+    setBrandingBusy(true)
+    setBrandingError(null)
+    setActionNote(null)
+    try {
+      const uploaded = await uploadSellerBrandMedia(file)
+      const stored = uploaded.storage_reference || uploaded.url
+      await patchPartnerAccount(
+        kind === "logo" ? { logo_url: stored } : { banner_url: stored }
+      )
+      const confirmed = await getPartnerAccount()
+      setAccount(confirmed)
+      const persisted =
+        kind === "logo"
+          ? confirmed.partner.logo_url
+          : confirmed.partner.banner_url
+      if (!persisted) {
+        throw new PartnerAccountApiError(
+          "Opslaan is niet bevestigd. Probeer opnieuw."
+        )
+      }
+      if (kind === "logo") setLogoFile(null)
+      else setBannerFile(null)
+      setActionNote(
+        `${t(kind === "logo" ? "sellerSettingsLogo" : "sellerSettingsBanner", locale)} opgeslagen.`
+      )
+    } catch (err) {
+      setActionNote(null)
+      setBrandingError(
+        err instanceof PartnerAccountApiError || err instanceof BrandApiError
+          ? err.message
+          : "Opslaan mislukt."
+      )
+    } finally {
+      setBrandingBusy(false)
+    }
+  }
+
+  async function removeBranding(kind: "logo" | "banner") {
+    setBrandingBusy(true)
+    setBrandingError(null)
+    setActionNote(null)
+    try {
+      await patchPartnerAccount(
+        kind === "logo" ? { logo_url: null } : { banner_url: null }
+      )
+      const confirmed = await getPartnerAccount()
+      setAccount(confirmed)
+      if (kind === "logo") {
+        setLogoFile(null)
+        if (confirmed.partner.logo_url) {
+          throw new PartnerAccountApiError("Verwijderen is niet bevestigd.")
+        }
+      } else {
+        setBannerFile(null)
+        if (confirmed.partner.banner_url) {
+          throw new PartnerAccountApiError("Verwijderen is niet bevestigd.")
+        }
+      }
+      setActionNote(
+        `${t(kind === "logo" ? "sellerSettingsLogo" : "sellerSettingsBanner", locale)} verwijderd.`
+      )
+    } catch (err) {
+      setActionNote(null)
+      setBrandingError(
+        err instanceof PartnerAccountApiError || err instanceof BrandApiError
+          ? err.message
+          : "Verwijderen mislukt."
+      )
+    } finally {
+      setBrandingBusy(false)
+    }
   }
 
   const activeTitleKey =
@@ -107,12 +217,20 @@ export default function SellerSettingsPage() {
         <p className="mt-1 text-wf-600">
           Beheer verzendprofielen centraal en koppel ze aan meerdere producten.
         </p>
-        <Link
-          href="/seller/settings/shipping"
-          className="mt-2 inline-flex text-[11px] font-semibold underline"
-        >
-          Naar verzendprofielen →
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link
+            href="/seller/settings/shipping"
+            className="inline-flex h-8 items-center rounded border border-wf-400 bg-white px-3 text-[11px] font-semibold text-wf-900 hover:bg-wf-100"
+          >
+            Verzendprofielen bekijken
+          </Link>
+          <Link
+            href="/seller/settings/shipping/new"
+            className="inline-flex h-8 items-center rounded bg-wf-900 px-3 text-[11px] font-semibold text-white hover:bg-wf-800"
+          >
+            Nieuw verzendprofiel
+          </Link>
+        </div>
       </div>
 
       {actionNote ? (
@@ -240,40 +358,92 @@ export default function SellerSettingsPage() {
 
           {active === "logo" ? (
             <div className="max-w-md">
+              {logoLocalPreview || account?.partner.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={
+                    logoLocalPreview ||
+                    resolveSellerMediaUrl(account?.partner.logo_url)
+                  }
+                  alt=""
+                  className="mb-3 h-24 w-24 rounded-lg border border-wf-200 object-contain bg-white p-1"
+                />
+              ) : null}
               <FileUpload
                 label={t("sellerSettingsLogoUpload", locale)}
-                requirementLabel={t("sellerSettingsLogoReq", locale)}
-                accept="image/png,image/svg+xml,.svg,.png"
+                requirementLabel={t("sellerSettingsPngJpg", locale)}
+                accept="image/png,image/jpeg,image/webp"
+                maxSizeBytes={5 * 1024 * 1024}
                 value={logoFile}
                 onChange={setLogoFile}
               />
-              <div className="mt-3">
+              {brandingError && active === "logo" ? (
+                <p className="text-[11px] text-red-700">{brandingError}</p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   type="button"
-                  onClick={() => markSaved("sellerSettingsLogo")}
+                  disabled={brandingBusy}
+                  onClick={() => void saveBranding("logo")}
                 >
                   {t("commonSave", locale)}
                 </Button>
+                {account?.partner.logo_url ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={brandingBusy}
+                    onClick={() => void removeBranding("logo")}
+                  >
+                    Verwijderen
+                  </Button>
+                ) : null}
               </div>
             </div>
           ) : null}
 
           {active === "banner" ? (
             <div className="max-w-md">
+              {bannerLocalPreview || account?.partner.banner_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={
+                    bannerLocalPreview ||
+                    resolveSellerMediaUrl(account?.partner.banner_url)
+                  }
+                  alt=""
+                  className="mb-3 h-24 w-full max-w-md rounded-lg border border-wf-200 object-cover bg-white"
+                />
+              ) : null}
               <FileUpload
                 label={t("sellerSettingsBannerUpload", locale)}
-                requirementLabel={t("sellerSettingsBannerReq", locale)}
-                accept="image/jpeg,image/png"
+                requirementLabel={t("sellerSettingsPngJpg", locale)}
+                accept="image/jpeg,image/png,image/webp"
+                maxSizeBytes={5 * 1024 * 1024}
                 value={bannerFile}
                 onChange={setBannerFile}
               />
-              <div className="mt-3">
+              {brandingError && active === "banner" ? (
+                <p className="text-[11px] text-red-700">{brandingError}</p>
+              ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   type="button"
-                  onClick={() => markSaved("sellerSettingsBanner")}
+                  disabled={brandingBusy}
+                  onClick={() => void saveBranding("banner")}
                 >
                   {t("commonSave", locale)}
                 </Button>
+                {account?.partner.banner_url ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={brandingBusy}
+                    onClick={() => void removeBranding("banner")}
+                  >
+                    Verwijderen
+                  </Button>
+                ) : null}
               </div>
             </div>
           ) : null}

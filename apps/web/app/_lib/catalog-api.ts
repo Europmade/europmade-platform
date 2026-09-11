@@ -301,3 +301,27 @@ export function getCatalogProduct(productId: string, region_code = "NL") {
     `/store/catalog/products/${encodeURIComponent(productId)}?${qs}`
   )
 }
+
+export type CatalogSellerPage = {
+  seller: {
+    id: string
+    slug: string
+    name: string
+    country_code: string | null
+    contact_email: string | null
+    website_url: string | null
+    logo_url: string | null
+    banner_url: string | null
+    product_count: number
+  }
+  products: CatalogListProduct[]
+}
+
+export function getCatalogSeller(slug: string, region_code = "NL") {
+  const qs = new URLSearchParams({ region_code })
+  return request<CatalogSellerPage>(
+    `/store/catalog/sellers/${encodeURIComponent(slug)}?${qs}`,
+    20_000,
+    "no-store"
+  )
+}

@@ -121,3 +121,46 @@ export function upsertSellerBrandFacility(
     body: JSON.stringify(body),
   })
 }
+
+export async function uploadSellerBrandMedia(file: File) {
+  const form = new FormData()
+  form.append("file", file)
+  const response = await fetch(`${medusaBackendUrl()}/store/brands/media`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(PUBLISHABLE_KEY
+        ? { "x-publishable-api-key": PUBLISHABLE_KEY }
+        : {}),
+    },
+    body: form,
+  })
+  const payload: unknown = await response.json().catch(() => undefined)
+  if (!response.ok) {
+    const message =
+      payload &&
+      typeof payload === "object" &&
+      "message" in payload &&
+      typeof payload.message === "string"
+        ? payload.message
+        : "Upload mislukt."
+    throw new BrandApiError(message, response.status)
+  }
+  const url =
+    payload &&
+    typeof payload === "object" &&
+    "url" in payload &&
+    typeof payload.url === "string"
+      ? payload.url
+      : null
+  const storage =
+    payload &&
+    typeof payload === "object" &&
+    "storage_reference" in payload &&
+    typeof payload.storage_reference === "string"
+      ? payload.storage_reference
+      : null
+  const stored = storage || url
+  if (!stored) throw new BrandApiError("Upload mislukt.")
+  return { url: url || stored, storage_reference: stored }
+}

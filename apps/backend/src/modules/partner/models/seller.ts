@@ -53,6 +53,9 @@ const Seller = model
     production_proof_file_id: model.text().nullable(),
     authorization_proof_file_id: model.text().nullable(),
     additional_certifications_file_id: model.text().nullable(),
+    // Seller storefront branding (Instellingen → Logo/Banner). Host-agnostic refs.
+    logo_url: model.text().nullable(),
+    banner_url: model.text().nullable(),
   })
   .indexes([{ on: ["company_id"] }, { on: ["onboarding_status"] }])
 

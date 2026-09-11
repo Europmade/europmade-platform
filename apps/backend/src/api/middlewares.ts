@@ -1012,6 +1012,16 @@ export default defineMiddlewares({
       middlewares: [],
     },
     {
+      matcher: "/store/catalog/sellers/:slug",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/brands/media",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
       matcher: "/store/brands",
       methods: ["GET"],
       middlewares: [customerAuth],
@@ -1065,6 +1075,11 @@ export default defineMiddlewares({
     {
       matcher: "/store/partner/account",
       methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/partner/account",
+      methods: ["PATCH"],
       middlewares: [customerAuth],
     },
     {

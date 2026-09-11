@@ -7,11 +7,13 @@ import {
   getCatalogBrand,
   getCatalogManufacturer,
   getCatalogProduct,
+  getCatalogSeller,
   listCatalogProducts,
   type CatalogBrandPage,
   type CatalogListProduct,
   type CatalogManufacturerPage,
   type CatalogProductDetail,
+  type CatalogSellerPage,
 } from "./catalog-api"
 import { slugifyForManufacturer } from "./manufacturer-slug"
 import { type ListingProduct } from "./listing-products"
@@ -248,6 +250,33 @@ export async function resolveBrandPage(
     if (!(err instanceof CatalogApiError) && !(err instanceof TypeError)) {
       console.error("[storefront-catalog] brand page failed", err)
     }
+    return null
+  }
+}
+
+
+export async function resolveSellerPage(
+  slug: string,
+  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
+): Promise<{
+  seller: CatalogSellerPage["seller"]
+  products: ListingProduct[]
+} | null> {
+  try {
+    const page = await getCatalogSeller(slug)
+    const backendOrigin = await getPageBackendOrigin()
+    return {
+      seller: {
+        ...page.seller,
+        logo_url: resolveMediaUrl(page.seller.logo_url, backendOrigin),
+        banner_url: resolveMediaUrl(page.seller.banner_url, backendOrigin),
+      },
+      products: page.products
+        .filter(hasValidCommerceOffer)
+        .map((item) => mapListItem(item, locale, backendOrigin)),
+    }
+  } catch (err) {
+    if (err instanceof CatalogApiError && err.status === 404) return null
     return null
   }
 }

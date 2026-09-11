@@ -74,6 +74,10 @@ export function slugifyCatalogEntityName(name: string): string {
     .replace(/^-|-$/g, "")
 }
 
+export function sellerPublicSlug(sellerId: string, legalName: string): string {
+  return slugifyCatalogEntityName(legalName) || sellerId.toLowerCase()
+}
+
 export type CatalogOfferView = {
   offer_id: string
   seller_id: string
