@@ -33,7 +33,9 @@ export default function ProductLinkGroupsPage() {
     setRows("loading")
     try {
       const res = await listProductLinkGroups(status)
-      setRows(res.product_link_groups)
+      setRows(
+        Array.isArray(res?.product_link_groups) ? res.product_link_groups : []
+      )
     } catch (err) {
       setError(
         err instanceof ProductLinkAdminApiError
@@ -121,7 +123,8 @@ export default function ProductLinkGroupsPage() {
                     {row.submitter_seller_id}
                   </td>
                   <td className="px-3 py-3 text-wf-800">
-                    {row.members.length} · {(row.dimensions || []).join(", ")}
+                    {(row.members || []).length} ·{" "}
+                    {(row.dimensions || []).join(", ")}
                   </td>
                   <td className="px-3 py-3 text-wf-800">
                     {formatDate(row.created_at)}

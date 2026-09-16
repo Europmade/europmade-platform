@@ -62,6 +62,15 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         available: true,
       },
       {
+        id: "product-links",
+        naam: "Productkoppelingen",
+        route: "/product-cloud/product-links",
+        icoon: "products",
+        permissie: "Beheerder",
+        navigatiepositie: 31,
+        available: true,
+      },
+      {
         id: "categories",
         naam: "Categorieën",
         route: "/product-cloud/categories",
@@ -174,7 +183,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
 export const ADMIN_SECONDARY_ROUTES: Array<{ route: string; parentId: string }> =
   [
     { route: "/product-cloud/products/approvals", parentId: "products" },
-    { route: "/product-cloud/product-links", parentId: "products" },
     { route: "/product-cloud/fields", parentId: "products" },
     { route: "/product-cloud/compliance", parentId: "products" },
     { route: "/product-cloud/translations", parentId: "products" },

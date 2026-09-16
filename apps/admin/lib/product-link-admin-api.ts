@@ -49,13 +49,15 @@ export type ProductLinkGroupRow = {
   members: ProductLinkMemberRow[]
 }
 
+export function adminProductLinkGroupsPath(status?: string) {
+  const normalized = status && status.trim() ? status.trim() : "proposed"
+  return `/admin/product-cloud/product-link-groups?status=${encodeURIComponent(normalized)}`
+}
+
 export function listProductLinkGroups(status?: string) {
-  const qs =
-    status && status !== "proposed"
-      ? `?status=${encodeURIComponent(status)}`
-      : ""
   return request<{ product_link_groups: ProductLinkGroupRow[]; count: number }>(
-    `/admin/product-cloud/product-link-groups${qs}`
+    adminProductLinkGroupsPath(status),
+    { cache: "no-store" }
   )
 }
 

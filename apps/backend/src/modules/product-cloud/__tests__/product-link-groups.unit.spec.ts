@@ -1,5 +1,8 @@
 import { MedusaError } from "@medusajs/framework/utils"
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import {
+  adminProductLinkGroupListFilter,
   assertAdminCanDecideProductLink,
   applyProductLinkGroupDecision,
   assertProductsFreeForActivation,
@@ -407,5 +410,72 @@ describe("public product link group", () => {
         members: members.map((m) => ({ ...m, is_active_slot: false })),
       })
     ).toBeNull()
+  })
+})
+
+describe("admin product link group list filter", () => {
+  it("defaults to proposed for missing or unknown status", () => {
+    expect(adminProductLinkGroupListFilter(undefined)).toEqual({
+      status: "proposed",
+    })
+    expect(adminProductLinkGroupListFilter("proposed")).toEqual({
+      status: "proposed",
+    })
+    expect(adminProductLinkGroupListFilter(["proposed"])).toEqual({
+      status: "proposed",
+    })
+    expect(adminProductLinkGroupListFilter({ $eq: "proposed" })).toEqual({
+      status: "proposed",
+    })
+    expect(adminProductLinkGroupListFilter({ bogus: true })).toEqual({
+      status: "proposed",
+    })
+    expect(adminProductLinkGroupListFilter("nope")).toEqual({
+      status: "proposed",
+    })
+  })
+
+  it("keeps active, rejected and all", () => {
+    expect(adminProductLinkGroupListFilter("active")).toEqual({
+      status: "active",
+    })
+    expect(adminProductLinkGroupListFilter("rejected")).toEqual({
+      status: "rejected",
+    })
+    expect(adminProductLinkGroupListFilter("all")).toEqual({})
+  })
+})
+
+describe("admin product link review wiring", () => {
+  const adminRoot = join(process.cwd(), "../admin")
+  const listPage = readFileSync(
+    join(adminRoot, "app/(shell)/product-cloud/product-links/page.tsx"),
+    "utf8"
+  )
+  const productsPage = readFileSync(
+    join(adminRoot, "app/(shell)/product-cloud/products/page.tsx"),
+    "utf8"
+  )
+  const apiSrc = readFileSync(
+    join(adminRoot, "lib/product-link-admin-api.ts"),
+    "utf8"
+  )
+  const routeSrc = readFileSync(
+    join(
+      process.cwd(),
+      "src/api/admin/product-cloud/product-link-groups/route.ts"
+    ),
+    "utf8"
+  )
+
+  it("uses the admin proposed queue API and renders rows", () => {
+    expect(listPage).toContain('useState("proposed")')
+    expect(listPage).toContain("listProductLinkGroups(status)")
+    expect(listPage).toContain("res.product_link_groups")
+    expect(listPage).toContain("/product-cloud/product-links/")
+    expect(productsPage).toContain('href="/product-cloud/product-links"')
+    expect(apiSrc).toContain("/admin/product-cloud/product-link-groups?status=")
+    expect(routeSrc).toContain("adminProductLinkGroupListFilter")
+    expect(routeSrc).toContain("listSerializedProductLinkGroups")
   })
 })

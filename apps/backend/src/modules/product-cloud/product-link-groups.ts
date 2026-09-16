@@ -27,6 +27,28 @@ export const PRODUCT_LINK_GROUP_STATUSES = [
 export type ProductLinkGroupStatus =
   (typeof PRODUCT_LINK_GROUP_STATUSES)[number]
 
+/**
+ * Admin list filter. Medusa/qs may pass status as a string, array, or object.
+ * Unknown values fall back to the proposed review queue — never an empty
+ * unmatchable filter.
+ */
+export function adminProductLinkGroupListFilter(
+  raw: unknown
+): { status: ProductLinkGroupStatus } | Record<string, never> {
+  let value: unknown = raw
+  if (Array.isArray(value)) value = value[0]
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>
+    value = obj.$eq ?? obj.value ?? obj.status ?? undefined
+    if (Array.isArray(value)) value = value[0]
+  }
+  const status = typeof value === "string" ? value.trim() : ""
+  if (!status || status === "proposed") return { status: "proposed" }
+  if (status === "all") return {}
+  if (status === "active" || status === "rejected") return { status }
+  return { status: "proposed" }
+}
+
 export type ProductLinkMemberInput = {
   product_id: string
   values: Record<string, string>
