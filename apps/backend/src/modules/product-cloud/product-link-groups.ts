@@ -208,6 +208,87 @@ export function assertProductsFreeForActivation(
   }
 }
 
+export function assertAdminCanDecideProductLink(
+  actorType: string | undefined
+): void {
+  if (actorType !== "user") {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Alleen een beheerder mag een koppelgroep goedkeuren of afwijzen."
+    )
+  }
+}
+
+export function applyProductLinkGroupDecision(input: {
+  currentStatus: string
+  decision: string
+  decision_reason?: string | null
+  decided_by: string
+  now?: Date
+}): {
+  status: "active" | "rejected"
+  decision_reason: string | null
+  decided_by: string
+  decided_at: Date
+  members_active_slot: boolean
+} {
+  const decidedBy = trimText(input.decided_by)
+  if (!decidedBy) {
+    fail("Geen beslissende beheerder.")
+  }
+  if (input.currentStatus !== "proposed") {
+    fail("Alleen een voorstel met status proposed kan worden beslist.")
+  }
+  const decision = trimText(input.decision)
+  if (decision !== "approve" && decision !== "reject") {
+    fail("decision moet approve of reject zijn.")
+  }
+  const reason = trimText(input.decision_reason)
+  return {
+    status: decision === "approve" ? "active" : "rejected",
+    decision_reason: reason || null,
+    decided_by: decidedBy,
+    decided_at: input.now ?? new Date(),
+    members_active_slot: decision === "approve",
+  }
+}
+
+export function assertMembersReadyForActivation(
+  members: Array<{
+    product_id: string
+    values_key: string
+  }>,
+  existingProductIds: Set<string>
+): void {
+  if (members.length < 1) {
+    fail("Een koppelgroep heeft minimaal één product nodig.")
+  }
+  const productIds = members.map((m) => m.product_id)
+  if (new Set(productIds).size !== productIds.length) {
+    fail("Een product mag niet twee keer in dezelfde groep staan.")
+  }
+  const keys = members.map((m) => m.values_key)
+  if (new Set(keys).size !== keys.length) {
+    fail("Dezelfde waardetupel mag niet twee keer in één groep voorkomen.")
+  }
+  for (const member of members) {
+    if (!existingProductIds.has(member.product_id)) {
+      fail(`Product bestaat niet: ${member.product_id}`)
+    }
+  }
+}
+
+export function isActiveConsumableLinkGroup(
+  group: { status: string },
+  members: Array<{ is_active_slot?: boolean }>
+): boolean {
+  return (
+    group.status === "active" &&
+    members.length > 0 &&
+    members.every((m) => m.is_active_slot === true)
+  )
+}
+
 export type ProductLinkMutations = {
   updateProducts?: unknown
   updateOffers?: unknown

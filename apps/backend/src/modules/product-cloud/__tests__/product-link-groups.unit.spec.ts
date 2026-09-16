@@ -1,10 +1,14 @@
 import { MedusaError } from "@medusajs/framework/utils"
 import {
+  assertAdminCanDecideProductLink,
+  applyProductLinkGroupDecision,
   assertProductsFreeForActivation,
   canonicalValuesKey,
+  isActiveConsumableLinkGroup,
   normalizeProductLinkProposal,
   productIdsBlockingActivation,
   proposalPersistenceTouchesCatalogOrOffers,
+  serializeProductLinkGroup,
   type ProductLinkProposalInput,
 } from "../product-link-groups"
 
@@ -250,5 +254,107 @@ describe("product link group proposals", () => {
     expect(() =>
       assertProductsFreeForActivation(["prod_B"], ["prod_A"])
     ).not.toThrow()
+  })
+})
+
+describe("product link group admin decisions", () => {
+  it("lets an admin retrieve proposed groups with members and submitter", () => {
+    const listed = [
+      serializeProductLinkGroup(
+        {
+          id: "plgrp_1",
+          name: "Kleurreeks",
+          dimensions: ["Kleur"],
+          status: "proposed",
+          submitter_seller_id: "sel_c",
+          note: "Toelichting",
+          created_at: "2026-09-16T12:00:00.000Z",
+        },
+        [
+          {
+            id: "plmem_1",
+            product_id: "prod_A",
+            values: { Kleur: "Zwart" },
+            values_key: "Kleur=Zwart",
+            is_active_slot: false,
+          },
+        ]
+      ),
+    ].filter((g) => g.status === "proposed")
+    expect(listed).toHaveLength(1)
+    expect(listed[0].submitter_seller_id).toBe("sel_c")
+    expect(listed[0].members[0].values).toEqual({ Kleur: "Zwart" })
+    expect(listed[0].note).toBe("Toelichting")
+    expect(listed[0].created_at).toBeTruthy()
+  })
+
+  it("approves a proposed group to active", () => {
+    const result = applyProductLinkGroupDecision({
+      currentStatus: "proposed",
+      decision: "approve",
+      decided_by: "user_admin",
+      now: new Date("2026-09-16T14:00:00.000Z"),
+    })
+    expect(result.status).toBe("active")
+    expect(result.members_active_slot).toBe(true)
+    expect(result.decided_by).toBe("user_admin")
+    expect(isActiveConsumableLinkGroup(result, [{ is_active_slot: true }])).toBe(
+      true
+    )
+  })
+
+  it("rejects a proposed group to rejected", () => {
+    const result = applyProductLinkGroupDecision({
+      currentStatus: "proposed",
+      decision: "reject",
+      decision_reason: "Niet dezelfde lijn",
+      decided_by: "user_admin",
+    })
+    expect(result.status).toBe("rejected")
+    expect(result.members_active_slot).toBe(false)
+    expect(result.decision_reason).toBe("Niet dezelfde lijn")
+  })
+
+  it("does not let a non-admin decide", () => {
+    expect(() =>
+      assertAdminCanDecideProductLink("customer")
+    ).toThrow(/beheerder/)
+    expect(() => assertAdminCanDecideProductLink(undefined)).toThrow(
+      /beheerder/
+    )
+    expect(() => assertAdminCanDecideProductLink("user")).not.toThrow()
+  })
+
+  it("does not let active or rejected groups be decided again", () => {
+    expectInvalid(
+      () =>
+        applyProductLinkGroupDecision({
+          currentStatus: "active",
+          decision: "reject",
+          decided_by: "user_admin",
+        }),
+      "proposed"
+    )
+    expectInvalid(
+      () =>
+        applyProductLinkGroupDecision({
+          currentStatus: "rejected",
+          decision: "approve",
+          decided_by: "user_admin",
+        }),
+      "proposed"
+    )
+  })
+
+  it("still rejects seller activation of a proposal", () => {
+    expectInvalid(
+      () =>
+        normalizeProductLinkProposal(
+          petrolShirts({ status: "active" }),
+          "sel_c",
+          PRODUCTS
+        ),
+      "proposed"
+    )
   })
 })

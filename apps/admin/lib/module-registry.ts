@@ -174,6 +174,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
 export const ADMIN_SECONDARY_ROUTES: Array<{ route: string; parentId: string }> =
   [
     { route: "/product-cloud/products/approvals", parentId: "products" },
+    { route: "/product-cloud/product-links", parentId: "products" },
     { route: "/product-cloud/fields", parentId: "products" },
     { route: "/product-cloud/compliance", parentId: "products" },
     { route: "/product-cloud/translations", parentId: "products" },

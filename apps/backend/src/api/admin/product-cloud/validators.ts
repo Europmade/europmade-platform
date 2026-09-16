@@ -62,3 +62,11 @@ export const AdminDecideChangeProposalBody = z.object({
 export type AdminDecideChangeProposalBodyInput = z.infer<
   typeof AdminDecideChangeProposalBody
 >
+
+export const AdminDecideProductLinkGroupBody = z.object({
+  decision: z.enum(["approve", "reject"]),
+  decision_reason: z.string().trim().min(1).nullable().optional(),
+})
+export type AdminDecideProductLinkGroupBodyInput = z.infer<
+  typeof AdminDecideProductLinkGroupBody
+>

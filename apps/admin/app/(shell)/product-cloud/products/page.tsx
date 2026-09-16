@@ -77,12 +77,20 @@ export default function AdminProductsPage() {
             geen demo.
           </p>
         </div>
-        <Link
-          href="/product-cloud/products/approvals"
-          className="rounded bg-wf-900 px-3 py-2 text-[11px] font-semibold text-white"
-        >
-          Productgoedkeuringen
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/product-cloud/product-links"
+            className="rounded border border-wf-300 bg-white px-3 py-2 text-[11px] font-semibold text-wf-800"
+          >
+            Productkoppelingen
+          </Link>
+          <Link
+            href="/product-cloud/products/approvals"
+            className="rounded bg-wf-900 px-3 py-2 text-[11px] font-semibold text-white"
+          >
+            Productgoedkeuringen
+          </Link>
+        </div>
       </div>
 
       {error ? (

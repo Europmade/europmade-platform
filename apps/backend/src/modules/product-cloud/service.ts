@@ -60,6 +60,11 @@ import {
 } from "./translation/workflow"
 import { buildLanguageCoverage, pickTranslationVersion } from "./translation/coverage"
 import {
+  applyProductLinkGroupDecision,
+  assertAdminCanDecideProductLink,
+  assertMembersReadyForActivation,
+  assertProductsFreeForActivation,
+  isActiveConsumableLinkGroup,
   normalizeProductLinkProposal,
   serializeProductLinkGroup,
   type ProductLinkProposalInput,
@@ -818,6 +823,241 @@ class ProductCloudModuleService extends MedusaService({
       group as Parameters<typeof serializeProductLinkGroup>[0],
       members as Parameters<typeof serializeProductLinkGroup>[1]
     )
+  }
+
+  @InjectManager()
+  async listSerializedProductLinkGroups(
+    filter: Record<string, unknown> = {},
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const groups = (await this.listProductLinkGroups(
+      filter,
+      { order: { created_at: "DESC" }, take: 200 },
+      sharedContext
+    )) as Array<Parameters<typeof serializeProductLinkGroup>[0] & { id: string }>
+    const groupIds = groups.map((g) => g.id)
+    const members =
+      groupIds.length > 0
+        ? ((await this.listProductLinkMembers(
+            { group_id: groupIds },
+            {},
+            sharedContext
+          )) as Array<
+            Parameters<typeof serializeProductLinkGroup>[1][number] & {
+              group_id: string
+            }
+          >)
+        : []
+    const byGroup = new Map<string, typeof members>()
+    for (const member of members) {
+      const list = byGroup.get(member.group_id) || []
+      list.push(member)
+      byGroup.set(member.group_id, list)
+    }
+    const serialized = groups.map((group) =>
+      serializeProductLinkGroup(group, byGroup.get(group.id) || [])
+    )
+    return this.enrichProductLinkGroupsWithTitles_(serialized, sharedContext)
+  }
+
+  @InjectManager()
+  async retrieveSerializedProductLinkGroup(
+    id: string,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const group = (await this.retrieveProductLinkGroup(
+      id,
+      {},
+      sharedContext
+    )) as Parameters<typeof serializeProductLinkGroup>[0] & { id: string }
+    const members = (await this.listProductLinkMembers(
+      { group_id: id },
+      { order: { sort_order: "ASC" } },
+      sharedContext
+    )) as Parameters<typeof serializeProductLinkGroup>[1]
+    const [enriched] = await this.enrichProductLinkGroupsWithTitles_(
+      [serializeProductLinkGroup(group, members)],
+      sharedContext
+    )
+    return enriched
+  }
+
+  @InjectManager()
+  async getActiveProductLinkGroupForProduct(
+    productId: string,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const slots = (await this.listProductLinkMembers(
+      { product_id: productId, is_active_slot: true },
+      {},
+      sharedContext
+    )) as Array<{ group_id: string }>
+    if (!slots.length) return null
+    const group = (await this.retrieveProductLinkGroup(
+      slots[0].group_id,
+      {},
+      sharedContext
+    )) as Parameters<typeof serializeProductLinkGroup>[0] & {
+      id: string
+      status: string
+    }
+    if (group.status !== "active") return null
+    const members = (await this.listProductLinkMembers(
+      { group_id: group.id },
+      { order: { sort_order: "ASC" } },
+      sharedContext
+    )) as Parameters<typeof serializeProductLinkGroup>[1]
+    if (!isActiveConsumableLinkGroup(group, members)) return null
+    const [enriched] = await this.enrichProductLinkGroupsWithTitles_(
+      [serializeProductLinkGroup(group, members)],
+      sharedContext
+    )
+    return enriched
+  }
+
+  @InjectManager()
+  async decideProductLinkGroup(
+    groupId: string,
+    input: { decision: string; decision_reason?: string | null },
+    actor: { actor_id: string; actor_type?: string },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    return await this.decideProductLinkGroup_(
+      groupId,
+      input,
+      actor,
+      sharedContext
+    )
+  }
+
+  @InjectTransactionManager()
+  protected async decideProductLinkGroup_(
+    groupId: string,
+    input: { decision: string; decision_reason?: string | null },
+    actor: { actor_id: string; actor_type?: string },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    assertAdminCanDecideProductLink(actor.actor_type)
+    const group = (await this.retrieveProductLinkGroup(
+      groupId,
+      {},
+      sharedContext
+    )) as Parameters<typeof serializeProductLinkGroup>[0] & {
+      id: string
+      status: string
+    }
+    const members = (await this.listProductLinkMembers(
+      { group_id: groupId },
+      { order: { sort_order: "ASC" } },
+      sharedContext
+    )) as Array<
+      Parameters<typeof serializeProductLinkGroup>[1][number] & {
+        id: string
+        product_id: string
+        values_key: string
+      }
+    >
+    const decision = applyProductLinkGroupDecision({
+      currentStatus: group.status,
+      decision: input.decision,
+      decision_reason: input.decision_reason,
+      decided_by: actor.actor_id,
+    })
+    if (decision.status === "active") {
+      const productIds = members.map((m) => m.product_id)
+      const found =
+        productIds.length > 0
+          ? await this.listProducts({ id: productIds }, {}, sharedContext)
+          : []
+      assertMembersReadyForActivation(
+        members,
+        new Set((found as Array<{ id: string }>).map((row) => row.id))
+      )
+      const activeSlots =
+        productIds.length > 0
+          ? ((await this.listProductLinkMembers(
+              { product_id: productIds, is_active_slot: true },
+              {},
+              sharedContext
+            )) as Array<{ product_id: string; group_id: string }>)
+          : []
+      assertProductsFreeForActivation(
+        productIds,
+        activeSlots
+          .filter((slot) => slot.group_id !== groupId)
+          .map((slot) => slot.product_id)
+      )
+    }
+
+    const updatedGroup = await this.updateProductLinkGroups(
+      {
+        id: groupId,
+        status: decision.status,
+        decision_reason: decision.decision_reason,
+        decided_by: decision.decided_by,
+        decided_at: decision.decided_at,
+      },
+      sharedContext
+    )
+    let updatedMembers = members
+    if (decision.members_active_slot) {
+      for (const member of members) {
+        await this.updateProductLinkMembers(
+          { id: member.id, is_active_slot: true },
+          sharedContext
+        )
+      }
+      updatedMembers = (await this.listProductLinkMembers(
+        { group_id: groupId },
+        { order: { sort_order: "ASC" } },
+        sharedContext
+      )) as typeof members
+    }
+
+    const serialized = serializeProductLinkGroup(
+      updatedGroup as Parameters<typeof serializeProductLinkGroup>[0],
+      updatedMembers
+    )
+    const [enriched] = await this.enrichProductLinkGroupsWithTitles_(
+      [serialized],
+      sharedContext
+    )
+    return enriched
+  }
+
+  protected async enrichProductLinkGroupsWithTitles_(
+    groups: Array<ReturnType<typeof serializeProductLinkGroup>>,
+    sharedContext: Context
+  ) {
+    const productIds = [
+      ...new Set(groups.flatMap((g) => g.members.map((m) => m.product_id))),
+    ]
+    if (!productIds.length) return groups
+    const versions = (await this.listProductVersions(
+      { product_id: productIds },
+      { take: 500, order: { version_number: "DESC" } },
+      sharedContext
+    )) as Array<{
+      product_id: string
+      title: string
+      publication_status: string
+      version_number: number
+    }>
+    const titles = new Map<string, string>()
+    for (const version of versions) {
+      if (version.publication_status === "Gepubliceerd") {
+        titles.set(version.product_id, version.title)
+      } else if (!titles.has(version.product_id)) {
+        titles.set(version.product_id, version.title)
+      }
+    }
+    return groups.map((group) => ({
+      ...group,
+      members: group.members.map((member) => ({
+        ...member,
+        product_title: titles.get(member.product_id) ?? null,
+      })),
+    }))
   }
 
   /**
