@@ -369,6 +369,47 @@ export function listOwnProducts(params?: {
   }>(`/store/product-cloud/products${suffix}`, { cache: "no-store" })
 }
 
+export type ProductLinkGroupProposal = {
+  id: string
+  name: string
+  dimensions: string[]
+  status: string
+  submitter_seller_id: string
+  note: string | null
+  created_at?: string
+  members: Array<{
+    id: string
+    product_id: string
+    values: Record<string, string>
+    values_key: string
+    is_active_slot: boolean
+  }>
+}
+
+export function listOwnProductLinkGroupProposals() {
+  return request<{
+    product_link_groups: ProductLinkGroupProposal[]
+    count: number
+  }>("/store/product-cloud/product-link-groups/proposals", {
+    cache: "no-store",
+  })
+}
+
+export function submitProductLinkGroupProposal(body: {
+  name: string
+  dimensions: string[]
+  members: Array<{ product_id: string; values: Record<string, string> }>
+  note?: string
+}) {
+  return request<{ product_link_group: ProductLinkGroupProposal }>(
+    "/store/product-cloud/product-link-groups/proposals",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
 export function getProductManager(productId: string) {
   return request<{ product: ProductManagerDetail }>(
     `/store/product-cloud/products/${productId}/manager`

@@ -12,9 +12,18 @@ import {
   bulkUpdateProductInformation,
   bulkAssignShippingProfile,
   listOwnProducts,
+  listOwnProductLinkGroupProposals,
   ProductCloudApiError,
   type CatalogProduct,
+  type ProductLinkGroupProposal,
 } from "../_lib/product-cloud-api"
+import { ProductLinkDialog } from "./_components/product-link-dialog"
+import {
+  applyVisibleSelection,
+  canOpenProductLinkDialog,
+  showProductLinkBulkAction,
+  toggleSelectedId,
+} from "../_lib/product-link-proposal"
 import { resolveSellerMediaUrl } from "../_lib/media-url"
 import { patchOffer, CommerceCloudApiError } from "../_lib/commerce-cloud-api"
 import {
@@ -179,6 +188,10 @@ export default function SellerProductsPage() {
   const [bulkShippingProfileId, setBulkShippingProfileId] = useState("")
   const [euForm, setEuForm] = useState<EuComplianceForm>(() => emptyEuForm())
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+  const [linkProposals, setLinkProposals] = useState<ProductLinkGroupProposal[]>(
+    []
+  )
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -214,6 +227,16 @@ export default function SellerProductsPage() {
   useEffect(() => {
     load()
   }, [load])
+
+  const loadLinkProposals = useCallback(() => {
+    listOwnProductLinkGroupProposals()
+      .then((res) => setLinkProposals(res.product_link_groups || []))
+      .catch(() => setLinkProposals([]))
+  }, [])
+
+  useEffect(() => {
+    loadLinkProposals()
+  }, [loadLinkProposals])
 
   useEffect(() => {
     void (async () => {
@@ -259,6 +282,10 @@ export default function SellerProductsPage() {
     () => (Array.isArray(rows) ? rows.map((p) => p.id) : []),
     [rows]
   )
+  const selectedProducts = useMemo(() => {
+    if (!Array.isArray(rows)) return []
+    return rows.filter((p) => selection.has(p.id))
+  }, [rows, selection])
 
   const allPageSelected =
     pageIds.length > 0 && pageIds.every((id) => selection.has(id))
@@ -266,24 +293,13 @@ export default function SellerProductsPage() {
     pageIds.some((id) => selection.has(id)) && !allPageSelected
 
   function toggleSelectAllPage() {
-    setSelection((prev) => {
-      const next = new Set(prev)
-      if (allPageSelected) {
-        for (const id of pageIds) next.delete(id)
-      } else {
-        for (const id of pageIds) next.add(id)
-      }
-      return next
-    })
+    setSelection((prev) =>
+      applyVisibleSelection(prev, pageIds, !allPageSelected)
+    )
   }
 
   function toggleRow(id: string) {
-    setSelection((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+    setSelection((prev) => toggleSelectedId(prev, id))
   }
 
   function clearSelection() {
@@ -296,6 +312,16 @@ export default function SellerProductsPage() {
     setBulkBrandId("")
     setBulkFacilityId("")
     setBulkShippingProfileId("")
+    setLinkDialogOpen(false)
+  }
+
+  function openProductLinkDialog() {
+    if (!canOpenProductLinkDialog(selection.size)) {
+      setActionNotice("Selecteer minimaal 2 producten om te koppelen.")
+      return
+    }
+    setActionNotice(null)
+    setLinkDialogOpen(true)
   }
 
   function onBulkActionChange(value: string) {
@@ -507,6 +533,26 @@ export default function SellerProductsPage() {
         </Notice>
       ) : null}
 
+      {linkProposals.length > 0 ? (
+        <div className="mb-4 rounded-lg border border-wf-200 bg-white p-3">
+          <h2 className="text-xs font-bold text-wf-900">Koppelvoorstellen</h2>
+          <p className="mt-0.5 text-[11px] text-wf-600">
+            Alleen ter inzage. Activeren of afwijzen doet beheer.
+          </p>
+          <ul className="mt-2 space-y-1 text-xs text-wf-800">
+            {linkProposals.slice(0, 8).map((group) => (
+              <li key={group.id} className="flex flex-wrap items-baseline gap-2">
+                <span className="font-semibold">{group.name}</span>
+                <Badge variant="outline">{group.status}</Badge>
+                <span className="font-mono text-[10px] text-wf-500">
+                  {group.id}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="mb-3 grid grid-cols-1 gap-2 tablet:grid-cols-[1fr_180px_160px]">
         <Input
           label={t("commonSearch", locale)}
@@ -594,7 +640,7 @@ export default function SellerProductsPage() {
               : t("plProductCountFiltered", locale).replace("{count}", String(rows.length)).replace("{total}", String(totalUnfiltered))}
           </p>
 
-          {selection.size > 0 ? (
+          {showProductLinkBulkAction(selection.size) ? (
             <div className="sticky top-0 z-20 mb-3 flex flex-wrap items-center gap-3 rounded-lg border border-wf-400 bg-white px-3 py-2 shadow-sm">
               <span className="text-xs font-semibold text-wf-900">
                 {t("plSelected", locale).replace("{count}", String(selection.size))}
@@ -605,6 +651,14 @@ export default function SellerProductsPage() {
                 onClick={clearSelection}
               >
                 {t("plClearSelection", locale)}
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-8 items-center rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white disabled:opacity-50"
+                disabled={bulkBusy || !canOpenProductLinkDialog(selection.size)}
+                onClick={openProductLinkDialog}
+              >
+                Producten koppelen
               </button>
               <label className="flex items-center gap-2 text-xs text-wf-700">
                 <span className="font-semibold">{t("plBulkAction", locale)}</span>
@@ -624,7 +678,9 @@ export default function SellerProductsPage() {
                 </select>
               </label>
               <p className="basis-full text-[11px] text-wf-600">
-                Bulkacties: EU Compliance, merk koppelen of verzendprofiel wijzigen.
+                {canOpenProductLinkDialog(selection.size)
+                  ? "Bulkacties: producten koppelen, EU Compliance, merk of verzendprofiel."
+                  : "Selecteer minimaal 2 producten om te koppelen. Overige bulkacties blijven beschikbaar."}
               </p>
             </div>
           ) : null}
@@ -848,6 +904,28 @@ export default function SellerProductsPage() {
             </div>
           ) : null}
 
+          <div className="mb-2 flex items-center gap-2 rounded-lg border border-wf-200 bg-white px-3 py-2">
+            <input
+              type="checkbox"
+              id="seller-select-all-visible"
+              aria-label="Selecteren"
+              checked={allPageSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = somePageSelected
+              }}
+              onChange={toggleSelectAllPage}
+            />
+            <label
+              htmlFor="seller-select-all-visible"
+              className="text-xs font-semibold text-wf-800"
+            >
+              Selecteren
+            </label>
+            <span className="text-[11px] text-wf-500">
+              Zichtbare producten op deze lijst
+            </span>
+          </div>
+
           <div className="grid gap-3">
             {rows.map((p) => {
               const info = qualityLabel(p.completeness, locale)
@@ -867,6 +945,7 @@ export default function SellerProductsPage() {
               const catalogOwner = isSellerCatalogOwner(p)
               const catalogInformationHref = sellerCatalogInformationHref(p)
               const catalogHistoryHref = sellerCatalogTabHref(p, "history")
+              const selected = selection.has(p.id)
 
               return (
                 <article
@@ -880,9 +959,25 @@ export default function SellerProductsPage() {
                       router.push(sellerProductHref(p))
                     }
                   }}
-                  className="relative cursor-pointer rounded-lg border border-wf-300 bg-white p-3 text-left transition hover:border-wf-500"
+                  className={`relative cursor-pointer rounded-lg border bg-white p-3 text-left transition hover:border-wf-500 ${
+                    selected
+                      ? "border-wf-800 ring-1 ring-wf-800"
+                      : "border-wf-300"
+                  }`}
                 >
                   <div className="flex gap-3">
+                    <div
+                      className="flex shrink-0 items-start pt-1"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label={`Selecteren ${p.title || "product"}`}
+                        checked={selected}
+                        onChange={() => toggleRow(p.id)}
+                      />
+                    </div>
                     {imageSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -1324,6 +1419,19 @@ export default function SellerProductsPage() {
           </div>
         </>
       )}
+      {linkDialogOpen ? (
+        <ProductLinkDialog
+          products={selectedProducts}
+          onClose={() => setLinkDialogOpen(false)}
+          onSubmitted={(group) => {
+            setActionNotice(
+              `Voorstel ingediend (${group.status}). De producten blijven zelfstandig. Beheer beoordeelt de koppeling.`
+            )
+            clearSelection()
+            loadLinkProposals()
+          }}
+        />
+      ) : null}
     </SellerGate>
   )
 }
