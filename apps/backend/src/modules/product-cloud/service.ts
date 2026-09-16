@@ -29,6 +29,8 @@ import {
   ChangeProposal,
   ProductFieldChange,
   ProductSectionReview,
+  ProductLinkGroup,
+  ProductLinkMember,
 } from "./models"
 import type { ProductCloudIdentifierType } from "./identifier-types"
 import {
@@ -57,6 +59,11 @@ import {
   shouldMarkTranslationStale,
 } from "./translation/workflow"
 import { buildLanguageCoverage, pickTranslationVersion } from "./translation/coverage"
+import {
+  normalizeProductLinkProposal,
+  serializeProductLinkGroup,
+  type ProductLinkProposalInput,
+} from "./product-link-groups"
 
 export type CreateProductGraphInput = {
   seller_id: string
@@ -140,6 +147,8 @@ class ProductCloudModuleService extends MedusaService({
   ChangeProposal,
   ProductFieldChange,
   ProductSectionReview,
+  ProductLinkGroup,
+  ProductLinkMember,
 }) {
   @InjectManager()
   async createProductGraph(
@@ -744,6 +753,71 @@ class ProductCloudModuleService extends MedusaService({
     )[0]
     if (existing) return existing
     return await this.createProductRelations(input, sharedContext)
+  }
+
+  @InjectManager()
+  async submitProductLinkGroupProposal(
+    input: ProductLinkProposalInput,
+    submitterSellerId: string,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    return await this.submitProductLinkGroupProposal_(
+      input,
+      submitterSellerId,
+      sharedContext
+    )
+  }
+
+  @InjectTransactionManager()
+  protected async submitProductLinkGroupProposal_(
+    input: ProductLinkProposalInput,
+    submitterSellerId: string,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const requestedIds = [
+      ...new Set(
+        (input.members || [])
+          .map((m) => (typeof m?.product_id === "string" ? m.product_id.trim() : ""))
+          .filter(Boolean)
+      ),
+    ]
+    const found =
+      requestedIds.length > 0
+        ? await this.listProducts({ id: requestedIds }, {}, sharedContext)
+        : []
+    const existingIds = new Set(
+      (found as Array<{ id: string }>).map((row) => row.id)
+    )
+    const normalized = normalizeProductLinkProposal(
+      input,
+      submitterSellerId,
+      existingIds
+    )
+    const group = await this.createProductLinkGroups(
+      {
+        name: normalized.name,
+        dimensions: normalized.dimensions,
+        status: "proposed",
+        submitter_seller_id: normalized.submitter_seller_id,
+        note: normalized.note,
+      },
+      sharedContext
+    )
+    const members = await this.createProductLinkMembers(
+      normalized.members.map((member) => ({
+        group_id: (group as { id: string }).id,
+        product_id: member.product_id,
+        values: member.values,
+        values_key: member.values_key,
+        sort_order: member.sort_order,
+        is_active_slot: false,
+      })),
+      sharedContext
+    )
+    return serializeProductLinkGroup(
+      group as Parameters<typeof serializeProductLinkGroup>[0],
+      members as Parameters<typeof serializeProductLinkGroup>[1]
+    )
   }
 
   /**

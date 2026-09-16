@@ -20,6 +20,8 @@ import ProductRelation from "./product-relation"
 import ChangeProposal from "./change-proposal"
 import ProductFieldChange from "./product-field-change"
 import ProductSectionReview from "./product-section-review"
+import ProductLinkGroup from "./product-link-group"
+import ProductLinkMember from "./product-link-member"
 
 export {
   ProductFamily,
@@ -44,4 +46,6 @@ export {
   ChangeProposal,
   ProductFieldChange,
   ProductSectionReview,
+  ProductLinkGroup,
+  ProductLinkMember,
 }

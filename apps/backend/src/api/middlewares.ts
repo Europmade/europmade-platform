@@ -30,6 +30,7 @@ import {
   StoreSubmitClaimBody,
   StoreSubmitChangeProposalBody,
   StoreDecideChangeProposalBody,
+  StoreSubmitProductLinkGroupProposalBody,
   StorePatchProductCategoriesBody,
   StoreAssignMadeInEuropeBody,
   StoreBulkMadeInEuropeBody,
@@ -387,6 +388,19 @@ export default defineMiddlewares({
       middlewares: [
         customerAuth,
         validateAndTransformBody(StoreDecideChangeProposalBody),
+      ],
+    },
+    {
+      matcher: "/store/product-cloud/product-link-groups/proposals",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/product-cloud/product-link-groups/proposals",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreSubmitProductLinkGroupProposalBody),
       ],
     },
     {

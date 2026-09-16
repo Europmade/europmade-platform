@@ -94,6 +94,23 @@ export type StoreDecideChangeProposalBodyInput = z.infer<
   typeof StoreDecideChangeProposalBody
 >
 
+export const StoreSubmitProductLinkGroupProposalBody = z.object({
+  name: z.string().trim().min(1),
+  dimensions: z.array(z.string().trim().min(1)).min(1),
+  members: z
+    .array(
+      z.object({
+        product_id: z.string().trim().min(1),
+        values: z.record(z.string(), z.string()),
+      })
+    )
+    .min(1),
+  note: z.string().trim().min(1).nullable().optional(),
+})
+export type StoreSubmitProductLinkGroupProposalBodyInput = z.infer<
+  typeof StoreSubmitProductLinkGroupProposalBody
+>
+
 const AssemblyEuBand = z.enum(["eu_100", "eu_75_99", "eu_50_74", "eu_below_50"])
 const PartsEuLevel = z.enum(["eu_majority", "eu_partial", "eu_none"])
 const MaterialsEuLevel = z.enum(["eu_majority", "eu_partial", "eu_none"])
