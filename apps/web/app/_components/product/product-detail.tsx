@@ -54,6 +54,8 @@ import type { ResolvedProductPresentation } from "../../_lib/cms/resolve-product
 import type { StoreCmsBanner } from "../../_lib/cms/fetch-store-cms"
 import { AdSlot } from "../homepage/ad-slot"
 import type { StorefrontAdCreative } from "../../_lib/storefront-ads"
+import { ProductLinkSelector } from "./product-link-selector"
+import { currentLinkMember } from "../../_lib/product-link-pdp"
 
 type TabId =
   | "description"
@@ -110,8 +112,6 @@ export function ProductDetailPage({
 }) {
   const { addLine } = useCart()
   const router = useRouter()
-  const [colorId, setColorId] = useState(detail.selectedColorId)
-  const [sizeId, setSizeId] = useState(detail.selectedSizeId)
   const [offers, setOffers] = useState<PdpOffer[]>(detail.offers)
   const [offersOpen, setOffersOpen] = useState(true)
   const descriptionVisibleInitial = presentation
@@ -310,10 +310,12 @@ export function ProductDetailPage({
     setCartBusy(true)
     setCartNote(null)
     try {
-      const color =
-        detail.colorVariants.find((c) => c.id === colorId)?.color ?? undefined
-      const size =
-        detail.sizeVariants.find((s) => s.id === sizeId)?.label ?? undefined
+      const linkValues = detail.productLinkGroup
+        ? currentLinkMember(detail.productLinkGroup, detail.slug)?.values
+        : undefined
+      const variant = linkValues
+        ? Object.values(linkValues).filter(Boolean).join(" / ") || undefined
+        : undefined
       await addLine(selected.id, 1, {
         offer_id: selected.id,
         product_id: detail.slug,
@@ -325,9 +327,7 @@ export function ProductDetailPage({
         delivery: selected.delivery || defaultDeliveryLabel(locale),
         stock: selected.stock || t("inStock", locale),
         returns: selected.returns || t("trust30DayReturn", locale),
-        color,
-        size,
-        variant: [color, size].filter(Boolean).join(" / ") || undefined,
+        variant,
       })
       setCartNote(null)
     } catch (err) {
@@ -503,68 +503,11 @@ export function ProductDetailPage({
             </div>
           ) : null}
 
-          {detail.colorVariants.length > 0 || detail.sizeVariants.length > 0 ? (
-            <div
-              className={`mt-2 grid gap-2 ${
-                detail.colorVariants.length > 0 && detail.sizeVariants.length > 0
-                  ? "grid-cols-1 tablet:grid-cols-2"
-                  : "grid-cols-1"
-              }`}
-            >
-              {detail.colorVariants.length > 0 ? (
-                <div className="min-w-0 rounded-lg border border-wf-200 px-2.5 py-2">
-                  <p className="mb-1.5 text-[11px] font-semibold text-wf-800">
-                    {t("color", locale)}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {detail.colorVariants.map((v) => (
-                      <button
-                        key={v.id}
-                        type="button"
-                        disabled={v.disabled}
-                        onClick={() => setColorId(v.id)}
-                        className={`flex h-8 min-w-[34px] items-center justify-center rounded-md border px-2 disabled:border-wf-200 disabled:opacity-50 ${
-                          colorId === v.id
-                            ? "border-2 border-wf-900"
-                            : "border-wf-400"
-                        }`}
-                        aria-pressed={colorId === v.id}
-                        aria-label={`${t("color", locale)} ${v.id}`}
-                      >
-                        <span
-                          className="h-5 w-5 rounded-full border border-wf-400"
-                          style={{ background: v.color }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              {detail.sizeVariants.length > 0 ? (
-                <div className="min-w-0 rounded-lg border border-wf-200 px-2.5 py-2">
-                  <p className="mb-1.5 text-[11px] font-semibold text-wf-800">
-                    {t("workArea", locale)}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {detail.sizeVariants.map((v) => (
-                      <button
-                        key={v.id}
-                        type="button"
-                        onClick={() => setSizeId(v.id)}
-                        className={`flex h-8 min-w-[34px] items-center justify-center rounded-md px-2.5 text-xs ${
-                          sizeId === v.id
-                            ? "border-2 border-wf-900 font-bold text-wf-900"
-                            : "border border-wf-400 text-wf-700"
-                        }`}
-                        aria-pressed={sizeId === v.id}
-                      >
-                        {v.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
+          {detail.productLinkGroup ? (
+            <ProductLinkSelector
+              group={detail.productLinkGroup}
+              currentProductId={detail.slug}
+            />
           ) : null}
 
           {introText ? (

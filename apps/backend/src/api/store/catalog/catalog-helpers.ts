@@ -15,6 +15,7 @@ import {
 } from "../../../modules/product-cloud/category-attributes"
 import { loadMadeInEuropeForProduct } from "../product-cloud/made-in-europe-helpers"
 import { buildEffectivePriceView } from "../../../modules/commerce-cloud/offer-pricing"
+import { toPublicProductLinkGroup } from "../../../modules/product-cloud/product-link-groups"
 
 type PublishedVersion = {
   id: string
@@ -748,6 +749,30 @@ export async function loadCatalogProductDetail(
       }
     : null
 
+  const rawLinkGroup =
+    await productCloud.getActiveProductLinkGroupForProduct(productId)
+  const publicLink = toPublicProductLinkGroup(rawLinkGroup)
+  let product_link_group = publicLink
+  if (publicLink) {
+    const members = []
+    for (const member of publicLink.members) {
+      let image_url: string | null = null
+      try {
+        const published = (await productCloud.listProductVersions(
+          { product_id: member.product_id, publication_status: "Gepubliceerd" },
+          { order: { version_number: "DESC" }, take: 1 }
+        )) as PublishedVersion[]
+        if (published[0]) {
+          image_url = await resolvePrimaryImageUrl(productCloud, published[0].id)
+        }
+      } catch {
+        image_url = null
+      }
+      members.push({ ...member, image_url })
+    }
+    product_link_group = { ...publicLink, members }
+  }
+
   return {
     product: {
       id: product.id,
@@ -786,6 +811,7 @@ export async function loadCatalogProductDetail(
     })),
     seller_reviews,
     seller_review_aggregate,
+    product_link_group,
   }
 }
 

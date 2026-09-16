@@ -243,6 +243,17 @@ export type CatalogProductDetail = {
     average_score: number | null
     count: number
   }
+  product_link_group?: {
+    id: string
+    name: string
+    dimensions: string[]
+    members: Array<{
+      product_id: string
+      product_title: string | null
+      values: Record<string, string>
+      image_url?: string | null
+    }>
+  } | null
 }
 
 export function listCatalogProducts(params?: {

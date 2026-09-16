@@ -71,6 +71,7 @@ export type PdpDetail = {
   sizeVariants: { id: string; label: string }[]
   selectedColorId: string
   selectedSizeId: string
+  productLinkGroup?: import("./product-link-pdp").PdpProductLinkGroup | null
   offers: PdpOffer[]
   buyBoxNotice: string
   productReviews: PdpReview[]

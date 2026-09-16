@@ -289,6 +289,60 @@ export function isActiveConsumableLinkGroup(
   )
 }
 
+export type PublicProductLinkMember = {
+  product_id: string
+  product_title: string | null
+  values: Record<string, string>
+  image_url?: string | null
+}
+
+export type PublicProductLinkGroup = {
+  id: string
+  name: string
+  dimensions: string[]
+  members: PublicProductLinkMember[]
+}
+
+export function toPublicProductLinkGroup(
+  group:
+    | {
+        id: string
+        name: string
+        dimensions: unknown
+        status: string
+        members: Array<{
+          product_id: string
+          product_title?: string | null
+          values: unknown
+          is_active_slot?: boolean
+          image_url?: string | null
+        }>
+      }
+    | null
+    | undefined
+): PublicProductLinkGroup | null {
+  if (!group) return null
+  if (!isActiveConsumableLinkGroup(group, group.members)) return null
+  const dimensions = Array.isArray(group.dimensions)
+    ? group.dimensions.filter((d): d is string => typeof d === "string" && d.trim().length > 0)
+    : []
+  if (!dimensions.length) return null
+  return {
+    id: group.id,
+    name: group.name,
+    dimensions,
+    members: group.members.map((m) => ({
+      product_id: m.product_id,
+      product_title: m.product_title ?? null,
+      values:
+        m.values && typeof m.values === "object" && !Array.isArray(m.values)
+          ? (m.values as Record<string, string>)
+          : {},
+      image_url: m.image_url ?? null,
+    })),
+  }
+}
+
 export type ProductLinkMutations = {
   updateProducts?: unknown
   updateOffers?: unknown

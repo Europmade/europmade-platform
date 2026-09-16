@@ -9,6 +9,7 @@ import {
   productIdsBlockingActivation,
   proposalPersistenceTouchesCatalogOrOffers,
   serializeProductLinkGroup,
+  toPublicProductLinkGroup,
   type ProductLinkProposalInput,
 } from "../product-link-groups"
 
@@ -356,5 +357,55 @@ describe("product link group admin decisions", () => {
         ),
       "proposed"
     )
+  })
+})
+
+describe("public product link group", () => {
+  const members = [
+    {
+      product_id: "prod_A",
+      product_title: "Zwart",
+      values: { Kleur: "Zwart" },
+      is_active_slot: true,
+    },
+    {
+      product_id: "prod_B",
+      product_title: "Wit",
+      values: { Kleur: "Wit" },
+      is_active_slot: true,
+    },
+  ]
+
+  it("exposes an active consumable group", () => {
+    const pub = toPublicProductLinkGroup({
+      id: "plgrp_active",
+      name: "Kleurreeks",
+      dimensions: ["Kleur"],
+      status: "active",
+      members,
+    })
+    expect(pub?.id).toBe("plgrp_active")
+    expect(pub?.members).toHaveLength(2)
+  })
+
+  it("hides proposed and rejected groups from customers", () => {
+    expect(
+      toPublicProductLinkGroup({
+        id: "plgrp_prop",
+        name: "X",
+        dimensions: ["Kleur"],
+        status: "proposed",
+        members: members.map((m) => ({ ...m, is_active_slot: false })),
+      })
+    ).toBeNull()
+    expect(
+      toPublicProductLinkGroup({
+        id: "plgrp_rej",
+        name: "X",
+        dimensions: ["Kleur"],
+        status: "rejected",
+        members: members.map((m) => ({ ...m, is_active_slot: false })),
+      })
+    ).toBeNull()
   })
 })
