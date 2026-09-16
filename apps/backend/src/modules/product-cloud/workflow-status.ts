@@ -3,6 +3,7 @@ import type { CompletenessReport } from "./completeness"
 export function resolveWorkflowStatus(input: {
   publication_status: string | null
   approval_rejection_reason?: string | null
+  admin_review_outcome?: string | null
   completeness: Pick<
     CompletenessReport,
     "compliance_review_status" | "publishable" | "information_quality"
@@ -11,8 +12,13 @@ export function resolveWorkflowStatus(input: {
 }): string {
   const pub = input.publication_status
   if (pub === "Gepubliceerd") return "published"
+  if (input.admin_review_outcome === "needs_info") return "needs_information"
   if (pub === "In review") return "pending_admin_approval"
-  if (input.approval_rejection_reason) return "rejected"
+  if (
+    input.admin_review_outcome === "rejected" ||
+    input.approval_rejection_reason
+  )
+    return "rejected"
   if (input.completeness.compliance_review_status === "pending_review")
     return "pending_evidence_review"
   if (input.offer_paused) return "paused"

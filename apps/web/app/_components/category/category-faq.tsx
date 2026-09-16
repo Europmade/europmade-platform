@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react"
 import type { StorefrontLocale } from "../../_lib/i18n/locales"
-import { getSpecialistGuide } from "../../_lib/category/buying-guide-specialist"
 
 type FaqItem = { id: string; question: string; answer: string }
 
@@ -18,20 +17,15 @@ type CategoryFaqProps = {
 }
 
 /**
- * Purchase-decision FAQ — specialist / ultimate guide questions only.
+ * Category FAQ — only published CMS items. No specialist/ultimate-guide mock when CMS is empty.
  */
 export function CategoryFaq({
   title,
   items,
-  categorySlug,
-  categoryLabel,
-  locale,
-  guideFaq,
   openId: controlledOpen,
   onOpenId,
 }: CategoryFaqProps) {
-  const fallback = getSpecialistGuide(categorySlug, categoryLabel, locale).faq
-  const faqs = (guideFaq && guideFaq.length > 0 ? guideFaq : fallback.length > 0 ? fallback : items)
+  const faqs = items.filter((f) => f.question.trim() || f.answer.trim())
   const [localOpen, setLocalOpen] = useState<string | null>(null)
   const openId = controlledOpen !== undefined ? controlledOpen : localOpen
   const setOpenId = onOpenId ?? setLocalOpen

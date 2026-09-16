@@ -12,6 +12,7 @@ import SplitRecord from "./split-record"
 import ChangeProposal from "./change-proposal"
 import ProductRelation from "./product-relation"
 import ProductFieldChange from "./product-field-change"
+import ProductSectionReview from "./product-section-review"
 
 /**
  * Product — Blueprint `02-database-model.md` Deel B.2.
@@ -84,6 +85,9 @@ const Product = model
       mappedBy: "to_product",
     }),
     field_changes: model.hasMany(() => ProductFieldChange, {
+      mappedBy: "product",
+    }),
+    section_reviews: model.hasMany(() => ProductSectionReview, {
       mappedBy: "product",
     }),
   })

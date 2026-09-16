@@ -4,7 +4,7 @@ Deze map bevat geen nieuwe inhoud, maar legt vast **waar alle andere documentati
 
 ## Inhoud
 
-- [`blueprint-reference.md`](./blueprint-reference.md) — herkomst en hoofdstukoverzicht van de EuropMade Blueprint (v2.1) en het financieel model (v1.0), die als vaste, externe basis dienen voor alle documentatie in dit repository.
+- [`blueprint-reference.md`](./blueprint-reference.md) — herkomst Blueprint v2.1 (business) en verwijzing naar het **implementatie-master** [`../11-blueprint-v2/README.md`](../11-blueprint-v2/README.md).
 - [`glossary.md`](./glossary.md) — begrippenlijst van EuropMade-specifieke termen (Product Cloud, Commerce Cloud, Buy Box, Verified™, Retailer Created, etc.), zodat terminologie in alle documenten consistent blijft.
 
 ## Belangrijk

@@ -160,6 +160,11 @@ export default defineMiddlewares({
       middlewares: [customerAuth, validateAndTransformBody(StoreEanMatchBody)],
     },
     {
+      matcher: "/store/product-cloud/search",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/product-cloud/products",
       methods: ["GET"],
       middlewares: [customerAuth],
@@ -178,6 +183,11 @@ export default defineMiddlewares({
       matcher: "/store/product-cloud/import",
       methods: ["POST"],
       middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/store/product-cloud/languages",
+      methods: ["GET"],
+      middlewares: [customerAuth],
     },
     {
       matcher: "/store/product-cloud/facilities",
@@ -342,7 +352,7 @@ export default defineMiddlewares({
     },
     {
       matcher: "/store/product-cloud/products/:id/translations",
-      methods: ["GET", "PATCH", "POST"],
+      methods: ["GET", "PATCH", "POST", "PUT"],
       middlewares: [customerAuth],
     },
     {
@@ -457,6 +467,16 @@ export default defineMiddlewares({
     {
       matcher: "/store/catalog/products",
       methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/catalog/category-nav",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/catalog/commercial-nav/visit",
+      methods: ["POST"],
       middlewares: [],
     },
     {
@@ -918,6 +938,11 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/product-cloud/products/:id/section-reviews",
+      methods: ["GET", "PUT"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/product-cloud/products/:id/evidence/:evidenceId/review",
       methods: ["POST"],
       middlewares: [adminAuth],
@@ -1007,6 +1032,11 @@ export default defineMiddlewares({
       middlewares: [],
     },
     {
+      matcher: "/store/catalog/brands",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
       matcher: "/store/catalog/brands/:slug",
       methods: ["GET"],
       middlewares: [],
@@ -1020,6 +1050,31 @@ export default defineMiddlewares({
       matcher: "/store/brands/media",
       methods: ["POST"],
       middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/store/brands/:id/ownership-claim",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/brands/:id/ownership-claim",
+      methods: ["POST"],
+      middlewares: [customerAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/admin/brand-ownership/pages/:brandId",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/brand-ownership",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/brand-ownership/:id",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/store/brands",
@@ -1389,6 +1444,16 @@ export default defineMiddlewares({
       matcher: "/admin/cms/media",
       methods: ["POST"],
       middlewares: [adminAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/admin/cms/commercial-nav/icons",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/commercial-nav/icons/:key",
+      methods: ["PUT", "DELETE"],
+      middlewares: [adminAuth],
     },
 
     // ── Advertising (seller) ──

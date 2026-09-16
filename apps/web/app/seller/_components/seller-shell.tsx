@@ -3,7 +3,9 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@europmade/utils"
+import { BrandLogo } from "../../_components/marketplace/brand-logo"
 import { LocaleCurrencySwitcher } from "../../_components/marketplace/locale-currency-switcher"
+import { SellerAccountMenu } from "./seller-account-menu"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
 import { t } from "../../_lib/i18n/messages"
 import {
@@ -12,8 +14,8 @@ import {
 } from "../_lib/module-registry"
 
 export type SellerShellProps = {
-  roleLabel: string
-  breadcrumb: Array<{ label: string; href?: string }>
+  roleLabel?: string
+  breadcrumb?: Array<{ label: string; href?: string }>
   children: React.ReactNode
 }
 
@@ -28,19 +30,34 @@ function navActive(pathname: string, route: string | null) {
  */
 export function SellerShell({
   roleLabel,
-  breadcrumb,
+  breadcrumb = [],
   children,
 }: SellerShellProps) {
   const pathname = usePathname()
   const locale = useStorefrontLocale()
   const primary = primaryNavSorted()
   const active = findActiveSellerNav(pathname)
+  const safeRole = typeof roleLabel === "string" ? roleLabel : ""
+  const translated = active ? t(active.labelKey, locale) : ""
+  const pageTitle =
+    (translated && translated.trim()) ||
+    active?.naam ||
+    safeRole ||
+    "Seller"
+  const initials = safeRole
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("")
 
   return (
     <div className="min-h-screen bg-wf-100">
       <div className="mx-auto flex min-h-screen max-w-[1080px] border border-wf-400 bg-white mobile:max-w-none">
         <aside className="hidden w-[220px] shrink-0 border-r border-wf-300 bg-wf-100 p-3.5 tablet:block">
-          <div className="mb-5 h-5 w-[110px] rounded-sm bg-wf-300" aria-hidden />
+          <div className="mb-5 px-1">
+            <BrandLogo href="/seller" size="md" />
+          </div>
           <p className="px-3 pb-1 text-[9.5px] font-semibold uppercase tracking-wide text-wf-500">
             {t("sellerDashboardTitle", locale)}
           </p>
@@ -52,15 +69,6 @@ export function SellerShell({
                 "flex items-center gap-2 rounded-md px-3 py-2 text-xs text-wf-700",
                 isActive && "bg-wf-900 font-semibold text-white"
               )
-              const icon = (
-                <span
-                  className={cn(
-                    "inline-block h-4 w-4 shrink-0 rounded-sm bg-wf-400",
-                    isActive && "bg-white"
-                  )}
-                  aria-hidden
-                />
-              )
               if (!item.route || !item.available) {
                 return (
                   <span
@@ -68,14 +76,12 @@ export function SellerShell({
                     className={cn(className, "cursor-not-allowed opacity-50")}
                     title={t("notAvailableYet", locale)}
                   >
-                    {icon}
                     <span>{label}</span>
                   </span>
                 )
               }
               return (
                 <Link key={item.id} href={item.route} className={className}>
-                  {icon}
                   <span>{label}</span>
                 </Link>
               )
@@ -86,23 +92,14 @@ export function SellerShell({
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex items-center justify-between border-b border-wf-300 px-4 py-3 tablet:px-6">
             <div className="flex items-center gap-3.5">
-              <div
-                className="h-[22px] w-[120px] rounded-sm bg-wf-300"
-                aria-hidden
-              />
+              <BrandLogo href="/seller" />
               <div className="border-l border-wf-300 pl-3.5 text-xs font-bold text-wf-700">
-                {active ? t(active.labelKey, locale) : roleLabel}
+                {pageTitle}
               </div>
             </div>
             <div className="flex items-center gap-4">
               <LocaleCurrencySwitcher />
-              <span
-                className="relative flex h-[26px] w-[26px] items-center justify-center rounded-full border border-wf-400 text-xs text-wf-600"
-                aria-label={t("notifications", locale)}
-              >
-                🔔
-              </span>
-              <span className="h-7 w-7 rounded-full bg-wf-300" aria-hidden />
+              <SellerAccountMenu roleLabel={safeRole} />
             </div>
           </header>
 

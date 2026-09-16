@@ -16,6 +16,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const country =
     typeof req.query.country === "string" ? req.query.country : undefined
   const q = typeof req.query.q === "string" ? req.query.q : undefined
+  const idsRaw =
+    typeof req.query.ids === "string"
+      ? req.query.ids
+      : Array.isArray(req.query.ids)
+        ? req.query.ids.filter((v): v is string => typeof v === "string").join(",")
+        : undefined
+  const ids = idsRaw
+    ? idsRaw.split(",").map((s) => s.trim()).filter(Boolean)
+    : undefined
   const verified =
     typeof req.query.verified === "string"
       ? req.query.verified === "true"
@@ -36,6 +45,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const baseOpts = {
     category,
     q,
+    ids,
     region_code,
     brand_id: brand,
     manufacturer_id: manufacturer,
@@ -53,20 +63,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     price_max: Number.isFinite(price_max) ? price_max : undefined,
   }
 
-  const products = await listPublishedCatalogProducts(req.scope, {
+  const page = await listPublishedCatalogProducts(req.scope, {
     ...baseOpts,
     offset: Number.isFinite(offset) ? offset : 0,
     limit: Number.isFinite(limit) ? limit : 24,
   })
-  const allMatching = await listPublishedCatalogProducts(req.scope, {
-    ...baseOpts,
-    offset: 0,
-    limit: 5000,
-  })
+  // count komt uit dezelfde scan (geen tweede limit=5000-pass).
 
   res.status(200).json({
-    products,
-    count: allMatching.length,
+    products: page.products,
+    count: page.count,
     offset: Number.isFinite(offset) ? offset : 0,
     limit: Number.isFinite(limit) ? limit : 24,
   })

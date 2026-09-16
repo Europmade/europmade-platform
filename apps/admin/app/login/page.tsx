@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
         </div>
         <h1 className="mb-1 text-lg font-bold text-wf-900">Beheerder-login</h1>
         <p className="mb-5 text-xs text-wf-600">
-          Log in om het Admin Dashboard te openen.
+          Log in met een Medusa admin-user (niet met een seller-/klantaccount).
         </p>
         {error && (
           <Notice variant="warning" className="mb-4">

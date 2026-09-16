@@ -12,11 +12,59 @@ import { useStorefrontLocale } from "../_lib/i18n/use-storefront-locale"
 import type { StorefrontLocale } from "../_lib/i18n/locales"
 import { t, tFormat } from "../_lib/i18n/messages"
 
+const ACCEPT = "image/jpeg,image/png,image/webp,application/pdf"
+
 function dateTimeLocale(locale: StorefrontLocale): string {
   if (locale === "en") return "en-GB"
   if (locale === "de") return "de-DE"
   if (locale === "fr") return "fr-FR"
   return "nl-NL"
+}
+
+function AttachmentList({
+  attachments,
+  mine,
+}: {
+  attachments?: MessageView["attachments"]
+  mine: boolean
+}) {
+  if (!attachments?.length) return null
+  return (
+    <ul className="mt-2 space-y-1">
+      {attachments.map((a) => {
+        const isImage = a.mime_type.startsWith("image/")
+        const typeLabel = isImage
+          ? a.mime_type.replace("image/", "").toUpperCase()
+          : "PDF"
+        return (
+          <li key={a.id}>
+            <a
+              href={a.url}
+              target="_blank"
+              rel="noreferrer"
+              download={a.filename}
+              className={`inline-flex items-center gap-1.5 text-[11px] underline ${
+                mine ? "text-wf-200" : "text-wf-700"
+              }`}
+            >
+              <span className="rounded border border-current px-1 text-[9px] font-semibold uppercase opacity-80">
+                {typeLabel}
+              </span>
+              {a.filename}
+            </a>
+            {isImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={a.url}
+                alt={a.filename}
+                className="mt-1 max-h-40 max-w-full rounded border border-wf-300"
+              />
+            ) : null}
+          </li>
+        )
+      })}
+    </ul>
+  )
 }
 
 export function OrderMessageThread({ orderId }: { orderId: string }) {
@@ -25,6 +73,7 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
   const [orderNumber, setOrderNumber] = useState<string>("")
   const [viewerId, setViewerId] = useState<string | null>(null)
   const [body, setBody] = useState("")
+  const [files, setFiles] = useState<File[]>([])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -55,8 +104,9 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
     setBusy(true)
     setError(null)
     try {
-      await sendOrderMessage(orderId, body)
+      await sendOrderMessage(orderId, body.trim(), files)
       setBody("")
+      setFiles([])
       load()
     } catch (err: unknown) {
       setError(
@@ -105,6 +155,7 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
                 }`}
               >
                 <div className="whitespace-pre-wrap">{m.body}</div>
+                <AttachmentList attachments={m.attachments} mine={mine} />
                 <div
                   className={`mt-1 text-[10px] ${
                     mine ? "text-wf-300" : "text-wf-500"
@@ -130,6 +181,25 @@ export function OrderMessageThread({ orderId }: { orderId: string }) {
             required
           />
         </label>
+        <label className="block text-xs font-semibold text-wf-800">
+          {t("sellerMessagesAttachments", locale)}
+          <input
+            className="mt-1.5 block w-full text-xs"
+            type="file"
+            accept={ACCEPT}
+            multiple
+            onChange={(e) =>
+              setFiles(Array.from(e.target.files ?? []).slice(0, 5))
+            }
+          />
+        </label>
+        {files.length > 0 ? (
+          <p className="text-[11px] text-wf-600">
+            {tFormat("sellerMessagesAttachmentLabel", locale, {
+              name: files.map((f) => f.name).join(", "),
+            })}
+          </p>
+        ) : null}
         <Button type="submit" disabled={busy || body.trim().length < 1}>
           {busy ? t("buyerSubmitting", locale) : t("commonSubmit", locale)}
         </Button>

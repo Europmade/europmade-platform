@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="EuropMade">
+    <defs><linearGradient id="zil" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="56"><stop offset="0" stop-color="#A2B0C0"/><stop offset=".34" stop-color="#566579"/><stop offset=".54" stop-color="#3F4E62"/><stop offset=".72" stop-color="#8390A2"/><stop offset="1" stop-color="#4C5B70"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="url(#zil)"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="url(#zil)"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="url(#zil)"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="url(#zil)"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="url(#zil)"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="url(#zil)"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="url(#zil)"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="url(#zil)"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="url(#zil)"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="url(#zil)"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="url(#zil)"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="url(#zil)"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/>
+</svg>

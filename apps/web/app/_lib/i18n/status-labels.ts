@@ -63,6 +63,15 @@ const STATUS_KEYS: Record<string, StorefrontMessageKey> = {
   Onbeantwoord: "statusUnanswered",
   // Returns / info request
   "Informatie gevraagd": "statusInfoRequested",
+  // Ad campaign statuses (API codes)
+  draft: "statusDraft",
+  pending_review: "statusUnderReview",
+  approved: "statusApproved",
+  scheduled: "statusScheduled",
+  active: "statusActive",
+  completed: "statusCompleted",
+  rejected: "statusRejected",
+  cancelled: "statusCancelled",
 }
 
 /** Map canonical status string → localized label (fallback = original). */

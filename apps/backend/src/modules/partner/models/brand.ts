@@ -18,6 +18,20 @@ const Brand = model
     story: model.text().nullable(),
     website_url: model.text().nullable(),
     logo_url: model.text().nullable(),
+    hero_image_url: model.text().nullable(),
+    story_title: model.text().nullable(),
+    story_image_url: model.text().nullable(),
+    page_document: model.json().default({}),
+    page_draft: model.json().default({}),
+    page_review_status: model
+      .enum(["draft", "in_review", "info_requested", "published"])
+      .default("draft"),
+    page_submitted_by_seller_id: model.text().nullable(),
+    page_review_note: model.text().nullable(),
+    created_by_seller_id: model.text().nullable(),
+    public_page_status: model
+      .enum(["unpublished", "published"])
+      .default("unpublished"),
     owner_company: model
       .belongsTo(() => Company, {
         mappedBy: "brands",
@@ -29,6 +43,8 @@ const Brand = model
     { on: ["name"] },
     { on: ["slug"] },
     { on: ["owner_company_id"] },
+    { on: ["created_by_seller_id"] },
+    { on: ["public_page_status"] },
   ])
 
 export default Brand

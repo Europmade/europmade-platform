@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link"
 import { AdSlot } from "../homepage/ad-slot"
 import type { StorefrontAdCreative } from "../../_lib/storefront-ads"
@@ -37,7 +39,10 @@ export function CategoryHero({
   productKind = "coffee",
 }: CategoryHeroProps) {
   return (
-    <section className="border-b border-wf-100 px-4 pb-3 pt-3 tablet:px-8 tablet:pb-3.5 tablet:pt-3.5">
+    <section
+      className="border-b border-wf-100 px-4 pb-3 pt-3 tablet:px-8 tablet:pb-3.5 tablet:pt-3.5"
+      data-cms-section="hero"
+    >
       <nav
         className="mb-1.5 text-[11.5px] text-wf-600"
         aria-label="Breadcrumb"
@@ -91,7 +96,7 @@ export function CategoryHero({
           </ul>
         </div>
 
-        <div data-banner-priority={bannerPriority ?? "none"}>
+        <div data-banner-priority={bannerPriority ?? "none"} data-cms-section="banner">
           <AdSlot
             position={1}
             location="category"

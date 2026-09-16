@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button, Input, Notice } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
@@ -9,6 +9,12 @@ import {
   ProductCloudApiError,
   uploadProductMediaFile,
 } from "../../_lib/product-cloud-api"
+import {
+  BrandApiError,
+  createSellerBrand,
+  listSellerBrands,
+  type ManageableBrand,
+} from "../../_lib/brands-api"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { t, type StorefrontMessageKey } from "../../../_lib/i18n/messages"
 
@@ -64,12 +70,62 @@ export default function SellerProductNewPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [title, setTitle] = useState("")
   const [brand, setBrand] = useState("")
+  const [brands, setBrands] = useState<ManageableBrand[]>([])
+  const [showNewBrand, setShowNewBrand] = useState(false)
+  const [newBrandName, setNewBrandName] = useState("")
+  const [brandCreateBusy, setBrandCreateBusy] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
   const [category, setCategory] = useState<string>("")
   const [identifier, setIdentifier] = useState("")
   const [fileName, setFileName] = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    void listSellerBrands()
+      .then((res) => setBrands(res.brands || []))
+      .catch(() => setBrands([]))
+  }, [])
+
+  async function onCreateBrand() {
+    const name = newBrandName.trim()
+    if (!name) {
+      setError(t("sellerProductNewBrandRequired", locale))
+      return
+    }
+    setBrandCreateBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const created = await createSellerBrand({ name })
+      const row = created.brand
+      setBrands((prev) =>
+        prev.some((b) => b.id === row.id) ? prev : [...prev, row]
+      )
+      setBrand(row.id)
+      setShowNewBrand(false)
+      setNewBrandName("")
+      setNotice(t("brandCreated", locale))
+      void listSellerBrands()
+        .then((res) => {
+          const next = res.brands || []
+          if (next.some((b) => b.id === row.id)) setBrands(next)
+        })
+        .catch(() => {
+          /* keep locally added brand */
+        })
+    } catch (err) {
+      setNotice(null)
+      setError(
+        err instanceof BrandApiError
+          ? err.message
+          : t("brandCreateFailed", locale)
+      )
+    } finally {
+      setBrandCreateBusy(false)
+    }
+  }
 
   async function onSubmit() {
     const trimmedTitle = title.trim()
@@ -200,15 +256,54 @@ export default function SellerProductNewPage() {
           placeholder={t("sellerProductNewTitlePlaceholder", locale)}
         />
       </div>
+      {notice ? (
+        <div className="mb-3 max-w-xl">
+          <Notice variant="success">{notice}</Notice>
+        </div>
+      ) : null}
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">
           {t("commonBrand", locale)}
         </label>
-        <Input
+        <select
+          className="w-full rounded-wf border border-wf-400 bg-white px-3 py-2 text-sm text-wf-800"
           value={brand}
           onChange={(e) => setBrand(e.target.value)}
-          placeholder={t("sellerProductNewBrandPlaceholder", locale)}
-        />
+        >
+          <option value="">{t("sellerProductNewBrandPlaceholder", locale)}</option>
+          {brands.map((row) => (
+            <option key={row.id} value={row.id}>
+              {row.name}
+            </option>
+          ))}
+        </select>
+        <div className="mt-2 space-y-2">
+          <Button
+            size="sm"
+            type="button"
+            variant="secondary"
+            onClick={() => setShowNewBrand((v) => !v)}
+          >
+            {t("pdpAddBrand", locale)}
+          </Button>
+          {showNewBrand ? (
+            <div className="space-y-2 rounded border border-wf-300 p-2">
+              <Input
+                value={newBrandName}
+                onChange={(e) => setNewBrandName(e.target.value)}
+                placeholder={t("brandNamePlaceholder", locale)}
+              />
+              <Button
+                size="sm"
+                type="button"
+                disabled={brandCreateBusy}
+                onClick={() => void onCreateBrand()}
+              >
+                {t("commonSave", locale)}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">
@@ -236,6 +331,10 @@ export default function SellerProductNewPage() {
           onChange={(e) => setIdentifier(e.target.value)}
           placeholder={t("sellerProductNewIdentifierPlaceholder", locale)}
         />
+        <p className="mt-1 text-[11px] text-wf-600">
+          Mag leeg voor een Concept. EAN/GTIN is verplicht vóór indienen ter
+          controle, goedkeuring, publicatie en verkoop.
+        </p>
       </div>
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">

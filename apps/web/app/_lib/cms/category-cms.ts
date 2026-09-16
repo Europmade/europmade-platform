@@ -511,7 +511,7 @@ function buildCategoryDoc(input: {
       "Sélection saisonnière de produits européens dans cette catégorie."
     ),
     ctaLabel: L("Ontdek meer", "Discover more", "Mehr entdecken", "En savoir plus"),
-    destinationUrl: `/zoeken?collectie=${slug}`,
+    destinationUrl: `/categorie/${slug}`,
     linkType: "collection",
     image: null,
     imageAlt: title,

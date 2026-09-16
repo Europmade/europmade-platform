@@ -48,9 +48,20 @@ export function ProductCard({
           <div
             className="h-full w-full overflow-hidden rounded-md bg-wf-100"
             style={{ aspectRatio: "1 / 1", maxHeight: "100%" }}
-            role="img"
-            aria-label={product.title}
-          />
+          >
+            {product.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={product.imageUrl}
+                alt={product.title}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div role="img" aria-label={product.title} className="h-full w-full" />
+            )}
+          </div>
         </Link>
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="mb-1 flex h-[22px] items-start gap-1 overflow-hidden">
@@ -122,9 +133,20 @@ export function ProductCard({
       >
         <div
           className="aspect-square w-full overflow-hidden rounded-md bg-wf-100"
-          role="img"
-          aria-label={product.title}
-        />
+        >
+          {product.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div role="img" aria-label={product.title} className="h-full w-full" />
+          )}
+        </div>
       </Link>
 
       <div className="mb-1 flex h-[22px] shrink-0 items-start gap-1 overflow-hidden">

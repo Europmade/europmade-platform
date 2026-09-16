@@ -105,6 +105,7 @@ export type CatalogOffer = {
   offer_id: string
   seller_id: string
   seller_name: string
+  seller_slug?: string
   base_price: number
   shipping_cost: number
   total_price: number
@@ -144,7 +145,9 @@ export type CatalogBrandProfile = {
   slug: string
   intro: string | null
   story: string | null
-  website_url: string | null
+  story_title?: string | null
+  story_image_url?: string | null
+  hero_image_url?: string | null
   logo_url: string | null
   country_code: string | null
   product_count: number
@@ -154,6 +157,17 @@ export type CatalogBrandProfile = {
   market_story: string | null
   market_contact: string | null
   facilities: CatalogProductionFacility[]
+  page_document?: {
+    category_slugs: string[]
+    product_ids: string[]
+    extra_sections: Array<{
+      id: string
+      type: "text" | "image" | "image_text"
+      title?: string | null
+      text?: string | null
+      image_url?: string | null
+    }>
+  }
 }
 
 export type CatalogBrandPage = {
@@ -237,6 +251,7 @@ export function listCatalogProducts(params?: {
   manufacturer?: string
   country?: string
   q?: string
+  ids?: string[]
   price_min?: number
   price_max?: number
   verified?: boolean
@@ -252,6 +267,7 @@ export function listCatalogProducts(params?: {
   if (params?.manufacturer) qs.set("manufacturer", params.manufacturer)
   if (params?.country) qs.set("country", params.country)
   if (params?.q) qs.set("q", params.q)
+  if (params?.ids?.length) qs.set("ids", params.ids.join(","))
   if (params?.price_min != null) qs.set("price_min", String(params.price_min))
   if (params?.price_max != null) qs.set("price_max", String(params.price_max))
   if (params?.verified != null) qs.set("verified", String(params.verified))
@@ -267,7 +283,7 @@ export function listCatalogProducts(params?: {
     limit: number
   }>(
     `/store/catalog/products${query ? `?${query}` : ""}`,
-    params?.q ? 15_000 : 12_000,
+    params?.q ? 8_000 : 12_000,
     params?.q ? "no-store" : "force-cache",
     params?.signal
   )
@@ -287,18 +303,11 @@ export function getCatalogBrand(
   )
 }
 
-export function getCatalogManufacturer(slug: string, region_code = "NL") {
-  const qs = new URLSearchParams({ region_code })
-  return request<CatalogManufacturerPage>(
-    `/store/catalog/manufacturers/${encodeURIComponent(slug)}?${qs}`,
-    60_000
-  )
-}
-
-export function getCatalogProduct(productId: string, region_code = "NL") {
-  const qs = new URLSearchParams({ region_code })
-  return request<CatalogProductDetail>(
-    `/store/catalog/products/${encodeURIComponent(productId)}?${qs}`
+export function listCatalogPublishedBrands() {
+  return request<{ brands: Array<{ id: string; name: string; slug: string }>; count: number }>(
+    "/store/catalog/brands",
+    8_000,
+    "no-store"
   )
 }
 
@@ -323,5 +332,20 @@ export function getCatalogSeller(slug: string, region_code = "NL") {
     `/store/catalog/sellers/${encodeURIComponent(slug)}?${qs}`,
     20_000,
     "no-store"
+  )
+}
+
+export function getCatalogManufacturer(slug: string, region_code = "NL") {
+  const qs = new URLSearchParams({ region_code })
+  return request<CatalogManufacturerPage>(
+    `/store/catalog/manufacturers/${encodeURIComponent(slug)}?${qs}`,
+    60_000
+  )
+}
+
+export function getCatalogProduct(productId: string, region_code = "NL") {
+  const qs = new URLSearchParams({ region_code })
+  return request<CatalogProductDetail>(
+    `/store/catalog/products/${encodeURIComponent(productId)}?${qs}`
   )
 }

@@ -32,7 +32,7 @@ export function CmsImageField({
   large?: boolean
   onChange: (url: string | null) => void
   placement?: MediaPlacement | string
-  onError?: (message: string) => void
+  onError?: (message: string | null) => void
   /** How the editor thumbnail should fit the preview box. */
   previewFit?: "cover" | "contain"
 }) {
@@ -40,9 +40,11 @@ export function CmsImageField({
   const accept = mediaAcceptAttribute(req.mimeTypes)
   const formatsHint = `Toegestaan: ${formatAllowedImageTypes(req.mimeTypes)}.`
   const [localError, setLocalError] = useState<string | null>(null)
+  const [localOk, setLocalOk] = useState<string | null>(null)
 
   async function onFile(file: File | null) {
     setLocalError(null)
+    setLocalOk(null)
     if (!file) {
       onChange(null)
       return
@@ -65,6 +67,8 @@ export function CmsImageField({
       }
       const uploaded = await uploadCmsMedia(file, placement)
       onChange(uploaded.asset.url)
+      setLocalOk("Afbeelding geüpload. Sla op als concept om te bewaren.")
+      onError?.(null)
     } catch (e) {
       const message = e instanceof Error ? e.message : "Upload mislukt"
       setLocalError(message)
@@ -88,6 +92,11 @@ export function CmsImageField({
       {localError ? (
         <p className="mb-2 text-[12px] text-red-700" role="alert">
           {localError}
+        </p>
+      ) : null}
+      {localOk ? (
+        <p className="mb-2 text-[12px] text-emerald-800" role="status">
+          {localOk}
         </p>
       ) : null}
       {display ? (

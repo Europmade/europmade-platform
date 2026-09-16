@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { SellerGate } from "./_components/seller-gate"
 import { KpiCard } from "./_components/kpi-card"
@@ -19,12 +19,21 @@ import {
   DEMO_PRODUCTS,
   DEMO_REVIEWS,
 } from "./_lib/demo-data"
-import { DEMO_MESSAGE_THREADS, DEMO_RETURN_DETAILS } from "./_lib/demo-data-details"
+import { DEMO_RETURN_DETAILS } from "./_lib/demo-data-details"
+import {
+  listOwnProducts,
+  ProductCloudApiError,
+} from "./_lib/product-cloud-api"
+import {
+  listSellerMessageThreads,
+  OrderServiceApiError,
+} from "../_lib/order-service-api"
 import { useStorefrontLocale } from "../_lib/i18n/use-storefront-locale"
 import { t, tFormat } from "../_lib/i18n/messages"
 
 /**
- * Seller Dashboard — periodefilter herberekent alle KPI's op demo-data.
+ * Seller Dashboard — periodefilter herberekent KPI's op demo-data,
+ * behalve berichten-aandacht (live API: waiting_for_seller).
  */
 export default function SellerDashboardPage() {
   const locale = useStorefrontLocale()
@@ -32,6 +41,35 @@ export default function SellerDashboardPage() {
   const range = useMemo(() => resolvePeriodRange(period), [period])
   const options = periodOptions(locale)
   const periodLabel = options.find((o) => o.key === period)?.label ?? period
+  const [attentionMessages, setAttentionMessages] = useState(0)
+  const [pendingApprovals, setPendingApprovals] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    listSellerMessageThreads("all")
+      .then((res) => {
+        if (cancelled) return
+        setAttentionMessages(res.attention_count)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        if (err instanceof OrderServiceApiError && err.status === 401) return
+        setAttentionMessages(0)
+      })
+    listOwnProducts({ filter: "pending_approval" })
+      .then((res) => {
+        if (cancelled) return
+        setPendingApprovals(res.count)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        if (err instanceof ProductCloudApiError && err.status === 401) return
+        setPendingApprovals(0)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const periodOrders = useMemo(
     () => DEMO_ORDERS.filter((o) => isInPeriod(o.created_at, range)),
@@ -48,11 +86,7 @@ export default function SellerDashboardPage() {
     () => DEMO_RETURN_DETAILS.filter((r) => isInPeriod(r.created_at, range)),
     [range]
   )
-  const periodMessages = useMemo(
-    () => DEMO_MESSAGE_THREADS.filter((m) => isInPeriod(m.updated_at, range)),
-    [range]
-  )
-  const unreadMessages = periodMessages.filter((m) => m.unread).length
+  const unreadMessages = attentionMessages
   const openReturns = periodReturns.filter((r) =>
     ["Aangevraagd", "Bevestigd", "Ontvangen"].includes(r.status)
   ).length
@@ -63,9 +97,7 @@ export default function SellerDashboardPage() {
   const productsConcept = DEMO_PRODUCTS.filter(
     (p) => p.listing === "concept"
   ).length
-  const productsInReview = DEMO_PRODUCTS.filter(
-    (p) => p.product_cloud_status === "In beoordeling"
-  ).length
+  const productsInReview = pendingApprovals
   const unansweredReviews = DEMO_REVIEWS.filter((r) => !r.answered).length
 
   const revenueByMonth = useMemo(() => {
@@ -88,7 +120,7 @@ export default function SellerDashboardPage() {
       label: tFormat("sellerProductsAwaiting", locale, {
         count: productsInReview,
       }),
-      href: "/seller/products",
+      href: "/seller/products?filter=pending_approval",
       show: productsInReview > 0,
     },
     {
@@ -213,11 +245,12 @@ export default function SellerDashboardPage() {
             linkLabel={t("sellerNavReturns", locale)}
           />
           <KpiCard
-            periodKey={period}
-            value={String(periodMessages.length)}
+            value={String(unreadMessages)}
             label={t("sellerNavMessages", locale)}
             source="api"
-            note={tFormat("sellerUnread", locale, { count: unreadMessages })}
+            note={tFormat("sellerMessagesAttentionCount", locale, {
+              count: unreadMessages,
+            })}
             href="/seller/messages"
             linkLabel={t("sellerNavMessages", locale)}
           />

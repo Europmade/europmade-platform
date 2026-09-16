@@ -18,7 +18,7 @@ const ProductOriginEvidence = model
     file_name: model.text().nullable(),
     mime_type: model.text().nullable(),
     file_size_bytes: model.number().nullable(),
-    /** pending | approved | rejected | superseded */
+    /** pending | pending_review | needs_info | approved | rejected | superseded */
     verification_status: model.text().default("pending"),
     verification_notes: model.text().nullable(),
     verification_result: model.text().nullable(),

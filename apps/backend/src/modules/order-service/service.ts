@@ -13,6 +13,10 @@ import {
   Shipment,
   EmReturn,
   OrderMessage,
+  OrderConversationRead,
+  EmConversation,
+  OrderMessageAttachment,
+  OrderDocument,
   Cart,
   CartLine,
 } from "./models"
@@ -31,6 +35,8 @@ export type PlaceOrderGraphInput = {
   payment_reference: string
   shipping_address: string
   billing_address: string
+  /** ISO-2 destination country for OSS VAT. */
+  shipping_country_code?: string | null
   lines: PlaceOrderLineInput[]
 }
 
@@ -56,9 +62,73 @@ class OrderServiceModuleService extends MedusaService({
   Shipment,
   EmReturn,
   OrderMessage,
+  OrderConversationRead,
+  EmConversation,
+  OrderMessageAttachment,
+  OrderDocument,
   Cart,
   CartLine,
 }) {
+  /**
+   * Mark conversation as read for a participant (idempotent).
+   * Does not encode waiting/resolved action status — read only.
+   */
+  @InjectManager()
+  async markConversationRead(
+    participant_customer_id: string,
+    conversation_id: string,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const participant = participant_customer_id.trim()
+    const conversation = conversation_id.trim()
+    if (!participant || !conversation) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "participant_customer_id en conversation_id zijn verplicht."
+      )
+    }
+
+    const existing = await this.listOrderConversationReads(
+      {
+        participant_customer_id: participant,
+        conversation_id: conversation,
+      },
+      {},
+      sharedContext
+    )
+
+    if (existing[0]) {
+      return this.updateOrderConversationReads(
+        {
+          id: existing[0].id,
+          read_at: new Date(),
+        },
+        sharedContext
+      )
+    }
+
+    return this.createOrderConversationReads(
+      {
+        participant_customer_id: participant,
+        conversation_id: conversation,
+        read_at: new Date(),
+      },
+      sharedContext
+    )
+  }
+
+  @InjectManager()
+  async listConversationReadsForParticipant(
+    participant_customer_id: string,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    return this.listOrderConversationReads(
+      { participant_customer_id: participant_customer_id.trim() },
+      {},
+      sharedContext
+    )
+  }
+
   @InjectManager()
   async findOrderSetByPaymentReference(
     payment_reference: string,
@@ -156,6 +226,7 @@ class OrderServiceModuleService extends MedusaService({
           exception_status: null,
           shipping_address: input.shipping_address,
           billing_address: input.billing_address,
+          shipping_country_code: input.shipping_country_code ?? null,
           exception_reason: null,
         },
         sharedContext

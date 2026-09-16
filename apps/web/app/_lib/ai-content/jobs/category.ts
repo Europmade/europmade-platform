@@ -6,8 +6,6 @@ import { STOREFRONT_LOCALES } from "../../i18n/locales"
 import { getCategoryCmsDocument } from "../../cms/category-cms"
 import { findMarketplaceCategory } from "../../marketplace-categories"
 import {
-  LISTING_PRODUCTS,
-  productsForCategory,
   type ListingProduct,
 } from "../../listing-products"
 import { analyzeCategorySignals } from "../analysis/category-signals"
@@ -20,10 +18,8 @@ import type {
   AiRegenerationTrigger,
 } from "../types"
 
-function poolForSlug(slug: string): ListingProduct[] {
-  const seed = productsForCategory(slug)
-  if (seed.length > 0) return seed
-  return LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
+function poolForSlug(_slug: string): ListingProduct[] {
+  return []
 }
 
 export async function generateCategoryAiContent(input: {

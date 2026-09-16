@@ -47,6 +47,7 @@ export type CreateProductCloudInput = {
     storage_reference: string
   }>
   mpn?: string | null
+  source_language_code?: string | null
 }
 
 export type CreateProductCloudResult = {
@@ -142,6 +143,7 @@ export const createProductCloudStep = createStep(
       variant_value: input.variant_value,
       media: input.media,
       mpn: input.mpn ?? null,
+      source_language_code: input.source_language_code ?? null,
     })
 
     if (match.outcome === "uncertain") {

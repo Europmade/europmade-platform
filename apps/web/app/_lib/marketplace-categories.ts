@@ -1,7 +1,10 @@
 /**
- * Redactionele hoofdcategorieën (Blueprint H14.8 ≈ 30).
- * Storefront koppelt waar mogelijk aan Product Cloud via slug
- * (`GET /store/product-cloud/categories`) — deze lijst blijft navigatie-/fallback-taxonomie.
+ * Tijdelijke compatibility mapping van de 30 EuropMade-slugs (Blueprint H14.8).
+ *
+ * Canonieke taxonomie = `pc_category` (ADR-0042). Deze lijst is geen bron van
+ * waarheid voor bestaan/404; die komt uit Product Cloud.
+ * Nav, SSG-params, affiliate-filters en i18n-labels mogen deze 30 slugs blijven
+ * gebruiken zodat bestaande routes niet breken als de store-API even wegvalt.
  */
 
 export type MarketplaceCategory = {
@@ -51,3 +54,25 @@ export function findMarketplaceCategory(slug: string): MarketplaceCategory | nul
 export const POPULAR_MARKETPLACE_CATEGORIES = MARKETPLACE_CATEGORIES.filter(
   (c) => c.popular
 )
+
+export const CANONICAL_STOREFRONT_SLUGS = MARKETPLACE_CATEGORIES.map(
+  (c) => c.slug
+)
+
+/** Nav-set: alleen de 30 slugs die al als `pc_category` bestaan; anders compatibility-fallback. */
+export function canonicalNavCategories(
+  productCloud: Array<{ slug: string | null; name: string }> | null
+): MarketplaceCategory[] {
+  if (!productCloud) return MARKETPLACE_CATEGORIES
+  const bySlug = new Map(
+    productCloud
+      .filter((c): c is { slug: string; name: string } => Boolean(c.slug))
+      .map((c) => [c.slug, c])
+  )
+  const fromPc = MARKETPLACE_CATEGORIES.map((c) => {
+    const hit = bySlug.get(c.slug)
+    if (!hit) return null
+    return { ...c, label: hit.name || c.label }
+  }).filter((c): c is MarketplaceCategory => c != null)
+  return fromPc.length > 0 ? fromPc : MARKETPLACE_CATEGORIES
+}

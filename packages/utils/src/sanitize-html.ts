@@ -10,6 +10,7 @@ const ALLOWED_TAGS = new Set([
   "b",
   "em",
   "i",
+  "u",
   "ul",
   "ol",
   "li",
@@ -17,6 +18,7 @@ const ALLOWED_TAGS = new Set([
   "h2",
   "h3",
   "h4",
+  "blockquote",
 ])
 
 function escapeText(value: string): string {

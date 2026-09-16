@@ -26,10 +26,13 @@ export type MediaPlacement =
   | "seller_logo"
   | "seller_storefront_banner"
   | "cms_banner"
+  | "cms_action_banner"
+  | "cms_site_logo"
   | "homepage_hero"
   | "facility_photo"
   | "brand_story_photo"
   | "partner_document"
+  | "commercial_nav_icon"
 
 export type MediaRequirements = {
   placement: MediaPlacement

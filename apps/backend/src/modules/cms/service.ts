@@ -9,6 +9,9 @@ import {
   AdCampaign,
   AdCampaignWeek,
   AdPricing,
+  CommercialNavRank,
+  CommercialNavVisit,
+  CommercialNavIcon,
 } from "./models"
 
 class CmsModuleService extends MedusaService({
@@ -21,6 +24,9 @@ class CmsModuleService extends MedusaService({
   AdCampaign,
   AdCampaignWeek,
   AdPricing,
+  CommercialNavRank,
+  CommercialNavVisit,
+  CommercialNavIcon,
 }) {}
 
 export default CmsModuleService

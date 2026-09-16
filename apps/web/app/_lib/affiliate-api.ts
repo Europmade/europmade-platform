@@ -2,8 +2,8 @@
  * Store Affiliate-service client (S3-07-02/04/05, S3-01-06).
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { medusaBackendUrl } from "./medusa-backend-url"
+
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export class AffiliateApiError extends Error {
@@ -23,7 +23,7 @@ async function request<T>(
 ): Promise<T> {
   let response: Response
   try {
-    response = await fetch(`${BACKEND_URL}${path}`, {
+    response = await fetch(`${medusaBackendUrl()}${path}`, {
       ...init,
       credentials: auth ? "include" : "omit",
       headers: {

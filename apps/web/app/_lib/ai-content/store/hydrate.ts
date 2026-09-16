@@ -6,10 +6,6 @@
 import { STOREFRONT_LOCALES } from "../../i18n/locales"
 import { CATEGORY_CMS_BY_SLUG } from "../../cms/category-cms"
 import { MARKETPLACE_CATEGORIES } from "../../marketplace-categories"
-import {
-  LISTING_PRODUCTS,
-  productsForCategory,
-} from "../../listing-products"
 import { analyzeCategorySignals } from "../analysis/category-signals"
 import { offlineAnalyzerProvider } from "../providers/offline-analyzer"
 import { AI_CONTENT_PROMPT_VERSION, AI_CONTENT_REFRESH_MONTHS } from "../prompts/versions"
@@ -20,11 +16,8 @@ const g = globalThis as typeof globalThis & {
   __emAiContentHydrated?: boolean
 }
 
-function pool(slug: string) {
-  const seed = productsForCategory(slug)
-  return seed.length > 0
-    ? seed
-    : LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
+function pool(_slug: string) {
+  return []
 }
 
 async function hydrateOne(slug: string): Promise<void> {

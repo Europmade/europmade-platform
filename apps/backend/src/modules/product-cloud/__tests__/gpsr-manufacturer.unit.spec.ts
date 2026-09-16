@@ -80,9 +80,9 @@ describe("GPSR manufacturer overlay", () => {
     ).toBe("not_applicable")
   })
 
-  it("keeps EU operator fields required when the manufacturer is outside the EU", () => {
+  it("never requires a separate EU operator (EuropMade EU-manufacturer rule)", () => {
     const nonEu = { ...manufacturer, country_code: "US" }
-    expect(manufacturerNeedsSeparateEuOperator(nonEu)).toBe(true)
+    expect(manufacturerNeedsSeparateEuOperator(nonEu)).toBe(false)
     const overlay = applyGpsrComplianceAttributes(
       [
         {
@@ -96,11 +96,11 @@ describe("GPSR manufacturer overlay", () => {
     )
     expect(
       overlay.find((row) => row.code === "gpsr_eu_responsible_name")?.tier
-    ).toBe("compliance_required")
+    ).toBe("not_applicable")
     expect(
       overlay.find((row) => row.code === "gpsr_eu_responsible_name")
         ?.requirement_tier
-    ).toBe("compliance_required")
+    ).toBe("not_applicable")
   })
 
   it("does not duplicate manufacturer fields as EU-responsible values", () => {

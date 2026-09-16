@@ -5,7 +5,7 @@
 import type { EuMarketCode } from "@europmade/types"
 import { rewriteMediaStrings } from "@europmade/utils"
 import type { HomepageCmsDocument } from "../cms/homepage-cms"
-import type { LocalizedString } from "./locales"
+import type { LocalizedString } from "../i18n/locales"
 import { getPageBackendOrigin } from "../page-backend-origin"
 import { medusaBackendUrl } from "../medusa-backend-url"
 
@@ -79,20 +79,24 @@ export async function fetchStoreCmsCategory(slug: string): Promise<{
   }
 }
 
-export async function fetchStoreCmsPage(slug: string): Promise<{
-  page: {
-    slug: string
-    title: LocalizedString
-    body: LocalizedString
-    seo_title: LocalizedString | null
-    seo_description: LocalizedString | null
-    seo_canonical: string | null
-    cover_url: string | null
-    document?: unknown
-    published: boolean
-    visible: boolean
-  }
-} | null> {
+export type StoreCmsPageDto = {
+  slug: string
+  title: LocalizedString
+  body: LocalizedString
+  seo_title: LocalizedString | null
+  seo_description: LocalizedString | null
+  seo_canonical: string | null
+  cover_url: string | null
+  document?: unknown
+  published: boolean
+  visible: boolean
+  publish_at?: string | null
+  expires_at?: string | null
+}
+
+export async function fetchStoreCmsPage(
+  slug: string
+): Promise<{ page: StoreCmsPageDto } | null> {
   try {
     const res = await fetch(
       `${medusaBackendUrl()}/store/cms/pages/${encodeURIComponent(slug)}`,
@@ -107,20 +111,7 @@ export async function fetchStoreCmsPage(slug: string): Promise<{
       }
     )
     if (!res.ok) return null
-    const data = (await res.json()) as {
-      page: {
-        slug: string
-        title: LocalizedString
-        body: LocalizedString
-        seo_title: LocalizedString | null
-        seo_description: LocalizedString | null
-        seo_canonical: string | null
-        cover_url: string | null
-        document?: unknown
-        published: boolean
-        visible: boolean
-      }
-    }
+    const data = (await res.json()) as { page: StoreCmsPageDto }
     return rewriteMediaStrings(data, await getPageBackendOrigin())
   } catch {
     return null

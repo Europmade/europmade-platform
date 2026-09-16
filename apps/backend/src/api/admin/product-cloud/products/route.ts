@@ -288,6 +288,7 @@ export async function GET(
         row.brand_name,
         row.identifier_value,
         row.sku_hint,
+        ...(Array.isArray(row.category_names) ? row.category_names : []),
         row.seller_name,
         row.seller_id,
         row.id,

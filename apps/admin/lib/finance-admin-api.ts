@@ -2,8 +2,7 @@
  * Admin Finance API — read-only views over bestaande finance-module.
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { adminFetch } from "./admin-fetch"
 
 export class FinanceAdminApiError extends Error {
   status?: number
@@ -141,14 +140,7 @@ export type FinanceAffiliateRow = {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-  })
+  const response = await adminFetch(path, init)
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
     const message =

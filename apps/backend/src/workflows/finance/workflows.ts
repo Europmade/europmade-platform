@@ -14,6 +14,8 @@ import type FinanceModuleService from "../../modules/finance/service"
 import { ORDER_MODULE } from "../../modules/order-service"
 import type OrderServiceModuleService from "../../modules/order-service/service"
 import { PARTNER_MODULE } from "../../modules/partner"
+import { CMS_MODULE } from "../../modules/cms"
+import type CmsModuleService from "../../modules/cms/service"
 import type PartnerModuleService from "../../modules/partner/service"
 import { AFFILIATE_MODULE } from "../../modules/affiliate"
 import type AffiliateModuleService from "../../modules/affiliate/service"
@@ -598,6 +600,28 @@ export async function executeSellerFinanceOverview(
       )
     : 0
 
+  // Advertising costs from P2.16 source data
+  let advertising_total = 0
+  try {
+    const cms = container.resolve(CMS_MODULE) as CmsModuleService
+    const campaigns = await (cms as any).listAdCampaigns(
+      { seller_id: seller.id },
+      { take: 1000 }
+    )
+    for (const camp of campaigns) {
+      if (camp.status === "draft") continue
+      const weeks = await (cms as any).listAdCampaignWeeks(
+        { campaign_id: camp.id },
+        { take: 200 }
+      )
+      advertising_total = roundMoney(
+        advertising_total + weeks.reduce((s: number, w: any) => s + Number(w.week_price), 0)
+      )
+    }
+  } catch {
+    // CMS/ad module not available
+  }
+
   return {
     seller_id: seller.id,
     summary: {
@@ -605,6 +629,7 @@ export async function executeSellerFinanceOverview(
       commission_held,
       next_payout_amount,
       next_payout_eligible_at: next ? next.eligible_at : null,
+      advertising_total,
     },
     commissions: commissionRows,
     invoices: invoices.map((inv) => ({

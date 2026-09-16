@@ -82,6 +82,7 @@ export type CatalogOfferView = {
   offer_id: string
   seller_id: string
   seller_name: string
+  seller_slug: string
   base_price: number
   shipping_cost: number
   total_price: number
@@ -164,6 +165,7 @@ export async function listPublishedCatalogProducts(
     price_min?: number
     price_max?: number
     verified?: boolean
+    ids?: string[]
     sort?:
       | "popularity"
       | "price_asc"
@@ -183,10 +185,14 @@ export async function listPublishedCatalogProducts(
   const reviews = scope.resolve(REVIEW_MODULE) as ReviewModuleService
 
   const region = (opts.region_code ?? "NL").toUpperCase()
+  const idFilter = (opts.ids ?? [])
+    .map((id) => id.trim())
+    .filter(Boolean)
+  const idSet = idFilter.length > 0 ? new Set(idFilter) : null
   const limit = Math.max(1, opts.limit ?? 24)
   const offset = Math.max(0, opts.offset ?? 0)
   const q = opts.q?.trim().toLowerCase() ?? ""
-  const scanTake = q ? 8000 : Math.max(opts.take ?? 400, offset + limit)
+  const scanTake = q || idSet ? 8000 : Math.max(opts.take ?? 400, offset + limit)
 
   const versions = (await productCloud.listProductVersions(
     { publication_status: "Gepubliceerd" },
@@ -197,6 +203,7 @@ export async function listPublishedCatalogProducts(
   const published: PublishedVersion[] = []
   for (const v of versions) {
     if (seen.has(v.product_id)) continue
+    if (idSet && !idSet.has(v.product_id)) continue
     seen.add(v.product_id)
     published.push(v)
     if (published.length >= scanTake) break
@@ -239,8 +246,78 @@ export async function listPublishedCatalogProducts(
     return country
   }
 
+  type ProductScanRow = {
+    id: string
+    brand_id?: string
+    manufacturer_id?: string
+    lifecycle_status?: string
+  }
+
+  let scanList = published
+  if (q) {
+    const ids = published.map((row) => row.product_id)
+    let productRows: ProductScanRow[] = []
+    try {
+      productRows = (await productCloud.listProducts(
+        { id: ids },
+        { take: Math.max(ids.length, 1) }
+      )) as ProductScanRow[]
+    } catch {
+      productRows = (await productCloud.listProducts(
+        {},
+        { take: scanTake }
+      )) as ProductScanRow[]
+    }
+    const productById = new Map(productRows.map((row) => [row.id, row]))
+    const uniqueBrandIds = [
+      ...new Set(
+        productRows
+          .map((row) => row.brand_id)
+          .filter((id): id is string => Boolean(id))
+      ),
+    ]
+    const uniqueMfrIds = [
+      ...new Set(
+        productRows
+          .map((row) => row.manufacturer_id)
+          .filter((id): id is string => Boolean(id))
+      ),
+    ]
+    await Promise.all([
+      ...uniqueBrandIds.map((id) => cachedBrandName(id)),
+      ...uniqueMfrIds.map((id) => cachedManufacturerName(id)),
+    ])
+    const compactQ = q.replace(/\s/g, "")
+    scanList =
+      productRows.length === 0
+        ? published
+        : published.filter((version) => {
+            const product = productById.get(version.product_id)
+            if (product?.lifecycle_status === "Gearchiveerd") return false
+            if (qProductIds.has(version.product_id)) return true
+            const brandName = product?.brand_id
+              ? (brandNameById.get(product.brand_id) ?? "")
+              : ""
+            const mfrName = product?.manufacturer_id
+              ? (manufacturerNameById.get(product.manufacturer_id) ?? "")
+              : ""
+            const hay = [
+              version.title ?? "",
+              version.description ?? "",
+              version.product_id,
+              brandName,
+              mfrName,
+              product?.brand_id ?? "",
+              product?.manufacturer_id ?? "",
+            ]
+              .join(" ")
+              .toLowerCase()
+            return hay.includes(q) || version.product_id.toLowerCase().includes(compactQ)
+          })
+  }
+
   const items: CatalogListItem[] = []
-  for (const version of published) {
+  for (const version of scanList) {
     const identifierBundle = await listProductIdentifiers(
       productCloud,
       version.product_id
@@ -384,39 +461,46 @@ export async function listPublishedCatalogProducts(
   }
 
   const sort = opts.sort ?? "popularity"
-  if (sort === "rating_desc") {
-    await Promise.all(
-      items.map(async (item) => {
-        const productReviews = await reviews.listReviews(
-          { product_id: item.id, review_type: "Productreview" },
-          { take: 200 }
-        )
-        item.review_count = productReviews.length
-        item.average_review_score =
-          item.review_count > 0
-            ? productReviews.reduce((s, r) => s + Number(r.score), 0) /
-              item.review_count
-            : null
-      })
+  if (idSet) {
+    const order = new Map(idFilter.map((id, i) => [id, i]))
+    items.sort(
+      (a, b) => (order.get(a.id) ?? 9999) - (order.get(b.id) ?? 9999)
     )
-  }
-  items.sort((a, b) => {
-    switch (sort) {
-      case "price_asc":
-        return (a.from_price ?? Number.MAX_SAFE_INTEGER) - (b.from_price ?? Number.MAX_SAFE_INTEGER)
-      case "price_desc":
-        return (b.from_price ?? 0) - (a.from_price ?? 0)
-      case "rating_desc":
-        return (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
-      case "name_asc":
-        return (a.title ?? "").localeCompare(b.title ?? "", "nl")
-      case "name_desc":
-        return (b.title ?? "").localeCompare(a.title ?? "", "nl")
-      case "popularity":
-      default:
-        return b.offer_count - a.offer_count || (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
+  } else {
+    if (sort === "rating_desc") {
+      await Promise.all(
+        items.map(async (item) => {
+          const productReviews = await reviews.listReviews(
+            { product_id: item.id, review_type: "Productreview" },
+            { take: 200 }
+          )
+          item.review_count = productReviews.length
+          item.average_review_score =
+            item.review_count > 0
+              ? productReviews.reduce((s, r) => s + Number(r.score), 0) /
+                item.review_count
+              : null
+        })
+      )
     }
-  })
+    items.sort((a, b) => {
+      switch (sort) {
+        case "price_asc":
+          return (a.from_price ?? Number.MAX_SAFE_INTEGER) - (b.from_price ?? Number.MAX_SAFE_INTEGER)
+        case "price_desc":
+          return (b.from_price ?? 0) - (a.from_price ?? 0)
+        case "rating_desc":
+          return (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
+        case "name_asc":
+          return (a.title ?? "").localeCompare(b.title ?? "", "nl")
+        case "name_desc":
+          return (b.title ?? "").localeCompare(a.title ?? "", "nl")
+        case "popularity":
+        default:
+          return b.offer_count - a.offer_count || (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
+      }
+    })
+  }
 
   const count = items.length
   const paged = items.slice(offset, offset + limit)
@@ -881,6 +965,7 @@ async function enrichRankedOffers(
       offer_id: ranked.offer_id,
     })
     const seller_name = await resolveSellerDisplayName(partner, ranked.seller_id)
+    const seller_slug = sellerPublicSlug(ranked.seller_id, seller_name)
     const view =
       price != null
         ? buildEffectivePriceView({
@@ -900,6 +985,7 @@ async function enrichRankedOffers(
       offer_id: ranked.offer_id,
       seller_id: ranked.seller_id,
       seller_name,
+      seller_slug,
       base_price: view ? view.unit_price : ranked.total_price,
       shipping_cost: view ? view.shipping_cost + view.extra_delivery_cost : 0,
       total_price: view ? view.total_customer_price : ranked.total_price,

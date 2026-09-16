@@ -1,6 +1,9 @@
 /**
- * CMS publish helpers — visibility + schedule (frontend mock until Admin CMS).
+ * CMS publish helpers — visibility + schedule.
+ * Page-level live check: @europmade/utils `isCmsPageLive`.
  */
+
+import { isCmsScheduleWindowLive } from "@europmade/utils"
 
 export type CmsPublishMeta = {
   /** Soft visibility flag from CMS. */
@@ -18,15 +21,13 @@ export function isCmsEntryLive(
   now: Date = new Date()
 ): boolean {
   if (!entry.visible) return false
-  if (entry.publishAt) {
-    const start = new Date(entry.publishAt)
-    if (!Number.isNaN(start.getTime()) && start > now) return false
-  }
-  if (entry.expiresAt) {
-    const end = new Date(entry.expiresAt)
-    if (!Number.isNaN(end.getTime()) && end <= now) return false
-  }
-  return true
+  return isCmsScheduleWindowLive(
+    {
+      publish_at: entry.publishAt ?? null,
+      expires_at: entry.expiresAt ?? null,
+    },
+    now
+  )
 }
 
 export function sortByCmsOrder<T extends CmsPublishMeta>(entries: T[]): T[] {

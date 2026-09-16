@@ -2,8 +2,7 @@
  * Moderation Center admin-API (S3-03-07 / S3-11-03).
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { adminFetch } from "./admin-fetch"
 
 export class ModerationAdminApiError extends Error {
   status?: number
@@ -15,14 +14,7 @@ export class ModerationAdminApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-  })
+  const response = await adminFetch(path, init)
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
     const message =

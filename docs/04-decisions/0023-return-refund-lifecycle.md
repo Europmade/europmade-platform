@@ -14,7 +14,7 @@
 1. **Return blijft in `orderService`** (`em_return`), gekoppeld aan `order_line` (Deel D.5). Geen Medusa Order-return-module tot Module Links Order↔Offer bestaan.
 2. **Statusenum (NL, bindend voor MVP):**  
    `Aangevraagd` → `Bevestigd` → `Ontvangen` → `Verwerkt` | `Afgewezen` → (optioneel) `Geëscaleerd`.
-3. **Herroepingstermijn:** 14 kalenderdagen vanaf `em_order.created_at` (Shipment nog Open — geen leveringsdatum als anker). Aanmelden buiten termijn → geweigerd.
+3. **Herroepingstermijn:** ~~14 kalenderdagen vanaf `em_order.created_at`~~ → **vervangen door ADR-0040:** 14 kalenderdagen vanaf `shipment.delivered_at` (fallback `em_order.created_at`). Aanmelden buiten termijn → geweigerd.
 4. **Refund:** lichtgewicht velden op `em_return` (`refund_amount`, `refund_status`, `refund_reference`, `refund_executed_at`) — geen aparte Refund-tabel (`returns-and-refunds/spec.md` §4).
 5. **Normaal pad:** Refund (`refund_status=Uitgevoerd`) alleen bij transitie `Ontvangen` → `Verwerkt` (Seller bevestigt ontvangst + akkoord).
 6. **Force-pad:** Beheerder mag Refund forceren (`refund_status=Geforceerd`) met verplichte `force_reason` (+ `force_admin_user_id`); slaat Seller-ontvangst over. Audit via deze velden + event.

@@ -79,17 +79,43 @@ const HandoverDaySchema = z.object({
   processing_time_code: DeliveryTimeCodeSchema,
 })
 
+const WeekdayKeySchema = z.enum([
+  "mon",
+  "tue",
+  "wed",
+  "thu",
+  "fri",
+  "sat",
+  "sun",
+])
+
 const ProcessingSettingsSchema = z.object({
   same_for_all_weekdays: z.boolean(),
   default_handover: HandoverDaySchema,
-  weekdays: z.record(HandoverDaySchema).optional(),
+  // Zod 4: z.record(value) treats the arg as KEY schema — always pass key + value.
+  weekdays: z.record(WeekdayKeySchema, HandoverDaySchema).optional(),
 })
 
 const CountryConfigSchema = z.object({
   active: z.boolean().default(true),
-  shipping_cost: z.number().min(0),
+  shipping_cost: z.preprocess((value) => {
+    if (typeof value === "string") {
+      const normalized = value.trim().replace(",", ".")
+      if (!normalized) return Number.NaN
+      return Number(normalized)
+    }
+    return value
+  }, z.number().finite().min(0)),
   free_shipping: z.boolean().default(false),
-  free_shipping_threshold: z.number().min(0).nullable().optional(),
+  free_shipping_threshold: z.preprocess((value) => {
+    if (value == null || value === "") return null
+    if (typeof value === "string") {
+      const normalized = value.trim().replace(",", ".")
+      if (!normalized) return null
+      return Number(normalized)
+    }
+    return value
+  }, z.number().finite().min(0).nullable().optional()),
   delivery_time_code: DeliveryTimeCodeSchema,
   delivery_days_max: z.number().int().min(0).max(365).nullable().optional(),
   delivery_weekdays: z.array(z.number().int().min(1).max(7)).optional(),

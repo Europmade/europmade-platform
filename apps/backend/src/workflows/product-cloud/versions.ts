@@ -509,7 +509,7 @@ export type AdminDecideVersionInput = {
   product_id: string
   version_id: string
   actor_id: string
-  decision: "approved" | "rejected"
+  decision: "approved" | "rejected" | "request_info"
   reason?: string
 }
 
@@ -533,11 +533,56 @@ export const adminDecideVersionStep = createStep(
         "Versie hoort niet bij dit product."
       )
     }
-    if (version.publication_status !== "In review") {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "Alleen producten in productgoedkeuring (In review) kunnen worden beoordeeld."
+
+    if (input.decision === "request_info") {
+      const reason = (input.reason || "").trim()
+      if (!reason) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          "Bij aanvulling vragen is een toelichting verplicht."
+        )
+      }
+      const wasInReview = version.publication_status === "In review"
+      const updated = await productCloud.updateProductVersions({
+        id: version.id,
+        publication_status: wasInReview ? "Concept" : version.publication_status,
+        approval_rejection_reason: reason,
+        approval_decided_at: new Date(),
+        approval_decided_by: input.actor_id,
+        admin_review_outcome: "needs_info",
+      })
+      await productCloud.createProductFieldChanges({
+        product_id: input.product_id,
+        product_version_id: version.id,
+        seller_id: "admin",
+        actor_customer_id: input.actor_id,
+        field_code: "publication.approval",
+        field_label: "Productbeoordeling",
+        old_value: version.publication_status,
+        new_value: `needs_info:${reason}`,
+        status: "pending",
+        reason,
+      })
+      logger.info(
+        `[audit] product approval request_info product=${input.product_id} version=${version.id}`
       )
+      return new StepResponse({
+        version: (Array.isArray(updated) ? updated[0] : updated) as ProductVersionRow,
+        lifecycle_status: product.lifecycle_status,
+        decision: "request_info" as const,
+      })
+    }
+
+    if (
+      input.decision === "approved" ||
+      input.decision === "rejected"
+    ) {
+      if (version.publication_status !== "In review") {
+        throw new MedusaError(
+          MedusaError.Types.NOT_ALLOWED,
+          "Alleen producten in productgoedkeuring (In review) kunnen worden goedgekeurd of afgewezen."
+        )
+      }
     }
 
     if (input.decision === "rejected") {
@@ -554,6 +599,7 @@ export const adminDecideVersionStep = createStep(
         approval_rejection_reason: reason,
         approval_decided_at: new Date(),
         approval_decided_by: input.actor_id,
+        admin_review_outcome: "rejected",
       })
       await productCloud.createProductFieldChanges({
         product_id: input.product_id,
@@ -587,6 +633,7 @@ export const adminDecideVersionStep = createStep(
       approval_rejection_reason: null,
       approval_decided_at: new Date(),
       approval_decided_by: input.actor_id,
+      admin_review_outcome: "approved",
     })
     await productCloud.createProductFieldChanges({
       product_id: input.product_id,

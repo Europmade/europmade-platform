@@ -20,6 +20,7 @@ export type ListingProduct = {
   verified: boolean
   features: string[]
   keywords: string[]
+  imageUrl?: string | null
 }
 
 function p(

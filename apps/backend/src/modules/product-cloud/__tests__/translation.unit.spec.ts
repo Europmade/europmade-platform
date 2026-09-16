@@ -67,6 +67,9 @@ describe("translation status UI labels + coverage", () => {
     expect(coverage.targets.find((t) => t.language_code === "fr")?.ui_status).toBe(
       "Ontbreekt"
     )
+    expect(
+      coverage.targets.find((t) => t.language_code === "nl")?.missing_fields
+    ).toEqual(["title", "description"])
   })
 
   it("aggregates worst status across fields for a language", () => {

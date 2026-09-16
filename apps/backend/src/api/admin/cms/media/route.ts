@@ -26,6 +26,7 @@ interface UploadedFile {
 
 const PLACEMENTS: MediaPlacement[] = [
   "cms_banner",
+  "cms_action_banner",
   "cms_site_logo",
   "homepage_hero",
   "brand_logo",
@@ -35,6 +36,7 @@ const PLACEMENTS: MediaPlacement[] = [
   "product_other",
   "facility_photo",
   "brand_story_photo",
+  "commercial_nav_icon",
 ]
 
 function isPlacement(value: string): value is MediaPlacement {
@@ -81,6 +83,23 @@ export async function POST(
   if (!Number.isFinite(height)) height = null
 
   const mimeType = normalizeMediaMimeType(file.mimetype, file.originalname)
+  if (
+    (!width || !height) &&
+    mimeType.startsWith("image/") &&
+    mimeType !== "image/svg+xml"
+  ) {
+    try {
+      const sharp = (await import("sharp")).default
+      const meta = await sharp(file.buffer).metadata()
+      if (typeof meta.width === "number" && meta.width > 0) width = meta.width
+      if (typeof meta.height === "number" && meta.height > 0) {
+        height = meta.height
+      }
+    } catch {
+      /* validateMedia handles missing dimensions */
+    }
+  }
+
   const hasAlpha =
     mimeType === "image/png"
       ? detectPngHasAlpha(file.buffer)

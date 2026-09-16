@@ -4,7 +4,13 @@ import {
   type EuMarketCode,
   type MarketScope,
 } from "@europmade/types"
-import { resolveMediaUrl, rewriteMediaStrings } from "@europmade/utils"
+import {
+  isCmsPageLive,
+  isCmsScheduleWindowLive,
+  persistMediaReference,
+  resolveMediaUrl,
+  rewriteMediaStrings,
+} from "@europmade/utils"
 
 export type LocalizedCmsString = {
   nl: string
@@ -52,14 +58,7 @@ export function bannerIsLive(row: {
   markets: unknown
 }, visitorMarket: string | null | undefined, now = new Date()): boolean {
   if (!row.published || !row.visible) return false
-  if (row.publish_at) {
-    const start = new Date(row.publish_at)
-    if (!Number.isNaN(start.getTime()) && start > now) return false
-  }
-  if (row.expires_at) {
-    const end = new Date(row.expires_at)
-    if (!Number.isNaN(end.getTime()) && end <= now) return false
-  }
+  if (!isCmsScheduleWindowLive(row, now)) return false
   return isVisibleInMarket(
     {
       marketScope: parseMarketScope(row.market_scope),
@@ -67,6 +66,19 @@ export function bannerIsLive(row: {
     },
     visitorMarket
   )
+}
+
+/** Storefront live check for cms_page (published + visible + schedule). */
+export function pageIsLive(
+  row: {
+    published: boolean
+    visible: boolean
+    publish_at?: Date | string | null
+    expires_at?: Date | string | null
+  },
+  now = new Date()
+): boolean {
+  return isCmsPageLive(row, now)
 }
 
 export function serializeBanner(
@@ -104,6 +116,19 @@ export function serializeBanner(
     created_at: row.created_at,
     updated_at: row.updated_at,
   }
+}
+
+export function persistCmsPageDocument(
+  document: unknown
+): Record<string, unknown> {
+  if (!document || typeof document !== "object" || Array.isArray(document)) {
+    return {}
+  }
+  const next = { ...(document as Record<string, unknown>) }
+  if (typeof next.banner_url === "string") {
+    next.banner_url = persistMediaReference(next.banner_url)
+  }
+  return next
 }
 
 export function serializePage(

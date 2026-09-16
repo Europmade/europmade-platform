@@ -1,6 +1,6 @@
 /**
- * Admin Dashboard Home — aggregaties uit bestaande admin-API's (S3-11-02).
- * Geen nieuwe backend; client-side samenstelling voor weergave.
+ * Admin Dashboard / Control Center — aggregaties uit bestaande admin-API's.
+ * Geen demo-data; ontbrekende bronnen → unavailable (—).
  */
 
 import {
@@ -10,8 +10,8 @@ import {
 import type { FinanceDashboardSource } from "./finance-dashboard"
 import type { PerformanceCatalogSource } from "./marketplace-performance"
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { adminFetch } from "./admin-fetch"
+import { medusaBackendUrl } from "./medusa-backend-url"
 
 export class DashboardApiError extends Error {
   status?: number
@@ -26,9 +26,7 @@ async function request<T>(path: string, timeoutMs = 12000): Promise<T> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    const response = await fetch(`${BACKEND_URL}${path}`, {
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
+    const response = await adminFetch(path, {
       cache: "no-store",
       signal: controller.signal,
     })
@@ -91,9 +89,10 @@ export type ModuleCard = {
 }
 
 export type AttentionItem = {
-  label: string
+  status: "ACTIE" | "INFO"
+  count: number
+  description: string
   href: string
-  severity: "normal" | "warning"
 }
 
 export type SystemRow = {
@@ -103,10 +102,105 @@ export type SystemRow = {
   ok: boolean
 }
 
+export type DashboardActivityRow = {
+  id: string
+  label: string
+  sublabel?: string
+  href: string
+  amount?: string
+  date?: string
+}
+
+export type RecentOrderRow = {
+  id: string
+  orderNumber: string
+  date: string
+  sellerLabel: string
+  amount: string
+  status: string
+  href: string
+}
+
+export type SellerQueueRow = {
+  id: string
+  companyName: string
+  status: string
+  date: string
+  href: string
+}
+
+export type ProductQueueRow = {
+  id: string
+  productName: string
+  sellerLabel: string
+  status: string
+  date: string | null
+  href: string
+}
+
+export type AdCampaignRow = {
+  id: string
+  name: string
+  sellerLabel: string
+  placement: string
+  periodLabel: string
+  amount: string
+  status: string
+  href: string
+}
+
+export type FinanceSnapshot = {
+  openPayoutCount: DashboardMetric
+  openPayoutAmount: DashboardMetric
+  advertisingRevenue: DashboardMetric
+  openCommissions: DashboardMetric
+  openInvoices: DashboardMetric
+}
+
+export type ModerationSnapshot = {
+  openCases: DashboardMetric
+  fraudSignals: DashboardMetric
+  disputes: DashboardMetric
+}
+
 export type AdminDashboardData = {
   loadedAt: string
   backendReachable: boolean
-  /** Wireframe #54 top-KPI's */
+  /** API-bereikbaarheid per bron (voor empty vs unavailable). */
+  sources: {
+    partners: boolean
+    activeSellers: boolean
+    sellerQueue: boolean
+    products: boolean
+    productApprovals: boolean
+    orders: boolean
+    payouts: boolean
+    ads: boolean
+    moderation: boolean
+    audit: boolean
+  }
+  /** Compat / finance hub — lifetime/today snapshots. */
+  platform: {
+    totalSellers: DashboardMetric
+    activeSellers: DashboardMetric
+    pendingSellerApprovals: DashboardMetric
+    totalProducts: DashboardMetric
+    pendingProductApprovals: DashboardMetric
+    totalOrders: DashboardMetric
+    revenue: DashboardMetric
+    openCommissions: DashboardMetric
+    advertisingRevenue: DashboardMetric
+    openPayouts: DashboardMetric
+  }
+  controlCenter: {
+    pendingSellerApplications: SellerQueueRow[]
+    pendingProductApprovals: ProductQueueRow[]
+    recentOrders: RecentOrderRow[]
+    pendingAdCampaigns: AdCampaignRow[]
+    pendingFinancialActions: DashboardActivityRow[]
+  }
+  financeSnapshot: FinanceSnapshot
+  moderationSnapshot: ModerationSnapshot
   hero: {
     activeSellers: DashboardMetric
     openModeration: DashboardMetric
@@ -130,9 +224,7 @@ export type AdminDashboardData = {
     openPayouts: DashboardMetric
     commissionsToday: DashboardMetric
   }
-  /** Ruwe finance-bron voor periodbewuste management-KPI's (client-side). */
   financeSource: FinanceDashboardSource
-  /** Catalogusbron voor Marketplace Performance (nieuwe partners/producten). */
   performanceSource: PerformanceCatalogSource
   moderation: {
     openCases: DashboardMetric
@@ -160,7 +252,12 @@ export type AdminDashboardData = {
 }
 
 type PartnerList = {
-  partners: Array<{ id: string; created_at: string; onboarding_status: string }>
+  partners: Array<{
+    id: string
+    created_at: string
+    onboarding_status: string
+    company: { legal_name: string } | null
+  }>
   count: number
 }
 
@@ -173,13 +270,24 @@ type QueueItems = {
 
 type OrdersList = {
   orders: Array<{
-    order: { created_at: string; exception_status: string | null }
+    order: {
+      id: string
+      order_number: string
+      seller_id: string
+      payment_status: string
+      created_at: string
+      exception_status: string | null
+    }
     order_total: number
   }>
   count: number
 }
 
-type ReturnsList = { returns: Array<{ id: string; status: string }> }
+type ReturnsList = {
+  returns: Array<{ id: string; status: string }>
+  count?: number
+  open_count?: number
+}
 
 type PayoutsList = {
   payouts: Array<{
@@ -218,6 +326,35 @@ type AuditList = {
   }>
 }
 
+type ApprovalsList = {
+  products: Array<{
+    id: string
+    title: string | null
+    seller_name?: string | null
+    publication_status?: string | null
+    requested_at?: string | null
+  }>
+  count: number
+}
+
+type AdCampaignsList = {
+  campaigns: Array<{
+    id: string
+    name: string
+    seller_id: string
+    status: string
+    placement: string
+    total_price: number
+    created_at: string
+    weeks?: Array<{ week_start: string; week_end: string }>
+  }>
+}
+
+type ComplianceEvidenceList = {
+  evidence: Array<{ id: string; product_id: string; status: string }>
+  count: number
+}
+
 async function safe<T>(
   fn: () => Promise<T>
 ): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
@@ -231,36 +368,29 @@ async function safe<T>(
   }
 }
 
-/**
- * Algemene backend-bereikbaarheid.
- * Primair: GET /health. Medusa zet op /health vaak geen ADMIN_CORS — de browser
- * krijgt dan "Failed to fetch" terwijl /admin/* wél bereikbaar is. Fallback:
- * lichte admin-probe; elke HTTP-status (incl. 401) telt als bereikbaar.
- */
 async function probeBackendReachable(timeoutMs = 4000): Promise<{
   ok: boolean
   detail: string
 }> {
+  const backend = medusaBackendUrl()
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
     try {
-      const res = await fetch(`${BACKEND_URL}/health`, {
+      const res = await fetch(`${backend}/health`, {
         cache: "no-store",
         signal: controller.signal,
       })
       if (res.ok) {
-        return { ok: true, detail: `${BACKEND_URL}/health` }
+        return { ok: true, detail: `${backend}/health` }
       }
     } catch {
       // CORS/network op /health — val terug op admin-probe.
     }
 
-    const res = await fetch(
-      `${BACKEND_URL}/admin/partner-onboarding?tab=active&limit=1`,
+    const res = await adminFetch(
+      `/admin/partner-onboarding?tab=active&limit=1`,
       {
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
         cache: "no-store",
         signal: controller.signal,
       }
@@ -268,7 +398,7 @@ async function probeBackendReachable(timeoutMs = 4000): Promise<{
     if (res.status > 0) {
       return {
         ok: true,
-        detail: `${BACKEND_URL} bereikbaar (admin-probe; /health zonder browser-CORS)`,
+        detail: `${backend} bereikbaar (admin-probe; /health zonder browser-CORS)`,
       }
     }
     return { ok: false, detail: "Geen verbinding met de backend" }
@@ -306,9 +436,44 @@ function metric(
   }
 }
 
+function sellerLabel(
+  sellerId: string,
+  nameBySellerId: Map<string, string>
+): string {
+  return nameBySellerId.get(sellerId) ?? sellerId
+}
+
+function campaignPeriodLabel(
+  weeks: Array<{ week_start: string; week_end: string }> | undefined
+): string {
+  if (!weeks || weeks.length === 0) return "—"
+  const starts = weeks.map((w) => new Date(w.week_start).getTime())
+  const ends = weeks.map((w) => new Date(w.week_end).getTime())
+  const from = new Date(Math.min(...starts))
+  const to = new Date(Math.max(...ends))
+  return `${from.toLocaleDateString("nl-NL")} – ${to.toLocaleDateString("nl-NL")}`
+}
+
+function placementLabel(p: string): string {
+  if (p === "homepage") return "Homepage"
+  if (p === "category") return "Categorie"
+  if (p === "search") return "Zoekresultaat"
+  return p
+}
+
+/** Campagnes die Admin-actie vereisen (bestaande status). */
+const AD_ACTION_STATUSES = new Set(["pending_review"])
+
+/** Omzet-achtige ad-statussen (bestaande total_price, geen nieuwe berekening). */
+const AD_REVENUE_STATUSES = new Set([
+  "approved",
+  "scheduled",
+  "active",
+  "completed",
+])
+
 /**
- * Laadt alle dashboard-aggregaties. Bij totale backend-uitval: lege API-waarden
- * + expliciete unavailable/demo-markering (geen stille nep-KPI's).
+ * Laadt alle dashboard-aggregaties uit bestaande admin-API's.
  */
 export async function loadAdminDashboard(): Promise<AdminDashboardData> {
   const healthProbe = await probeBackendReachable()
@@ -327,6 +492,9 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
     products,
     affiliates,
     audit,
+    productApprovals,
+    adCampaigns,
+    complianceEvidence,
   ] = await Promise.all([
     safe(() =>
       request<PartnerList>("/admin/partner-onboarding?tab=active&limit=1")
@@ -335,12 +503,10 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
       request<PartnerList>("/admin/partner-onboarding?tab=queue&limit=50")
     ),
     safe(() =>
-      request<PartnerList>("/admin/partner-onboarding?tab=all&limit=100")
+      request<PartnerList>("/admin/partner-onboarding?tab=all&limit=500")
     ),
     safe(() => request<QueueSummary>("/admin/moderation/queues")),
-    safe(() =>
-      request<QueueItems>("/admin/moderation/queues/fraude")
-    ),
+    safe(() => request<QueueItems>("/admin/moderation/queues/fraude")),
     safe(() =>
       request<QueueItems>("/admin/moderation/queues/hoog-risico")
     ),
@@ -348,11 +514,20 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
     safe(() =>
       request<OrdersList>("/admin/order-service/orders?exception=open")
     ),
-    safe(() => request<ReturnsList>("/admin/order-service/returns")),
+    safe(() =>
+      request<ReturnsList>("/admin/order-service/returns?open=1")
+    ),
     safe(() => request<PayoutsList>("/admin/finance/payouts")),
     safe(() => request<ProductsList>("/admin/product-cloud/products")),
     safe(() => request<AffiliatesList>("/admin/affiliates")),
     safe(() => request<AuditList>("/admin/audit-log?limit=8")),
+    safe(() => request<ApprovalsList>("/admin/product-cloud/approvals")),
+    safe(() => request<AdCampaignsList>("/admin/advertising/campaigns")),
+    safe(() =>
+      request<ComplianceEvidenceList>(
+        "/admin/product-cloud/compliance/evidence"
+      )
+    ),
   ])
 
   const anyAdminReachable =
@@ -369,8 +544,23 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
   const backendStatusDetail = backendReachable
     ? healthProbe.ok
       ? healthProbe.detail
-      : `${BACKEND_URL} bereikbaar via admin-API's`
+      : `${medusaBackendUrl()} bereikbaar via admin-API's`
     : healthProbe.detail
+
+  const nameBySellerId = new Map<string, string>()
+  if (allPartners.ok) {
+    for (const p of allPartners.data.partners) {
+      const name = p.company?.legal_name?.trim()
+      if (name) nameBySellerId.set(p.id, name)
+    }
+  }
+  if (queuePartners.ok) {
+    for (const p of queuePartners.data.partners) {
+      const name = p.company?.legal_name?.trim()
+      if (name) nameBySellerId.set(p.id, name)
+    }
+  }
+
   const queueCountMap = new Map<string, number>()
   if (queues.ok) {
     for (const q of queues.data.queues) queueCountMap.set(q.key, q.count)
@@ -412,6 +602,29 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
     ? queuePartners.data.count
     : null
   const activeSellers = activePartners.ok ? activePartners.data.count : null
+  const totalSellers = allPartners.ok ? allPartners.data.count : null
+  const totalProducts = products.ok ? products.data.count : null
+  const pendingProductApprovals = productApprovals.ok
+    ? productApprovals.data.count
+    : null
+  const totalOrders = ordersAll.ok ? ordersAll.data.count : null
+
+  const actionAdCampaigns = adCampaigns.ok
+    ? adCampaigns.data.campaigns.filter((c) =>
+        AD_ACTION_STATUSES.has(String(c.status).toLowerCase())
+      )
+    : []
+  const advertisingRevenue = adCampaigns.ok
+    ? adCampaigns.data.campaigns
+        .filter((c) =>
+          AD_REVENUE_STATUSES.has(String(c.status).toLowerCase())
+        )
+        .reduce((s, c) => s + (Number(c.total_price) || 0), 0)
+    : null
+
+  const pendingCompliance = complianceEvidence.ok
+    ? complianceEvidence.data.count
+    : null
 
   const ordersToday = ordersAll.ok
     ? ordersAll.data.orders.filter((o) => isToday(o.order.created_at)).length
@@ -424,12 +637,18 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
   const openExceptions = ordersExceptions.ok
     ? ordersExceptions.data.count
     : null
-  const returnsCount = returns.ok ? returns.data.returns.length : null
+  const returnsCount = returns.ok
+    ? (returns.data.open_count ?? returns.data.count ?? returns.data.returns.length)
+    : null
 
-  const openPayouts = payouts.ok
+  const openPayoutList = payouts.ok
     ? payouts.data.payouts.filter((p) =>
         ["Gepland", "In behandeling"].includes(p.status)
-      ).length
+      )
+    : []
+  const openPayouts = payouts.ok ? openPayoutList.length : null
+  const openPayoutAmount = payouts.ok
+    ? openPayoutList.reduce((s, p) => s + (Number(p.amount) || 0), 0)
     : null
 
   const newAffiliates = affiliates.ok
@@ -444,89 +663,184 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
   const attention: AttentionItem[] = []
   if ((pendingPartnerRequests ?? 0) > 0) {
     attention.push({
-      label: `${pendingPartnerRequests} partneraanvragen wachten op beoordeling`,
+      status: "ACTIE",
+      count: pendingPartnerRequests!,
+      description: "seller-aanvragen wachten op beoordeling",
       href: "/partners",
-      severity: "warning",
+    })
+  }
+  if ((pendingProductApprovals ?? 0) > 0) {
+    attention.push({
+      status: "ACTIE",
+      count: pendingProductApprovals!,
+      description: "producten wachten op goedkeuring",
+      href: "/product-cloud/products/approvals",
+    })
+  }
+  if (actionAdCampaigns.length > 0) {
+    attention.push({
+      status: "ACTIE",
+      count: actionAdCampaigns.length,
+      description: "advertising-campagnes in beoordeling",
+      href: "/advertising/campaigns",
+    })
+  }
+  if ((openPayouts ?? 0) > 0) {
+    attention.push({
+      status: "INFO",
+      count: openPayouts!,
+      description: "openstaande uitbetalingen",
+      href: "/finance",
     })
   }
   if ((moderationTotal ?? 0) > 0) {
     attention.push({
-      label: `${moderationTotal} openstaande moderatie-items`,
+      status: "ACTIE",
+      count: moderationTotal!,
+      description: "openstaande moderatiezaken",
       href: "/moderation",
-      severity: "warning",
     })
   }
   if ((returnsCount ?? 0) > 0) {
     attention.push({
-      label: `${returnsCount} retouren in behandeling`,
-      href: "/orders",
-      severity: "warning",
-    })
-  }
-  if ((disputesCount ?? 0) > 0) {
-    attention.push({
-      label: `${disputesCount} geschillen in behandeling`,
-      href: "/moderation",
-      severity: "warning",
+      status: "ACTIE",
+      count: returnsCount!,
+      description: "retouren in behandeling",
+      href: "/returns",
     })
   }
   if ((openExceptions ?? 0) > 0) {
     attention.push({
-      label: `${openExceptions} open order-uitzonderingen`,
+      status: "ACTIE",
+      count: openExceptions!,
+      description: "orderproblemen / uitzonderingen",
       href: "/orders",
-      severity: "warning",
     })
   }
   if ((fraudCount ?? 0) > 0) {
     attention.push({
-      label: `${fraudCount} fraude-signalen in wachtrij`,
+      status: "ACTIE",
+      count: fraudCount!,
+      description: "fraudesignalen in wachtrij",
       href: "/moderation",
-      severity: "warning",
     })
   }
+  if ((disputesCount ?? 0) > 0) {
+    attention.push({
+      status: "ACTIE",
+      count: disputesCount!,
+      description: "geschillen in behandeling",
+      href: "/moderation",
+    })
+  }
+
+  const pendingSellerApplications: SellerQueueRow[] = queuePartners.ok
+    ? queuePartners.data.partners.slice(0, 5).map((p) => ({
+        id: p.id,
+        companyName:
+          p.company?.legal_name?.trim() || `Seller ${p.id.slice(-8)}`,
+        status: p.onboarding_status,
+        date: p.created_at,
+        href: `/partners/${p.id}`,
+      }))
+    : []
+
+  const pendingProductApprovalRows: ProductQueueRow[] = productApprovals.ok
+    ? productApprovals.data.products.slice(0, 5).map((p) => ({
+        id: p.id,
+        productName: p.title?.trim() || p.id,
+        sellerLabel: p.seller_name?.trim() || "—",
+        status: p.publication_status?.trim() || "In review",
+        date: p.requested_at ?? null,
+        href: `/product-cloud/products/${p.id}`,
+      }))
+    : []
+
+  const recentOrders: RecentOrderRow[] = ordersAll.ok
+    ? [...ordersAll.data.orders]
+        .sort(
+          (a, b) =>
+            new Date(b.order.created_at).getTime() -
+            new Date(a.order.created_at).getTime()
+        )
+        .slice(0, 5)
+        .map((o) => ({
+          id: o.order.id,
+          orderNumber: o.order.order_number || o.order.id,
+          date: o.order.created_at,
+          sellerLabel: sellerLabel(o.order.seller_id, nameBySellerId),
+          amount: formatEuro(Number(o.order_total) || 0),
+          status: o.order.payment_status || "—",
+          href: `/orders/${o.order.id}`,
+        }))
+    : []
+
+  const pendingAdRows: AdCampaignRow[] = actionAdCampaigns
+    .slice(0, 5)
+    .map((c) => ({
+      id: c.id,
+      name: c.name,
+      sellerLabel: sellerLabel(c.seller_id, nameBySellerId),
+      placement: placementLabel(c.placement),
+      periodLabel: campaignPeriodLabel(c.weeks),
+      amount: formatEuro(Number(c.total_price) || 0),
+      status: c.status,
+      href: "/advertising/campaigns",
+    }))
+
+  const pendingFinancialActions: DashboardActivityRow[] = openPayoutList
+    .slice(0, 5)
+    .map((p) => ({
+      id: p.id,
+      label: `Uitbetaling ${p.recipient_type}`,
+      sublabel: p.status,
+      href: "/finance",
+      amount: formatEuro(Number(p.amount) || 0),
+      date: p.created_at,
+    }))
 
   const system: SystemRow[] = [
     {
       label: "Medusa / Backend API",
-      status: backendReachable ? "Online" : "Offline",
+      status: backendReachable ? "ONLINE" : "ERROR",
       detail: backendStatusDetail,
       ok: backendReachable,
     },
     {
       label: "Partner API",
-      status: activePartners.ok ? "OK" : "Fout",
+      status: activePartners.ok ? "OK" : "ERROR",
       detail: activePartners.ok
         ? "partner-onboarding bereikbaar"
         : activePartners.error,
       ok: activePartners.ok,
     },
     {
-      label: "Moderation API",
-      status: queues.ok ? "OK" : "Fout",
-      detail: queues.ok ? "queues bereikbaar" : queues.error,
-      ok: queues.ok,
+      label: "Product Cloud API",
+      status: products.ok ? "OK" : "ERROR",
+      detail: products.ok ? "products bereikbaar" : products.error,
+      ok: products.ok,
     },
     {
       label: "Order Service API",
-      status: ordersAll.ok ? "OK" : "Fout",
+      status: ordersAll.ok ? "OK" : "ERROR",
       detail: ordersAll.ok ? "orders bereikbaar" : ordersAll.error,
       ok: ordersAll.ok,
     },
     {
       label: "Finance API",
-      status: payouts.ok ? "OK" : "Fout",
+      status: payouts.ok ? "OK" : "ERROR",
       detail: payouts.ok ? "payouts bereikbaar" : payouts.error,
       ok: payouts.ok,
     },
     {
-      label: "Product Cloud API",
-      status: products.ok ? "OK" : "Fout",
-      detail: products.ok ? "products bereikbaar" : products.error,
-      ok: products.ok,
+      label: "Moderation API",
+      status: queues.ok ? "OK" : "ERROR",
+      detail: queues.ok ? "queues bereikbaar" : queues.error,
+      ok: queues.ok,
     },
     {
       label: "Audit Log",
-      status: audit.ok ? "OK" : "Fout",
+      status: audit.ok ? "OK" : "ERROR",
       detail: audit.ok
         ? `${audit.data.audit_log.length} recente events`
         : audit.error,
@@ -552,6 +866,121 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
   return {
     loadedAt: new Date().toISOString(),
     backendReachable,
+    sources: {
+      partners: allPartners.ok,
+      activeSellers: activePartners.ok,
+      sellerQueue: queuePartners.ok,
+      products: products.ok,
+      productApprovals: productApprovals.ok,
+      orders: ordersAll.ok,
+      payouts: payouts.ok,
+      ads: adCampaigns.ok,
+      moderation: queues.ok,
+      audit: audit.ok,
+    },
+    platform: {
+      totalSellers: metric(totalSellers, totalSellers != null ? "api" : "unavailable", {
+        href: "/partners",
+      }),
+      activeSellers: metric(activeSellers, activeSellers != null ? "api" : "unavailable", {
+        href: "/partners",
+      }),
+      pendingSellerApprovals: metric(
+        pendingPartnerRequests,
+        pendingPartnerRequests != null ? "api" : "unavailable",
+        { href: "/partners" }
+      ),
+      totalProducts: metric(totalProducts, totalProducts != null ? "api" : "unavailable", {
+        href: "/product-cloud/products",
+      }),
+      pendingProductApprovals: metric(
+        pendingProductApprovals,
+        pendingProductApprovals != null ? "api" : "unavailable",
+        { href: "/product-cloud/products/approvals" }
+      ),
+      totalOrders: metric(totalOrders, totalOrders != null ? "api" : "unavailable", {
+        href: "/orders",
+      }),
+      revenue: metric(
+        revenueToday,
+        revenueToday != null ? "api" : "unavailable",
+        { format: "euro", href: "/finance", note: "Orders vandaag (order_total)" }
+      ),
+      openCommissions: metric(null, "unavailable", {
+        format: "euro",
+        note: "Geen admin commissie-aggregatie-API",
+      }),
+      advertisingRevenue: metric(
+        advertisingRevenue,
+        advertisingRevenue != null ? "api" : "unavailable",
+        {
+          format: "euro",
+          href: "/advertising/campaigns",
+          note: "Som total_price (approved/scheduled/active/completed)",
+        }
+      ),
+      openPayouts: metric(
+        openPayouts,
+        openPayouts != null ? "api" : "unavailable",
+        { href: "/finance" }
+      ),
+    },
+    controlCenter: {
+      pendingSellerApplications,
+      pendingProductApprovals: pendingProductApprovalRows,
+      recentOrders,
+      pendingAdCampaigns: pendingAdRows,
+      pendingFinancialActions,
+    },
+    financeSnapshot: {
+      openPayoutCount: metric(
+        openPayouts,
+        openPayouts != null ? "api" : "unavailable",
+        { href: "/finance", note: "Status Gepland / In behandeling" }
+      ),
+      openPayoutAmount: metric(
+        openPayoutAmount,
+        openPayoutAmount != null ? "api" : "unavailable",
+        {
+          format: "euro",
+          href: "/finance",
+          note: "Som bedragen open payouts",
+        }
+      ),
+      advertisingRevenue: metric(
+        advertisingRevenue,
+        advertisingRevenue != null ? "api" : "unavailable",
+        {
+          format: "euro",
+          href: "/advertising/campaigns",
+          note: "Som campaign total_price (goedgekeurd/actief)",
+        }
+      ),
+      openCommissions: metric(null, "unavailable", {
+        format: "euro",
+        note: "Geen admin commissie-aggregatie-API",
+      }),
+      openInvoices: metric(null, "unavailable", {
+        note: "Geen admin factuur-list-API (alleen POST invoicing)",
+      }),
+    },
+    moderationSnapshot: {
+      openCases: metric(
+        moderationTotal,
+        moderationTotal != null ? "api" : "unavailable",
+        { href: "/moderation" }
+      ),
+      fraudSignals: metric(
+        fraudCount,
+        fraudCount != null ? "api" : "unavailable",
+        { href: "/moderation" }
+      ),
+      disputes: metric(
+        disputesCount,
+        disputesCount != null ? "api" : "unavailable",
+        { href: "/moderation" }
+      ),
+    },
     hero: {
       activeSellers: metric(activeSellers, activeSellers != null ? "api" : "unavailable", {
         href: "/partners",
@@ -583,7 +1012,6 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
       {
         title: "Geschillenbeheer",
         meta: disputesMeta,
-        // Geen aparte Admin-route; geschillen-wachtrij zit in Moderation Center.
         href: "/moderation",
         available: true,
       },
@@ -598,9 +1026,11 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
         newProductsToday,
         newProductsToday != null ? "api" : "unavailable"
       ),
-      pendingVerifications: metric(null, "unavailable", {
-        note: "Verification Center heeft nog geen admin-API",
-      }),
+      pendingVerifications: metric(
+        pendingCompliance,
+        pendingCompliance != null ? "api" : "unavailable",
+        { href: "/product-cloud/compliance", note: "Compliance bewijs in review" }
+      ),
       newPartners: metric(
         newPartnersToday,
         newPartnersToday != null ? "api" : "unavailable",
@@ -626,7 +1056,7 @@ export async function loadAdminDashboard(): Promise<AdminDashboardData> {
       returns: metric(
         returnsCount,
         returnsCount != null ? "api" : "unavailable",
-        { href: "/orders" }
+        { href: "/returns" }
       ),
     },
     finance: {

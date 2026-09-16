@@ -24,7 +24,7 @@ export type MarketplaceListingProps = {
 
 /**
  * Marketplace Listing Template — sprint-1a/04-marketplace-listing-*.html
- * + marketplace-listing/spec.md. Productgrid via catalog API of seed-fallback.
+ * + marketplace-listing/spec.md. Productgrid via catalog API.
  */
 export function MarketplaceListing({
   mode,

@@ -125,6 +125,38 @@ export const MEDIA_REQUIREMENTS: Record<MediaPlacement, MediaRequirements> = {
     enforceDimensions: true,
     enforceAspectRatio: true,
   },
+  cms_action_banner: {
+    placement: "cms_action_banner",
+    label: "CMS actie-banner",
+    recommendedSize: { width: 1600, height: 480 },
+    minSize: { width: 800, height: 200 },
+    maxSize: null,
+    aspectRatio: null,
+    aspectRatioValue: null,
+    maxBytes: 10 * MB,
+    mimeTypes: ["image/png", "image/jpeg", "image/webp"],
+    transparency: "allowed",
+    notes:
+      "Hero op /acties/{slug} (object-cover, ~280px hoog). Aanbevolen 1600 × 480 px. Geen strikte 4:1-verhouding.",
+    enforceDimensions: true,
+    enforceAspectRatio: false,
+  },
+  cms_site_logo: {
+    placement: "cms_site_logo",
+    label: "Site-logo (header)",
+    recommendedSize: { width: 480, height: 120 },
+    minSize: null,
+    maxSize: null,
+    aspectRatio: null,
+    aspectRatioValue: null,
+    maxBytes: 2 * MB,
+    mimeTypes: ["image/png", "image/svg+xml", "image/webp"],
+    transparency: "recommended",
+    notes:
+      "Header-woordmerk/logo. Aanbevolen ~480 × 120 px (of SVG). PNG/SVG/WebP, transparante achtergrond aanbevolen. Wordt met object-contain geschaald (geen vervorming).",
+    enforceDimensions: false,
+    enforceAspectRatio: false,
+  },
   homepage_hero: {
     placement: "homepage_hero",
     label: "Homepage hero",
@@ -186,6 +218,30 @@ export const MEDIA_REQUIREMENTS: Record<MediaPlacement, MediaRequirements> = {
     enforceDimensions: false,
     enforceAspectRatio: false,
   },
+  commercial_nav_icon: {
+    placement: "commercial_nav_icon",
+    label: "Commercieel categorie-icoon",
+    recommendedSize: { width: 256, height: 256 },
+    minSize: { width: 64, height: 64 },
+    maxSize: { width: 256, height: 256 },
+    aspectRatio: "1:1",
+    aspectRatioValue: 1,
+    aspectRatioTolerance: 0.08,
+    maxBytes: 500 * 1024,
+    mimeTypes: ["image/png", "image/webp"],
+    transparency: "recommended",
+    notes:
+      "Vierkant lijnicoon voor storefront-navigatie. PNG of WebP, 256 × 256 px aanbevolen. Het verloop vult het hele vierkant. Max. 500 KB. SVG is niet toegestaan (geen SVG-sanitizer). Niet-vierkante bestanden worden in een vierkant vlak geplaatst zonder uitrekken.",
+    enforceDimensions: true,
+    enforceAspectRatio: false,
+  },
+}
+
+export function formatMediaMaxBytes(maxBytes: number): string {
+  if (maxBytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(maxBytes / 1024))} KB`
+  }
+  return `${Math.round(maxBytes / (1024 * 1024))} MB`
 }
 
 export function getMediaRequirements(placement: MediaPlacement): MediaRequirements {
@@ -202,12 +258,13 @@ export function formatMediaRequirementSummary(req: MediaRequirements): string {
   if (req.aspectRatio) {
     parts.push(req.aspectRatio)
   }
-  parts.push(`max. ${Math.round(req.maxBytes / (1024 * 1024))} MB`)
+  parts.push(`max. ${formatMediaMaxBytes(req.maxBytes)}`)
   const types = req.mimeTypes
     .map((m) => {
-      if (m === "image/jpeg") return "JPG"
+      if (m === "image/jpeg") return "JPEG/JPG"
       if (m === "image/png") return "PNG"
-      if (m === "image/webp") return "WebP"
+      if (m === "image/webp") return "WEBP"
+      if (m === "image/avif") return "AVIF"
       if (m === "image/svg+xml") return "SVG"
       if (m === "application/pdf") return "PDF"
       if (m === "video/mp4") return "MP4"

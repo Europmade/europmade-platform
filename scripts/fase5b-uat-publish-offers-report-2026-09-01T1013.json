@@ -1,0 +1,138 @@
+{
+  "published_count": 9,
+  "offer_count": 9,
+  "planned": 10,
+  "products": [
+    {
+      "em_product_id": "EM-0001",
+      "product_cloud_id": "prod_01M1E35GVBQ6SBWGA82BVYHBTY",
+      "version_id": "pver_01M1E35GVGC20BGTX51X4KCV0P",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7B7ZTGB61WKA2G0XVVYBA",
+      "media_total": 2
+    },
+    {
+      "em_product_id": "EM-0002",
+      "product_cloud_id": "prod_01M1E35HDA8TAZFGKE7KF8Q022",
+      "version_id": "pver_01M1E35HDDFCXC242VFTKNKJD6",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7B8H8H9WZ6HQC425G8G2K",
+      "media_total": 3
+    },
+    {
+      "em_product_id": "EM-0003",
+      "product_cloud_id": "prod_01M1E35HMVTJPFJ9J4AAP1S1V4",
+      "version_id": "pver_01M1E35HMXFAVHKY6N7K9Z0HYW",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7B91AW93NGK598SPQMVZ6",
+      "media_total": 3
+    },
+    {
+      "em_product_id": "EM-0004",
+      "product_cloud_id": "prod_01M1E35HV5NXNVG4Z9K11379T6",
+      "version_id": "pver_01M1E35HV7PDXD049MREJ4RVQA",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7B9FHD7136EF2X13AAVPS",
+      "media_total": 3
+    },
+    {
+      "em_product_id": "EM-0005",
+      "product_cloud_id": "prod_01M1E35J19WBWM33S0MXRSGS6S",
+      "version_id": "pver_01M1E35J1BS6GGH4K3SA3T6PTM",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7BA3X7GYQD5ZXQ8PWA6Z5",
+      "media_total": 3
+    },
+    {
+      "em_product_id": "EM-0015",
+      "product_cloud_id": "prod_01M1E35J7F942HHYGBGQ88YVZK",
+      "version_id": "pver_01M1E35J7HG4Y72YABPHFCDH2H",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7BAFX4FRPSB7EBNGEG6GQ",
+      "media_total": 2
+    },
+    {
+      "em_product_id": "EM-0016",
+      "product_cloud_id": "prod_01M1E35JFKPX5N8SJMXBBNGRXE",
+      "version_id": "pver_01M1E35JFN0S3EQR87GS5RYK4F",
+      "publication_status": "Concept",
+      "offer_status": "none",
+      "media_total": 0,
+      "error": "{\n  \"message\": \"Geen Hoofdafbeelding — publicatie vereist minimaal één Hoofdafbeelding\",\n  \"name\": \"Error\",\n  \"stack\": \"Error: Geen Hoofdafbeelding — publicatie vereist minimaal één Hoofdafbeelding\\n    at main (C:/Users/sjoer/EuropMade/apps/backend/scripts/fase5b-uat-publish-offers.ts:294:17)\\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\"\n}"
+    },
+    {
+      "em_product_id": "EM-0030",
+      "product_cloud_id": "prod_01M1E35JPKV3EQVG6AYQ962M7Q",
+      "version_id": "pver_01M1E35JPNR596SAR8FWF0TSVV",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7BAWNJQXJQDPBN7RN1QS0",
+      "media_total": 3
+    },
+    {
+      "em_product_id": "EM-0095",
+      "product_cloud_id": "prod_01M1E35K050M9PXVHWKHTT5VPX",
+      "version_id": "pver_01M1E35K09QXWE7N8XKZEHNP7M",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7BBDTXD1KXXDG3A25JXTD",
+      "media_total": 3
+    },
+    {
+      "em_product_id": "EM-0258",
+      "product_cloud_id": "prod_01M1E35KA84JR80BYYZ8HAMFM9",
+      "version_id": "pver_01M1E35KA9W4B5FH79CH878V15",
+      "publication_status": "Gepubliceerd",
+      "offer_status": "active_uat_demo",
+      "offer_id": "offr_01M1E7BBXGY2DF8HJ2PJ5QPV35",
+      "media_total": 3
+    }
+  ],
+  "media_summary": {
+    "total_uploaded_previously": 25,
+    "em_0016_media": 0
+  },
+  "catalog": {
+    "http_ok": false,
+    "total_in_catalog": 0,
+    "uat_in_catalog": 0,
+    "uat_em_ids_in_catalog": [],
+    "missing_from_catalog": [
+      "EM-0001",
+      "EM-0002",
+      "EM-0003",
+      "EM-0004",
+      "EM-0005",
+      "EM-0015",
+      "EM-0016",
+      "EM-0030",
+      "EM-0095",
+      "EM-0258"
+    ]
+  },
+  "pdp_check": {
+    "skipped": true
+  },
+  "storefront": {
+    "home_http_ok": true,
+    "home_shows_sample_product": false,
+    "storefront_url": "http://127.0.0.1:3000"
+  },
+  "counts": {
+    "selectie_before": 10,
+    "selectie_after": 10,
+    "legacy_before": 232,
+    "legacy_after": 232,
+    "offers_before": 0,
+    "offers_after": 9,
+    "legacy_offers_before": 205,
+    "legacy_offers_after": 205
+  },
+  "content_issues": []
+}

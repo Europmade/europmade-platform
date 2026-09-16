@@ -89,6 +89,46 @@ describe("Product completeness — optional must not block publishability", () =
     )
   })
 
+  it("does not block publishability when gpsr_safety_warnings is empty", () => {
+    const report = computeProductCompleteness({
+      basis: {
+        title: "Boormachine",
+        brand_id: "brand_1",
+        manufacturer_id: "mfr_1",
+        category_names: ["Gereedschap"],
+        identifier_value: "8720000000099",
+        has_primary_image: true,
+      },
+      attributes: [
+        {
+          code: "gpsr_safety_warnings",
+          name: "Veiligheidswaarschuwingen",
+          tier: "optional",
+          value: null,
+        },
+        {
+          code: "gpsr_manual",
+          name: "GPSR handleiding",
+          tier: "compliance_required",
+          value: "yes",
+        },
+      ],
+      offer: {
+        has_offer: true,
+        has_price: true,
+        has_stock_configured: true,
+        has_delivery: true,
+        has_shipping_profile: true,
+      },
+    })
+    expect(report.publishable).toBe(true)
+    expect(
+      report.publication_blocked_reasons.some((r) =>
+        r.toLowerCase().includes("veiligheid")
+      )
+    ).toBe(false)
+  })
+
   it("marks complete when required + recommended + optional are filled", () => {
     const report = computeProductCompleteness({
       basis: {
@@ -198,5 +238,33 @@ describe("Product completeness — optional must not block publishability", () =
       )
     ).toBe(false)
     expect(report.publishable).toBe(true)
+  })
+
+  it("does not treat a DRAFT concept identifier or MPN as a filled EAN", () => {
+    const draft = computeProductCompleteness({
+      basis: {
+        title: "Concept",
+        brand_id: "brand_1",
+        manufacturer_id: "mfr_1",
+        category_names: ["Huishouden"],
+        identifier_value: "DRAFT-ABCDEF",
+        has_primary_image: true,
+      },
+      attributes: [],
+    })
+    expect(draft.missing_required.some((m) => m.code === "ean")).toBe(true)
+
+    const mpnOnly = computeProductCompleteness({
+      basis: {
+        title: "Concept",
+        brand_id: "brand_1",
+        manufacturer_id: "mfr_1",
+        category_names: ["Huishouden"],
+        identifier_value: "SMD8TCX04E",
+        has_primary_image: true,
+      },
+      attributes: [],
+    })
+    expect(mpnOnly.missing_required.some((m) => m.code === "ean")).toBe(true)
   })
 })

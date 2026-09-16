@@ -104,7 +104,12 @@ export default function ProductCloudTranslationsOverviewPage() {
                           }
                         >
                           {t.language_code.toUpperCase()} —{" "}
-                          {t.ui_status || uiStatusLabel(t.translation_status)}
+                          {t.review_label ||
+                            t.ui_status ||
+                            uiStatusLabel(t.translation_status)}
+                          {t.missing_fields?.length
+                            ? ` (ontbreekt: ${t.missing_fields.join(", ")})`
+                            : ""}
                         </Badge>
                       ))}
                     </div>

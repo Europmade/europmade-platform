@@ -9,6 +9,7 @@ import {
   PartnerOnboardingApiError,
   type OnboardingRecord,
 } from "../_lib/partner-onboarding-api";
+import { getMfaStatus } from "../../(auth)/_lib/medusa-auth";
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
 import { t } from "../../_lib/i18n/messages";
 import { statusLabel } from "../../_lib/i18n/status-labels";
@@ -20,18 +21,27 @@ export default function PartnerOnboardingStatusPage() {
   const router = useRouter();
   const locale = useStorefrontLocale();
   const [onboarding, setOnboarding] = useState<OnboardingRecord | null | "loading">("loading");
+  const [mfaEnabled, setMfaEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     getOnboarding()
-      .then(({ onboarding: current }) => {
+      .then(async ({ onboarding: current }) => {
         if (cancelled) return;
         if (!current) {
           router.replace("/partner-onboarding");
           return;
         }
         setOnboarding(current);
+        if (current.onboarding_status === "Goedgekeurd") {
+          try {
+            const status = await getMfaStatus();
+            if (!cancelled) setMfaEnabled(status.enabled);
+          } catch {
+            if (!cancelled) setMfaEnabled(false);
+          }
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -86,6 +96,7 @@ export default function PartnerOnboardingStatusPage() {
   }
 
   if (onboarding.onboarding_status === "Goedgekeurd") {
+    const ready = mfaEnabled === true;
     return (
       <StatusScreen
         icon="✓"
@@ -93,12 +104,26 @@ export default function PartnerOnboardingStatusPage() {
         badge={statusLabel("Goedgekeurd", locale)}
         title={t("partnerStatusApprovedTitle", locale)}
         actions={
-          <Button onClick={() => router.push("/account/two-factor-setup")}>
-            {t("partnerSetup2fa", locale)}
-          </Button>
+          mfaEnabled === null ? null : (
+            <Button
+              onClick={() =>
+                router.push(
+                  ready
+                    ? "/seller"
+                    : "/account/two-factor-setup?required=1"
+                )
+              }
+            >
+              {ready
+                ? t("authOpenDashboard", locale)
+                : t("partnerSetup2fa", locale)}
+            </Button>
+          )
         }
       >
-        {t("partnerStatusApprovedBody", locale)}
+        {ready
+          ? t("partnerStatusApprovedReadyBody", locale)
+          : t("partnerStatusApprovedBody", locale)}
       </StatusScreen>
     );
   }

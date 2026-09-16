@@ -6,6 +6,7 @@ import { Badge } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
+import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
 
 type Row = {
   id: string
@@ -18,8 +19,6 @@ type Row = {
   invoice_id: string | null
 }
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PK = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export default function SellerSettlementsPage() {
@@ -27,7 +26,7 @@ export default function SellerSettlementsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/store/finance/seller/settlements`, {
+    fetch(`${medusaBackendUrl()}/store/finance/seller/settlements`, {
       credentials: "include",
       headers: {
         "content-type": "application/json",

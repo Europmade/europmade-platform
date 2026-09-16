@@ -6,6 +6,7 @@ import type CmsModuleService from "../../../../../modules/cms/service"
 import { requestBackendOrigin } from "../../../../request-backend-origin"
 import {
   asLocalized,
+  persistCmsPageDocument,
   serializePage,
 } from "../../../../cms/serialize"
 
@@ -71,7 +72,9 @@ export async function PUT(req: PageReq, res: MedusaResponse) {
   }
   if (body.document !== undefined) {
     patch.document =
-      body.document && typeof body.document === "object" ? body.document : {}
+      body.document && typeof body.document === "object"
+        ? persistCmsPageDocument(body.document)
+        : {}
   }
   if (body.i18n_meta !== undefined) {
     patch.i18n_meta =

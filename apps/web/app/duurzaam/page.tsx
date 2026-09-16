@@ -1,12 +1,30 @@
 import type { Metadata } from "next"
+import { CmsPageView } from "../_components/cms/cms-page-view"
 import { ContentPage } from "../_components/marketplace/content-page"
+import {
+  loadFixedCmsPage,
+  metadataFromCmsPage,
+} from "../_lib/cms/fixed-cms-page"
+import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
 
-export const metadata: Metadata = {
+const FALLBACK_META: Metadata = {
   title: "Duurzame producten — EuropMade",
   description: "Duurzaamheid en Europese productie op EuropMade.",
+  alternates: { canonical: "/duurzaam" },
 }
 
-export default function DuurzaamPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/duurzaam", locale })
+  if (cms) return metadataFromCmsPage(cms, FALLBACK_META)
+  return FALLBACK_META
+}
+
+export default async function DuurzaamPage() {
+  const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/duurzaam", locale })
+  if (cms) return <CmsPageView page={cms} locale={locale} />
+
   return (
     <ContentPage title="Duurzame producten">
       <p>

@@ -2,8 +2,8 @@
  * Store Commerce Cloud-client — Offer CRUD + Buy Box (S3-04-03/04).
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { medusaBackendUrl } from "../../_lib/medusa-backend-url"
+
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export class CommerceCloudApiError extends Error {
@@ -16,8 +16,31 @@ export class CommerceCloudApiError extends Error {
   }
 }
 
+/** Seller-facing message; technical detail stays in console for debugging. */
+export function shippingProfileSaveErrorMessage(err: unknown): string {
+  const technical =
+    err instanceof CommerceCloudApiError
+      ? err.message
+      : err instanceof Error
+        ? err.message
+        : "Onbekende fout"
+  if (typeof console !== "undefined") {
+    console.error("[shipping-profile] opslaan mislukt:", technical, err)
+  }
+  if (
+    /invalid key in record/i.test(technical) ||
+    /^invalid request:/i.test(technical)
+  ) {
+    return "Het verzendprofiel kon niet worden opgeslagen. Controleer de verzendkosten en landen en probeer het opnieuw."
+  }
+  if (err instanceof CommerceCloudApiError && err.message.trim()) {
+    return err.message
+  }
+  return "Opslaan mislukt."
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     ...init,
     credentials: "include",
     headers: {
@@ -277,11 +300,34 @@ export function getShippingProfile(id: string) {
 export function createShippingProfile(
   body: Partial<SellerShippingProfile> & { name: string }
 ) {
+  const country_rates: Record<string, ShippingCountryConfig> = {}
+  for (const [code, row] of Object.entries(body.country_rates || {})) {
+    if (!row) continue
+    const cost = Number(row.shipping_cost)
+    country_rates[code] = {
+      ...row,
+      shipping_cost: Number.isFinite(cost) && cost >= 0 ? cost : 0,
+      free_shipping_threshold:
+        row.free_shipping_threshold == null
+          ? null
+          : Number.isFinite(Number(row.free_shipping_threshold))
+            ? Number(row.free_shipping_threshold)
+            : null,
+    }
+  }
   return request<{ shipping_profile: SellerShippingProfile }>(
     "/store/commerce-cloud/shipping-profiles",
     {
       method: "POST",
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        name: body.name.trim(),
+        description: body.description?.trim() || null,
+        status: body.status || "draft",
+        country_rates,
+        processing_settings: body.processing_settings,
+        carrier_mode: body.carrier_mode || "own",
+        carrier_ref: body.carrier_ref ?? null,
+      }),
     }
   )
 }

@@ -14,6 +14,7 @@ import { findMarketplaceCategory } from "./marketplace-categories"
 export type PdpOffer = {
   id: string
   retailer: string
+  sellerSlug?: string
   rating: number
   priceCents: number
   delivery: string

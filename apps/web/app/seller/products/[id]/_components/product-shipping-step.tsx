@@ -19,14 +19,22 @@ type Props = {
     quantity_available: string
     region_code: string
   } | null
+  onQuantityChange: (value: string) => void
   onReload: () => void
   onSaveStock: () => Promise<void>
   stockSaving: boolean
 }
 
 export function ProductShippingStep(props: Props) {
-  const { product, productId, offerDraft, onReload, onSaveStock, stockSaving } =
-    props
+  const {
+    product,
+    productId,
+    offerDraft,
+    onQuantityChange,
+    onReload,
+    onSaveStock,
+    stockSaving,
+  } = props
   const router = useRouter()
   const [profiles, setProfiles] = useState<SellerShippingProfile[]>([])
   const [selectedId, setSelectedId] = useState(
@@ -34,30 +42,63 @@ export function ProductShippingStep(props: Props) {
   )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   useEffect(() => {
-    void listShippingProfiles().then((res) =>
-      setProfiles(res.shipping_profiles.filter((p) => p.status === "active"))
-    )
+    setSelectedId(product.shipping_profile_id || "")
+  }, [product.shipping_profile_id])
+
+  useEffect(() => {
+    void listShippingProfiles().then((res) => {
+      // Actief + concept (concept mag gekoppeld worden; inactief niet in de lijst).
+      const usable = res.shipping_profiles.filter(
+        (p) => p.status === "active" || p.status === "draft"
+      )
+      setProfiles(usable)
+    })
   }, [])
 
   const profile =
     product.shipping_profile ||
-    profiles.find((p) => p.id === product.shipping_profile_id) ||
+    profiles.find((p) => p.id === (product.shipping_profile_id || selectedId)) ||
     null
 
   async function applyProfile(profileId: string) {
     setBusy(true)
     setError(null)
+    setNotice(null)
     try {
       await assignProductShippingProfile(productId, profileId || null)
       setSelectedId(profileId)
+      setNotice(
+        profileId
+          ? "Verzendprofiel gekoppeld en opgeslagen."
+          : "Verzendprofiel ontkoppeld."
+      )
       onReload()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Koppelen mislukt.")
     } finally {
       setBusy(false)
     }
+  }
+
+  async function saveAndContinue() {
+    setError(null)
+    // Persist profile before advancing — select alone must not stay local-only.
+    if (selectedId && selectedId !== (product.shipping_profile_id || "")) {
+      setBusy(true)
+      try {
+        await assignProductShippingProfile(productId, selectedId)
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Koppelen mislukt.")
+        setBusy(false)
+        return
+      } finally {
+        setBusy(false)
+      }
+    }
+    await onSaveStock()
   }
 
   const previewCountries = profile
@@ -71,9 +112,19 @@ export function ProductShippingStep(props: Props) {
       <div className="rounded border border-wf-300 bg-white p-3 text-xs">
         <h2 className="font-semibold text-wf-900">Voorraad & verzending</h2>
         <p className="mt-1 text-[11px] text-wf-600">
-          Koppel een verzendprofiel. Je hoeft hier geen landen opnieuw in te
-          vullen — dat regel je centraal onder Instellingen → Verzending.
+          Koppel een verzendprofiel. De selectie wordt opgeslagen op het product
+          (niet alleen in dit scherm). Landen en tarieven beheer je centraal
+          onder Instellingen → Verzending.
         </p>
+        {!product.shipping_profile_id ? (
+          <p className="mt-2 text-[11px] font-semibold text-amber-800">
+            ❌ Verzendprofiel ontbreekt — kies een profiel hieronder.
+          </p>
+        ) : (
+          <p className="mt-2 text-[11px] font-semibold text-emerald-800">
+            ✓ Verzendprofiel gekoppeld
+          </p>
+        )}
       </div>
 
       <section className="rounded border border-wf-300 bg-white p-3">
@@ -82,6 +133,7 @@ export function ProductShippingStep(props: Props) {
           <div className="mt-2 space-y-2 text-xs">
             <p className="font-semibold text-emerald-800">
               ✓ {profile.name}
+              {profile.status === "draft" ? " (concept)" : ""}
             </p>
             <ul className="space-y-0.5 text-wf-700">
               {previewCountries.map(([code, cfg]) => (
@@ -108,23 +160,22 @@ export function ProductShippingStep(props: Props) {
             <select
               className="h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
               value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
+              disabled={busy}
+              onChange={(e) => {
+                const next = e.target.value
+                setSelectedId(next)
+                void applyProfile(next)
+              }}
             >
               <option value="">— kies profiel —</option>
               {profiles.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
+                  {p.status === "draft" ? " (concept)" : ""}
                 </option>
               ))}
             </select>
           </div>
-          <Button
-            size="sm"
-            disabled={busy || !selectedId}
-            onClick={() => void applyProfile(selectedId)}
-          >
-            Wijzigen
-          </Button>
           <Button
             size="sm"
             variant="secondary"
@@ -139,6 +190,9 @@ export function ProductShippingStep(props: Props) {
             Verzendprofiel beheren
           </Link>
         </div>
+        {notice ? (
+          <p className="mt-2 text-[11px] text-emerald-800">{notice}</p>
+        ) : null}
         {error ? <p className="mt-2 text-[11px] text-red-700">{error}</p> : null}
       </section>
 
@@ -150,20 +204,32 @@ export function ProductShippingStep(props: Props) {
               Beschikbare voorraad
             </label>
             <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              step={1}
               className="h-9 w-full rounded border border-wf-400 px-2 text-xs"
               value={offerDraft.quantity_available}
-              readOnly
+              onChange={(e) => {
+                const raw = e.target.value
+                if (raw === "") {
+                  onQuantityChange("")
+                  return
+                }
+                if (!/^\d+$/.test(raw)) return
+                onQuantityChange(raw)
+              }}
             />
           </div>
           <p className="mt-2 text-[10px] text-wf-500">
-            Voorraad wordt beheerd via je verkoopaanbod (regio{" "}
+            Geheel getal, minimaal 0. Voorraad hoort bij je verkoopaanbod (regio{" "}
             {offerDraft.region_code || "NL"}).
           </p>
           <Button
             size="sm"
             className="mt-3"
-            disabled={stockSaving}
-            onClick={() => void onSaveStock()}
+            disabled={stockSaving || busy}
+            onClick={() => void saveAndContinue()}
           >
             Opslaan en verder
           </Button>

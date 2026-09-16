@@ -3,6 +3,14 @@
  */
 
 import type { RequirementTier } from "./category-attributes"
+import { isConceptDraftIdentifier } from "./concept-identifier"
+import { normalizeGtinDigits } from "./gtin-validation"
+
+function isCatalogEanFilled(value: string | null | undefined): boolean {
+  if (!value?.trim()) return false
+  if (isConceptDraftIdentifier("IMPORT_REF", value, null)) return false
+  return /^\d{8}$|^\d{12,14}$/.test(normalizeGtinDigits(value))
+}
 
 export type CompletenessField = {
   code: string
@@ -28,6 +36,7 @@ export type ComplianceReviewStatus =
   | "missing"
   | "pending_review"
   | "precheck_warning"
+  | "needs_info"
   | "approved"
   | "rejected"
   | "not_required"
@@ -107,6 +116,8 @@ export type CompletenessRulesInput = {
   ce_required_for_category?: boolean
   mie_claimed?: boolean
   publication_status?: string | null
+  /** EuropMade: known non-EU manufacturer blocks publication. */
+  manufacturer_outside_eu?: boolean
 }
 
 export type CompletenessDocumentInput = {
@@ -153,14 +164,20 @@ export function computeProductCompleteness(input: {
   attributes: AttributeInput[]
   offer?: OfferGateInput | null
   rules?: CompletenessRulesInput | null
+  /** Compliance evidence documents (MiE / CE / data). */
   documents?: CompletenessDocumentInput[] | null
+  /**
+   * Locale translation gates (title/description per target language).
+   * Affects publishable only — never compliance_review_status.
+   */
+  translation_documents?: CompletenessDocumentInput[] | null
 }): CompletenessReport {
   const basisFields: CompletenessField[] = [
     {
       code: "ean",
       name: "EAN / GTIN",
       tier: "category_required",
-      filled: isFilled(input.basis.identifier_value),
+      filled: isCatalogEanFilled(input.basis.identifier_value),
       value: input.basis.identifier_value,
       group: "basis",
     },
@@ -270,24 +287,34 @@ export function computeProductCompleteness(input: {
 
   const publication_blocked_reasons: string[] = []
   for (const m of missing_required) {
-    publication_blocked_reasons.push(`Ontbreekt: ${m.name}`)
+    publication_blocked_reasons.push(
+      m.code === "category"
+        ? "Categorie niet herkend — kies een EuropMade-categorie."
+        : `Ontbreekt: ${m.name}`
+    )
+  }
+
+  if (input.rules?.manufacturer_outside_eu) {
+    publication_blocked_reasons.push(
+      "Fabrikant moet in de EU/EER gevestigd zijn"
+    )
   }
 
   if (input.offer) {
     if (!input.offer.has_offer) {
-      publication_blocked_reasons.push("Geen seller-offer aanwezig")
+      publication_blocked_reasons.push("Geen verkoopaanbod aanwezig")
     } else {
       if (!input.offer.has_price) {
-        publication_blocked_reasons.push("Prijs ontbreekt op offer")
+        publication_blocked_reasons.push("Verkoopprijs invullen")
       }
       if (!input.offer.has_stock_configured) {
-        publication_blocked_reasons.push("Voorraad niet ingesteld")
+        publication_blocked_reasons.push("Voorraad instellen")
       }
       if (!input.offer.has_delivery) {
-        publication_blocked_reasons.push("Levertijd/verzending niet ingesteld")
+        publication_blocked_reasons.push("Levertijd/verzending instellen")
       }
       if (input.offer.has_shipping_profile === false) {
-        publication_blocked_reasons.push("Verzendprofiel ontbreekt")
+        publication_blocked_reasons.push("Verzendprofiel koppelen")
       }
     }
   }
@@ -304,6 +331,17 @@ export function computeProductCompleteness(input: {
   }
 
   const documents: CompletenessDocument[] = (input.documents || []).map((d) => ({
+    code: d.code,
+    name: d.name,
+    required: d.required,
+    present: d.present,
+    status: d.status,
+    rejection_reason: d.rejection_reason ?? null,
+  }))
+
+  const translationDocuments: CompletenessDocument[] = (
+    input.translation_documents || []
+  ).map((d) => ({
     code: d.code,
     name: d.name,
     required: d.required,
@@ -349,6 +387,10 @@ export function computeProductCompleteness(input: {
       publication_blocked_reasons.push(`Ontbreekt: ${doc.name}`)
     } else if (doc.status === "pending_review" || doc.status === "precheck_warning") {
       publication_blocked_reasons.push(`${doc.name} wacht op controle (niet goedgekeurd)`)
+    } else if (doc.status === "needs_info") {
+      publication_blocked_reasons.push(
+        `${doc.name} — aanvulling gevraagd${doc.rejection_reason ? `: ${doc.rejection_reason}` : ""}`
+      )
     } else if (doc.status === "rejected") {
       publication_blocked_reasons.push(
         `${doc.name} afgekeurd${doc.rejection_reason ? `: ${doc.rejection_reason}` : ""}`
@@ -356,8 +398,25 @@ export function computeProductCompleteness(input: {
     }
   }
 
+  for (const doc of translationDocuments) {
+    if (!doc.required) continue
+    if (doc.status === "approved") continue
+    if (!doc.present || doc.status === "missing") {
+      publication_blocked_reasons.push(`Ontbreekt: ${doc.name}`)
+    } else if (doc.status === "pending_review") {
+      publication_blocked_reasons.push(
+        `${doc.name} incompleet${doc.rejection_reason ? ` (${doc.rejection_reason})` : ""}`
+      )
+    } else if (doc.status === "rejected") {
+      publication_blocked_reasons.push(
+        `${doc.name} mislukt/verouderd${doc.rejection_reason ? `: ${doc.rejection_reason}` : ""}`
+      )
+    }
+  }
+
   const requiredDocs = documents.filter((d) => d.required)
   const anyRejected = requiredDocs.some((d) => d.status === "rejected")
+  const anyNeedsInfo = requiredDocs.some((d) => d.status === "needs_info")
   const anyPending = requiredDocs.some(
     (d) => d.status === "pending_review" || d.status === "precheck_warning"
   )
@@ -387,6 +446,9 @@ export function computeProductCompleteness(input: {
         ? "precheck_warning"
         : "pending_review"
       compliance_status = "pending_review"
+    } else if (anyNeedsInfo) {
+      compliance_review_status = "needs_info"
+      compliance_status = "incomplete"
     } else if (anyMissingDoc || complianceMissing > 0) {
       compliance_review_status = "missing"
       compliance_status =
@@ -437,7 +499,7 @@ export function computeProductCompleteness(input: {
     sale_presentation = "not_published"
   } else if (input.offer.is_sellable === false) {
     sale_presentation = "blocked"
-    sale_blocked_reasons.push("Offer is technisch niet verkoopbaar")
+    sale_blocked_reasons.push("Aanbod is technisch niet verkoopbaar")
   } else {
     sale_presentation = "for_sale"
   }
@@ -453,7 +515,7 @@ export function computeProductCompleteness(input: {
     compliance_review_status,
     product_gate_status,
     sale_presentation,
-    documents,
+    documents: [...documents, ...translationDocuments],
     missing_required,
   }
 }

@@ -1,20 +1,44 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { Notice } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { t } from "../../../_lib/i18n/messages"
+import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
 
-const DEMO_VAT = [
-  { country: "NL", rate: 21, base: 18420.5, vat: 3868.31 },
-  { country: "DE", rate: 19, base: 4120.0, vat: 782.8 },
-  { country: "BE", rate: 21, base: 2980.75, vat: 625.96 },
-  { country: "FR", rate: 20, base: 1560.0, vat: 312.0 },
-]
+type VatRow = {
+  country_code: string
+  country_label: string
+  amount_excl: number
+  vat_rate: number
+  vat_amount: number
+}
 
 export default function SellerFinanceBtwPage() {
   const locale = useStorefrontLocale()
+  const [vatRows, setVatRows] = useState<VatRow[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const PK = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+    fetch(`${medusaBackendUrl()}/store/finance/seller`, {
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        ...(PK ? { "x-publishable-api-key": PK } : {}),
+      },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        setVatRows(d?.vat_by_country ?? [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
   return (
     <SellerGate
       breadcrumb={[
@@ -30,7 +54,11 @@ export default function SellerFinanceBtwPage() {
         {t("sellerFinanceVatIntro", locale)}
       </p>
 
-      {DEMO_VAT.length === 0 ? (
+      <Notice variant="info" className="mt-4">
+        {t("sellerFinanceVatDemoNotice", locale)}
+      </Notice>
+
+      {!loading && vatRows.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             title={t("sellerFinanceVatEmptyTitle", locale)}
@@ -58,15 +86,23 @@ export default function SellerFinanceBtwPage() {
               </tr>
             </thead>
             <tbody>
-              {DEMO_VAT.map((row) => (
+              {vatRows.map((row) => (
                 <tr
-                  key={row.country}
+                  key={row.country_code}
                   className="border-b border-wf-200 last:border-b-0"
                 >
-                  <td className="px-4 py-2.5">{row.country}</td>
-                  <td className="px-4 py-2.5">{row.rate}%</td>
-                  <td className="px-4 py-2.5">{formatEuro(row.base)}</td>
-                  <td className="px-4 py-2.5">{formatEuro(row.vat)}</td>
+                  <td className="px-4 py-2.5">
+                    {row.country_label} ({row.country_code})
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {(row.vat_rate * 100).toFixed(0)}%
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {formatEuro(row.amount_excl)}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {formatEuro(row.vat_amount)}
+                  </td>
                 </tr>
               ))}
             </tbody>

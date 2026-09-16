@@ -1,16 +1,24 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { CmsPageView } from "../_components/cms/cms-page-view"
 import { PublicStorefrontChrome } from "../_components/marketplace/public-storefront-chrome"
+import {
+  loadFixedCmsPage,
+  metadataFromCmsPage,
+} from "../_lib/cms/fixed-cms-page"
 import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
 import { t, type StorefrontMessageKey } from "../_lib/i18n/messages"
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getStorefrontLocaleFromCookies()
-  return {
+  const fallback: Metadata = {
     title: `${t("affLandingTitle", locale)} — EuropMade`,
     description: t("affLandingMetaDesc", locale),
     alternates: { canonical: "/affiliate" },
   }
+  const cms = await loadFixedCmsPage({ path: "/affiliate", locale })
+  if (cms) return metadataFromCmsPage(cms, fallback)
+  return fallback
 }
 
 const HOW_STEPS: StorefrontMessageKey[] = [
@@ -40,9 +48,12 @@ const FAQ: Array<[StorefrontMessageKey, StorefrontMessageKey]> = [
 /**
  * Publieke affiliate marketingpagina (F2).
  * Geen auth — dashboard staat op /affiliate/dashboard.
+ * CMS page slug "affiliate" overrides when published + live.
  */
 export default async function AffiliateLandingPage() {
   const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/affiliate", locale })
+  if (cms) return <CmsPageView page={cms} locale={locale} />
 
   const faqJsonLd = {
     "@context": "https://schema.org",

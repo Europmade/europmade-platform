@@ -5,6 +5,7 @@ import Brand from "./models/brand"
 import BrandMarketContent from "./models/brand-market-content"
 import Manufacturer from "./models/manufacturer"
 import ProductionFacility from "./models/production-facility"
+import BrandOwnershipClaim from "./models/brand-ownership-claim"
 
 /**
  * Partner-module — Blueprint `11-medusa-architecture.md` §3:
@@ -20,6 +21,7 @@ class PartnerModuleService extends MedusaService({
   BrandMarketContent,
   Manufacturer,
   ProductionFacility,
+  BrandOwnershipClaim,
 }) {}
 
 export default PartnerModuleService

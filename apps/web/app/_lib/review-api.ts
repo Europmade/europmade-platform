@@ -2,8 +2,8 @@
  * Store Review-service client (S3-06-02/03).
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { medusaBackendUrl } from "./medusa-backend-url"
+
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export class ReviewApiError extends Error {
@@ -17,7 +17,7 @@ export class ReviewApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     ...init,
     credentials: "include",
     headers: {

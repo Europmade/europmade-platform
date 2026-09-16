@@ -14,6 +14,7 @@ export type ReviewStatus =
   | "missing"
   | "pending_review"
   | "precheck_warning"
+  | "needs_info"
   | "approved"
   | "rejected"
 
@@ -102,18 +103,16 @@ export function isPdfEvidence(row: EvidenceRow): boolean {
 }
 
 /**
- * One uploaded document can support multiple checks without a second upload.
- * Datagebruik blijft een apart PDF-document (privacytoelichting).
+ * Exact kind match. One physical file can still cover CE + Made in Europe when
+ * the upload registers both kinds (two evidence rows / evidence_kinds[]).
+ * Datagebruik blijft altijd een apart PDF-document.
  */
 export function coveringRowsForKind(
   rows: EvidenceRow[],
   kind: EvidenceKind
 ): EvidenceRow[] {
   const active = rows.filter((r) => r.verification_status !== "superseded")
-  if (kind === "data_usage") {
-    return active.filter((r) => evidenceKindOf(r) === "data_usage")
-  }
-  return active.filter((r) => evidenceKindOf(r) !== "data_usage")
+  return active.filter((r) => evidenceKindOf(r) === kind)
 }
 
 export function summarizeEvidenceKind(
@@ -125,8 +124,11 @@ export function summarizeEvidenceKind(
   const active = coveringRowsForKind(rows, kind)
   const approved = active.find((r) => r.verification_status === "approved")
   const pending = active.find(
-    (r) => r.verification_status === "pending" || r.verification_status === "pending_review"
+    (r) =>
+      r.verification_status === "pending" ||
+      r.verification_status === "pending_review"
   )
+  const needsInfo = active.find((r) => r.verification_status === "needs_info")
   const rejected = active.find((r) => r.verification_status === "rejected")
   const warning = active.find(
     (r) =>
@@ -135,17 +137,21 @@ export function summarizeEvidenceKind(
   )
 
   let status: ReviewStatus = "missing"
+  // New uploads (pending) reopen review even if older rows are needs_info/rejected.
   if (approved) status = "approved"
-  else if (rejected && !pending) status = "rejected"
   else if (pending && warning) status = "precheck_warning"
   else if (pending) status = "pending_review"
+  else if (needsInfo) status = "needs_info"
   else if (rejected) status = "rejected"
 
   const present = active.length > 0 && status !== "missing"
   const rejection_reason =
-    status === "rejected"
-      ? rejected?.verification_notes?.trim() || "Afgekeurd door EuropMade."
-      : null
+    status === "needs_info"
+      ? needsInfo?.verification_notes?.trim() ||
+        "Aanvulling gevraagd door EuropMade."
+      : status === "rejected"
+        ? rejected?.verification_notes?.trim() || "Afgekeurd door EuropMade."
+        : null
 
   return {
     code: `doc.${kind}`,

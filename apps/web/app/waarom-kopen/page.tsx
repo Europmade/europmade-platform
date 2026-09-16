@@ -8,24 +8,35 @@ import {
   IconSearch,
   IconStar,
 } from "../_components/commercial/commercial-icons"
+import { CmsPageView } from "../_components/cms/cms-page-view"
 import { PublicStorefrontChrome } from "../_components/marketplace/public-storefront-chrome"
+import {
+  loadFixedCmsPage,
+  metadataFromCmsPage,
+} from "../_lib/cms/fixed-cms-page"
 import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
 import { t } from "../_lib/i18n/messages"
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getStorefrontLocaleFromCookies()
-  return {
+  const fallback: Metadata = {
     title: `${t("whyBuyTitle", locale)} — EuropMade`,
     description: t("whyBuyLead", locale),
     alternates: { canonical: "/waarom-kopen" },
   }
+  const cms = await loadFixedCmsPage({ path: "/waarom-kopen", locale })
+  if (cms) return metadataFromCmsPage(cms, fallback)
+  return fallback
 }
 
 /**
  * Commerciële "Waarom kopen" — visueel scanbaar (Sprint 8 UX).
+ * CMS page slug "waarom-kopen" overrides when published + live.
  */
 export default async function WhyBuyPage() {
   const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/waarom-kopen", locale })
+  if (cms) return <CmsPageView page={cms} locale={locale} />
 
   const flow = [
     { icon: IconGlobe, label: t("whyBuyFlow1", locale) },

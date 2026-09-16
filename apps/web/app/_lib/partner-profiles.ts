@@ -120,9 +120,12 @@ export function findPartnerByName(name: string): PartnerProfile | null {
 }
 
 export function partnerHref(nameOrSlug: string): string {
-  const byName = findPartnerByName(nameOrSlug)
+  const trimmed = nameOrSlug.trim()
+  if (!trimmed) return "/partner"
+  if (trimmed.startsWith("sell_")) return `/partner/${trimmed}`
+  const byName = findPartnerByName(trimmed)
   if (byName) return `/partner/${byName.slug}`
-  return `/partner/${slugifyForBrand(nameOrSlug)}`
+  return `/partner/${slugifyForBrand(trimmed)}`
 }
 
 export function productsForPartner(

@@ -1,0 +1,406 @@
+{
+  "version": "1.0",
+  "description": "Claude Fase 5B → EuropMade Product Cloud category mapping (fixed IDs, no new categories).",
+  "exact_main_categories": {
+    "Elektronica": {
+      "category_id": "pcgy_01KYSAP66YNXE2XRSXETRZHWQR",
+      "category_name": "Elektronica",
+      "slug": "elektronica"
+    },
+    "Huishouden": {
+      "category_id": "pcgy_01KZTTCPC3AC9EYE661Z639D8M",
+      "category_name": "Huishouden",
+      "slug": "huishouden"
+    },
+    "Keuken": {
+      "category_id": "pcgy_01KZTTCPBFXE0MRKVZGYM3GXW3",
+      "category_name": "Keuken",
+      "slug": "keuken"
+    },
+    "Kleding": {
+      "category_id": "pcgy_01M05PKVCBFP3Z748ZSQNB8GA6",
+      "category_name": "Kleding",
+      "slug": "kleding"
+    },
+    "Verlichting": {
+      "category_id": "pcgy_01KZTTCQKK4ZW4C7JGCS8Y9E9A",
+      "category_name": "Verlichting",
+      "slug": "verlichting"
+    },
+    "Wonen": {
+      "category_id": "pcgy_01KZTTCND9HG6T57H7DDVVJMZ9",
+      "category_name": "Wonen",
+      "slug": "wonen"
+    }
+  },
+  "main_defaults": {
+    "Huisdieren": {
+      "category_id": "pcgy_01M0Z1CGSGDVGQX18F9HJ31C4V",
+      "category_name": "Dieren",
+      "slug": "dieren",
+      "reason": "Semantische equivalent van Huisdieren"
+    }
+  },
+  "subcategory_rules": [
+    {
+      "claude_main": "Badkamer & Verzorging",
+      "claude_sub": "Badtextiel",
+      "category_id": "pcgy_01M0Z1CQ48AGJKA11F0JXD2251",
+      "category_name": "Badkamer",
+      "slug": "badkamer",
+      "reason": "Badkamerproducten"
+    },
+    {
+      "claude_main": "Badkamer & Verzorging",
+      "claude_sub": "Badkamerinrichting",
+      "category_id": "pcgy_01M0Z1CQ48AGJKA11F0JXD2251",
+      "category_name": "Badkamer",
+      "slug": "badkamer",
+      "reason": "Badkamerinrichting"
+    },
+    {
+      "claude_main": "Badkamer & Verzorging",
+      "claude_sub": "Douche & kranen",
+      "category_id": "pcgy_01M0Z1CQ48AGJKA11F0JXD2251",
+      "category_name": "Badkamer",
+      "slug": "badkamer",
+      "reason": "Sanitair"
+    },
+    {
+      "claude_main": "Badkamer & Verzorging",
+      "claude_sub": "Badkameraccessoires",
+      "category_id": "pcgy_01M0Z1CQ48AGJKA11F0JXD2251",
+      "category_name": "Badkamer",
+      "slug": "badkamer",
+      "reason": "Badkameraccessoires"
+    },
+    {
+      "claude_main": "Badkamer & Verzorging",
+      "claude_sub": "Badproducten",
+      "category_id": "pcgy_01M0Z1CQ48AGJKA11F0JXD2251",
+      "category_name": "Badkamer",
+      "slug": "badkamer",
+      "reason": "Badproducten"
+    },
+    {
+      "claude_main": "Badkamer & Verzorging",
+      "claude_sub": "*",
+      "category_id": "pcgy_01KZTTCT7Z9Y4N7AM04H5791WK",
+      "category_name": "Beauty & Verzorging",
+      "slug": "beauty-en-verzorging",
+      "reason": "Overige verzorgingsproducten"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Tuin & buitenleven - verlichting",
+      "category_id": "pcgy_01KZTTCQKK4ZW4C7JGCS8Y9E9A",
+      "category_name": "Verlichting",
+      "slug": "verlichting",
+      "reason": "Tuinverlichting"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "*",
+      "category_id": "pcgy_s7_tuin",
+      "category_name": "Tuin",
+      "slug": "tuin",
+      "reason": "Default tuin/gereedschap — specifieke gereedschap-subcategorieën hieronder"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Handgereedschap",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Handgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Handgereedschap - dopsleutels",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Handgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Handgereedschap - tangen",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Handgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Handgereedschap - schroevendraaiers",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Handgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Handgereedschap - momentsleutels",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Handgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Handgereedschap - houtbewerking",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Handgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Bijlen & bosbouwgereedschap",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Bosbouwgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Elektrisch gereedschap",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Elektrisch gereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Meetgereedschap",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Meetgereedschap"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Bosbouw en houtbewerking",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Houtbewerking"
+    },
+    {
+      "claude_main": "Gereedschap & Tuin",
+      "claude_sub": "Snoeigereedschap",
+      "category_id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "category_name": "Klus & Gereedschap",
+      "slug": "klus-en-gereedschap",
+      "reason": "Snoeigereedschap"
+    },
+    {
+      "claude_main": "Kantoor & Papierwaren",
+      "claude_sub": "Kunstenaarsmateriaal",
+      "category_id": "pcgy_01KZTTCWR1VY3K9P90ZEB3BPG5",
+      "category_name": "Ambacht",
+      "slug": "ambacht",
+      "reason": "Creatief materiaal"
+    },
+    {
+      "claude_main": "Kantoor & Papierwaren",
+      "claude_sub": "Papierwaren",
+      "category_id": "pcgy_01M0Z1CKV0TH41FN9QC2X1983G",
+      "category_name": "Boeken & Media",
+      "slug": "boeken-media",
+      "reason": "Papierwaren"
+    },
+    {
+      "claude_main": "Kantoor & Papierwaren",
+      "claude_sub": "Notitieboeken & agenda's",
+      "category_id": "pcgy_01M0Z1CKV0TH41FN9QC2X1983G",
+      "category_name": "Boeken & Media",
+      "slug": "boeken-media",
+      "reason": "Notitieboeken"
+    },
+    {
+      "claude_main": "Kantoor & Papierwaren",
+      "claude_sub": "Notitieblokken",
+      "category_id": "pcgy_01M0Z1CKV0TH41FN9QC2X1983G",
+      "category_name": "Boeken & Media",
+      "slug": "boeken-media",
+      "reason": "Notitieblokken"
+    },
+    {
+      "claude_main": "Kantoor & Papierwaren",
+      "claude_sub": "*",
+      "category_id": "pcgy_01KZTTCQJHNB6E3CAZKR80XR70",
+      "category_name": "Kantoor",
+      "slug": "kantoor",
+      "reason": "Kantoorartikelen default"
+    },
+    {
+      "claude_main": "Schoenen & Lederwaren",
+      "claude_sub": "Tassen & lederwaren",
+      "category_id": "pcgy_01KZTTCVMG2BN0Q5PGDNPZPN7E",
+      "category_name": "Tassen & Accessoires",
+      "slug": "tassen-en-accessoires",
+      "reason": "Tassen en lederwaren"
+    },
+    {
+      "claude_main": "Schoenen & Lederwaren",
+      "claude_sub": "Tassen en lederwaren",
+      "category_id": "pcgy_01KZTTCVMG2BN0Q5PGDNPZPN7E",
+      "category_name": "Tassen & Accessoires",
+      "slug": "tassen-en-accessoires",
+      "reason": "Tassen en lederwaren"
+    },
+    {
+      "claude_main": "Schoenen & Lederwaren",
+      "claude_sub": "Koffers",
+      "category_id": "pcgy_01KZTTCVMG2BN0Q5PGDNPZPN7E",
+      "category_name": "Tassen & Accessoires",
+      "slug": "tassen-en-accessoires",
+      "reason": "Koffers"
+    },
+    {
+      "claude_main": "Schoenen & Lederwaren",
+      "claude_sub": "*",
+      "category_id": "pcgy_01KZTTCTYBZ964HF7FJ1BJH6MC",
+      "category_name": "Schoenen",
+      "slug": "schoenen",
+      "reason": "Schoeisel default"
+    },
+    {
+      "claude_main": "Speelgoed & Kind",
+      "claude_sub": "Babyspeelgoed",
+      "category_id": "pcgy_01KZTTCVM1YBVK6PJHPK152PWT",
+      "category_name": "Baby & Kind",
+      "slug": "baby-en-kind",
+      "reason": "Babyproducten"
+    },
+    {
+      "claude_main": "Speelgoed & Kind",
+      "claude_sub": "Zindelijkheid & verzorging",
+      "category_id": "pcgy_01KZTTCVM1YBVK6PJHPK152PWT",
+      "category_name": "Baby & Kind",
+      "slug": "baby-en-kind",
+      "reason": "Baby verzorging"
+    },
+    {
+      "claude_main": "Speelgoed & Kind",
+      "claude_sub": "Kindermeubelen",
+      "category_id": "pcgy_01KZTTCVM1YBVK6PJHPK152PWT",
+      "category_name": "Baby & Kind",
+      "slug": "baby-en-kind",
+      "reason": "Kindermeubelen"
+    },
+    {
+      "claude_main": "Speelgoed & Kind",
+      "claude_sub": "*",
+      "category_id": "pcgy_01KZTTCZZ5FZKZMRQMGQSN808W",
+      "category_name": "Speelgoed",
+      "slug": "speelgoed",
+      "reason": "Speelgoed default"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Outdoorschoeisel",
+      "category_id": "pcgy_01KZTTCTYBZ964HF7FJ1BJH6MC",
+      "category_name": "Schoenen",
+      "slug": "schoenen",
+      "reason": "Outdoorschoeisel"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Bergsportschoenen",
+      "category_id": "pcgy_01KZTTCTYBZ964HF7FJ1BJH6MC",
+      "category_name": "Schoenen",
+      "slug": "schoenen",
+      "reason": "Bergsportschoenen"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Fietstassen",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Fietstassen/outdoor tassen"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Bikepacking-tassen",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Bikepacking"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Rugzakken",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Rugzakken"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Reis- en sporttassen",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Sporttassen"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Bergsport en klimmen",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Bergsport"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Bergsport",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Bergsport"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Klimuitrusting",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Klimuitrusting"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Tenten",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Tenten"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Slaapmatten",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Slaapmatten"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "Trekkingstokken",
+      "category_id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "category_name": "Outdoor",
+      "slug": "outdoor",
+      "reason": "Trekking"
+    },
+    {
+      "claude_main": "Sport & Outdoor",
+      "claude_sub": "*",
+      "category_id": "pcgy_01KZTTCW2Q22JEXB57D3NRJ043",
+      "category_name": "Sport",
+      "slug": "sport",
+      "reason": "Sport/fiets default"
+    }
+  ]
+}

@@ -1,0 +1,353 @@
+﻿[
+    {
+        "manufacturer":  "S7 Atelier Gent",
+        "categories":  [
+                           "Keuken",
+                           "Huishouden",
+                           "Cadeaus"
+                       ],
+        "title":  "S7 Chocolade Maker Kit",
+        "price":  64.95,
+        "brand_id":  "brand_01KZTVQKD2SDFM2AB4423Y9P3N",
+        "product_id":  "prod_01KZTVR3KJBFZM7TPD8GQ2Z09Y",
+        "brand_name":  "S7 Brugge Atelier",
+        "country":  "BE",
+        "ean":  "8700469898733"
+    },
+    {
+        "manufacturer":  "S7 Atelier Gent",
+        "categories":  [
+                           "Keuken",
+                           "Mode",
+                           "Huishouden"
+                       ],
+        "title":  "S7 Linnen Keukenschort",
+        "price":  34.95,
+        "brand_id":  "brand_01KZTVQKD2SDFM2AB4423Y9P3N",
+        "product_id":  "prod_01KZTVR4B0DHRMFDQ1M8RJ4FJ8",
+        "brand_name":  "S7 Brugge Atelier",
+        "country":  "BE",
+        "ean":  "8700469898734"
+    },
+    {
+        "manufacturer":  "S7 Atelier Gent",
+        "categories":  [
+                           "Outdoor",
+                           "Sport",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Fietsmand Wilgentenen",
+        "price":  54.95,
+        "brand_id":  "brand_01KZTVQKD2SDFM2AB4423Y9P3N",
+        "product_id":  "prod_01KZTVR4YFKVK97RDQK6G5KH4S",
+        "brand_name":  "S7 Brugge Atelier",
+        "country":  "BE",
+        "ean":  "8700469898735"
+    },
+    {
+        "manufacturer":  "S7 Atelier Gent",
+        "categories":  [
+                           "Speelgoed",
+                           "Baby \u0026 Kind",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Speelgoed Houten Blokken",
+        "price":  39.95,
+        "brand_id":  "brand_01KZTVQKD2SDFM2AB4423Y9P3N",
+        "product_id":  "prod_01KZTVR5K5G3BSC1E8FH8EG26V",
+        "brand_name":  "S7 Brugge Atelier",
+        "country":  "BE",
+        "ean":  "8700469898736"
+    },
+    {
+        "manufacturer":  "S7 Werk Graz",
+        "categories":  [
+                           "Sport",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Ski Wax Set Alpine",
+        "price":  29.95,
+        "brand_id":  "brand_01KZTVQPMA4G7SVESMQNFRDPX2",
+        "product_id":  "prod_01KZTVR67412P4C4PX6Q17T8Q3",
+        "brand_name":  "S7 AlpenForm",
+        "country":  "AT",
+        "ean":  "8700469898737"
+    },
+    {
+        "manufacturer":  "S7 Werk Graz",
+        "categories":  [
+                           "Mode",
+                           "Sport",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Wantenset Merino",
+        "price":  44.95,
+        "brand_id":  "brand_01KZTVQPMA4G7SVESMQNFRDPX2",
+        "product_id":  "prod_01KZTVR6RBCWAHHFBBSKFT4GMS",
+        "brand_name":  "S7 AlpenForm",
+        "country":  "AT",
+        "ean":  "8700469898738"
+    },
+    {
+        "manufacturer":  "S7 Werk Graz",
+        "categories":  [
+                           "Keuken",
+                           "Huishouden",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Houten Snijplank Beuk",
+        "price":  49.95,
+        "brand_id":  "brand_01KZTVQPMA4G7SVESMQNFRDPX2",
+        "product_id":  "prod_01KZTVR7BJZV9G0MHQNR9Z7Q3A",
+        "brand_name":  "S7 AlpenForm",
+        "country":  "AT",
+        "ean":  "8700469898739"
+    },
+    {
+        "manufacturer":  "S7 Werk Graz",
+        "categories":  [
+                           "Wonen",
+                           "Verlichting"
+                       ],
+        "title":  "S7 Wandlamp Metaal",
+        "price":  89.95,
+        "brand_id":  "brand_01KZTVQPMA4G7SVESMQNFRDPX2",
+        "product_id":  "prod_01KZTVR7XGKEPQ3EX2PZ423FTF",
+        "brand_name":  "S7 AlpenForm",
+        "country":  "AT",
+        "ean":  "8700469898740"
+    },
+    {
+        "manufacturer":  "S7 Oficina Porto",
+        "categories":  [
+                           "Sport",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Kurken Yogablok",
+        "price":  24.95,
+        "brand_id":  "brand_01KZTVQSQPGH0Z7WDF5MSM2Q8B",
+        "product_id":  "prod_01KZTVR8JVP8GE7Y1ZF34BM5A8",
+        "brand_name":  "S7 Atlantico",
+        "country":  "PT",
+        "ean":  "8700469898741"
+    },
+    {
+        "manufacturer":  "S7 Oficina Porto",
+        "categories":  [
+                           "Keuken",
+                           "Wonen",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Keramiek Saladekom",
+        "price":  36.95,
+        "brand_id":  "brand_01KZTVQSQPGH0Z7WDF5MSM2Q8B",
+        "product_id":  "prod_01KZTVR92PW6EM7H3QEHTK6WBB",
+        "brand_name":  "S7 Atlantico",
+        "country":  "PT",
+        "ean":  "8700469898742"
+    },
+    {
+        "manufacturer":  "S7 Oficina Porto",
+        "categories":  [
+                           "Tassen \u0026 Accessoires",
+                           "Mode",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Linnen Strandtas",
+        "price":  42.95,
+        "brand_id":  "brand_01KZTVQSQPGH0Z7WDF5MSM2Q8B",
+        "product_id":  "prod_01KZTVR9NPKYHG5ZY1J5NGW7NE",
+        "brand_name":  "S7 Atlantico",
+        "country":  "PT",
+        "ean":  "8700469898743"
+    },
+    {
+        "manufacturer":  "S7 Oficina Porto",
+        "categories":  [
+                           "Schoenen",
+                           "Mode"
+                       ],
+        "title":  "S7 Espadrille Canvas",
+        "price":  59.95,
+        "brand_id":  "brand_01KZTVQSQPGH0Z7WDF5MSM2Q8B",
+        "product_id":  "prod_01KZTVRA5YGFJRQDBDZ6X73FZV",
+        "brand_name":  "S7 Atlantico",
+        "country":  "PT",
+        "ean":  "8700469898744"
+    },
+    {
+        "manufacturer":  "S7 Verkstad Malmo",
+        "categories":  [
+                           "Wonen",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Berkenhout Kapstok",
+        "price":  119.95,
+        "brand_id":  "brand_01KZTVQWN41HH3QKEZBP3WY74N",
+        "product_id":  "prod_01KZTVRAPFMX7QPMWVQQ63FGXR",
+        "brand_name":  "S7 Nordskog",
+        "country":  "SE",
+        "ean":  "8700469898745"
+    },
+    {
+        "manufacturer":  "S7 Verkstad Malmo",
+        "categories":  [
+                           "Outdoor",
+                           "Sport",
+                           "Keuken"
+                       ],
+        "title":  "S7 Outdoor Thermos 1L",
+        "price":  39.95,
+        "brand_id":  "brand_01KZTVQWN41HH3QKEZBP3WY74N",
+        "product_id":  "prod_01KZTVRB98Q9XXYRTPVED74SSQ",
+        "brand_name":  "S7 Nordskog",
+        "country":  "SE",
+        "ean":  "8700469898746"
+    },
+    {
+        "manufacturer":  "S7 Verkstad Malmo",
+        "categories":  [
+                           "Schoenen",
+                           "Mode",
+                           "Wonen"
+                       ],
+        "title":  "S7 Wollen Sloffen",
+        "price":  49.95,
+        "brand_id":  "brand_01KZTVQWN41HH3QKEZBP3WY74N",
+        "product_id":  "prod_01KZTVRBSVJ5N39VEB62EJEF7C",
+        "brand_name":  "S7 Nordskog",
+        "country":  "SE",
+        "ean":  "8700469898747"
+    },
+    {
+        "manufacturer":  "S7 Verkstad Malmo",
+        "categories":  [
+                           "Elektronica",
+                           "Verlichting",
+                           "Wonen"
+                       ],
+        "title":  "S7 LED Strip Warm 5m",
+        "price":  32.95,
+        "brand_id":  "brand_01KZTVQWN41HH3QKEZBP3WY74N",
+        "product_id":  "prod_01KZTVRCA82FQZ89QVW26VVVN5",
+        "brand_name":  "S7 Nordskog",
+        "country":  "SE",
+        "ean":  "8700469898748"
+    },
+    {
+        "manufacturer":  "S7 Vaerksted Aarhus",
+        "categories":  [
+                           "Wonen",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Design Stoel Eiken",
+        "price":  299.95,
+        "brand_id":  "brand_01KZTVQZS7T1FX6WYD5PA5H65V",
+        "product_id":  "prod_01KZTVRCVPMJG9MV9NAY4DP9EQ",
+        "brand_name":  "S7 HavnDesign",
+        "country":  "DK",
+        "ean":  "8700469898749"
+    },
+    {
+        "manufacturer":  "S7 Vaerksted Aarhus",
+        "categories":  [
+                           "Keuken",
+                           "Wonen",
+                           "Huishouden"
+                       ],
+        "title":  "S7 Keramiek Mok Set 4",
+        "price":  45.95,
+        "brand_id":  "brand_01KZTVQZS7T1FX6WYD5PA5H65V",
+        "product_id":  "prod_01KZTVRDHQWQA1DGGGHXG78C3M",
+        "brand_name":  "S7 HavnDesign",
+        "country":  "DK",
+        "ean":  "8700469898750"
+    },
+    {
+        "manufacturer":  "S7 Vaerksted Aarhus",
+        "categories":  [
+                           "Mode",
+                           "Outdoor",
+                           "Sport"
+                       ],
+        "title":  "S7 Regenjas Urban",
+        "price":  139.95,
+        "brand_id":  "brand_01KZTVQZS7T1FX6WYD5PA5H65V",
+        "product_id":  "prod_01KZTVRE4MZ12QDQ8D1N5K7XXV",
+        "brand_name":  "S7 HavnDesign",
+        "country":  "DK",
+        "ean":  "8700469898751"
+    },
+    {
+        "manufacturer":  "S7 Vaerksted Aarhus",
+        "categories":  [
+                           "Elektronica",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Bluetooth Speaker Mini",
+        "price":  79.95,
+        "brand_id":  "brand_01KZTVQZS7T1FX6WYD5PA5H65V",
+        "product_id":  "prod_01KZTVREQ6Q2327WGKY8NZH0J4",
+        "brand_name":  "S7 HavnDesign",
+        "country":  "DK",
+        "ean":  "8700469898752"
+    },
+    {
+        "manufacturer":  "S7 Dilna Brno",
+        "categories":  [
+                           "Wonen",
+                           "Cadeaus",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Kristal Vaas Klein",
+        "price":  69.95,
+        "brand_id":  "brand_01KZTVR2ZXKF9YEAT7Y9XGHCBJ",
+        "product_id":  "prod_01KZTVRFCSXSTH047BAQNB12J1",
+        "brand_name":  "S7 Bohemia Craft",
+        "country":  "CZ",
+        "ean":  "8700469898753"
+    },
+    {
+        "manufacturer":  "S7 Dilna Brno",
+        "categories":  [
+                           "Klus \u0026 Gereedschap",
+                           "Huishouden"
+                       ],
+        "title":  "S7 Gereedschapset 56-delig",
+        "price":  89.95,
+        "brand_id":  "brand_01KZTVR2ZXKF9YEAT7Y9XGHCBJ",
+        "product_id":  "prod_01KZTVRGNTXQZXM6RZZ0XJNGQG",
+        "brand_name":  "S7 Bohemia Craft",
+        "country":  "CZ",
+        "ean":  "8700469898754"
+    },
+    {
+        "manufacturer":  "S7 Dilna Brno",
+        "categories":  [
+                           "Sport",
+                           "Mode"
+                       ],
+        "title":  "S7 Hardloopbroek Light",
+        "price":  54.95,
+        "brand_id":  "brand_01KZTVR2ZXKF9YEAT7Y9XGHCBJ",
+        "product_id":  "prod_01KZTVRHD0SZQNCP6Q3QYPP61R",
+        "brand_name":  "S7 Bohemia Craft",
+        "country":  "CZ",
+        "ean":  "8700469898755"
+    },
+    {
+        "manufacturer":  "S7 Dilna Brno",
+        "categories":  [
+                           "Sport",
+                           "Baby \u0026 Kind",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Kinderhelm Fiets",
+        "price":  47.95,
+        "brand_id":  "brand_01KZTVR2ZXKF9YEAT7Y9XGHCBJ",
+        "product_id":  "prod_01KZTVRHXZCDVYHWMK98X4P3WZ",
+        "brand_name":  "S7 Bohemia Craft",
+        "country":  "CZ",
+        "ean":  "8700469898756"
+    }
+]

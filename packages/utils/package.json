@@ -6,13 +6,15 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./media/public-url": "./src/media/public-url.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@europmade/types": "workspace:*",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4"
   },

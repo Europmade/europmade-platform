@@ -21,6 +21,69 @@ export function slugifyCategoryName(name: string): string {
     .slice(0, 80)
 }
 
+/**
+ * Compatibility: slugify turns "&" into "en", while the 30 storefront slugs
+ * omit that extra token (baby-kind, not baby-en-kind). Canonical = pc_category.
+ */
+export const SLUGIFY_TO_CANONICAL_SLUG: Record<string, string> = {
+  "beauty-en-verzorging": "beauty-verzorging",
+  "baby-en-kind": "baby-kind",
+  "klus-en-gereedschap": "klus-gereedschap",
+  "auto-en-motor": "auto-motor",
+  "boeken-en-media": "boeken-media",
+  "juwelen-en-horloges": "juwelen-horloges",
+  "tassen-en-accessoires": "tassen-accessoires",
+  "plant-en-bloem": "plant-bloem",
+  "feest-en-seizoen": "feest-seizoen",
+}
+
+export function toCanonicalCategorySlug(nameOrSlug: string): string {
+  const trimmed = nameOrSlug.trim()
+  if (!trimmed) return ""
+  const slug = /[\s&]/.test(trimmed)
+    ? slugifyCategoryName(trimmed)
+    : trimmed.toLowerCase()
+  return SLUGIFY_TO_CANONICAL_SLUG[slug] ?? slug
+}
+
+export function categoryLookupSlugs(nameOrSlug: string): string[] {
+  const trimmed = nameOrSlug.trim()
+  if (!trimmed) return []
+  const asSlug = trimmed.toLowerCase()
+  const slugified = slugifyCategoryName(trimmed)
+  const canonical = toCanonicalCategorySlug(trimmed)
+  return [...new Set([canonical, asSlug, slugified].filter(Boolean))]
+}
+
+/**
+ * Catalogusfilter op canonieke slug of exacte categorienaam.
+ * Geen substring-match (voorkomt te ruime hits tussen categorieën).
+ */
+export function productMatchesCategoryFilter(
+  categoryNames: string[],
+  filter: string
+): boolean {
+  const parts = filter
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return true
+  return parts.some((part) => productMatchesSingleCategory(categoryNames, part))
+}
+
+function productMatchesSingleCategory(
+  categoryNames: string[],
+  filter: string
+): boolean {
+  const wanted = toCanonicalCategorySlug(filter)
+  if (!wanted) return true
+  const wantedRaw = filter.trim().toLowerCase()
+  return categoryNames.some((name) => {
+    const n = name.trim().toLowerCase()
+    return n === wantedRaw || toCanonicalCategorySlug(name) === wanted
+  })
+}
+
 export type AttributeCatalogItem = {
   code: string
   name: string
@@ -152,7 +215,7 @@ export const GPSR_COMPLIANCE_ATTRIBUTES: AttributeCatalogItem[] = [
     name: "Veiligheidswaarschuwingen",
     data_type: "Tekst-met-eenheid",
     is_required: false,
-    requirement_tier: "recommended",
+    requirement_tier: "optional",
     sort_order: 1080,
     is_filterable: false,
     is_comparable: false,

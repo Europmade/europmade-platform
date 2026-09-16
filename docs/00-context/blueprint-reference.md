@@ -1,7 +1,9 @@
 # Blueprint-referentie
 
 **Bron:** [`/blueprint/EuropMade_Blueprint_V2_1.docx`](../../blueprint/EuropMade_Blueprint_V2_1.docx) (Blueprint v2.1) + Financieel model v1.0
-**Status:** Definitief, vaste basis voor alle documentatie in dit repository.
+**Status:** Definitief als **business**-brondocument.
+
+**Implementatie-master (as-built + MVP-status + fasering):** [`docs/11-blueprint-v2/README.md`](../11-blueprint-v2/README.md) — Fase 0 (2026-08-26). Dat document beschrijft wat het systeem werkelijk is; het PDF hieronder blijft missie/businessmodel (H-nummers) en wordt niet vanuit de repo bewerkt.
 
 Deze documenten zijn de externe bron van waarheid voor de business- en financiële strategie van EuropMade. Ze worden hier niet gedupliceerd, maar staan als los einddocument in de repository-brede map [`/blueprint/`](../../blueprint/README.md) (bewust buiten `docs/`, zie de toelichting daar) en worden vanuit alle documentatie in `docs/` met hoofdstukverwijzingen (bijv. "H8.5") aangehaald.
 

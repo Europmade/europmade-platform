@@ -27,7 +27,12 @@ export type UpsertOfferInput = {
   seller_sku?: string | null
   sales_status?: "active" | "paused"
   delivery_days_max?: number | null
+  extra_delivery_cost?: number | null
   regular_customer_price?: number | null
+  promo_price?: number | null
+  promo_starts_at?: string | Date | null
+  promo_ends_at?: string | Date | null
+  clear_promo?: boolean
 }
 
 export type UpsertOfferWorkflowResult = {
@@ -218,7 +223,12 @@ export type PatchOfferInput = {
   seller_sku?: string | null
   sales_status?: "active" | "paused"
   delivery_days_max?: number | null
+  extra_delivery_cost?: number | null
   regular_customer_price?: number | null
+  promo_price?: number | null
+  promo_starts_at?: string | Date | null
+  promo_ends_at?: string | Date | null
+  clear_promo?: boolean
   actor_customer_id?: string | null
 }
 
@@ -249,7 +259,12 @@ export const patchOfferStep = createStep(
       input.seller_sku === undefined &&
       input.sales_status === undefined &&
       input.delivery_days_max === undefined &&
-      input.regular_customer_price === undefined
+      input.extra_delivery_cost === undefined &&
+      input.regular_customer_price === undefined &&
+      input.promo_price === undefined &&
+      input.promo_starts_at === undefined &&
+      input.promo_ends_at === undefined &&
+      input.clear_promo === undefined
     ) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
@@ -271,6 +286,19 @@ export const patchOfferStep = createStep(
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
         "delivery_days_max moet tussen 0 en 365 liggen."
+      )
+    }
+
+    if (
+      input.promo_price != null &&
+      input.base_price == null
+    ) {
+      // ok — compare later against existing base
+    }
+    if (input.promo_price != null && input.promo_price < 0) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "promo_price mag niet negatief zijn."
       )
     }
 
@@ -320,16 +348,31 @@ export const patchOfferStep = createStep(
     }
     validateOfferAmounts(next)
 
+    if (
+      input.promo_price != null &&
+      Number(input.promo_price) >= next.base_price
+    ) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Actieprijs moet lager zijn dan de reguliere prijs."
+      )
+    }
+
     const result = await commerce.patchOfferGraph({
       offer_id: offer.id,
       quantity_available: input.quantity_available,
       base_price:
         centralRequested != null ? central : undefined,
       shipping_cost: input.shipping_cost,
+      extra_delivery_cost: input.extra_delivery_cost,
       vat_rate: input.vat_rate,
       seller_sku: input.seller_sku,
       sales_status: input.sales_status,
       delivery_days_max: input.delivery_days_max,
+      promo_price: input.promo_price,
+      promo_starts_at: input.promo_starts_at,
+      promo_ends_at: input.promo_ends_at,
+      clear_promo: input.clear_promo,
     })
 
     if (centralRequested != null) {
@@ -378,9 +421,9 @@ export const patchOfferStep = createStep(
         previous_base_price: result.previous_base_price,
         previous_shipping_cost: result.previous_shipping_cost,
         previous_vat_rate: result.previous_vat_rate,
+        previous_promo_price: result.previous_promo_price,
       })
 
-      // Append-only price history on linked Product Cloud product
       try {
         const identifier = await productCloud.retrieveIdentifier(
           offer.identifier_id
@@ -414,6 +457,26 @@ export const patchOfferStep = createStep(
                 ? String(result.previous_base_price)
                 : null,
             new_value: String(next.base_price),
+            status: "current",
+            reason: `offer:${offer.id}`,
+          })
+        }
+        if (input.clear_promo || input.promo_price !== undefined) {
+          historyRows.push({
+            product_id: variant.product_id,
+            seller_id: input.seller_id,
+            actor_customer_id: input.actor_customer_id ?? null,
+            field_code: "offer.promo_price",
+            field_label: "Actieprijs",
+            old_value:
+              result.previous_promo_price != null
+                ? String(result.previous_promo_price)
+                : null,
+            new_value: input.clear_promo
+              ? null
+              : input.promo_price != null
+                ? String(input.promo_price)
+                : null,
             status: "current",
             reason: `offer:${offer.id}`,
           })

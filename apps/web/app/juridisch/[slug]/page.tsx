@@ -1,5 +1,10 @@
 import type { Metadata } from "next"
+import { CmsPageView } from "../../_components/cms/cms-page-view"
 import { ContentPage } from "../../_components/marketplace/content-page"
+import {
+  loadFixedCmsPage,
+  metadataFromCmsPage,
+} from "../../_lib/cms/fixed-cms-page"
 import { getStorefrontLocaleFromCookies } from "../../_lib/i18n/get-storefront-locale"
 import { L, pickLocalized, type LocalizedString } from "../../_lib/i18n/locales"
 import { t } from "../../_lib/i18n/messages"
@@ -277,9 +282,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const locale = await getStorefrontLocaleFromCookies()
+  const path = `/juridisch/${slug}`
+  const cms = await loadFixedCmsPage({ path, locale })
   const doc = DOCS.find((d) => d.slug === slug)
-  if (!doc) return { title: `${t("legalIndexTitle", locale)} — EuropMade` }
-  return { title: `${pickLocalized(doc.title, locale)} — EuropMade` }
+  const fallback: Metadata = doc
+    ? {
+        title: `${pickLocalized(doc.title, locale)} — EuropMade`,
+        alternates: { canonical: path },
+      }
+    : {
+        title: `${t("legalIndexTitle", locale)} — EuropMade`,
+        alternates: { canonical: path },
+      }
+  if (cms) return metadataFromCmsPage(cms, fallback)
+  return fallback
 }
 
 export default async function JuridischDocPage({
@@ -289,6 +305,10 @@ export default async function JuridischDocPage({
 }) {
   const { slug } = await params
   const locale = await getStorefrontLocaleFromCookies()
+  const path = `/juridisch/${slug}`
+  const cms = await loadFixedCmsPage({ path, locale })
+  if (cms) return <CmsPageView page={cms} locale={locale} />
+
   const doc = DOCS.find((d) => d.slug === slug)
   if (!doc) {
     return (

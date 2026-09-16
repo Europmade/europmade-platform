@@ -6,9 +6,8 @@ import { useParams } from "next/navigation"
 import { Badge, Notice } from "@europmade/ui"
 import { SellerGate } from "../../../_components/seller-gate"
 import { formatEuro } from "../../../../_components/storefront-shell"
+import { medusaBackendUrl } from "../../../../_lib/medusa-backend-url"
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PK = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export default function SellerSettlementDetailPage() {
@@ -19,7 +18,7 @@ export default function SellerSettlementDetailPage() {
 
   useEffect(() => {
     if (!id) return
-    fetch(`${BACKEND_URL}/store/finance/seller/settlements/${id}`, {
+    fetch(`${medusaBackendUrl()}/store/finance/seller/settlements/${id}`, {
       credentials: "include",
       headers: {
         "content-type": "application/json",

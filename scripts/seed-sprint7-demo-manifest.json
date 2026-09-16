@@ -1,0 +1,437 @@
+﻿[
+    {
+        "manufacturer":  "S7 Werkplaats Utrecht",
+        "categories":  [
+                           "Tuin",
+                           "Heggenscharen",
+                           "Klus \u0026 Gereedschap"
+                       ],
+        "title":  "S7 Heggenschaar Pro 60cm",
+        "price":  79.95,
+        "brand_id":  "brand_01KZTTCAAFZZNXFEZA3A3KJN18",
+        "product_id":  "prod_01KZTTCMDR5ERXZ8P26TEGBYXD",
+        "brand_name":  "S7 PolderCraft",
+        "country":  "NL",
+        "ean":  "8700664809290"
+    },
+    {
+        "manufacturer":  "S7 Werkplaats Utrecht",
+        "categories":  [
+                           "Tuin",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Tuinhandschoenen Leder Set",
+        "price":  19.95,
+        "brand_id":  "brand_01KZTTCAAFZZNXFEZA3A3KJN18",
+        "product_id":  "prod_01KZTTCN0WCRQHZSTWQ07ZBXEE",
+        "brand_name":  "S7 PolderCraft",
+        "country":  "NL",
+        "ean":  "8700664809291"
+    },
+    {
+        "manufacturer":  "S7 Werkplaats Utrecht",
+        "categories":  [
+                           "Tuin",
+                           "Wonen",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Moestuinbak Lariks 120cm",
+        "price":  149.95,
+        "brand_id":  "brand_01KZTTCAAFZZNXFEZA3A3KJN18",
+        "product_id":  "prod_01KZTTCND2QZP7KGET3CSPX2QQ",
+        "brand_name":  "S7 PolderCraft",
+        "country":  "NL",
+        "ean":  "8700664809292"
+    },
+    {
+        "manufacturer":  "S7 Werkplaats Utrecht",
+        "categories":  [
+                           "Tuin",
+                           "Wonen",
+                           "Plant \u0026 Bloem"
+                       ],
+        "title":  "S7 Gietersets Keramiek 3-delig",
+        "price":  49.95,
+        "brand_id":  "brand_01KZTTCAAFZZNXFEZA3A3KJN18",
+        "product_id":  "prod_01KZTTCNRCBF6QVXHYX2FXVTK8",
+        "brand_name":  "S7 PolderCraft",
+        "country":  "NL",
+        "ean":  "8700664809293"
+    },
+    {
+        "manufacturer":  "S7 Werkplaats Utrecht",
+        "categories":  [
+                           "Keuken",
+                           "Huishouden"
+                       ],
+        "title":  "S7 Keukenmes Santoku 18cm",
+        "price":  59.95,
+        "brand_id":  "brand_01KZTTCAAFZZNXFEZA3A3KJN18",
+        "product_id":  "prod_01KZTTCPBC8ED575RG6AEFQ24B",
+        "brand_name":  "S7 PolderCraft",
+        "country":  "NL",
+        "ean":  "8700664809294"
+    },
+    {
+        "manufacturer":  "S7 Fertigung Muenchen",
+        "categories":  [
+                           "Keuken",
+                           "Elektronica",
+                           "Huishouden"
+                       ],
+        "title":  "S7 Inductiekookplaat Compact",
+        "price":  249.95,
+        "brand_id":  "brand_01KZTTCCAFB05ND9HVS0T2BT26",
+        "product_id":  "prod_01KZTTCPPSCA8P0M940C2M6KSS",
+        "brand_name":  "S7 RheinWerk",
+        "country":  "DE",
+        "ean":  "8700664809295"
+    },
+    {
+        "manufacturer":  "S7 Fertigung Muenchen",
+        "categories":  [
+                           "Klus \u0026 Gereedschap",
+                           "Elektronica"
+                       ],
+        "title":  "S7 Accuboormachine 18V Kit",
+        "price":  129.95,
+        "brand_id":  "brand_01KZTTCCAFB05ND9HVS0T2BT26",
+        "product_id":  "prod_01KZTTCQ35HT2JQRQWJSXBSF7R",
+        "brand_name":  "S7 RheinWerk",
+        "country":  "DE",
+        "ean":  "8700664809296"
+    },
+    {
+        "manufacturer":  "S7 Fertigung Muenchen",
+        "categories":  [
+                           "Elektronica",
+                           "Kantoor",
+                           "Verlichting"
+                       ],
+        "title":  "S7 LED Desk Lamp Dimbaar",
+        "price":  39.95,
+        "brand_id":  "brand_01KZTTCCAFB05ND9HVS0T2BT26",
+        "product_id":  "prod_01KZTTCQJ5BNT0BBQ7KZ23HTXA",
+        "brand_name":  "S7 RheinWerk",
+        "country":  "DE",
+        "ean":  "8700664809297"
+    },
+    {
+        "manufacturer":  "S7 Fertigung Muenchen",
+        "categories":  [
+                           "Elektronica",
+                           "Kantoor"
+                       ],
+        "title":  "S7 Bluetooth Headset Office",
+        "price":  89.95,
+        "brand_id":  "brand_01KZTTCCAFB05ND9HVS0T2BT26",
+        "product_id":  "prod_01KZTTCR3K7X0WF0CH54Y626SH",
+        "brand_name":  "S7 RheinWerk",
+        "country":  "DE",
+        "ean":  "8700664809298"
+    },
+    {
+        "manufacturer":  "S7 Fertigung Muenchen",
+        "categories":  [
+                           "Huishouden",
+                           "Elektronica"
+                       ],
+        "title":  "S7 Stofzuiger Zakloos Eco",
+        "price":  199.95,
+        "brand_id":  "brand_01KZTTCCAFB05ND9HVS0T2BT26",
+        "product_id":  "prod_01KZTTCREC4EAXHEQB6Y9ZNPMY",
+        "brand_name":  "S7 RheinWerk",
+        "country":  "DE",
+        "ean":  "8700664809299"
+    },
+    {
+        "manufacturer":  "S7 Usine Nantes",
+        "categories":  [
+                           "Wonen",
+                           "Slaapkamer",
+                           "Mode"
+                       ],
+        "title":  "S7 Linnen Beddengoed Set 240",
+        "price":  119.95,
+        "brand_id":  "brand_01KZTTCDZ1676M1Q7CYBBF1R3D",
+        "product_id":  "prod_01KZTTCRS8ZDT165GKF8TS6WRT",
+        "brand_name":  "S7 Atelier Loire",
+        "country":  "FR",
+        "ean":  "8700664809300"
+    },
+    {
+        "manufacturer":  "S7 Usine Nantes",
+        "categories":  [
+                           "Keuken",
+                           "Wonen",
+                           "Huishouden"
+                       ],
+        "title":  "S7 Keramiek Servies 12-delig",
+        "price":  99.95,
+        "brand_id":  "brand_01KZTTCDZ1676M1Q7CYBBF1R3D",
+        "product_id":  "prod_01KZTTCS5HAJ8JQAQVJKYCRP19",
+        "brand_name":  "S7 Atelier Loire",
+        "country":  "FR",
+        "ean":  "8700664809301"
+    },
+    {
+        "manufacturer":  "S7 Usine Nantes",
+        "categories":  [
+                           "Wonen",
+                           "Mode"
+                       ],
+        "title":  "S7 Wollen Plaid Merino",
+        "price":  79.95,
+        "brand_id":  "brand_01KZTTCDZ1676M1Q7CYBBF1R3D",
+        "product_id":  "prod_01KZTTCSN58DW2XJ0EKDJ9XTGS",
+        "brand_name":  "S7 Atelier Loire",
+        "country":  "FR",
+        "ean":  "8700664809302"
+    },
+    {
+        "manufacturer":  "S7 Usine Nantes",
+        "categories":  [
+                           "Wonen",
+                           "Beauty \u0026 Verzorging",
+                           "Cadeaus"
+                       ],
+        "title":  "S7 Geurkaars Lavendel Pot",
+        "price":  24.95,
+        "brand_id":  "brand_01KZTTCDZ1676M1Q7CYBBF1R3D",
+        "product_id":  "prod_01KZTTCT7QDVCPXBRAJ2BSG1P0",
+        "brand_name":  "S7 Atelier Loire",
+        "country":  "FR",
+        "ean":  "8700664809303"
+    },
+    {
+        "manufacturer":  "S7 Usine Nantes",
+        "categories":  [
+                           "Keuken",
+                           "Huishouden"
+                       ],
+        "title":  "S7 Espressokan RVS 6-kops",
+        "price":  34.95,
+        "brand_id":  "brand_01KZTTCDZ1676M1Q7CYBBF1R3D",
+        "product_id":  "prod_01KZTTCTK129FTSJBRAJ4SGDFF",
+        "brand_name":  "S7 Atelier Loire",
+        "country":  "FR",
+        "ean":  "8700664809304"
+    },
+    {
+        "manufacturer":  "S7 Fabbrica Brescia",
+        "categories":  [
+                           "Schoenen",
+                           "Mode"
+                       ],
+        "title":  "S7 Leren Sneaker Milano",
+        "price":  129.95,
+        "brand_id":  "brand_01KZTTCG6XX8W4141V6MV13S0V",
+        "product_id":  "prod_01KZTTCTY8EBRHEDKW3MVAER6R",
+        "brand_name":  "S7 Bottega Verde",
+        "country":  "IT",
+        "ean":  "8700664809305"
+    },
+    {
+        "manufacturer":  "S7 Fabbrica Brescia",
+        "categories":  [
+                           "Mode"
+                       ],
+        "title":  "S7 Katoenen T-shirt Basic",
+        "price":  29.95,
+        "brand_id":  "brand_01KZTTCG6XX8W4141V6MV13S0V",
+        "product_id":  "prod_01KZTTCV9601AGY4CJ9QYXCQJA",
+        "brand_name":  "S7 Bottega Verde",
+        "country":  "IT",
+        "ean":  "8700664809306"
+    },
+    {
+        "manufacturer":  "S7 Fabbrica Brescia",
+        "categories":  [
+                           "Baby \u0026 Kind",
+                           "Tassen \u0026 Accessoires",
+                           "Mode"
+                       ],
+        "title":  "S7 Kinderrugzak Canvas",
+        "price":  44.95,
+        "brand_id":  "brand_01KZTTCG6XX8W4141V6MV13S0V",
+        "product_id":  "prod_01KZTTCVKXE2ND22DZW63K84R3",
+        "brand_name":  "S7 Bottega Verde",
+        "country":  "IT",
+        "ean":  "8700664809307"
+    },
+    {
+        "manufacturer":  "S7 Fabbrica Brescia",
+        "categories":  [
+                           "Sport",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Yogamat Kurk 5mm",
+        "price":  54.95,
+        "brand_id":  "brand_01KZTTCG6XX8W4141V6MV13S0V",
+        "product_id":  "prod_01KZTTCW2JGBKEXKDAM35SE7E8",
+        "brand_name":  "S7 Bottega Verde",
+        "country":  "IT",
+        "ean":  "8700664809308"
+    },
+    {
+        "manufacturer":  "S7 Fabbrica Brescia",
+        "categories":  [
+                           "Sport",
+                           "Outdoor"
+                       ],
+        "title":  "S7 Fietshelm Urban",
+        "price":  69.95,
+        "brand_id":  "brand_01KZTTCG6XX8W4141V6MV13S0V",
+        "product_id":  "prod_01KZTTCWCZ7MG0NQGX6XRM6X8X",
+        "brand_name":  "S7 Bottega Verde",
+        "country":  "IT",
+        "ean":  "8700664809309"
+    },
+    {
+        "manufacturer":  "S7 Taller Valencia",
+        "categories":  [
+                           "Keuken",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Keramiek Olijfoliekan",
+        "price":  27.95,
+        "brand_id":  "brand_01KZTTCHYXY65AJYB0K8PN6JA9",
+        "product_id":  "prod_01KZTTCWQSBD7AHDKBQ6819GKK",
+        "brand_name":  "S7 Casa Iberica",
+        "country":  "ES",
+        "ean":  "8700664809310"
+    },
+    {
+        "manufacturer":  "S7 Taller Valencia",
+        "categories":  [
+                           "Tuin",
+                           "Wonen",
+                           "Plant \u0026 Bloem"
+                       ],
+        "title":  "S7 Terracotta Bloempot Set",
+        "price":  32.95,
+        "brand_id":  "brand_01KZTTCHYXY65AJYB0K8PN6JA9",
+        "product_id":  "prod_01KZTTCXA0KP599AR4TT21ZTGX",
+        "brand_name":  "S7 Casa Iberica",
+        "country":  "ES",
+        "ean":  "8700664809311"
+    },
+    {
+        "manufacturer":  "S7 Taller Valencia",
+        "categories":  [
+                           "Outdoor",
+                           "Sport",
+                           "Tuin"
+                       ],
+        "title":  "S7 Outdoor Picknickkleed",
+        "price":  39.95,
+        "brand_id":  "brand_01KZTTCHYXY65AJYB0K8PN6JA9",
+        "product_id":  "prod_01KZTTCXT18V4H1YJGAJH1ZSAX",
+        "brand_name":  "S7 Casa Iberica",
+        "country":  "ES",
+        "ean":  "8700664809312"
+    },
+    {
+        "manufacturer":  "S7 Taller Valencia",
+        "categories":  [
+                           "Keuken",
+                           "Wonen",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Kurk Onderzetters 6-pack",
+        "price":  19.95,
+        "brand_id":  "brand_01KZTTCHYXY65AJYB0K8PN6JA9",
+        "product_id":  "prod_01KZTTCY4ABN89TWREPT16W4RQ",
+        "brand_name":  "S7 Casa Iberica",
+        "country":  "ES",
+        "ean":  "8700664809313"
+    },
+    {
+        "manufacturer":  "S7 Taller Valencia",
+        "categories":  [
+                           "Baby \u0026 Kind",
+                           "Mode"
+                       ],
+        "title":  "S7 Baby Rompertjes 3-pack",
+        "price":  22.95,
+        "brand_id":  "brand_01KZTTCHYXY65AJYB0K8PN6JA9",
+        "product_id":  "prod_01KZTTCYMG3SRX6YN70D8EAC3H",
+        "brand_name":  "S7 Casa Iberica",
+        "country":  "ES",
+        "ean":  "8700664809314"
+    },
+    {
+        "manufacturer":  "S7 Zaklad Gdansk",
+        "categories":  [
+                           "Wonen",
+                           "Verlichting"
+                       ],
+        "title":  "S7 Staande Lamp Eiken",
+        "price":  159.95,
+        "brand_id":  "brand_01KZTTCM27WT4BBAPKDC591HFD",
+        "product_id":  "prod_01KZTTCZ8FW9Q49X3QFQY75F4S",
+        "brand_name":  "S7 Baltic Form",
+        "country":  "PL",
+        "ean":  "8700664809315"
+    },
+    {
+        "manufacturer":  "S7 Zaklad Gdansk",
+        "categories":  [
+                           "Speelgoed",
+                           "Baby \u0026 Kind",
+                           "Ambacht"
+                       ],
+        "title":  "S7 Speelgoed Houten Trein",
+        "price":  49.95,
+        "brand_id":  "brand_01KZTTCM27WT4BBAPKDC591HFD",
+        "product_id":  "prod_01KZTTCZZ1RFRDBHBT9ZR2SCPJ",
+        "brand_name":  "S7 Baltic Form",
+        "country":  "PL",
+        "ean":  "8700664809316"
+    },
+    {
+        "manufacturer":  "S7 Zaklad Gdansk",
+        "categories":  [
+                           "Sport",
+                           "Schoenen"
+                       ],
+        "title":  "S7 Hardloopschoen Trail",
+        "price":  109.95,
+        "brand_id":  "brand_01KZTTCM27WT4BBAPKDC591HFD",
+        "product_id":  "prod_01KZTTD0M4TSV4G71YS32EPDNZ",
+        "brand_name":  "S7 Baltic Form",
+        "country":  "PL",
+        "ean":  "8700664809317"
+    },
+    {
+        "manufacturer":  "S7 Zaklad Gdansk",
+        "categories":  [
+                           "Outdoor",
+                           "Sport",
+                           "Tassen \u0026 Accessoires"
+                       ],
+        "title":  "S7 Rugzak Weekend 30L",
+        "price":  84.95,
+        "brand_id":  "brand_01KZTTCM27WT4BBAPKDC591HFD",
+        "product_id":  "prod_01KZTTD1AHPQ5WR33KJ7R3PWHQ",
+        "brand_name":  "S7 Baltic Form",
+        "country":  "PL",
+        "ean":  "8700664809318"
+    },
+    {
+        "manufacturer":  "S7 Zaklad Gdansk",
+        "categories":  [
+                           "Tuin",
+                           "Heggenscharen",
+                           "Klus \u0026 Gereedschap",
+                           "Elektronica"
+                       ],
+        "title":  "S7 Elektrische Heggenschaar Compact",
+        "price":  99.95,
+        "brand_id":  "brand_01KZTTCM27WT4BBAPKDC591HFD",
+        "product_id":  "prod_01KZTTD20AG35RP7PD0GDDMGXR",
+        "brand_name":  "S7 Baltic Form",
+        "country":  "PL",
+        "ean":  "8700664809319"
+    }
+]

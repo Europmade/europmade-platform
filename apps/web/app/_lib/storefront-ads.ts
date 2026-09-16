@@ -84,7 +84,7 @@ const PUBLISHED_ADS: StorefrontAdCreative[] = [
     headline: "Collectie robotmaaiers",
     description: "Vergelijk Europese merken op prijs, levertijd en reviews.",
     ctaLabel: "Bekijk collectie",
-    href: "/zoeken?q=robotmaaier&collectie=robotmaaiers",
+    href: "/acties/robotmaaiers",
     linkType: "collection",
     imageSrc: "",
     imageAlt: "Advertentie: Collectie robotmaaiers",

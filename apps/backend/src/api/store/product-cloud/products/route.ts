@@ -16,7 +16,18 @@ import {
   buildSellerProductManagerRow,
   filterAndSortProductRows,
   loadSellerOfferLookup,
+  pickWorkingVersion,
+  productIdsForSellerOffers,
 } from "../product-manager"
+import {
+  LIST_QUERY_TAKE,
+  listVersionsByProductId,
+  loadSellerListDataCache,
+} from "../seller-product-list-cache"
+import {
+  unionSellerListProductIds,
+  workingPublicationMatchesListFilter,
+} from "../../../../modules/product-cloud/seller-product-list"
 import { VERIFICATION_MODULE } from "../../../../modules/verification"
 import type VerificationModuleService from "../../../../modules/verification/service"
 import { generateConceptDraftIdentifier } from "../../../../modules/product-cloud/concept-identifier"
@@ -55,9 +66,12 @@ export async function GET(
     partner = null
   }
 
-  const products = await productCloud.listProducts({
-    current_owner_seller_id: seller.id,
-  })
+  const owned = await productCloud.listProducts(
+    {
+      current_owner_seller_id: seller.id,
+    },
+    { take: LIST_QUERY_TAKE }
+  )
 
   let verification: VerificationModuleService | null = null
   try {
@@ -69,10 +83,62 @@ export async function GET(
   }
 
   const offerMaps = await loadSellerOfferLookup(commerce, seller.id)
+  const offerProductIds = await productIdsForSellerOffers(
+    productCloud,
+    offerMaps
+  )
+  const ownedIds = owned.map((p) => p.id)
+  const listIds = unionSellerListProductIds(ownedIds, offerProductIds)
+  const byId = new Map(owned.map((p) => [p.id, p]))
+  const missingIds = listIds.filter((id) => !byId.has(id))
+  if (missingIds.length > 0) {
+    const extra = await productCloud.listProducts(
+      { id: missingIds },
+      { take: LIST_QUERY_TAKE }
+    )
+    for (const product of extra) {
+      byId.set(product.id, product)
+    }
+  }
+  const products = listIds
+    .map((id) => byId.get(id))
+    .filter((p): p is (typeof owned)[number] => Boolean(p))
+
+  const filter =
+    typeof req.query.filter === "string" ? req.query.filter : undefined
+  const versionsByProduct = await listVersionsByProductId(
+    productCloud,
+    products.map((p) => p.id)
+  )
+  const productsToEnrich =
+    filter === "pending_approval" ||
+    filter === "published" ||
+    filter === "unpublished"
+      ? products.filter((product) =>
+          workingPublicationMatchesListFilter(
+            pickWorkingVersion(versionsByProduct.get(product.id) || [])
+              ?.publication_status,
+            filter
+          )
+        )
+      : products
+
   const brandNameCache = new Map<string, string | null>()
+  const listCache = await loadSellerListDataCache({
+    productCloud,
+    commerce,
+    partner,
+    verification,
+    products: productsToEnrich,
+    sellerId: seller.id,
+    versionsByProduct,
+  })
+  for (const [brandId, name] of listCache.brandNameById) {
+    brandNameCache.set(brandId, name)
+  }
 
   const enriched = []
-  for (const product of products) {
+  for (const product of productsToEnrich) {
     enriched.push(
       await buildSellerProductManagerRow(
         productCloud,
@@ -85,6 +151,7 @@ export async function GET(
           brandNameCache,
           verification,
           container: req.scope,
+          listCache,
         }
       )
     )
@@ -92,8 +159,6 @@ export async function GET(
 
   const q =
     typeof req.query.q === "string" ? req.query.q : undefined
-  const filter =
-    typeof req.query.filter === "string" ? req.query.filter : undefined
   const sort =
     typeof req.query.sort === "string" ? req.query.sort : undefined
   const brandId =
@@ -107,7 +172,7 @@ export async function GET(
   res.json({
     products: filtered,
     count: filtered.length,
-    total_unfiltered: enriched.length,
+    total_unfiltered: products.length,
   })
 }
 

@@ -4,6 +4,7 @@ import Offer from "./offer"
 /**
  * Price — Blueprint `02-database-model.md` Deel C.3.
  * Tabelnaam `cc_price` om botsing met Medusa Pricing-module te vermijden.
+ * promo_* = tijdelijke actieprijs (Commerce Cloud, niet catalogus).
  */
 const OfferPrice = model
   .define("cc_price", {
@@ -14,7 +15,13 @@ const OfferPrice = model
     }),
     base_price: model.bigNumber(),
     shipping_cost: model.bigNumber(),
+    /** Objectieve extra leverings-/handlingkosten per markt (niet een andere basisprijs). */
+    extra_delivery_cost: model.bigNumber().nullable(),
     vat_rate: model.float(),
+    /** Temporary / promotional unit price (excl. shipping). */
+    promo_price: model.bigNumber().nullable(),
+    promo_starts_at: model.dateTime().nullable(),
+    promo_ends_at: model.dateTime().nullable(),
   })
   .indexes([
     {

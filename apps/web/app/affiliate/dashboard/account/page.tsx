@@ -12,9 +12,8 @@ import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
 import { t } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
+import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 type CustomerMe = {
@@ -39,7 +38,7 @@ function Field({
 }
 
 async function fetchCustomerMe(): Promise<CustomerMe> {
-  const res = await fetch(`${BACKEND_URL}/store/customers/me`, {
+  const res = await fetch(`${medusaBackendUrl()}/store/customers/me`, {
     credentials: "include",
     headers: {
       ...(PUBLISHABLE_KEY

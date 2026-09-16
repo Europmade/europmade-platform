@@ -4,7 +4,8 @@
  * `app/(auth)/_lib/medusa-auth.ts`, geen eigen backend-logica.
  */
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000";
+import { medusaBackendUrl } from "../../_lib/medusa-backend-url";
+
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? "";
 
 export class PartnerOnboardingApiError extends Error {
@@ -18,7 +19,7 @@ export class PartnerOnboardingApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     ...init,
     credentials: "include",
     headers: {
@@ -56,7 +57,11 @@ export interface OnboardingRecord {
   company_id: string | null;
   is_retailer: boolean;
   is_producer_or_brand_owner: boolean;
+  is_brand_owner?: boolean;
+  is_producer?: boolean;
   is_distributor: boolean;
+  roles?: string[];
+  permissions?: string[];
   onboarding_status:
     | "Concept"
     | "Ingediend"
@@ -74,6 +79,8 @@ export interface OnboardingRecord {
 export interface RoleSelection {
   is_retailer: boolean;
   is_producer_or_brand_owner: boolean;
+  is_brand_owner?: boolean;
+  is_producer?: boolean;
   is_distributor: boolean;
 }
 
@@ -143,7 +150,7 @@ export async function uploadOnboardingDocument(
   form.append("file", file);
   form.append("document_type", documentType);
 
-  const response = await fetch(`${BACKEND_URL}/store/partner-onboarding/documents`, {
+  const response = await fetch(`${medusaBackendUrl()}/store/partner-onboarding/documents`, {
     method: "POST",
     credentials: "include",
     headers: {

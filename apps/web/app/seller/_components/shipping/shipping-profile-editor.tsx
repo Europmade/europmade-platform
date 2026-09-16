@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { EU_MARKET_CODES } from "@europmade/types"
 import { Button, Input } from "@europmade/ui"
 import type {
@@ -8,6 +9,11 @@ import type {
   SellerShippingProfile,
   ShippingCountryConfig,
 } from "../../_lib/commerce-cloud-api"
+import {
+  formatMoneyInput,
+  parseMoneyInput,
+} from "../../_lib/money-input"
+import { euMarketLabelNl } from "../../_lib/eu-market-labels"
 
 export const DELIVERY_TIME_OPTIONS: Array<{
   code: DeliveryTimeCode
@@ -92,6 +98,25 @@ export function ShippingProfileEditor(props: Props) {
   const rates = draft.country_rates || {}
   const selected = Object.keys(rates)
   const processing = draft.processing_settings || defaultProcessing()
+  const [costDrafts, setCostDrafts] = useState<Record<string, string>>({})
+  const [bulkCostDraft, setBulkCostDraft] = useState("")
+
+  useEffect(() => {
+    setCostDrafts((prev) => {
+      const next = { ...prev }
+      for (const code of Object.keys(rates)) {
+        if (next[code] == null) {
+          next[code] = rates[code].free_shipping
+            ? ""
+            : formatMoneyInput(rates[code].shipping_cost)
+        }
+      }
+      for (const code of Object.keys(next)) {
+        if (!rates[code]) delete next[code]
+      }
+      return next
+    })
+  }, [rates])
 
   function setRate(code: string, patch: Partial<ShippingCountryConfig>) {
     onChange({
@@ -101,6 +126,21 @@ export function ShippingProfileEditor(props: Props) {
         [code]: { ...rates[code], ...patch },
       },
     })
+  }
+
+  function commitCost(code: string, raw: string) {
+    const parsed = parseMoneyInput(raw)
+    if (parsed == null) {
+      setCostDrafts((prev) => ({
+        ...prev,
+        [code]: rates[code]?.free_shipping
+          ? ""
+          : formatMoneyInput(rates[code]?.shipping_cost),
+      }))
+      return
+    }
+    setCostDrafts((prev) => ({ ...prev, [code]: formatMoneyInput(parsed) }))
+    setRate(code, { shipping_cost: parsed, free_shipping: false })
   }
 
   function toggleCountry(code: string) {
@@ -117,12 +157,20 @@ export function ShippingProfileEditor(props: Props) {
   }
 
   function applyBulkCost(value: string) {
-    const cost = Number(value)
-    if (!Number.isFinite(cost)) return
+    const cost = parseMoneyInput(value)
+    if (cost == null) return
     const next = { ...rates }
+    const drafts: Record<string, string> = {}
     for (const code of Object.keys(next)) {
-      next[code] = { ...next[code], shipping_cost: cost, free_shipping: cost === 0 }
+      next[code] = {
+        ...next[code],
+        shipping_cost: cost,
+        free_shipping: cost === 0,
+      }
+      drafts[code] = formatMoneyInput(cost)
     }
+    setCostDrafts(drafts)
+    setBulkCostDraft(formatMoneyInput(cost))
     onChange({ ...draft, country_rates: next })
   }
 
@@ -202,6 +250,8 @@ export function ShippingProfileEditor(props: Props) {
             <button
               key={code}
               type="button"
+              title={euMarketLabelNl(code)}
+              aria-label={euMarketLabelNl(code)}
               onClick={() => toggleCountry(code)}
               className={`rounded border px-2 py-1 text-[11px] font-semibold ${
                 rates[code]
@@ -221,9 +271,17 @@ export function ShippingProfileEditor(props: Props) {
           <div className="flex flex-wrap gap-2">
             <Input
               label="Zelfde kosten (€)"
-              value=""
+              value={bulkCostDraft}
               placeholder="7,95"
-              onChange={(e) => applyBulkCost(e.target.value.replace(",", "."))}
+              inputMode="decimal"
+              onChange={(e) => setBulkCostDraft(e.target.value)}
+              onBlur={() => applyBulkCost(bulkCostDraft)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  applyBulkCost(bulkCostDraft)
+                }
+              }}
             />
             <div>
               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
@@ -284,16 +342,26 @@ export function ShippingProfileEditor(props: Props) {
                     <td className="px-2 py-2">
                       <input
                         className="h-8 w-24 rounded border border-wf-400 px-2"
-                        value={row.free_shipping ? "" : String(row.shipping_cost)}
-                        disabled={row.free_shipping}
-                        onChange={(e) =>
-                          setRate(code, {
-                            shipping_cost: Number(
-                              e.target.value.replace(",", ".")
-                            ),
-                            free_shipping: false,
-                          })
+                        inputMode="decimal"
+                        value={
+                          row.free_shipping
+                            ? ""
+                            : (costDrafts[code] ??
+                              formatMoneyInput(row.shipping_cost))
                         }
+                        disabled={row.free_shipping}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          setCostDrafts((prev) => ({ ...prev, [code]: raw }))
+                          const parsed = parseMoneyInput(raw)
+                          if (parsed != null) {
+                            setRate(code, {
+                              shipping_cost: parsed,
+                              free_shipping: false,
+                            })
+                          }
+                        }}
+                        onBlur={(e) => commitCost(code, e.target.value)}
                       />
                     </td>
                     <td className="px-2 py-2">

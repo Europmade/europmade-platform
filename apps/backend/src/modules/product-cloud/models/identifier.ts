@@ -12,7 +12,7 @@ const Identifier = model
       mappedBy: "identifiers",
       foreignKeyName: "product_variant_id",
     }),
-    identifier_type: model.enum(["GTIN", "MPN"]),
+    identifier_type: model.enum(["GTIN", "MPN", "IMPORT_REF"]),
     identifier_value: model.text(),
     // null = alle landen (Blueprint B.5).
     country_scope: model.text().nullable(),

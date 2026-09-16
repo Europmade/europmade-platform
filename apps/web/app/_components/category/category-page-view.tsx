@@ -1,9 +1,12 @@
+"use client"
+
 import type { ListingProduct } from "../../_lib/listing-products"
 import type { ResolvedCategoryPage } from "../../_lib/cms/resolve-category"
 import { CATEGORY_PRODUCT_KIND } from "../../_lib/product-mockup"
 import { PublicStorefrontChrome } from "../marketplace/public-storefront-chrome"
 import { CategoryHero } from "./category-hero"
 import { CategoryExperience } from "./category-experience"
+import { CommercialNavVisitBeacon } from "../../_lib/commercial-nav-visit"
 
 type CategoryPageViewProps = {
   page: ResolvedCategoryPage
@@ -18,6 +21,7 @@ export function CategoryPageView({ page, products }: CategoryPageViewProps) {
 
   return (
     <PublicStorefrontChrome locale={page.locale}>
+      <CommercialNavVisitBeacon categoryKey={page.slug} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

@@ -8,7 +8,8 @@ export async function emitCommerceEvent(
     | "OfferCreated"
     | "OfferWithdrawn"
     | "InventoryChanged"
-    | "PriceChanged",
+    | "PriceChanged"
+    | "OfferMetaChanged",
   data: Record<string, unknown>
 ): Promise<void> {
   const eventBus = container.resolve(Modules.EVENT_BUS)

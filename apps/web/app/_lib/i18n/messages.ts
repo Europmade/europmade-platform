@@ -59,6 +59,8 @@ const M = {
     "Campagnes suivantes"
   ),
   breadcrumbHome: L("Home", "Home", "Home", "Accueil"),
+  breadcrumbActions: L("Acties", "Deals", "Aktionen", "Promos"),
+  filterCategory: L("Categorie", "Category", "Kategorie", "Catégorie"),
   breadcrumbCategories: L(
     "Categorieën",
     "Categories",
@@ -462,6 +464,30 @@ const M = {
     "Alle Kategorien",
     "Toutes les catégories"
   ),
+  navViewCategory: L(
+    "Bekijk categorie",
+    "View category",
+    "Kategorie ansehen",
+    "Voir la catégorie"
+  ),
+  navNoSubcategories: L(
+    "Geen subcategorieën",
+    "No subcategories",
+    "Keine Unterkategorien",
+    "Pas de sous-catégories"
+  ),
+  navOpenSubcategories: L(
+    "Subcategorieën openen",
+    "Open subcategories",
+    "Unterkategorien öffnen",
+    "Ouvrir les sous-catégories"
+  ),
+  navProductCount: L(
+    "{count} producten",
+    "{count} products",
+    "{count} Produkte",
+    "{count} produits"
+  ),
   searchPlaceholder: L(
     "Zoek naar producten, merken, categorieën…",
     "Search products, brands, categories…",
@@ -475,6 +501,24 @@ const M = {
     "Rechercher des produits"
   ),
   searchLabel: L("Zoeken", "Search", "Suchen", "Rechercher"),
+  searchSuggestions: L(
+    "Zoeksuggesties",
+    "Search suggestions",
+    "Suchvorschläge",
+    "Suggestions de recherche"
+  ),
+  searchViewAllResults: L(
+    "Alle resultaten voor “{query}”",
+    "All results for “{query}”",
+    "Alle Ergebnisse für „{query}“",
+    "Tous les résultats pour « {query} »"
+  ),
+  searchNoSuggestions: L(
+    "Geen suggesties",
+    "No suggestions",
+    "Keine Vorschläge",
+    "Aucune suggestion"
+  ),
   menu: L("Menu", "Menu", "Menü", "Menu"),
   cart: L("Winkelwagen", "Cart", "Warenkorb", "Panier"),
   cartWithCount: L(
@@ -617,6 +661,24 @@ const M = {
     "Wo werden unsere Produkte hergestellt?",
     "Où nos produits sont-ils fabriqués ?"
   ),
+  brandCategoriesHeading: L(
+    "Productcategorieën",
+    "Product categories",
+    "Produktkategorien",
+    "Catégories de produits"
+  ),
+  brandAllProducts: L(
+    "Alle producten",
+    "All products",
+    "Alle Produkte",
+    "Tous les produits"
+  ),
+  brandNoProducts: L(
+    "Dit merk heeft momenteel geen zichtbare producten.",
+    "This brand currently has no visible products.",
+    "Diese Marke hat derzeit keine sichtbaren Produkte.",
+    "Cette marque n’a actuellement aucun produit visible."
+  ),
   brandProductsHeading: L(
     "Producten van {name}",
     "Products from {name}",
@@ -654,7 +716,7 @@ const M = {
     "Pas encore de marques à gérer."
   ),
   sellerBrandsIntro: L(
-    "Beheer de merken die aan jouw Partner-account zijn gekoppeld.",
+    "Beheer merknamen, slug en de koppeling met producten en productielocaties. De publieke merkpagina beheer je via Marketing → Merkpagina.",
     "Manage the brands linked to your Partner account.",
     "Verwalten Sie die Marken, die mit Ihrem Partnerkonto verknüpft sind.",
     "Gérez les marques liées à votre compte partenaire."
@@ -862,6 +924,42 @@ const M = {
     "At least 50% of substantial assembly steps must take place in the EU. Packaging or labelling alone does not count.",
     "Mindestens 50 % der wesentlichen Montageschritte müssen in der EU stattfinden. Nur Verpacken oder Etikettieren zählt nicht.",
     "Au moins 50 % des étapes d'assemblage substantielles doivent avoir lieu dans l'UE. L'emballage ou l'étiquetage seuls ne comptent pas."
+  ),
+  mieInfoAria: L(
+    "Meer informatie over EU Verified™ en de Made in Europe-score",
+    "More information about EU Verified™ and the Made in Europe score",
+    "Mehr Informationen zu EU Verified™ und dem Made-in-Europe-Score",
+    "Plus d'informations sur EU Verified™ et le score Made in Europe"
+  ),
+  mieVerifiedMeaningTitle: L(
+    "Wat betekent EU Verified™?",
+    "What does EU Verified™ mean?",
+    "Was bedeutet EU Verified™?",
+    "Que signifie EU Verified™ ?"
+  ),
+  mieVerifiedMeaningBody: L(
+    "EU Verified™ betekent dat herkomst- en productinformatie is gecontroleerd volgens de EuropMade-regels: productie in Europa, traceerbare producentgegevens en geen misleidende claims.",
+    "EU Verified™ means origin and product information has been checked under EuropMade rules: production in Europe, traceable producer data, and no misleading claims.",
+    "EU Verified™ bedeutet, dass Herkunfts- und Produktinformationen nach den EuropMade-Regeln geprüft wurden: Produktion in Europa, nachvollziehbare Herstellerdaten und keine irreführenden Angaben.",
+    "EU Verified™ signifie que les informations d'origine et de produit ont été contrôlées selon les règles EuropMade : production en Europe, données producteur traçables et aucune allégation trompeuse."
+  ),
+  mieVerifiedMeaningBuyBox: L(
+    "EU Verified™ zegt iets over de productinformatie — niet over welke aanbieder de Buy Box wint.",
+    "EU Verified™ is about product information — not about which seller wins the Buy Box.",
+    "EU Verified™ betrifft die Produktinformationen — nicht, welcher Anbieter die Buy Box gewinnt.",
+    "EU Verified™ concerne les informations produit — pas quel vendeur remporte la Buy Box."
+  ),
+  mieVerifiedReadMore: L(
+    "Lees de volledige EU Verified™-uitleg",
+    "Read the full EU Verified™ explanation",
+    "Vollständige EU Verified™-Erklärung lesen",
+    "Lire l'explication complète EU Verified™"
+  ),
+  mieProductScoreTitle: L(
+    "Score voor dit product",
+    "Score for this product",
+    "Score für dieses Produkt",
+    "Score pour ce produit"
   ),
   miePageTitle: L(
     "Hoe bepaalt EuropMade Made in Europe?",
@@ -3401,6 +3499,12 @@ const M = {
     "E-Mail-Adresse oder Passwort falsch.",
     "Adresse e-mail ou mot de passe incorrect."
   ),
+  authEmailInvalid: L(
+    "Vul een geldig e-mailadres in, bijvoorbeeld naam@example.com.",
+    "Enter a valid email address, for example name@example.com.",
+    "Geben Sie eine gültige E-Mail-Adresse ein, zum Beispiel name@example.com.",
+    "Saisissez une adresse e-mail valide, par exemple nom@example.com."
+  ),
   authLoginUnavailable: L(
     "Inloggen is tijdelijk niet mogelijk. Probeer het opnieuw.",
     "Sign-in is temporarily unavailable. Please try again.",
@@ -4868,10 +4972,16 @@ const M = {
     "Produits sponsorisés"
   ),
   sellerMktSponsoredDesc: L(
-    "Campagnes met CPC, budget en looptijd.",
-    "Campaigns with CPC, budget and duration.",
-    "Kampagnen mit CPC, Budget und Laufzeit.",
-    "Campagnes avec CPC, budget et durée."
+    "Sponsored Products wordt binnenkort beschikbaar.",
+    "Sponsored Products will be available soon.",
+    "Sponsored Products wird in Kürze verfügbar sein.",
+    "Sponsored Products sera bientôt disponible."
+  ),
+  commonComingSoon: L(
+    "Binnenkort beschikbaar",
+    "Coming soon",
+    "Demnächst verfügbar",
+    "Bientôt disponible"
   ),
   sellerMktAffiliateTitle: L(
     "Affiliate Programma",
@@ -4896,6 +5006,78 @@ const M = {
     "Outstanding and paid marketing costs.",
     "Offene und bezahlte Marketingkosten.",
     "Coûts marketing ouverts et payés."
+  ),
+  sellerMktBrandPageTitle: L(
+    "Merkpagina",
+    "Brand page",
+    "Markenseite",
+    "Page marque"
+  ),
+  sellerMktBrandPageDesc: L(
+    "Bereid de officiële EuropMade-merkpagina voor en dien deze in ter beoordeling.",
+    "Prepare the official EuropMade brand page and submit it for review.",
+    "Bereiten Sie die offizielle EuropMade-Markenseite vor und reichen Sie sie zur Prüfung ein.",
+    "Préparez la page marque officielle EuropMade et soumettez-la pour examen."
+  ),
+  sellerBrandPagesHubTitle: L(
+    "Mijn merken",
+    "My brands",
+    "Meine Marken",
+    "Mes marques"
+  ),
+  sellerBrandPagesHubIntro: L(
+    "Per merk vraag je eigenaarschap aan. Na goedkeuring beheer je de officiële EuropMade-merkpagina — zonder externe links.",
+    "Request ownership per brand. After approval you manage the official EuropMade brand page — without external links.",
+    "Beantragen Sie pro Marke die Inhaberschaft. Nach Freigabe verwalten Sie die offizielle EuropMade-Markenseite — ohne externe Links.",
+    "Demandez la propriété par marque. Après validation, vous gérez la page officielle EuropMade — sans liens externes."
+  ),
+  sellerBrandPageRequest: L(
+    "Merkpagina aanvragen",
+    "Request brand page",
+    "Markenseite beantragen",
+    "Demander la page marque"
+  ),
+  sellerBrandPageManage: L(
+    "Merkpagina beheren",
+    "Manage brand page",
+    "Markenseite verwalten",
+    "Gérer la page marque"
+  ),
+  sellerBrandPagePublish: L(
+    "Indienen ter beoordeling",
+    "Submit for review",
+    "Zur Prüfung einreichen",
+    "Soumettre pour examen"
+  ),
+  sellerBrandPageUnpublish: L(
+    "Depubliceren",
+    "Unpublish",
+    "Zurückziehen",
+    "Dépublier"
+  ),
+  brandStoryPlaceholder: L(
+    "Merkverhaal",
+    "Brand story",
+    "Markengeschichte",
+    "Histoire de la marque"
+  ),
+  brandWebsitePlaceholder: L(
+    "Website-URL",
+    "Website URL",
+    "Website-URL",
+    "URL du site"
+  ),
+  brandLogoUrlPlaceholder: L(
+    "Logo-URL",
+    "Logo URL",
+    "Logo-URL",
+    "URL du logo"
+  ),
+  brandPublicPage: L(
+    "Publieke merkpagina",
+    "Public brand page",
+    "Öffentliche Markenseite",
+    "Page marque publique"
   ),
 
   sellerFinanceIntro: L(
@@ -5972,29 +6154,34 @@ const M = {
   ),
 
   sellerProductAddTitle: L(
-    "Product toevoegen — EAN-zoeken",
-    "Add product — EAN search",
-    "Produkt hinzufügen — EAN-Suche",
-    "Ajouter un produit — recherche EAN"
+    "Product toevoegen",
+    "Add product",
+    "Produkt hinzufügen",
+    "Ajouter un produit"
   ),
   sellerProductAddIntro: L(
-    "Zoek op EAN/GTIN om te controleren of dit product al in de Product Cloud bestaat.",
-    "Search by EAN/GTIN to check whether this product already exists in the Product Cloud.",
-    "Suche nach EAN/GTIN, um zu prüfen, ob dieses Produkt bereits in der Product Cloud existiert.",
-    "Recherchez par EAN/GTIN pour vérifier si ce produit existe déjà dans la Product Cloud."
+    "Zoek of het product al in de Product Cloud bestaat. EAN/GTIN is de meest zekere match; naam, merk, MPN of je eigen artikelnummer tonen kandidaten die je zelf kiest.",
+    "Search whether the product already exists in the Product Cloud. EAN/GTIN is the strongest match; name, brand, MPN or your own SKU show candidates you choose yourself.",
+    "Suche, ob das Produkt bereits in der Product Cloud existiert. EAN/GTIN ist der sicherste Treffer; Name, Marke, MPN oder deine eigene Artikelnummer zeigen Kandidaten, die du selbst wählst.",
+    "Recherchez si le produit existe déjà dans la Product Cloud. L'EAN/GTIN est la correspondance la plus sûre ; nom, marque, MPN ou votre SKU affichent des candidats que vous choisissez."
   ),
-  sellerProductAddEanLabel: L("EAN / GTIN", "EAN / GTIN", "EAN / GTIN", "EAN / GTIN"),
+  sellerProductAddEanLabel: L(
+    "Zoek op productnaam, merk, EAN, MPN of artikelnummer",
+    "Search by product name, brand, EAN, MPN or SKU",
+    "Suche nach Produktname, Marke, EAN, MPN oder Artikelnummer",
+    "Recherchez par nom de produit, marque, EAN, MPN ou référence"
+  ),
   sellerProductAddEanHint: L(
-    "Sterkste matchsleutel (Product Cloud Architecture Deel 2.4). Geen EAN? Gebruik MPN via 'Nieuw product aanmaken'.",
-    "Strongest match key (Product Cloud Architecture part 2.4). No EAN? Use MPN via 'Create new product'.",
-    "Stärkster Match-Schlüssel (Product Cloud Architecture Teil 2.4). Keine EAN? Nutze MPN über 'Neues Produkt anlegen'.",
-    "Clé de correspondance la plus forte (Product Cloud Architecture partie 2.4). Pas d'EAN ? Utilisez le MPN via 'Créer un nouveau produit'."
+    "EAN/GTIN koppelt het sterkst. MPN, naam en merk zijn geen automatische koppeling. Artikelnummer zoekt alleen in je eigen aanbod.",
+    "EAN/GTIN is the strongest link. MPN, name and brand are not automatic links. SKU searches only your own offers.",
+    "EAN/GTIN ist die stärkste Verknüpfung. MPN, Name und Marke sind keine automatische Kopplung. Die Artikelnummer sucht nur in deinem eigenen Angebot.",
+    "L'EAN/GTIN est le lien le plus fort. MPN, nom et marque ne sont pas une liaison automatique. La référence ne cherche que dans vos propres offres."
   ),
   sellerProductAddEanRequired: L(
-    "Vul een EAN / GTIN in.",
-    "Enter an EAN / GTIN.",
-    "Gib eine EAN / GTIN ein.",
-    "Saisissez un EAN / GTIN."
+    "Vul een zoekterm in.",
+    "Enter a search term.",
+    "Gib einen Suchbegriff ein.",
+    "Saisissez un terme de recherche."
   ),
   sellerProductAddSearchFailed: L(
     "Zoeken mislukt. Probeer opnieuw.",
@@ -6057,22 +6244,28 @@ const M = {
     "Identifiant manquant — recherchez à nouveau ou contactez le support."
   ),
   sellerProductNoMatch: L(
-    "Geen match gevonden",
-    "No match found",
-    "Kein Match gefunden",
-    "Aucune correspondance"
+    "Product niet gevonden?",
+    "Product not found?",
+    "Produkt nicht gefunden?",
+    "Produit introuvable ?"
   ),
   sellerProductNoMatchIntro: L(
-    "Er bestaat nog geen product met dit EAN in de Product Cloud.",
-    "No product with this EAN exists yet in the Product Cloud.",
-    "Es existiert noch kein Produkt mit dieser EAN in der Product Cloud.",
-    "Aucun produit avec cet EAN n'existe encore dans la Product Cloud."
+    "Er is geen geschikt Product Cloud-product gevonden. Maak alleen een nieuw product aan als je zeker weet dat het nog niet bestaat.",
+    "No suitable Product Cloud product was found. Only create a new product if you are sure it does not exist yet.",
+    "Es wurde kein passendes Product-Cloud-Produkt gefunden. Lege nur ein neues Produkt an, wenn du sicher bist, dass es noch nicht existiert.",
+    "Aucun produit Product Cloud adapté n'a été trouvé. Créez un nouveau produit seulement si vous êtes sûr qu'il n'existe pas encore."
   ),
   sellerProductNoMatchHint: L(
-    "Controleer het ingevoerde EAN ({ean}), of maak een nieuw product aan als dit de eerste keer is dat dit product wordt aangeboden.",
-    "Check the entered EAN ({ean}), or create a new product if this is the first time it is offered.",
-    "Prüfe die eingegebene EAN ({ean}), oder lege ein neues Produkt an, wenn es zum ersten Mal angeboten wird.",
-    "Vérifiez l'EAN saisi ({ean}), ou créez un nouveau produit si c'est la première fois qu'il est proposé."
+    "Geen resultaten voor “{ean}”. Controleer de zoekterm, of voer het product nieuw in.",
+    "No results for “{ean}”. Check the search term, or enter the product as new.",
+    "Keine Ergebnisse für „{ean}“. Prüfe den Suchbegriff oder lege das Produkt neu an.",
+    "Aucun résultat pour « {ean} ». Vérifiez le terme, ou saisissez le produit comme nouveau."
+  ),
+  sellerProductCreateNew: L(
+    "Nieuw product invoeren",
+    "Enter new product",
+    "Neues Produkt eingeben",
+    "Saisir un nouveau produit"
   ),
   sellerProductSearchAgain: L(
     "Opnieuw zoeken",
@@ -6080,11 +6273,47 @@ const M = {
     "Erneut suchen",
     "Rechercher à nouveau"
   ),
-  sellerProductCreateNew: L(
-    "Nieuw product aanmaken",
-    "Create new product",
-    "Neues Produkt anlegen",
-    "Créer un nouveau produit"
+  sellerProductSelectExisting: L(
+    "Dit product kiezen",
+    "Choose this product",
+    "Dieses Produkt wählen",
+    "Choisir ce produit"
+  ),
+  sellerProductOwnOfferYes: L(
+    "Eigen aanbod: aanwezig",
+    "Own offer: present",
+    "Eigenes Angebot: vorhanden",
+    "Offre propre : présente"
+  ),
+  sellerProductOwnOfferNo: L(
+    "Eigen aanbod: nog niet aanwezig",
+    "Own offer: not present yet",
+    "Eigenes Angebot: noch nicht vorhanden",
+    "Offre propre : pas encore présente"
+  ),
+  sellerProductMatchCandidate: L(
+    "Kandidaat — kies zelf; dit is geen automatische koppeling.",
+    "Candidate — you choose; this is not an automatic link.",
+    "Kandidat — du entscheidest; keine automatische Kopplung.",
+    "Candidat — vous choisissez ; ce n'est pas une liaison automatique."
+  ),
+  sellerProductMatchExactEan: L(
+    "EAN/GTIN-match (meest zekere sleutel).",
+    "EAN/GTIN match (strongest key).",
+    "EAN/GTIN-Treffer (sicherster Schlüssel).",
+    "Correspondance EAN/GTIN (clé la plus sûre)."
+  ),
+  sellerProductResultsCount: L(
+    "{count} resultaat/resultaten",
+    "{count} result(s)",
+    "{count} Ergebnis(se)",
+    "{count} résultat(s)"
+  ),
+  sellerOfferSkuLabel: L(
+    "Eigen artikelnummer (SKU)",
+    "Your SKU",
+    "Eigene Artikelnummer (SKU)",
+    "Votre référence (SKU)"
   ),
   sellerProductUncertain: L(
     "Onzekere match",
@@ -8429,6 +8658,12 @@ const M = {
     "Verantwortlichen Wirtschaftsakteur (EU verantwortlicher Hersteller) auswählen",
     "Sélectionner l'opérateur économique responsable (fabricant responsable UE)"
   ),
+  pdpAddBrand: L(
+    "Nieuw merk toevoegen",
+    "Add new brand",
+    "Neue Marke hinzufügen",
+    "Ajouter une nouvelle marque"
+  ),
   pdpAddManufacturer: L(
     "+ Verantwoordelijke marktdeelnemer toevoegen",
     "Add responsible economic operator",
@@ -8539,6 +8774,7 @@ const M = {
   wfPendingApproval: L("Wacht op productgoedkeuring", "Awaiting product approval", "Wartet auf Produktfreigabe", "En attente d'approbation produit"),
   wfRejected: L("Afgekeurd", "Rejected", "Abgelehnt", "Refusé"),
   wfPendingEvidence: L("Wacht op bewijsgoedkeuring", "Awaiting evidence approval", "Wartet auf Nachweisgenehmigung", "En attente d'approbation des preuves"),
+  wfNeedsInformation: L("Aanvulling gevraagd", "Additional information required", "Zusätzliche Angaben erforderlich", "Informations complémentaires demandées"),
   wfPaused: L("Gepauzeerd", "Paused", "Pausiert", "En pause"),
   wfComplete: L("Compleet", "Complete", "Vollständig", "Complet"),
   wfIncomplete: L("Incomplete", "Incomplete", "Unvollständig", "Incomplet"),
@@ -8644,7 +8880,7 @@ const M = {
   pdpOfferPaused: L("Aanbod gepauzeerd.", "Offer paused.", "Angebot pausiert.", "Offre en pause."),
   pdpOfferResumed: L("Aanbod hervat.", "Offer resumed.", "Angebot fortgesetzt.", "Offre reprise."),
   pdpStatusChangeFailed: L("Statuswijziging mislukt.", "Status change failed.", "Statusänderung fehlgeschlagen.", "Échec du changement de statut."),
-  pdpSubmitNotReady: L("Product is nog niet compleet genoeg om ter goedkeuring aan te bieden.", "Product is not yet complete enough to submit for approval.", "Produkt ist noch nicht vollständig genug für die Einreichung.", "Le produit n'est pas encore assez complet pour être soumis."),
+  pdpSubmitNotReady: L("Product is nog niet compleet genoeg om ter goedkeuring aan te bieden. EAN/GTIN is verplicht vóór indienen.", "Product is not yet complete enough to submit for approval. EAN/GTIN is required before submission.", "Produkt ist noch nicht vollständig genug für die Einreichung. EAN/GTIN ist vor dem Einreichen Pflicht.", "Le produit n'est pas encore assez complet pour être soumis. L'EAN/GTIN est obligatoire avant l'envoi."),
   pdpSubmitSuccess: L("Product ter goedkeuring aangeboden. Het is nog niet publiek zichtbaar.", "Product submitted for approval. It is not yet publicly visible.", "Produkt zur Genehmigung eingereicht. Es ist noch nicht öffentlich sichtbar.", "Produit soumis pour approbation. Il n'est pas encore visible publiquement."),
   pdpSubmitFailed: L("Indienen mislukt.", "Submission failed.", "Einreichung fehlgeschlagen.", "Échec de la soumission."),
   pdpFileTooLarge: L("Bestand is groter dan 10MB. Kies een kleiner bestand.", "File is larger than 10MB. Choose a smaller file.", "Datei ist größer als 10MB. Wähle eine kleinere Datei.", "Le fichier dépasse 10 Mo. Choisissez un fichier plus petit."),
@@ -8972,6 +9208,75 @@ const M = {
   importPreviewFailed: L("Preview mislukt.", "Preview failed.", "Vorschau fehlgeschlagen.", "Échec de l'aperçu."),
   importBlockedErrors: L("Importeren is geblokkeerd zolang er foute regels zijn.", "Import is blocked while there are invalid rows.", "Import ist blockiert, solange fehlerhafte Zeilen vorhanden sind.", "L'importation est bloquée tant qu'il y a des lignes erronées."),
   importFailed: L("Import mislukt.", "Import failed.", "Import fehlgeschlagen.", "Échec de l'importation."),
+  importFailedMaybeCreated: L(
+    "De import gaf een technische fout, maar het product kan al zijn aangemaakt. Controleer Producten of open het product hieronder als het in de lijst staat.",
+    "The import reported a technical error, but the product may already have been created. Check Products or open the product below if it is listed.",
+    "Der Import hat einen technischen Fehler gemeldet, das Produkt kann aber bereits angelegt sein. Prüfe Produkte oder öffne das Produkt unten, falls es in der Liste steht.",
+    "L'importation a signalé une erreur technique, mais le produit peut déjà avoir été créé. Vérifiez Produits ou ouvrez le produit ci-dessous s'il figure dans la liste."
+  ),
+  importOpenProductList: L(
+    "Naar producten",
+    "Go to products",
+    "Zu den Produkten",
+    "Aller aux produits"
+  ),
+  importSucceeded: L("Import geslaagd", "Import succeeded", "Import erfolgreich", "Importation réussie"),
+  importSucceededWithWarnings: L(
+    "Import geslaagd, met waarschuwingen",
+    "Import succeeded, with warnings",
+    "Import erfolgreich, mit Warnungen",
+    "Importation réussie, avec avertissements"
+  ),
+  importCreatedCount: L(
+    "{count} product(en) aangemaakt",
+    "{count} product(s) created",
+    "{count} Produkt(e) angelegt",
+    "{count} produit(s) créé(s)"
+  ),
+  importUpdatedCount: L(
+    "{count} bestaande producten bijgewerkt",
+    "{count} existing products updated",
+    "{count} bestehende Produkte aktualisiert",
+    "{count} produit(s) existant(s) mis à jour"
+  ),
+  importWarningCount: L(
+    "{count} waarschuwing(en)",
+    "{count} warning(s)",
+    "{count} Warnung(en)",
+    "{count} avertissement(s)"
+  ),
+  importSkippedCount: L(
+    "{count} regel(s) overgeslagen",
+    "{count} row(s) skipped",
+    "{count} Zeile(n) übersprungen",
+    "{count} ligne(s) ignorée(s)"
+  ),
+  importErrorCount: L(
+    "{count} echte fout(en)",
+    "{count} actual error(s)",
+    "{count} tatsächliche(r) Fehler",
+    "{count} erreur(s) réelle(s)"
+  ),
+  importViewProduct: L("Product bekijken", "View product", "Produkt ansehen", "Voir le produit"),
+  importCategoryFromExcel: L(
+    "Categorie uit Excel",
+    "Category from Excel",
+    "Kategorie aus Excel",
+    "Catégorie dans Excel"
+  ),
+  importActionChooseCategory: L(
+    "Actie vereist: kies een geldige EuropMade-categorie",
+    "Action required: choose a valid EuropMade category",
+    "Aktion erforderlich: wähle eine gültige EuropMade-Kategorie",
+    "Action requise : choisissez une catégorie EuropMade valide"
+  ),
+  importCategoryPendingList: L(
+    "Producten waarvan de categorie nog gekozen moet worden",
+    "Products that still need a category",
+    "Produkte, für die noch eine Kategorie gewählt werden muss",
+    "Produits dont la catégorie doit encore être choisie"
+  ),
+  importStatusConcept: L("Concept", "Draft", "Entwurf", "Brouillon"),
   importBreadcrumb: L("Importeren", "Import", "Importieren", "Importer"),
   importDownloadFailed: L("Download mislukt.", "Download failed.", "Download fehlgeschlagen.", "Échec du téléchargement."),
 

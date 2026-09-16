@@ -12,6 +12,7 @@ import {
   OfferPrice,
   BuyBoxComputation,
   BuyBoxWeighting,
+  SellerShippingProfile,
 } from "./models"
 import {
   computeBuyBoxRanking,
@@ -147,6 +148,7 @@ class CommerceCloudModuleService extends MedusaService({
   OfferPrice,
   BuyBoxComputation,
   BuyBoxWeighting,
+  SellerShippingProfile,
 }) {
   @InjectManager()
   async upsertOfferGraph(

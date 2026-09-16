@@ -62,6 +62,32 @@ function normalizeSlides(
   }))
 }
 
+/** Keep primary image when CMS thumbnailCount would otherwise slice it away. */
+function applyThumbnailLimit(
+  all: PdpGallerySlide[],
+  thumbnailCount?: number
+): PdpGallerySlide[] {
+  if (
+    thumbnailCount == null ||
+    !Number.isFinite(thumbnailCount) ||
+    thumbnailCount <= 0
+  ) {
+    return all
+  }
+  const limit = Math.floor(thumbnailCount)
+  if (all.length <= limit) return all
+
+  const primaryIdx = all.findIndex(
+    (slide) => slide.kind === "image" && slide.isPrimary
+  )
+  if (primaryIdx < 0) return all.slice(0, limit)
+  if (primaryIdx < limit) return all.slice(0, limit)
+
+  const primary = all[primaryIdx]!
+  const withoutPrimary = all.filter((_, i) => i !== primaryIdx)
+  return [primary, ...withoutPrimary].slice(0, limit)
+}
+
 function GalleryImage({
   slide,
   title,
@@ -117,18 +143,18 @@ export function ProductGallery({
 }: ProductGalleryProps) {
   const slides = useMemo(() => {
     const all = normalizeSlides(slidesProp, images, count)
-    if (
-      thumbnailCount != null &&
-      Number.isFinite(thumbnailCount) &&
-      thumbnailCount > 0
-    ) {
-      return all.slice(0, Math.floor(thumbnailCount))
-    }
-    return all
+    return applyThumbnailLimit(all, thumbnailCount)
   }, [slidesProp, images, count, thumbnailCount])
 
+  const primaryIndex = useMemo(() => {
+    const idx = slides.findIndex(
+      (slide) => slide.kind === "image" && slide.isPrimary
+    )
+    return idx >= 0 ? idx : 0
+  }, [slides])
+
   const slots = slides.length
-  const [active, setActive] = useState(0)
+  const [active, setActive] = useState(primaryIndex)
   const [zooming, setZooming] = useState(false)
   const [origin, setOrigin] = useState("50% 50%")
   const [lightbox, setLightbox] = useState(false)
@@ -136,8 +162,8 @@ export function ProductGallery({
   const didSwipeRef = useRef(false)
 
   useEffect(() => {
-    setActive((a) => (slots > 0 ? Math.min(a, slots - 1) : 0))
-  }, [slots])
+    setActive(primaryIndex)
+  }, [primaryIndex])
 
   const activeSlide = slides[active] ?? slides[0]
   const under = thumbnailPosition === "under"

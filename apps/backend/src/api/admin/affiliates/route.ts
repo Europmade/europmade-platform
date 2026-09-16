@@ -1,6 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { AFFILIATE_MODULE } from "../../../modules/affiliate"
 import type AffiliateModuleService from "../../../modules/affiliate/service"
+import { toAdminAffiliate } from "./serialize"
 
 const ONBOARDING_STATUSES = [
   "Ingediend",
@@ -26,5 +27,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     status ? { onboarding_status: status } : {},
     { order: { created_at: "DESC" }, take: 100 }
   )
-  res.status(200).json({ affiliates: rows })
+  const affiliates = await Promise.all(
+    rows.map((row) => toAdminAffiliate(req.scope, row))
+  )
+  res.status(200).json({ affiliates })
 }

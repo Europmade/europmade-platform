@@ -15,6 +15,13 @@ import { mergePaidHomepageBanners } from "../../_lib/cms/merge-paid-banners"
 import { fetchLiveAdSlots } from "../../_lib/advertising-live-slots"
 import { fetchStoreCmsTheme } from "../../_lib/cms/fetch-store-theme"
 import { pickHomepageRailProducts } from "../../_lib/cms/homepage-product-rails"
+import {
+  liveBrandSpotlightsFromProducts,
+  mergeHomepageBrandSpotlights,
+} from "../../_lib/homepage-brand-spotlights"
+import { fetchStorefrontCategories } from "../../_lib/product-cloud-store"
+import { bindHomepageCategoriesToProductCloud } from "../../_lib/cms/bind-homepage-categories"
+import { listCatalogPublishedBrands } from "../../_lib/catalog-api"
 
 export async function Homepage({
   marketOverride,
@@ -61,6 +68,12 @@ export async function Homepage({
   })
   cms.banners = mergePaidHomepageBanners(cms.banners, paid, locale)
 
+  const pcCategories = await fetchStorefrontCategories(locale)
+  cms.categories = bindHomepageCategoriesToProductCloud(
+    cms.categories,
+    pcCategories
+  )
+
   const { products } = await resolveListingProducts({ locale })
   const pool = products
   const featuredSection = cms.sections.featured
@@ -75,6 +88,18 @@ export async function Homepage({
   )
   const newest = pickHomepageRailProducts(pool, newestSection, "newest", 12)
   const bestSold = pickHomepageRailProducts(pool, bestSection, "offers", 12)
+  cms.partners.items = mergeHomepageBrandSpotlights(
+    cms.partners.items,
+    liveBrandSpotlightsFromProducts(pool, 8),
+    6
+  )
+  try {
+    const published = await listCatalogPublishedBrands()
+    const slugs = new Set(published.brands.map((b) => b.slug))
+    cms.partners.items = cms.partners.items.filter((row) => slugs.has(row.slug))
+  } catch {
+    cms.partners.items = []
+  }
 
   const theme = themeRow?.theme?.published
     ? parseCmsTheme(themeRow.theme.document)

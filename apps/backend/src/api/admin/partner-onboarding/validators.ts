@@ -8,6 +8,15 @@ import { z } from "@medusajs/framework/zod"
 export const AdminListPartnerOnboardingQuery = z.object({
   q: z.string().trim().min(1).optional(),
   tab: z.enum(["queue", "active", "all"]).optional().default("queue"),
+  status: z
+    .enum([
+      "Ingediend",
+      "In beoordeling",
+      "Aanvullende informatie vereist",
+      "Goedgekeurd",
+      "Afgekeurd",
+    ])
+    .optional(),
   is_retailer: z.enum(["true", "false"]).optional(),
   is_producer_or_brand_owner: z.enum(["true", "false"]).optional(),
   is_distributor: z.enum(["true", "false"]).optional(),

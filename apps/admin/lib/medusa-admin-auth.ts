@@ -3,7 +3,7 @@
  * maar met actor_type "user" (Beheerder).
  */
 
-import { medusaBackendUrl } from "./medusa-backend-url"
+import { adminFetch, setAdminAuthToken } from "./admin-fetch"
 
 export class MedusaAdminAuthError extends Error {
   status?: number;
@@ -19,11 +19,9 @@ async function request<T>(
   init: RequestInit & { auth?: string } = {},
 ): Promise<T> {
   const { auth, headers, ...rest } = init;
-  const response = await fetch(`${medusaBackendUrl()}${path}`, {
+  const response = await adminFetch(path, {
     ...rest,
-    credentials: "include",
     headers: {
-      "Content-Type": "application/json",
       ...(auth ? { Authorization: `Bearer ${auth}` } : {}),
       ...headers,
     },
@@ -44,22 +42,25 @@ async function request<T>(
 }
 
 /** POST /auth/user/emailpass */
-export function loginUser(email: string, password: string) {
-  return request<{ token: string }>("/auth/user/emailpass", {
+export async function loginUser(email: string, password: string) {
+  const result = await request<{ token: string }>("/auth/user/emailpass", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
+  if (result.token) setAdminAuthToken(result.token);
+  return result;
 }
 
 /** POST /auth/session */
 export function createSession(token: string) {
+  setAdminAuthToken(token);
   return request<{ user: unknown }>("/auth/session", {
     method: "POST",
     auth: token,
   });
 }
 
-/** GET /admin/users/me — huidige admin-gebruiker (sessiecookie). */
+/** GET /admin/users/me — huidige admin-gebruiker (sessiecookie en/of Bearer). */
 export function getSession() {
   return request<{
     user?: {
@@ -72,6 +73,10 @@ export function getSession() {
 }
 
 /** DELETE /auth/session */
-export function endSession() {
-  return request<void>("/auth/session", { method: "DELETE" });
+export async function endSession() {
+  try {
+    await request<void>("/auth/session", { method: "DELETE" });
+  } finally {
+    setAdminAuthToken(null);
+  }
 }

@@ -3,6 +3,7 @@
  */
 
 import { isEuMarketCode, isVisibleInMarket, type EuMarketCode } from "@europmade/types"
+import { rewriteCollectionHrefToAction } from "@europmade/utils"
 import { resolveStorefrontLocale } from "../i18n/detect-locale"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -244,7 +245,9 @@ function resolvePartners(
   locale: StorefrontLocale,
   now: Date
 ): ResolvedPartnerSpotlight[] {
-  return liveSorted(items, now).map((p) => ({
+  return liveSorted(items, now)
+    .filter((p) => Boolean(p.slug?.trim()))
+    .map((p) => ({
     slug: p.slug,
     name: pickLocalized(p.title, locale),
     country: pickLocalized(p.country, locale),
@@ -366,7 +369,7 @@ export function resolveHomepageCms(
       title: pickLocalized(c.title, locale),
       description: pickLocalized(c.subtitle, locale),
       ctaLabel: pickLocalized(c.ctaLabel, locale),
-      href: c.href,
+      href: rewriteCollectionHrefToAction(c.href, c.slug),
       imageSrc: c.image ?? undefined,
       imageAlt: pickLocalized(c.imageAlt, locale),
       accentHue: c.accentHue,
@@ -404,8 +407,8 @@ export function resolveHomepageCms(
       slug: c.slug,
       label: pickLocalized(c.title, locale),
       popular: true,
-      productCountHint: c.productCountHint,
       image: typeof c.image === "string" ? c.image : null,
+      categoryId: c.categoryId ?? null,
     })),
     why: {
       title: whySection?.title ?? "",

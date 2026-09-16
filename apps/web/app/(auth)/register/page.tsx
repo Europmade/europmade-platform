@@ -5,12 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
-import {
-  createCustomer,
-  createSession,
-  refreshToken,
-  registerAuthIdentity,
-} from "../_lib/medusa-auth";
+import { createCustomer, createSession, refreshToken, registerAuthIdentity } from "../_lib/medusa-auth";
+import { isValidLoginEmail, normalizeLoginEmail } from "../_lib/login-email";
 import { claimPendingGuestOrder, mergeGuestCart } from "../../_lib/order-service-api";
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
 import { t } from "../../_lib/i18n/messages";
@@ -38,12 +34,18 @@ function RegisterPageContent() {
     event.preventDefault();
     setError(null);
     setExistingAccount(false);
+    const normalizedEmail = normalizeLoginEmail(email);
+    setEmail(normalizedEmail);
+    if (!isValidLoginEmail(normalizedEmail)) {
+      setError(t("authEmailInvalid", locale));
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const { token } = await registerAuthIdentity(email, password);
+      const { token } = await registerAuthIdentity(normalizedEmail, password);
       const [firstName, ...rest] = name.trim().split(/\s+/);
       await createCustomer(token, {
-        email,
+        email: normalizedEmail,
         first_name: firstName || undefined,
         last_name: rest.join(" ") || undefined,
       });
@@ -69,7 +71,7 @@ function RegisterPageContent() {
       if (process.env.NODE_ENV === "development") {
         router.push("/partner-onboarding");
       } else {
-        router.push(`/check-email?context=register&email=${encodeURIComponent(email)}`);
+        router.push(`/check-email?context=register&email=${encodeURIComponent(normalizedEmail)}`);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
@@ -123,9 +125,14 @@ function RegisterPageContent() {
         />
         <Input
           label={t("authEmail", locale)}
-          type="email"
+          type="text"
+          inputMode="email"
+          name="email"
           placeholder={t("authEmailPlaceholder", locale)}
           autoComplete="email"
+          spellCheck={false}
+          autoCapitalize="none"
+          autoCorrect="off"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

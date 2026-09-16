@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Checkbox, CodeInput, Input, Notice } from "@europmade/ui";
 import { AuthCard } from "../_components/auth-card";
 import { createSession, loginWithMfa, MedusaAuthError, storeMfaTrustToken, verifyMfaChallenge } from "../_lib/medusa-auth";
+import { isValidLoginEmail, normalizeLoginEmail } from "../_lib/login-email";
 import { claimPendingGuestOrder, mergeGuestCart } from "../../_lib/order-service-api";
 import { getOnboarding } from "../../partner-onboarding/_lib/partner-onboarding-api";
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale";
@@ -63,9 +64,15 @@ function LoginPageContent() {
   async function handleCredentialsSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    const normalizedEmail = normalizeLoginEmail(email);
+    setEmail(normalizedEmail);
+    if (!isValidLoginEmail(normalizedEmail)) {
+      setError(t("authEmailInvalid", locale));
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const result = await loginWithMfa(email, password);
+      const result = await loginWithMfa(normalizedEmail, password);
       if (result.mfa_required && result.mfa_challenge) {
         setStep({ name: "mfa", challengeId: result.mfa_challenge.id, useRecoveryCode: false });
         return;
@@ -198,9 +205,14 @@ function LoginPageContent() {
         )}
         <Input
           label={t("authEmail", locale)}
-          type="email"
+          type="text"
+          inputMode="email"
+          name="email"
           placeholder={t("authEmailPlaceholder", locale)}
-          autoComplete="email"
+          autoComplete="username"
+          spellCheck={false}
+          autoCapitalize="none"
+          autoCorrect="off"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

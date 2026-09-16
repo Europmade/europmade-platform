@@ -19,11 +19,12 @@ export function isStorefrontLocale(value: string): value is StorefrontLocale {
 }
 
 export function pickLocalized(
-  value: LocalizedString | string,
+  value: LocalizedString | string | null | undefined,
   locale: StorefrontLocale
 ): string {
+  if (value == null) return ""
   if (typeof value === "string") return value
-  return value[locale] ?? value.nl ?? value.en
+  return value[locale] ?? value.nl ?? value.en ?? ""
 }
 
 /** Helper for mock CMS authoring. */

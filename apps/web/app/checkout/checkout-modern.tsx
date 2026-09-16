@@ -10,6 +10,7 @@ import {
   OrderServiceApiError,
   placeOrder,
 } from "../_lib/order-service-api"
+import { serializeOrderAddress, normalizeCountryCode } from "@europmade/utils"
 import { CLICK_COOKIE, readCookie } from "../_lib/cookie-consent"
 import { rememberPendingGuestOrder } from "../_lib/guest-checkout-token"
 import { useCart } from "../_components/cart/cart-provider"
@@ -42,14 +43,36 @@ type AddressFields = {
   city: string
   province: string
   country: string
+  countryCode: string
 }
 
 type PaymentId = (typeof PAYMENT_METHODS)[number]["id"]
 
-function composeAddress(a: AddressFields) {
-  const line1 = `${a.street} ${a.houseNumber}${a.addition ? ` ${a.addition}` : ""}`.trim()
-  const line2 = `${a.postalCode} ${a.city}`.trim()
-  return [line1, line2, a.province.trim(), a.country.trim()].filter(Boolean).join(", ")
+const CHECKOUT_COUNTRIES: Array<{ code: string; label: string }> = [
+  { code: "NL", label: "Nederland" },
+  { code: "BE", label: "België" },
+  { code: "DE", label: "Deutschland" },
+  { code: "FR", label: "France" },
+  { code: "AT", label: "Österreich" },
+  { code: "ES", label: "España" },
+  { code: "IT", label: "Italia" },
+  { code: "IE", label: "Ireland" },
+  { code: "PT", label: "Portugal" },
+  { code: "PL", label: "Polska" },
+]
+
+function composeAddress(a: AddressFields, name?: string) {
+  return serializeOrderAddress({
+    name: name ?? null,
+    street: a.street,
+    house_number: a.houseNumber,
+    addition: a.addition,
+    postal_code: a.postalCode,
+    city: a.city,
+    province: a.province,
+    country: a.country,
+    country_code: a.countryCode || normalizeCountryCode(a.country),
+  })
 }
 
 function emptyAddress(): AddressFields {
@@ -61,6 +84,7 @@ function emptyAddress(): AddressFields {
     city: "",
     province: "",
     country: "Nederland",
+    countryCode: "NL",
   }
 }
 
@@ -177,12 +201,15 @@ export default function CheckoutModernPage() {
     if (!fullName.trim() || !email.trim()) {
       return setError("Vul je naam en e-mailadres in.")
     }
-    const shippingComposed = composeAddress(shippingAddress)
+    const shippingComposed = composeAddress(shippingAddress, fullName)
     const billingComposed = billingSameAsShipping
       ? shippingComposed
-      : composeAddress(billingAddress)
+      : composeAddress(billingAddress, fullName)
     if (!shippingComposed || !billingComposed) {
       return setError("Vul aflever- en factuuradres volledig in.")
+    }
+    if (!shippingAddress.postalCode.trim() || !shippingAddress.city.trim()) {
+      return setError("Vul postcode en plaats in voor het afleveradres.")
     }
     if (hasAccount && !isAuthenticated && !accountLoggedIn) {
       return setError("Log eerst inline in voordat je bestelt.")
@@ -206,6 +233,7 @@ export default function CheckoutModernPage() {
         payment_reference,
         shipping_address: shippingComposed,
         billing_address: billingComposed,
+        delivery_country: shippingAddress.countryCode || "NL",
         lines: cart.lines.map((l) => ({
           offer_id: l.offer_id,
           quantity: l.quantity,
@@ -396,7 +424,32 @@ export default function CheckoutModernPage() {
                 <Input label="Postcode" value={shippingAddress.postalCode} onChange={(e) => setShippingAddress((s) => ({ ...s, postalCode: e.target.value }))} className="h-10" />
                 <Input label="Plaats" value={shippingAddress.city} onChange={(e) => setShippingAddress((s) => ({ ...s, city: e.target.value }))} className="h-10" />
                 <Input label="Provincie (optioneel)" value={shippingAddress.province} onChange={(e) => setShippingAddress((s) => ({ ...s, province: e.target.value }))} className="h-10" />
-                <Input label="Land" value={shippingAddress.country} onChange={(e) => setShippingAddress((s) => ({ ...s, country: e.target.value }))} className="h-10" />
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+                    Land
+                  </label>
+                  <select
+                    className="h-10 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-sm text-wf-800"
+                    value={shippingAddress.countryCode}
+                    onChange={(e) => {
+                      const code = e.target.value
+                      const label =
+                        CHECKOUT_COUNTRIES.find((c) => c.code === code)?.label ??
+                        code
+                      setShippingAddress((s) => ({
+                        ...s,
+                        countryCode: code,
+                        country: label,
+                      }))
+                    }}
+                  >
+                    {CHECKOUT_COUNTRIES.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="mt-1">
                 <Checkbox
@@ -418,7 +471,32 @@ export default function CheckoutModernPage() {
                   <Input label="Postcode" value={billingAddress.postalCode} onChange={(e) => setBillingAddress((s) => ({ ...s, postalCode: e.target.value }))} className="h-10" />
                   <Input label="Plaats" value={billingAddress.city} onChange={(e) => setBillingAddress((s) => ({ ...s, city: e.target.value }))} className="h-10" />
                   <Input label="Provincie (optioneel)" value={billingAddress.province} onChange={(e) => setBillingAddress((s) => ({ ...s, province: e.target.value }))} className="h-10" />
-                  <Input label="Land" value={billingAddress.country} onChange={(e) => setBillingAddress((s) => ({ ...s, country: e.target.value }))} className="h-10" />
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+                      Land
+                    </label>
+                    <select
+                      className="h-10 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-sm text-wf-800"
+                      value={billingAddress.countryCode}
+                      onChange={(e) => {
+                        const code = e.target.value
+                        const label =
+                          CHECKOUT_COUNTRIES.find((c) => c.code === code)
+                            ?.label ?? code
+                        setBillingAddress((s) => ({
+                          ...s,
+                          countryCode: code,
+                          country: label,
+                        }))
+                      }}
+                    >
+                      {CHECKOUT_COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </section>
             ) : null}

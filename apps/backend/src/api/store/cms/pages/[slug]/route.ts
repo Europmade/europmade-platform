@@ -2,10 +2,10 @@ import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { requestBackendOrigin } from "../../../../request-backend-origin"
 import { CMS_MODULE } from "../../../../../modules/cms"
 import type CmsModuleService from "../../../../../modules/cms/service"
-import { serializePage } from "../../../../cms/serialize"
+import { pageIsLive, serializePage } from "../../../../cms/serialize"
 
 /**
- * GET /store/cms/pages/:slug — alleen gepubliceerd.
+ * GET /store/cms/pages/:slug — alleen gepubliceerd + zichtbaar + binnen planning.
  */
 export async function GET(
   req: MedusaRequest & { params: { slug: string } },
@@ -13,12 +13,17 @@ export async function GET(
 ) {
   const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
   const slug = req.params.slug?.trim().toLowerCase()
-  const rows = await cms.listCmsPages(
-    { slug, published: true },
-    { take: 1 }
-  )
+  const rows = await cms.listCmsPages({ slug }, { take: 1 })
   const page = rows[0]
-  if (!page || !page.visible) {
+  if (
+    !page ||
+    !pageIsLive(page as unknown as {
+      published: boolean
+      visible: boolean
+      publish_at?: Date | string | null
+      expires_at?: Date | string | null
+    })
+  ) {
     res.status(404).json({ message: "Pagina niet gevonden." })
     return
   }

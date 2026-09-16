@@ -1,16 +1,32 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { CmsPageView } from "../_components/cms/cms-page-view"
 import { ContentPage } from "../_components/marketplace/content-page"
+import {
+  loadFixedCmsPage,
+  metadataFromCmsPage,
+} from "../_lib/cms/fixed-cms-page"
 import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
 import { t } from "../_lib/i18n/messages"
 
-export const metadata: Metadata = {
+const FALLBACK_META: Metadata = {
   title: "Klantenservice — EuropMade",
   description: "Hulp bij bestellingen, retouren, betalingen en je account.",
+  alternates: { canonical: "/klantenservice" },
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/klantenservice", locale })
+  if (cms) return metadataFromCmsPage(cms, FALLBACK_META)
+  return FALLBACK_META
 }
 
 export default async function KlantenservicePage() {
   const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/klantenservice", locale })
+  if (cms) return <CmsPageView page={cms} locale={locale} />
+
   return (
     <ContentPage title={t("supportPageTitle", locale)}>
       <p>{t("supportPageIntro", locale)}</p>

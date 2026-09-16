@@ -1,0 +1,243 @@
+{
+  "planned_total": 26,
+  "uploaded_total": 25,
+  "failed_total": 1,
+  "products": [
+    {
+      "em_product_id": "EM-0001",
+      "product_cloud_id": "prod_01M1E35GVBQ6SBWGA82BVYHBTY",
+      "version_id": "pver_01M1E35GVGC20BGTX51X4KCV0P",
+      "planned": 2,
+      "uploaded": 2,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://www.auerswald.de/fileadmin/_processed_/2/b/csm_Produkt_AU_COMfortelD-600_FrontRight_angeschaltet_5edcae365c.png",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AE9A6R5YTW2CPZGC3G67"
+        },
+        {
+          "source_url": "https://www.auerswald.de/fileadmin/assets/products/Webseite_AU_Header_COMfortelD-600_1370x400px.png",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AF5S9JBAJVG72ZZCCA9R"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0002",
+      "product_cloud_id": "prod_01M1E35HDA8TAZFGKE7KF8Q022",
+      "version_id": "pver_01M1E35HDDFCXC242VFTKNKJD6",
+      "planned": 3,
+      "uploaded": 3,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/b/e/beyerdynamic-dt-1990-pro-mk-2-perspective-transparent.png?store=en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AFX93QGJKTAW9E89YDGX"
+        },
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/b/e/beyerdynamic-dt-1990-pro-mk-2-side.png?store=en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AG7NNJS8CSVV6BVT36MN"
+        },
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/d/t/dt-1990-pro-mk-ii-studio-kopfhoerer-beyerdynamic-people.png?store=en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AGN1RMBM5775TMYJM330"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0003",
+      "product_cloud_id": "prod_01M1E35HMVTJPFJ9J4AAP1S1V4",
+      "version_id": "pver_01M1E35HMXFAVHKY6N7K9Z0HYW",
+      "planned": 3,
+      "uploaded": 3,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/d/t/dt-770-pro-80-ohm-handmade-in-germany-perspective_transparent.png?store=usa_en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AGZ660Q0EFKXHCRD62QM"
+        },
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/d/t/dt-770-pro-80-ohm-headphones-beyerdynamic-side.png?store=usa_en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AH757BST4P35S19QKE4Y"
+        },
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/d/t/dt-770-pro-studio-kopfhoerer-people-beyerdynamic_1.png?store=usa_en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AHJJH3S8XP3QX4RC8ST7"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0004",
+      "product_cloud_id": "prod_01M1E35HV5NXNVG4Z9K11379T6",
+      "version_id": "pver_01M1E35HV7PDXD049MREJ4RVQA",
+      "planned": 3,
+      "uploaded": 3,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/d/t/dt-990-pro-black-edition-headphones-beyerdynamic-perspective_transparent.png?store=en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AHX83HWCCCY30RB4VGJG"
+        },
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/d/t/dt-990-pro-black-edition-headphones-beyerdynamic-side.png?store=en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AJ5CTQ8JW9BMNSX9SZ0M"
+        },
+        {
+          "source_url": "https://api.beyerdynamic.de/media/catalog/product/d/t/dt-990-pro-80-ohms-studio-headphones-people-beyerdynamic.png?store=en&amp;image-type=image",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AJGH4GFM1KC1BFJMG3R0"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0005",
+      "product_cloud_id": "prod_01M1E35J19WBWM33S0MXRSGS6S",
+      "version_id": "pver_01M1E35J1BS6GGH4K3SA3T6PTM",
+      "planned": 3,
+      "uploaded": 3,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://cdn.canton.de/media/03/f6/d2/1693920060/15493_Reference_5_schwarz_frontal_2023.png.png",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AK7ZWN2AS77CQGMGEFPR"
+        },
+        {
+          "source_url": "https://cdn.canton.de/media/b5/e9/ea/1694075607/15583_Reference_5_schwarz_Detail_Hochtonsystem_2023.jpg.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AKKM4GY1TF0Y8GQT9DFD"
+        },
+        {
+          "source_url": "https://cdn.canton.de/media/41/41/7f/1693816351/Reference-5-schwarz-Thonet.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AKVZ7EG80TR5R0A9V1TZ"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0015",
+      "product_cloud_id": "prod_01M1E35J7F942HHYGBGQ88YVZK",
+      "version_id": "pver_01M1E35J7HG4Y72YABPHFCDH2H",
+      "planned": 2,
+      "uploaded": 2,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://www.auerswald.de/fileadmin/_processed_/8/9/csm_Produkt_AU_COMfortelD-400_FrontRight_62cd3c8f9e.png",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AN011Q3P4QM465V7EVV5"
+        },
+        {
+          "source_url": "https://www.auerswald.de/fileadmin/assets/products/Webseite_AU_Header_COMfortelD-400_1370x400px.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AN6F2E9NKKC48Y7B9Y64"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0016",
+      "product_cloud_id": "prod_01M1E35JFKPX5N8SJMXBBNGRXE",
+      "version_id": "pver_01M1E35JFN0S3EQR87GS5RYK4F",
+      "planned": 1,
+      "uploaded": 0,
+      "failed": 1,
+      "media": [
+        {
+          "source_url": "https://www.burmester.de/wp-content/uploads/2022/12/1x1_BUR_Web_Produkt_Front_069-380x380.png",
+          "status": "failed",
+          "error": "HTTP 404"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0030",
+      "product_cloud_id": "prod_01M1E35JPKV3EQVG6AYQ962M7Q",
+      "version_id": "pver_01M1E35JPNR596SAR8FWF0TSVV",
+      "planned": 3,
+      "uploaded": 3,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://www.advanceparis.com/wp-content/uploads/2025/10/ADVANCE_APEX_A10_3_4_vignetteproduit.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AP2SRAF0RAAQK5J7XPS2"
+        },
+        {
+          "source_url": "https://www.advanceparis.com/wp-content/uploads/2025/10/ADVANCE_APEX_A10_FACE_vignetteproduit.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AP8R60YMGGMG85ZV61HE"
+        },
+        {
+          "source_url": "https://www.advanceparis.com/wp-content/uploads/2025/10/ADVANCE_APEX_A10_BACK_vignetteproduit.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6APG1FDDVN2GKJRSWEPJG"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0095",
+      "product_cloud_id": "prod_01M1E35K050M9PXVHWKHTT5VPX",
+      "version_id": "pver_01M1E35K09QXWE7N8XKZEHNP7M",
+      "planned": 3,
+      "uploaded": 3,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://us.alessi.com/cdn/shop/products/9090-1_01.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6APXMHS9BEHCW9M3KY6A0"
+        },
+        {
+          "source_url": "https://us.alessi.com/cdn/shop/products/9090.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AQ5VB4AY9QVFHZFRZFCD"
+        },
+        {
+          "source_url": "https://us.alessi.com/cdn/shop/products/03_9090_2777b594-f5eb-4d51-a768-1d2078f08523.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AQJE8Q2ASGGB2N125WDK"
+        }
+      ]
+    },
+    {
+      "em_product_id": "EM-0258",
+      "product_cloud_id": "prod_01M1E35KA84JR80BYYZ8HAMFM9",
+      "version_id": "pver_01M1E35KA9W4B5FH79CH878V15",
+      "planned": 3,
+      "uploaded": 3,
+      "failed": 0,
+      "media": [
+        {
+          "source_url": "https://us.ortlieb.com/cdn/shop/files/productimage-f5302-pair.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6ARBWH8G8HY42MV7ARWC3"
+        },
+        {
+          "source_url": "https://us.ortlieb.com/cdn/shop/files/productimage-f5302-front.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6ASB5Y2ECTQK07TCYR83B"
+        },
+        {
+          "source_url": "https://us.ortlieb.com/cdn/shop/files/productimage-f5302-back.jpg",
+          "status": "uploaded",
+          "media_id": "media_01M1E6AT1A76A0Z4V1FTSP6K7R"
+        }
+      ]
+    }
+  ],
+  "counts": {
+    "selectie_before": 10,
+    "selectie_after": 10,
+    "legacy_before": 232,
+    "legacy_after": 232
+  }
+}

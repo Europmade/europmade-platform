@@ -1,17 +1,16 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import { COMMERCIAL_NAV_GROUPS } from "@europmade/utils"
 import { AdSlot } from "../_components/homepage/ad-slot"
+import { CommercialCategoryIcon } from "../_components/marketplace/commercial-category-icon"
 import { PublicStorefrontChrome } from "../_components/marketplace/public-storefront-chrome"
+import {
+  fetchCategoryNav,
+  fetchCommercialNav,
+  filterCommercialNav,
+} from "../_lib/category-nav"
 import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
-import {
-  categoryNavLabel,
-  t,
-  tFormat,
-} from "../_lib/i18n/messages"
-import {
-  MARKETPLACE_CATEGORIES,
-  POPULAR_MARKETPLACE_CATEGORIES,
-} from "../_lib/marketplace-categories"
+import { t, tFormat } from "../_lib/i18n/messages"
 
 export const metadata: Metadata = {
   title: "Categorieën — EuropMade",
@@ -34,6 +33,19 @@ export const metadata: Metadata = {
  */
 export default async function CategoriesIndexPage() {
   const locale = await getStorefrontLocaleFromCookies()
+  const commercial = filterCommercialNav(
+    await fetchCommercialNav(locale),
+    false
+  )
+  const mapped = new Set(
+    COMMERCIAL_NAV_GROUPS.flatMap((g) => [g.key, ...g.pcSlugs])
+  )
+  const otherPc = (await fetchCategoryNav(locale)).filter(
+    (row) =>
+      !row.parent_category_id &&
+      row.product_count > 0 &&
+      !mapped.has(row.slug)
+  )
   return (
     <PublicStorefrontChrome locale={locale}>
       <div className="page-head px-4 pt-[18px] tablet:px-8">
@@ -55,28 +67,27 @@ export default async function CategoriesIndexPage() {
         </h1>
         <p className="mt-1 text-[10.5px] text-wf-600 tablet:text-[12.5px]">
           {tFormat("categoriesIndexMeta", locale, {
-            count: MARKETPLACE_CATEGORIES.length,
+            count: commercial.length,
           })}
         </p>
       </div>
 
       <section className="px-4 py-6 tablet:px-8 tablet:py-8">
         <h2 className="mb-4 text-base font-bold text-wf-900 tablet:text-lg">
-          {t("popularCategories", locale)}
+          {t("navMainCategories", locale)}
         </h2>
-        <ul className="grid grid-cols-2 gap-3 tablet:grid-cols-3 desktop:grid-cols-6 desktop:gap-4">
-          {POPULAR_MARKETPLACE_CATEGORIES.map((cat) => (
-            <li key={cat.slug}>
+        <ul className="grid grid-cols-2 gap-3 tablet:grid-cols-3 desktop:grid-cols-5 desktop:gap-4">
+          {commercial.map((group) => (
+            <li key={group.key}>
               <Link
-                href={`/categorie/${cat.slug}`}
+                href={group.href}
                 className="block rounded-lg border border-wf-300 px-2.5 py-4 text-center hover:border-wf-500"
               >
-                <span
-                  className="mx-auto mb-2.5 block h-11 w-11 rounded-full bg-wf-200"
-                  aria-hidden
-                />
+                <span className="mx-auto mb-2.5 flex justify-center">
+                  <CommercialCategoryIcon group={group} size={44} />
+                </span>
                 <span className="text-xs font-semibold text-wf-800">
-                  {categoryNavLabel(cat.slug, cat.label, locale)}
+                  {group.name}
                 </span>
               </Link>
             </li>
@@ -88,32 +99,34 @@ export default async function CategoriesIndexPage() {
         <AdSlot position={1} compact location="category" />
       </div>
 
-      <section className="px-4 py-6 tablet:px-8 tablet:py-8">
-        <h2 className="mb-1 text-base font-bold text-wf-900 tablet:text-lg">
-          {t("allCategories", locale)}
-        </h2>
-        <p className="mb-4 text-[12.5px] text-wf-600">
-          {t("categoriesCatalogHint", locale)}
-        </p>
-        <ul className="grid grid-cols-2 gap-3 tablet:grid-cols-3 desktop:grid-cols-5 desktop:gap-4">
-          {MARKETPLACE_CATEGORIES.map((cat) => (
-            <li key={cat.slug}>
-              <Link
-                href={`/categorie/${cat.slug}`}
-                className="flex items-center gap-3 rounded-lg border border-wf-300 px-3 py-3 hover:border-wf-500"
-              >
-                <span
-                  className="inline-block h-9 w-9 shrink-0 rounded-full bg-wf-200"
-                  aria-hidden
-                />
-                <span className="text-xs font-semibold text-wf-800">
-                  {categoryNavLabel(cat.slug, cat.label, locale)}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {otherPc.length > 0 ? (
+        <section className="px-4 py-6 tablet:px-8 tablet:py-8">
+          <h2 className="mb-1 text-base font-bold text-wf-900 tablet:text-lg">
+            {t("allCategories", locale)}
+          </h2>
+          <p className="mb-4 text-[12.5px] text-wf-600">
+            {t("categoriesCatalogHint", locale)}
+          </p>
+          <ul className="grid grid-cols-2 gap-3 tablet:grid-cols-3 desktop:grid-cols-5 desktop:gap-4">
+            {otherPc.map((cat) => (
+              <li key={cat.id}>
+                <Link
+                  href={`/categorie/${cat.slug}`}
+                  className="flex items-center gap-3 rounded-lg border border-wf-300 px-3 py-3 hover:border-wf-500"
+                >
+                  <span
+                    className="inline-block h-9 w-9 shrink-0 rounded-full bg-wf-200"
+                    aria-hidden
+                  />
+                  <span className="text-xs font-semibold text-wf-800">
+                    {cat.name}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="border-t border-wf-200 px-4 py-8 tablet:px-8 tablet:py-10">
         <h2 className="text-base font-bold text-wf-900 tablet:text-lg">

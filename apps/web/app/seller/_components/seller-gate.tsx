@@ -7,20 +7,32 @@ import {
   PartnerOnboardingApiError,
   type OnboardingRecord,
 } from "../../partner-onboarding/_lib/partner-onboarding-api"
+import { getMfaStatus } from "../../(auth)/_lib/medusa-auth"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
 import { t } from "../../_lib/i18n/messages"
 import type { StorefrontLocale } from "../../_lib/i18n/locales"
 import { SellerShell } from "./seller-shell"
+import {
+  PartnerAccessContext,
+  accessFromFlags,
+} from "../_lib/partner-access"
 
 function roleLabel(
   onboarding: OnboardingRecord,
   locale: StorefrontLocale
 ): string {
-  if (onboarding.is_retailer && onboarding.is_producer_or_brand_owner) {
-    return t("sellerRoleRetailerProducer", locale)
+  const access = accessFromFlags(onboarding)
+  if (access.roles.length >= 2) {
+    return t("sellerRolePartner", locale)
   }
-  if (onboarding.is_producer_or_brand_owner) {
+  if (access.roles.includes("BRAND_OWNER") && access.roles.includes("PRODUCER")) {
     return t("sellerRoleProducerBrand", locale)
+  }
+  if (access.roles.includes("BRAND_OWNER")) {
+    return t("sellerRoleBrandOwner", locale)
+  }
+  if (access.roles.includes("PRODUCER")) {
+    return t("sellerRoleProducerOnly", locale)
   }
   if (onboarding.is_retailer) {
     return t("partnerRoleRetailer", locale)
@@ -29,14 +41,14 @@ function roleLabel(
 }
 
 export type SellerGateProps = {
-  breadcrumb: Array<{ label: string; href?: string }>
+  breadcrumb?: Array<{ label: string; href?: string }>
   children: React.ReactNode
 }
 
 /**
- * Sessie + goedgekeurde partner vereist voor Seller Dashboard.
+ * Sessie + goedgekeurde partner + actieve 2FA vereist voor Seller Dashboard.
  */
-export function SellerGate({ breadcrumb, children }: SellerGateProps) {
+export function SellerGate({ breadcrumb = [], children }: SellerGateProps) {
   const router = useRouter()
   const pathname = usePathname()
   const locale = useStorefrontLocale()
@@ -47,7 +59,7 @@ export function SellerGate({ breadcrumb, children }: SellerGateProps) {
   useEffect(() => {
     let cancelled = false
     getOnboarding()
-      .then(({ onboarding: current }) => {
+      .then(async ({ onboarding: current }) => {
         if (cancelled) return
         if (!current) {
           router.replace("/partner-onboarding")
@@ -55,6 +67,18 @@ export function SellerGate({ breadcrumb, children }: SellerGateProps) {
         }
         if (current.onboarding_status !== "Goedgekeurd") {
           router.replace("/partner-onboarding/status")
+          return
+        }
+        try {
+          const mfa = await getMfaStatus()
+          if (cancelled) return
+          if (!mfa.enabled) {
+            router.replace("/account/two-factor-setup?required=1")
+            return
+          }
+        } catch {
+          if (cancelled) return
+          router.replace("/account/two-factor-setup?required=1")
           return
         }
         setOnboarding(current)
@@ -82,12 +106,16 @@ export function SellerGate({ breadcrumb, children }: SellerGateProps) {
     )
   }
 
+  const access = accessFromFlags(onboarding)
+
   return (
+    <PartnerAccessContext.Provider value={access}>
     <SellerShell
       roleLabel={roleLabel(onboarding, locale)}
       breadcrumb={breadcrumb}
     >
       {children}
     </SellerShell>
+    </PartnerAccessContext.Provider>
   )
 }

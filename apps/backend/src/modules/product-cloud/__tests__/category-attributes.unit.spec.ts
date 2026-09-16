@@ -3,6 +3,7 @@ import {
   productMatchesUseCase,
   serializeUseCaseTags,
   slugifyCategoryName,
+  productMatchesCategoryFilter,
   CATEGORY_ATTRIBUTE_CATALOGS,
   uniqueCatalogFieldsForImport,
   categorySpecificFieldsForNames,
@@ -15,6 +16,39 @@ describe("Product Cloud category-attributes helpers (ADR-0037)", () => {
       "beauty-en-verzorging"
     )
     expect(slugifyCategoryName("  Tuin  ")).toBe("tuin")
+  })
+
+  it("matches catalog products on exact category slug or name, not substrings", () => {
+    expect(
+      productMatchesCategoryFilter(["Elektronica"], "elektronica")
+    ).toBe(true)
+    expect(
+      productMatchesCategoryFilter(["Elektronica"], "Elektronica")
+    ).toBe(true)
+    expect(
+      productMatchesCategoryFilter(["Tuin"], "elektronica")
+    ).toBe(false)
+    expect(
+      productMatchesCategoryFilter(["Consumentenelektronica"], "elektronica")
+    ).toBe(false)
+    expect(
+      productMatchesCategoryFilter(
+        ["Beauty & Verzorging"],
+        "beauty-verzorging"
+      )
+    ).toBe(true)
+    expect(
+      productMatchesCategoryFilter(
+        ["Schoenen"],
+        "schoenen,tassen-en-accessoires"
+      )
+    ).toBe(true)
+    expect(
+      productMatchesCategoryFilter(
+        ["Tuin"],
+        "schoenen,tassen-en-accessoires"
+      )
+    ).toBe(false)
   })
 
   it("exposes category-specific attribute catalogs", () => {

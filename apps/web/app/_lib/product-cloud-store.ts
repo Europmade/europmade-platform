@@ -66,6 +66,16 @@ async function storeFetch<T>(
  * Fetch one Product Cloud category by storefront slug + locale.
  * Returns null when missing / backend down (safe fallback).
  */
+export async function fetchStorefrontCategories(
+  locale: StorefrontLocale
+): Promise<ProductCloudStoreCategory[] | null> {
+  const qs = new URLSearchParams({ locale })
+  const data = await storeFetch<{ categories: ProductCloudStoreCategory[] }>(
+    `/store/product-cloud/categories?${qs.toString()}`
+  )
+  return data?.categories ?? null
+}
+
 export async function fetchProductCloudCategoryBySlug(
   slug: string,
   locale: StorefrontLocale
@@ -77,8 +87,19 @@ export async function fetchProductCloudCategoryBySlug(
   const data = await storeFetch<{ categories: ProductCloudStoreCategory[] }>(
     `/store/product-cloud/categories?${qs.toString()}`
   )
-  const match = data?.categories?.find((c) => c.slug === slug)
-  return match ?? data?.categories?.[0] ?? null
+  return data?.categories?.find((c) => c.slug === slug) ?? null
+}
+
+export async function fetchCategoryRedirect(
+  fromSlug: string
+): Promise<string | null> {
+  const qs = new URLSearchParams({ from: fromSlug })
+  const data = await storeFetch<{
+    redirect: { from_slug: string; to_slug: string } | null
+  }>(`/store/product-cloud/category-redirects?${qs.toString()}`)
+  const to = data?.redirect?.to_slug?.trim()
+  if (!to || to === fromSlug) return null
+  return to
 }
 
 export function productCloudFilterableAttributes(

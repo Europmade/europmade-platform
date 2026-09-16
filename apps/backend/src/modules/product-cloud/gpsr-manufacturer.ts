@@ -51,10 +51,18 @@ export function isGpsrEuResponsibleAttributeCode(
 }
 
 /**
- * GPSR Art. 16/19: een afzonderlijke EU-verantwoordelijke persoon is alleen
- * nodig wanneer de fabrikant niet in de Unie is gevestigd.
+ * EuropMade: fabrikant moet in de EU/EER gevestigd zijn.
+ * Een aparte "EU verantwoordelijke persoon" is geen toegestaan alternatief
+ * voor publicatie — die velden zijn daarom altijd not_applicable.
  */
 export function manufacturerNeedsSeparateEuOperator(
+  _manufacturer: ManufacturerGpsrSource | null | undefined
+): boolean {
+  return false
+}
+
+/** True when a known manufacturer country is outside the EU/EER. */
+export function manufacturerIsOutsideEu(
   manufacturer: ManufacturerGpsrSource | null | undefined
 ): boolean {
   if (!manufacturer?.country_code) return false
@@ -112,9 +120,7 @@ export function applyGpsrComplianceAttributes<
     attributes,
     manufacturer
   )
-  if (manufacturerNeedsSeparateEuOperator(manufacturer)) {
-    return withManufacturer
-  }
+  // Always mark EU-operator fields as not applicable for seller publication.
   return withManufacturer.map((row) => {
     if (!isGpsrEuResponsibleAttributeCode(row.code)) return row
     return {

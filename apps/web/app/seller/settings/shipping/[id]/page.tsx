@@ -3,15 +3,16 @@
 import { useCallback, useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { Button, Notice } from "@europmade/ui"
-import { SellerGate } from "../../../../_components/seller-gate"
-import { ShippingProfileEditor } from "../../../../_components/shipping/shipping-profile-editor"
+import { SellerGate } from "../../../_components/seller-gate"
+import { ShippingProfileEditor } from "../../../_components/shipping/shipping-profile-editor"
 import {
   CommerceCloudApiError,
   getShippingProfile,
   patchShippingProfile,
+  shippingProfileSaveErrorMessage,
   type SellerShippingProfile,
-} from "../../../../_lib/commerce-cloud-api"
-import { formatEuro } from "../../../../../_components/storefront-shell"
+} from "../../../_lib/commerce-cloud-api"
+import { formatEuro } from "../../../../_components/storefront-shell"
 
 export default function EditShippingProfilePage() {
   const params = useParams<{ id: string }>()
@@ -54,11 +55,7 @@ export default function EditShippingProfilePage() {
       setDraft(res.shipping_profile)
       setNotice("Verzendprofiel opgeslagen.")
     } catch (err: unknown) {
-      setError(
-        err instanceof CommerceCloudApiError
-          ? err.message
-          : "Opslaan mislukt."
-      )
+      setError(shippingProfileSaveErrorMessage(err))
     } finally {
       setBusy(false)
     }

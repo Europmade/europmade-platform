@@ -42,6 +42,12 @@ export function matchesCategoryFilters(
   for (const group of filterGroups) {
     const selected = group.options.filter((o) => active.has(o.id))
     if (selected.length === 0) continue
+    if (group.attributeKey === "category") {
+      const slugs = new Set(product.categorySlugs)
+      const ok = selected.some((o) => slugs.has(o.value.toLowerCase()))
+      if (!ok) return false
+      continue
+    }
     const hay = productHaystack(product)
     const ok = selected.some((o) => hay.includes(o.value.toLowerCase()))
     if (!ok) return false

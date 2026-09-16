@@ -42,6 +42,7 @@ export async function POST(
       payment_mode: body.payment_mode,
       shipping_address: body.shipping_address,
       billing_address: body.billing_address,
+      delivery_country: body.delivery_country,
       lines: body.lines,
       affiliate_click_id: body.affiliate_click_id ?? null,
       affiliate_coupon_code: body.affiliate_coupon_code ?? null,

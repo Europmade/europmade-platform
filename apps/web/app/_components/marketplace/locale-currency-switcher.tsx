@@ -76,7 +76,7 @@ export function LocaleCurrencySwitcher() {
 
   return (
     <div
-      className="hidden items-center gap-1 text-[11px] text-wf-600 tablet:flex"
+      className="flex items-center gap-1 text-[11px] text-wf-600"
       aria-label={t("languageAndCurrency", locale)}
     >
       <label htmlFor={localeId} className="sr-only">

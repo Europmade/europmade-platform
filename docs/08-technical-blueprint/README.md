@@ -30,7 +30,8 @@ Voorheen opgeslagen in `docs/07-technical/` — die map is per besluit definitie
 
 ## Relatie met andere mappen
 
-- Bouwt voort op [`01-architecture/`](../01-architecture/README.md) (tech-stack.md, standard-vs-custom.md) — vult dit aan, vervangt het niet.
+- Bouwt voort op [`01-architecture/`](../01-architecture/README.md).
+- **As-built-status en fasering 0–12:** [`docs/11-blueprint-v2/README.md`](../11-blueprint-v2/README.md) is leidend wanneer dit TB-document (Concept v0.2 / “vóór code”) achterloopt op de repository.
 - Vertaalt de al definitief bevroren functionele specificaties in [`03-functional-specs/`](../03-functional-specs/README.md) naar technische architectuur.
 - Respecteert alle vastgestelde [ADR's](../04-decisions/README.md) (0001–0005) en de daarin vastgelegde uitbreidingen binnen `product-cloud-architecture/spec.md` Deel 11 (ADR-0006 t/m ADR-0013).
 - Elk "Open punten"-onderwerp in TB-01 wordt het onderwerp van een volgend Technical Blueprint-hoofdstuk.

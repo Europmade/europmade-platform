@@ -28,17 +28,17 @@
 
 Zie [`standard-vs-custom.md`](./standard-vs-custom.md) voor de volledige toepassing van dit principe per domein.
 
-## Repository-indicatie (toekomstig, nog niet aanwezig)
+## Repository (as-built)
 
-Zodra de ontwikkeling start, wordt de volgende globale indeling verwacht (niet onderdeel van deze documentatiefase, ter oriëntatie opgenomen):
+Actuele monorepo (`pnpm-workspace.yaml`: `apps/*`, `packages/*`). Volledige status: [`docs/11-blueprint-v2/README.md`](../11-blueprint-v2/README.md).
 
 ```
 apps/
-├── storefront/     ← Next.js, publieke marketplace (klant/bezoeker)
-├── partner/        ← Next.js, Partnerdashboard (retailer/producent) — los van Medusa Admin
-└── backend/         ← Medusa, inclusief custom modules (Offer, Product Cloud-uitbreidingen, Buy Box-engine)
+├── web/        ← Next.js: storefront, seller portal, affiliate, account, onboarding
+├── admin/      ← Next.js: EuropMade Admin Control Center
+└── backend/    ← Medusa v2 + custom modules (Product Cloud, Commerce Cloud, orders, finance, …)
 packages/
-├── types/           ← gedeelde TypeScript-types (o.a. Product Cloud/Commerce Cloud-datamodel)
-├── ui/               ← gedeelde UI-componenten tussen storefront en partnerdashboard
-└── config/           ← gedeelde configuratie (linting, tsconfig, etc.)
+├── types/      ← gedeelde TypeScript-types
+├── ui/         ← gedeelde UI-componenten
+└── utils/      ← gedeelde utilities
 ```

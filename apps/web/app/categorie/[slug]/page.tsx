@@ -1,25 +1,35 @@
 import type { Metadata } from "next"
-import { notFound } from "next/navigation"
+import { notFound, permanentRedirect } from "next/navigation"
+import { COMMERCIAL_NAV_GROUPS, isCommercialNavKey } from "@europmade/utils"
 import { CategoryPageView } from "../../_components/category/category-page-view"
 import { resolveCategoryPage } from "../../_lib/cms/resolve-category"
+import { fetchStoreCmsCategory } from "../../_lib/cms/fetch-store-cms"
+import { overlayCategoryEditorial } from "../../_lib/cms/overlay-category-editorial"
 import { getStorefrontLocaleFromCookies } from "../../_lib/i18n/get-storefront-locale"
-import {
-  findMarketplaceCategory,
-  MARKETPLACE_CATEGORIES,
-} from "../../_lib/marketplace-categories"
-import {
-  LISTING_PRODUCTS,
-  productsForCategory,
-} from "../../_lib/listing-products"
+import { MARKETPLACE_CATEGORIES } from "../../_lib/marketplace-categories"
 import { resolveListingProducts } from "../../_lib/storefront-catalog"
-import { fetchProductCloudCategoryBySlug } from "../../_lib/product-cloud-store"
+import {
+  catalogCategoryFilterForSlug,
+  isCanonicalStorefrontCategory,
+} from "../../_lib/storefront-category"
+import {
+  fetchCategoryRedirect,
+  fetchProductCloudCategoryBySlug,
+  fetchStorefrontCategories,
+} from "../../_lib/product-cloud-store"
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>
 }
 
 export async function generateStaticParams() {
-  return MARKETPLACE_CATEGORIES.map((c) => ({ slug: c.slug }))
+  const slugs = new Set(MARKETPLACE_CATEGORIES.map((c) => c.slug))
+  const pc = await fetchStorefrontCategories("nl")
+  for (const c of pc ?? []) {
+    if (c.slug) slugs.add(c.slug)
+  }
+  for (const group of COMMERCIAL_NAV_GROUPS) slugs.add(group.key)
+  return [...slugs].map((slug) => ({ slug }))
 }
 
 export async function generateMetadata({
@@ -27,20 +37,24 @@ export async function generateMetadata({
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params
   const locale = await getStorefrontLocaleFromCookies()
+  const productCloud = await fetchProductCloudCategoryBySlug(slug, locale)
+  if (!isCanonicalStorefrontCategory(slug, productCloud)) {
+    return { title: "Category — EuropMade" }
+  }
   const { products } = await resolveListingProducts({
-    categorySlug: slug,
+    categorySlug: catalogCategoryFilterForSlug(slug),
     locale,
   })
-  const pool =
-    products.length > 0 ? products : productsForCategory(slug).length
-      ? productsForCategory(slug)
-      : LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
-  const productCloud = await fetchProductCloudCategoryBySlug(slug, locale)
+  const remoteCms = await fetchStoreCmsCategory(slug)
+  const cmsDocument = overlayCategoryEditorial(
+    slug,
+    remoteCms?.category?.document ?? {}
+  )
   const page = resolveCategoryPage(
     slug,
-    pool,
+    products,
     locale,
-    undefined,
+    cmsDocument,
     new Date(),
     productCloud
   )
@@ -66,34 +80,38 @@ export async function generateMetadata({
 }
 
 /**
- * Premium category page — CMS/AI-ready listing (scherm #3/#4).
+ * Categoriepagina — pc_category-slug of commerciële Fase-5-groep.
+ * Listing filtert op gekoppelde Product Cloud-slugs. Geen seed-producten.
  */
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params
-  if (!findMarketplaceCategory(slug)) notFound()
-
   const locale = await getStorefrontLocaleFromCookies()
+  const productCloud = await fetchProductCloudCategoryBySlug(slug, locale)
+  if (
+    !isCommercialNavKey(slug) &&
+    (!productCloud || productCloud.slug !== slug)
+  ) {
+    const to = await fetchCategoryRedirect(slug)
+    if (to) permanentRedirect(`/categorie/${to}`)
+  }
+  if (!isCanonicalStorefrontCategory(slug, productCloud)) notFound()
 
-  const { products: apiProducts } = await resolveListingProducts({
-    categorySlug: slug,
+  const { products } = await resolveListingProducts({
+    categorySlug: catalogCategoryFilterForSlug(slug),
     locale,
   })
 
-  // Seed fallback for empty catalog (demo / offline) — seller images replace later.
-  const seed = productsForCategory(slug)
-  const products =
-    apiProducts.length > 0
-      ? apiProducts
-      : seed.length > 0
-        ? seed
-        : LISTING_PRODUCTS.filter((p) => p.categorySlugs.includes(slug))
+  const remoteCms = await fetchStoreCmsCategory(slug)
+  const cmsDocument = overlayCategoryEditorial(
+    slug,
+    remoteCms?.category?.document ?? {}
+  )
 
-  const productCloud = await fetchProductCloudCategoryBySlug(slug, locale)
   const page = resolveCategoryPage(
     slug,
     products,
     locale,
-    undefined,
+    cmsDocument,
     new Date(),
     productCloud
   )

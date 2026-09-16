@@ -9,8 +9,8 @@ import {
   ShippingProfileEditor,
 } from "../../../_components/shipping/shipping-profile-editor"
 import {
-  CommerceCloudApiError,
   createShippingProfile,
+  shippingProfileSaveErrorMessage,
   type SellerShippingProfile,
 } from "../../../_lib/commerce-cloud-api"
 
@@ -34,11 +34,7 @@ export default function NewShippingProfilePage() {
       })
       router.push(`/seller/settings/shipping/${res.shipping_profile.id}`)
     } catch (err: unknown) {
-      setError(
-        err instanceof CommerceCloudApiError
-          ? err.message
-          : "Opslaan mislukt."
-      )
+      setError(shippingProfileSaveErrorMessage(err))
     } finally {
       setBusy(false)
     }

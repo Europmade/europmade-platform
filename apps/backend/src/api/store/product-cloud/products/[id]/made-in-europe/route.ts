@@ -6,10 +6,12 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../../resolve-seller"
+import { assertPermission } from "../../../../../../modules/partner/permissions"
 import type { StoreAssignMadeInEuropeBodyInput } from "../../../validators"
 import {
   upsertProductMadeInEurope,
   loadMadeInEuropeForProduct,
+  serializeProductionLocation,
 } from "../../../made-in-europe-helpers"
 
 type RouteParams = { id: string }
@@ -26,6 +28,7 @@ export async function POST(
     req.scope,
     req.auth_context.actor_id
   )
+  assertPermission(seller, "mie.manage")
   const { id } = req.params as RouteParams
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
@@ -61,13 +64,7 @@ export async function POST(
     product_id: result.product_id,
     product_version_id: result.product_version_id,
     made_in_europe: result.score,
-    facility: result.facility
-      ? {
-          id: result.facility.id,
-          name: result.facility.name,
-          country_code: result.facility.country_code,
-        }
-      : null,
+    facility: serializeProductionLocation(result.facility),
   })
 }
 
@@ -98,12 +95,6 @@ export async function GET(
   res.status(200).json({
     product_id: id,
     made_in_europe: data?.score ?? null,
-    facility: data?.facility
-      ? {
-          id: data.facility.id,
-          name: data.facility.name,
-          country_code: data.facility.country_code,
-        }
-      : null,
+    facility: serializeProductionLocation(data?.facility ?? null),
   })
 }

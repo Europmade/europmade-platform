@@ -30,6 +30,7 @@ import {
 import type { AiContentDocument } from "../ai-content/types"
 import { AI_CONTENT_PROMPT_VERSION } from "../ai-content/prompts/versions"
 import type { ProductCloudStoreCategory } from "../product-cloud-store"
+import { commercialCategoryTitle } from "../storefront-category"
 import {
   parseOptionValues,
   productCloudComparableAttributes,
@@ -391,7 +392,10 @@ export function resolveCategoryPage(
     ? (localeInput as StorefrontLocale)
     : DEFAULT_STOREFRONT_LOCALE
 
-  if (!productCloud || productCloud.slug !== slug) return null
+  if (!productCloud || productCloud.slug !== slug) {
+    const commercialTitle = commercialCategoryTitle(slug, locale)
+    if (!commercialTitle) return null
+  }
 
   const doc = document ?? overlayCategoryEditorial(slug, {})
   if (!isCmsEntryLive(doc, now)) return null
@@ -504,9 +508,27 @@ export function resolveCategoryPage(
   }))
 
   const cmsTitle = pickLocalized(doc.title, locale).trim()
-  const title = cmsTitle || productCloud?.name?.trim() || slug
+  const cmsTitleLocale =
+    locale === "nl"
+      ? doc.title.nl.trim()
+      : locale === "en"
+        ? doc.title.en.trim()
+        : locale === "de"
+          ? doc.title.de.trim()
+          : doc.title.fr.trim()
+  const pcName = productCloud?.name?.trim() || ""
+  const commercialName = commercialCategoryTitle(slug, locale) || ""
+  const title = cmsTitleLocale || commercialName || pcName || cmsTitle || slug
+  const cmsH1Locale =
+    locale === "nl"
+      ? doc.seo.h1.nl.trim()
+      : locale === "en"
+        ? doc.seo.h1.en.trim()
+        : locale === "de"
+          ? doc.seo.h1.de.trim()
+          : doc.seo.h1.fr.trim()
   const cmsH1 = pickLocalized(doc.seo.h1, locale).trim()
-  const h1 = cmsH1 || title
+  const h1 = cmsH1Locale || title || cmsH1
   const intro = pickLocalized(doc.seo.intro, locale)
   const seoTitleRaw = pickLocalized(doc.seo.title, locale).trim()
   const seoTitle = seoTitleRaw || `${title} | EuropMade`

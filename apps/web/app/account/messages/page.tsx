@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Notice } from "@europmade/ui"
+import { Badge, Notice } from "@europmade/ui"
 import { BuyerGate } from "../_components/buyer-gate"
 import {
   OrderServiceApiError,
@@ -70,29 +70,51 @@ export default function BuyerMessagesPage() {
         </p>
       ) : (
         <ul className="mt-5 divide-y divide-wf-200 rounded-md border border-wf-300">
-          {threads.map((thread) => (
-            <li key={thread.order_id}>
-              <Link
-                href={`/account/messages/${thread.order_id}`}
-                className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 text-xs hover:bg-wf-50"
-              >
-                <div>
-                  <div className="font-semibold text-wf-900">
-                    {t("commonOrder", locale)} #{thread.order_number}
+          {threads.map((thread) => {
+            const id = thread.conversation_id ?? thread.id
+            if (!id) return null
+            return (
+              <li key={id}>
+                <Link
+                  href={`/account/messages/c/${id}`}
+                  className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 text-xs hover:bg-wf-50"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 font-semibold text-wf-900">
+                      {thread.subject ||
+                        (thread.order_number
+                          ? `${t("commonOrder", locale)} #${thread.order_number}`
+                          : t("buyerConversation", locale))}
+                      {thread.status === "waiting_for_customer" ? (
+                        <Badge variant="outline">
+                          {t("sellerMsgStatusWaitingCustomer", locale)}
+                        </Badge>
+                      ) : null}
+                      {thread.status === "waiting_for_seller" ? (
+                        <Badge variant="outline">
+                          {t("sellerMsgStatusWaitingSeller", locale)}
+                        </Badge>
+                      ) : null}
+                      {thread.status === "resolved" ? (
+                        <Badge variant="outline">
+                          {t("sellerMsgStatusResolved", locale)}
+                        </Badge>
+                      ) : null}
+                    </div>
+                    <div className="mt-0.5 truncate text-wf-600">
+                      {thread.last_body_preview ??
+                        t("buyerNoMessagesStart", locale)}
+                    </div>
                   </div>
-                  <div className="mt-0.5 text-wf-600">
-                    {thread.last_body_preview ??
-                      t("buyerNoMessagesStart", locale)}
-                  </div>
-                </div>
-                <span className="text-wf-500">
-                  {tFormat("buyerMessageCount", locale, {
-                    count: thread.message_count,
-                  })}
-                </span>
-              </Link>
-            </li>
-          ))}
+                  <span className="shrink-0 text-wf-500">
+                    {tFormat("buyerMessageCount", locale, {
+                      count: thread.message_count,
+                    })}
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       )}
     </BuyerGate>

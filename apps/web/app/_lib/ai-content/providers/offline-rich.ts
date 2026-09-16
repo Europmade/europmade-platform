@@ -170,7 +170,7 @@ export function buildDiscoveryCards(
       "Saisonale Auswahl europäischer Hersteller",
       "Sélection saisonnière de fabricants européens"
     ),
-    href: `/zoeken?collectie=${ctx.entityId}`,
+    href: `/categorie/${ctx.entityId}`,
     imageKind: CATEGORY_PRODUCT_KIND[ctx.entityId] ?? "coffee",
     badge: LS("Collectie", "Collection", "Kollektion", "Collection"),
   })

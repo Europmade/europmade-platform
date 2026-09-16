@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="EuropMade">
+    <defs><linearGradient id="zili" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".25" stop-color="#DCE3EB"/><stop offset=".5" stop-color="#A3AFBF"/><stop offset=".68" stop-color="#EDF1F5"/><stop offset="1" stop-color="#8B98AA"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#zili)"/>
+</svg>

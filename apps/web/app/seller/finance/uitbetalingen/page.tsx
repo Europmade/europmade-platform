@@ -1,16 +1,45 @@
 "use client"
 
-import { Badge } from "@europmade/ui"
+import { useEffect, useState } from "react"
+import { Badge, Notice } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
-import { DEMO_PAYOUTS } from "../../_lib/demo-data"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { t } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
+import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
+
+type PayoutRow = {
+  id: string
+  amount: number
+  status: string
+  eligible_at: string
+  order_number: string | null
+}
 
 export default function SellerFinanceUitbetalingenPage() {
   const locale = useStorefrontLocale()
+  const [payouts, setPayouts] = useState<PayoutRow[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const PK = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+    fetch(`${medusaBackendUrl()}/store/finance/seller`, {
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        ...(PK ? { "x-publishable-api-key": PK } : {}),
+      },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        setPayouts(d?.payouts ?? [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
   return (
     <SellerGate
       breadcrumb={[
@@ -26,7 +55,11 @@ export default function SellerFinanceUitbetalingenPage() {
         {t("sellerFinancePayoutsIntro", locale)}
       </p>
 
-      {DEMO_PAYOUTS.length === 0 ? (
+      <Notice variant="info" className="mt-4">
+        {t("sellerFinancePayoutNotInvoice", locale)}
+      </Notice>
+
+      {!loading && payouts.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             title={t("sellerFinancePayoutsEmptyTitle", locale)}
@@ -42,6 +75,7 @@ export default function SellerFinanceUitbetalingenPage() {
                   t("commonStatus", locale),
                   t("commonAmount", locale),
                   t("commonDate", locale),
+                  t("commonOrder", locale),
                 ].map((h) => (
                   <th
                     key={h}
@@ -53,8 +87,11 @@ export default function SellerFinanceUitbetalingenPage() {
               </tr>
             </thead>
             <tbody>
-              {DEMO_PAYOUTS.map((p) => (
-                <tr key={p.id} className="border-b border-wf-200 last:border-b-0">
+              {payouts.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-wf-200 last:border-b-0"
+                >
                   <td className="px-4 py-2.5">
                     <Badge variant="outline">
                       {statusLabel(p.status, locale)}
@@ -62,6 +99,7 @@ export default function SellerFinanceUitbetalingenPage() {
                   </td>
                   <td className="px-4 py-2.5">{formatEuro(p.amount)}</td>
                   <td className="px-4 py-2.5">{p.eligible_at}</td>
+                  <td className="px-4 py-2.5">{p.order_number ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

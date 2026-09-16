@@ -11,6 +11,7 @@ import type CommerceCloudModuleService from "../../../../../../../../modules/com
 import { PARTNER_MODULE } from "../../../../../../../../modules/partner"
 import type PartnerModuleService from "../../../../../../../../modules/partner/service"
 import { buildSellerProductManagerDetail } from "../../../../../product-manager"
+import { assertValidGtinForSubmission } from "../../../../../submit-gates"
 
 type RouteParams = { id: string; versionId: string }
 
@@ -54,6 +55,7 @@ export async function POST(
         "Product is niet publiceerbaar. Controleer productinformatie en compliance."
     )
   }
+  await assertValidGtinForSubmission(productCloud, id)
 
   throw new MedusaError(
     MedusaError.Types.NOT_ALLOWED,

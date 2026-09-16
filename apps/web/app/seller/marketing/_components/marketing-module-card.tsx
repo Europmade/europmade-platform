@@ -12,6 +12,7 @@ export function MarketingModuleCard({
   module: MarketingModuleDefinition
 }) {
   const locale = useStorefrontLocale()
+  const comingSoon = module.status === "coming_soon"
   const unavailable = module.status !== "available" || !module.href
   const inner = (
     <>
@@ -19,7 +20,9 @@ export function MarketingModuleCard({
         <h3 className="text-sm font-bold text-wf-900">
           {t(module.titleKey, locale)}
         </h3>
-        {unavailable ? (
+        {comingSoon ? (
+          <Badge variant="outline">{t("commonComingSoon", locale)}</Badge>
+        ) : unavailable ? (
           <Badge variant="outline">{t("commonUnavailable", locale)}</Badge>
         ) : (
           <Badge variant="solid">{t("commonAvailable", locale)}</Badge>

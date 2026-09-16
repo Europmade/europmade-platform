@@ -50,5 +50,11 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/ai-support",
     },
+    {
+      resolve: "./src/modules/cms",
+    },
+    {
+      resolve: "./src/modules/mfa",
+    },
   ],
 })

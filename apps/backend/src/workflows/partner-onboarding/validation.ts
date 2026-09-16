@@ -74,6 +74,8 @@ export interface OnboardingRoleSelection {
   is_retailer: boolean
   is_producer_or_brand_owner: boolean
   is_distributor: boolean
+  is_brand_owner?: boolean
+  is_producer?: boolean
 }
 
 /**
@@ -86,11 +88,13 @@ export function assertAtLeastOneRoleSelected(
   if (
     !roles.is_retailer &&
     !roles.is_producer_or_brand_owner &&
-    !roles.is_distributor
+    !roles.is_distributor &&
+    !roles.is_brand_owner &&
+    !roles.is_producer
   ) {
     throw new MedusaError(
       MedusaError.Types.INVALID_DATA,
-      "Kies ten minste één rol (Retailer, Producent/Merkhouder en/of Distributeur)."
+      "Kies ten minste één rol (Retailer, Merkeigenaar, Producent en/of Distributeur)."
     )
   }
 }

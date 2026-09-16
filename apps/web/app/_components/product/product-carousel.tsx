@@ -84,13 +84,19 @@ function ProductThumb({
         aria-hidden
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={imageSrc || productMockupSrc(slug || title)}
-        alt=""
-        className="relative z-[1] h-full w-full object-contain p-2.5 drop-shadow-[0_10px_20px_rgba(15,23,42,0.1)]"
-        loading="lazy"
-        decoding="async"
-      />
+      {imageSrc ? (
+        <img
+          src={imageSrc}
+          alt=""
+          className="relative z-[1] h-full w-full object-contain p-2.5 drop-shadow-[0_10px_20px_rgba(15,23,42,0.1)]"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <div className="relative z-[1] flex h-full items-center justify-center px-2 text-center text-[11px] text-wf-500">
+          Geen productafbeelding
+        </div>
+      )}
     </div>
   )
 }
@@ -217,7 +223,11 @@ export function ProductCarouselCard({
     <article className={`${shellClass} group/card`}>
       <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-wf-200 bg-white p-1.5 shadow-sm transition duration-200 group-hover/card:-translate-y-0.5 group-hover/card:border-wf-300 group-hover/card:shadow-md">
         <div className="relative">
-          <ProductThumb slug={product.slug} title={product.title} />
+          <ProductThumb
+            slug={product.slug}
+            title={product.title}
+            imageSrc={product.imageUrl}
+          />
           <span
             className="pointer-events-none absolute left-1.5 top-1.5 z-[1] rounded bg-white/90 px-1 py-0.5 text-[9.5px] leading-none tracking-tighter text-wf-800 shadow-sm backdrop-blur-sm"
             aria-label={`Beoordeling ${product.rating.toFixed(1).replace(".", ",")}`}

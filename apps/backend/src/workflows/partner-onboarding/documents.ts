@@ -54,7 +54,11 @@ export function requiredDocumentTypesForRoles(
   roles: OnboardingRoleSelection
 ): DocumentType[] {
   const required: DocumentType[] = ["identity_document", "chamber_of_commerce_extract"]
-  if (roles.is_producer_or_brand_owner) {
+  if (
+    roles.is_producer_or_brand_owner ||
+    roles.is_brand_owner ||
+    roles.is_producer
+  ) {
     required.push("production_proof")
   }
   if (roles.is_distributor) {

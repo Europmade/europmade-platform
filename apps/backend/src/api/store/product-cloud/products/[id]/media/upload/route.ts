@@ -12,7 +12,10 @@ import {
 } from "@europmade/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../../modules/product-cloud/service"
-import { processProductImageBuffer } from "../../../../../../../modules/product-cloud/product-media-processor"
+import {
+  mapUploadedProductImageRefs,
+  processProductImageBuffer,
+} from "../../../../../../../modules/product-cloud/product-media-processor"
 import { addMediaWorkflow } from "../../../../../../../workflows/product-cloud"
 import { resolveApprovedSeller } from "../../../../resolve-seller"
 
@@ -32,6 +35,7 @@ const IMAGE_MIME = new Set([
   "image/avif",
 ])
 const VIDEO_MIME = new Set(["video/mp4", "video/webm"])
+const PDF_MIME = "application/pdf"
 
 function placementForMediaType(
   media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
@@ -67,10 +71,11 @@ export async function POST(
 
   const isVideo = VIDEO_MIME.has(file.mimetype)
   const isImage = IMAGE_MIME.has(file.mimetype)
-  if (!isVideo && !isImage) {
+  const isPdf = file.mimetype === PDF_MIME
+  if (!isVideo && !isImage && !isPdf) {
     throw new MedusaError(
       MedusaError.Types.INVALID_DATA,
-      "Toegestaan: JPG, PNG, WebP, AVIF of MP4/WebM."
+      "Toegestaan: JPG, PNG, WebP, AVIF, PDF of MP4/WebM."
     )
   }
 
@@ -120,24 +125,34 @@ export async function POST(
       "Voor video gebruik je een MP4/WebM-bestand of voeg een YouTube/Vimeo-link toe."
     )
   }
-  if (media_type === "Hoofdafbeelding" && isVideo) {
+  if (media_type === "Hoofdafbeelding" && (isVideo || isPdf)) {
     throw new MedusaError(
       MedusaError.Types.INVALID_DATA,
       "De hoofdafbeelding moet een afbeelding zijn."
     )
   }
-
-  const placement = placementForMediaType(media_type)
-  const reqLimits = getMediaRequirements(placement)
-  if (file.size > reqLimits.maxBytes) {
+  if (isPdf && media_type === "Video") {
     throw new MedusaError(
       MedusaError.Types.INVALID_DATA,
-      `Bestand is te groot. Maximum is ${Math.round(reqLimits.maxBytes / (1024 * 1024))} MB.`
+      "PDF is geen video. Gebruik PDF als compliance-bewijs."
+    )
+  }
+
+  const placement = placementForMediaType(
+    isPdf ? "Overige afbeelding" : media_type
+  )
+  const reqLimits = getMediaRequirements(placement)
+  const maxBytes = isPdf ? 5 * 1024 * 1024 : reqLimits.maxBytes
+  if (file.size > maxBytes) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      `Bestand is te groot. Maximum is ${Math.round(maxBytes / (1024 * 1024))} MB.`
     )
   }
 
   let storage_reference = ""
   let metadata: Record<string, unknown> | null = null
+  const persistedMediaType = isPdf ? "Overige afbeelding" : media_type
 
   if (isImage) {
     const alpha =
@@ -175,38 +190,51 @@ export async function POST(
       },
     })
 
-    const variantRefs: typeof processed.metadata.variants = {
-      webp: {},
-      avif: {},
-      jpeg: {},
-      png: processed.metadata.variants?.png,
-    }
-    for (const row of uploaded ?? []) {
-      const ref = persistMediaReference(
-        (row as { url?: string }).url || (row as { id?: string }).id
-      )
-      if (!ref) continue
-      const name = (row as { filename?: string }).filename || ""
-      for (const width of ["400", "800", "1200"] as const) {
-        if (name.includes(`-${width}.webp`)) variantRefs.webp![width] = ref
-        if (name.includes(`-${width}.avif`)) variantRefs.avif![width] = ref
-        if (name.includes(`-${width}.jpg`)) variantRefs.jpeg![width] = ref
-        if (name.includes(`-1200.png`)) {
-          variantRefs.png = { ...variantRefs.png, "1200": ref }
-        }
-      }
-      if (name === file.originalname.replace(/[^\w.\-() ]+/g, "_")) {
-        processed.metadata.original_reference = ref
-      }
+    const mapped = mapUploadedProductImageRefs(
+      uploaded as Array<{
+        url?: string
+        id?: string
+        filename?: string
+        file_name?: string
+        key?: string
+      }>,
+      file.originalname
+    )
+    if (mapped.original_reference) {
+      processed.metadata.original_reference = mapped.original_reference
     }
 
-    metadata = { ...processed.metadata, variants: variantRefs }
+    metadata = { ...processed.metadata, variants: mapped.variants }
     storage_reference =
       persistMediaReference(
-        variantRefs.webp?.["800"] ||
+        mapped.variants.webp?.["800"] ||
+          mapped.variants.jpeg?.["800"] ||
+          mapped.original_reference ||
           processed.metadata.original_reference ||
           processed.display_reference
-      ) || processed.display_reference
+      ) ||
+      mapped.original_reference ||
+      processed.display_reference
+  } else if (isPdf) {
+    const { result: uploaded } = await uploadFilesWorkflow(req.scope).run({
+      input: {
+        files: [
+          {
+            filename: file.originalname,
+            mimeType: PDF_MIME,
+            content: file.buffer.toString("base64"),
+            access: "public",
+          },
+        ],
+      },
+    })
+    const fileRow = uploaded?.[0] as { id?: string; url?: string } | undefined
+    storage_reference =
+      persistMediaReference(fileRow?.url || fileRow?.id) || fileRow?.id || ""
+    metadata = {
+      mime_type: PDF_MIME,
+      purpose: "compliance_evidence",
+    }
   } else {
     const validation = validateMedia({
       placement: "product_video",
@@ -242,7 +270,7 @@ export async function POST(
     )
   }
 
-  if (media_type === "Hoofdafbeelding") {
+  if (persistedMediaType === "Hoofdafbeelding") {
     const existing = await productCloud.listProductMedias({
       product_version_id: versionId,
       media_type: "Hoofdafbeelding",
@@ -260,7 +288,7 @@ export async function POST(
       product_id: id,
       version_id: versionId,
       seller_id: seller.id,
-      media_type,
+      media_type: persistedMediaType,
       storage_reference,
       metadata,
     },
@@ -269,8 +297,10 @@ export async function POST(
   res.status(201).json({
     media: result,
     limits: {
-      max_bytes: reqLimits.maxBytes,
-      mime_types: reqLimits.mimeTypes,
+      max_bytes: maxBytes,
+      mime_types: isPdf
+        ? [PDF_MIME]
+        : reqLimits.mimeTypes,
     },
   })
 }

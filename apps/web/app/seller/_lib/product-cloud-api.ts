@@ -33,14 +33,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const body: unknown = await response.json().catch(() => undefined)
 
   if (!response.ok) {
-    const message =
-      body &&
-      typeof body === "object" &&
-      "message" in body &&
-      typeof body.message === "string"
-        ? body.message
-        : "Er is iets misgegaan. Probeer het opnieuw."
-    throw new ProductCloudApiError(message, response.status)
+    throw new ProductCloudApiError(
+      readImportApiErrorMessage(body, "Er is iets misgegaan. Probeer het opnieuw."),
+      response.status
+    )
   }
 
   return body as T
@@ -146,9 +142,12 @@ export type CatalogProduct = {
   manufacturer_id: string
   lifecycle_status: string
   current_owner_seller_id: string
+  catalog_owner?: boolean
+  list_activity_at?: string | null
   title: string | null
   description?: string | null
   category_names: string[]
+  category_assignment_status?: "linked" | "category_pending"
   primary_image_url?: string | null
   identifier_id: string | null
   identifier_type: string | null
@@ -158,7 +157,15 @@ export type CatalogProduct = {
   approval_status?: string | null
   approval_rejection_reason?: string | null
   approval_requested_at?: string | null
+  admin_review_outcome?: string | null
   workflow_status?: string | null
+  section_reviews?: Array<{
+    section_key: string
+    label_nl: string
+    status: string
+    comment: string | null
+    decided_at?: string | null
+  }>
   variant_count?: number
   regular_customer_price?: number | null
   offer?: SellerOfferSummary
@@ -297,6 +304,29 @@ export type EanMatchResponse = {
   candidate_previews?: ProductCloudPreview[]
 }
 
+export type ExistingProductSearchHit = {
+  product_id: string
+  title: string | null
+  brand_id: string
+  brand_name: string | null
+  ean: string | null
+  mpn: string | null
+  identifier_id: string | null
+  category_names: string[]
+  primary_image_url: string | null
+  own_offer: boolean
+  match_kinds: Array<"ean" | "mpn" | "own_sku" | "title" | "brand">
+  certainty: "exact" | "candidate"
+}
+
+export type ExistingProductSearchResponse = {
+  products: ExistingProductSearchHit[]
+  count: number
+  offset: number
+  limit: number
+  creates_product: false
+}
+
 export type CreateProductInput = {
   brand_id: string
   manufacturer_id: string
@@ -336,7 +366,7 @@ export function listOwnProducts(params?: {
     products: CatalogProduct[]
     count: number
     total_unfiltered?: number
-  }>(`/store/product-cloud/products${suffix}`)
+  }>(`/store/product-cloud/products${suffix}`, { cache: "no-store" })
 }
 
 export function getProductManager(productId: string) {
@@ -376,10 +406,37 @@ export function matchByEan(identifier_value: string) {
   })
 }
 
+export function searchExistingProducts(q: string, offset = 0, limit = 20) {
+  const qs = new URLSearchParams()
+  qs.set("q", q)
+  qs.set("offset", String(offset))
+  qs.set("limit", String(limit))
+  return request<ExistingProductSearchResponse>(
+    `/store/product-cloud/search?${qs.toString()}`
+  )
+}
+
 export function createProduct(body: CreateProductInput) {
   return request<CreateProductResponse>("/store/product-cloud/products", {
     method: "POST",
     body: JSON.stringify(body),
+  })
+}
+
+export function listProductCloudCategories() {
+  return request<{
+    categories: Array<{ id: string; name: string; slug: string | null }>
+  }>("/store/product-cloud/categories?locale=nl")
+}
+
+export function patchProductCategories(productId: string, category_names: string[]) {
+  return request<{
+    product_id: string
+    category_names: string[]
+    category_count: number
+  }>(`/store/product-cloud/products/${productId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ category_names }),
   })
 }
 
@@ -414,6 +471,14 @@ export function getProductTranslations(productId: string) {
     provider_configured: boolean
     provider_message: string | null
     active_targets: string[]
+    active_languages?: string[]
+    required_target_languages?: string[]
+    editable_fields?: Array<{
+      field_name: string
+      label: string
+      source_value: string
+      required: boolean
+    }>
   }>(`/store/product-cloud/products/${productId}/translations`)
 }
 
@@ -452,6 +517,51 @@ export function prepareProductTranslations(productId: string) {
   }>(`/store/product-cloud/products/${productId}/translations`, {
     method: "POST",
     body: JSON.stringify({ only_missing: true }),
+  })
+}
+
+/** Seller: save manual title + description for one target language (Gepubliceerd). */
+export function saveProductTranslationManual(
+  productId: string,
+  body: {
+    language_code: string
+    title?: string
+    description?: string
+    fields?: Record<string, string>
+    publish?: boolean
+  }
+) {
+  return request<{
+    product_id: string
+    language_code: string
+    message?: string
+    source_language_code: string | null
+    targets: Array<{
+      language_code: string
+      translation_status: string
+      ui_status: string
+      field_count: number
+      has_manual: boolean
+    }>
+    translations: Array<{
+      id: string
+      field_name: string
+      language_code: string
+      value: string
+      translation_status: string
+      origin?: string
+    }>
+    active_languages?: string[]
+    required_target_languages?: string[]
+    editable_fields?: Array<{
+      field_name: string
+      label: string
+      source_value: string
+      required: boolean
+    }>
+  }>(`/store/product-cloud/products/${productId}/translations`, {
+    method: "PUT",
+    body: JSON.stringify(body),
   })
 }
 
@@ -779,12 +889,24 @@ export type ImportPreviewResponse = {
     requirement_tier?: string
     unit?: string | null
   }>
+  field_labels?: Array<{
+    column: string
+    nl_name: string
+    required: string
+  }>
   detected_categories?: string[]
+  import_categories?: Array<{ id: string; name: string; slug: string }>
   preview: Array<{
     row: number
     values: Record<string, string>
     status: "new" | "existing" | "error"
-    issues: Array<{ row: number; field: string; message: string }>
+    issues: Array<{ row: number; field: string; message: string; blocking?: boolean }>
+    category_resolution?: {
+      status: "linked" | "suggested" | "pending"
+      raw: string
+      matched: { id: string; name: string; slug: string } | null
+      suggestions: Array<{ id: string; name: string; slug: string }>
+    }
   }>
   summary: {
     rows: number
@@ -793,8 +915,22 @@ export type ImportPreviewResponse = {
     error_rows: number
     missing_ean: number
     missing_required: number
+    concept_without_ean?: number
+    skipped_empty?: number
+    skipped_header_rows?: number
   }
   csv_limitation?: string
+  source_language_code?: string | null
+  unknown_columns?: string[]
+  structure_error?: string | null
+  transposed?: boolean
+}
+
+export function listProductCloudLanguages() {
+  return request<{
+    languages: Array<{ code: string; name: string }>
+    required_target_languages: string[]
+  }>("/store/product-cloud/languages")
 }
 
 export function previewProductImport(body: {
@@ -802,6 +938,7 @@ export function previewProductImport(body: {
   headers?: string[]
   rows?: string[][]
   mapping?: Record<string, string | null>
+  source_language_code?: string
 }) {
   return request<ImportPreviewResponse>("/store/product-cloud/import/preview", {
     method: "POST",
@@ -814,20 +951,24 @@ export function commitProductImport(body: {
   headers?: string[]
   rows?: string[][]
   mapping?: Record<string, string | null>
+  source_language_code: string
+  row_overrides?: Record<string, Record<string, string>>
 }) {
-  return request<{ imported: number; updated: number; product_ids: string[] }>(
-    "/store/product-cloud/import",
-    { method: "POST", body: JSON.stringify(body) }
-  )
+  return request<ImportCommitResponse>("/store/product-cloud/import", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
 }
 
 export async function previewProductImportFile(
   file: File,
-  mapping?: Record<string, string | null>
+  mapping?: Record<string, string | null>,
+  sourceLanguage?: string
 ) {
   const form = new FormData()
   form.append("file", file)
   if (mapping) form.append("mapping", JSON.stringify(mapping))
+  if (sourceLanguage) form.append("source_language_code", sourceLanguage)
   const response = await fetch(
     `${medusaBackendUrl()}/store/product-cloud/import/preview`,
     {
@@ -841,22 +982,102 @@ export async function previewProductImportFile(
   )
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
-    const message =
-      body && typeof body === "object" && "message" in body
-        ? String((body as { message: unknown }).message)
-        : "Preview mislukt."
-    throw new ProductCloudApiError(message, response.status)
+    throw new ProductCloudApiError(
+      readImportApiErrorMessage(body, "Preview mislukt."),
+      response.status
+    )
   }
   return body as ImportPreviewResponse
 }
 
+export type ImportCommitProduct = {
+  row: number
+  product_id: string
+  title: string
+  action: "created" | "updated"
+  lifecycle_status: string | null
+  publication_status: string
+  category_status: "linked" | "category_pending"
+  category_raw: string
+  category_name: string | null
+  category_suggestions: string[]
+  warning: string | null
+}
+
+export type ImportCommitResponse = {
+  success?: boolean
+  imported: number
+  updated: number
+  created_count?: number
+  updated_count?: number
+  warning_count?: number
+  skipped_count?: number
+  error_count?: number
+  product_ids: string[]
+  products?: ImportCommitProduct[]
+  warnings?: string[]
+  errors?: string[]
+  message?: string
+  source_language_code: string
+  translations: {
+    provider_configured: boolean
+    queued: number
+    skipped_manual: number
+  }
+}
+
+export function isGenericUnknownApiMessage(message: string): boolean {
+  return /unknown error occurred/i.test(message.trim())
+}
+
+export function sanitizeImportUserMessage(
+  message: string,
+  fallback = "Import mislukt."
+): string {
+  if (!message.trim() || isGenericUnknownApiMessage(message)) return fallback
+  return message
+}
+
+export function readImportApiErrorMessage(
+  body: unknown,
+  fallback = "Import mislukt."
+): string {
+  if (!body || typeof body !== "object") return fallback
+  const record = body as {
+    message?: unknown
+    error?: { message?: unknown }
+  }
+  if (typeof record.message === "string" && record.message.trim()) {
+    return sanitizeImportUserMessage(record.message, fallback)
+  }
+  if (typeof record.error?.message === "string" && record.error.message.trim()) {
+    return sanitizeImportUserMessage(record.error.message, fallback)
+  }
+  return fallback
+}
+
+export function importCommitLooksSuccessful(body: unknown): boolean {
+  if (!body || typeof body !== "object") return false
+  const record = body as ImportCommitResponse
+  if (record.success === true) return true
+  if (Array.isArray(record.product_ids) && record.product_ids.length > 0) {
+    return true
+  }
+  if (Array.isArray(record.products) && record.products.length > 0) return true
+  return false
+}
+
 export async function commitProductImportFile(
   file: File,
-  mapping: Record<string, string | null>
-) {
+  mapping: Record<string, string | null>,
+  sourceLanguage: string,
+  rowOverrides?: Record<string, Record<string, string>>
+): Promise<ImportCommitResponse> {
   const form = new FormData()
   form.append("file", file)
   form.append("mapping", JSON.stringify(mapping))
+  form.append("source_language_code", sourceLanguage)
+  if (rowOverrides) form.append("row_overrides", JSON.stringify(rowOverrides))
   const response = await fetch(`${medusaBackendUrl()}/store/product-cloud/import`, {
     method: "POST",
     credentials: "include",
@@ -867,13 +1088,99 @@ export async function commitProductImportFile(
   })
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
-    const message =
-      body && typeof body === "object" && "message" in body
-        ? String((body as { message: unknown }).message)
-        : "Import mislukt."
-    throw new ProductCloudApiError(message, response.status)
+    if (importCommitLooksSuccessful(body)) {
+      return body as ImportCommitResponse
+    }
+    throw new ProductCloudApiError(
+      readImportApiErrorMessage(body, "Import mislukt."),
+      response.status
+    )
   }
-  return body as { imported: number; updated: number; product_ids: string[] }
+  return body as ImportCommitResponse
+}
+
+export function recoverImportCommitFromOwnProducts(
+  catalog: CatalogProduct[],
+  preview: ImportPreviewResponse
+): ImportCommitResponse | null {
+  const products: ImportCommitProduct[] = []
+  for (const row of preview.preview) {
+    const ean = (row.values.ean || "").replace(/\D/g, "")
+    const want = (row.values.title || "").trim().toLowerCase()
+    const hit = catalog.find((item) => {
+      const idValue = (item.identifier_value || "").replace(/\D/g, "")
+      if (ean && idValue === ean) return true
+      return Boolean(want) && (item.title || "").trim().toLowerCase() === want
+    })
+    if (!hit) continue
+    const pending =
+      hit.category_assignment_status === "category_pending" ||
+      !(hit.category_names && hit.category_names.length)
+    const raw =
+      row.category_resolution?.raw ||
+      row.values.category_raw ||
+      row.values.category ||
+      ""
+    products.push({
+      row: row.row,
+      product_id: hit.id,
+      title: hit.title || row.values.title || "",
+      action: row.status === "existing" ? "updated" : "created",
+      lifecycle_status: hit.lifecycle_status ?? "Concept",
+      publication_status: hit.publication_status || "Concept",
+      category_status: pending ? "category_pending" : "linked",
+      category_raw: raw,
+      category_name: hit.category_names?.[0] ?? null,
+      category_suggestions:
+        row.category_resolution?.suggestions.map((item) => item.name) || [],
+      warning: pending
+        ? `Categorie niet herkend (${raw.trim() || "onbekend"}) — kies een EuropMade-categorie.`
+        : null,
+    })
+  }
+  if (!products.length) return null
+  const created = products.filter((item) => item.action === "created")
+  const updated = products.filter((item) => item.action === "updated")
+  const warnings = products.map((item) => item.warning).filter(Boolean) as string[]
+  return {
+    success: true,
+    imported: created.length,
+    updated: updated.length,
+    created_count: created.length,
+    updated_count: updated.length,
+    warning_count: warnings.length,
+    skipped_count: preview.summary.skipped_empty ?? 0,
+    error_count: 0,
+    product_ids: products.map((item) => item.product_id),
+    products,
+    warnings,
+    errors: [],
+    message:
+      warnings.length > 0
+        ? "Import geslaagd, met waarschuwingen."
+        : "Import geslaagd.",
+    source_language_code: preview.source_language_code || "nl",
+    translations: {
+      provider_configured: false,
+      queued: 0,
+      skipped_manual: 0,
+    },
+  }
+}
+
+export async function recoverImportCommitAfterFailure(
+  preview: ImportPreviewResponse
+): Promise<ImportCommitResponse | null> {
+  const firstTitle = preview.preview[0]?.values.title?.trim()
+  const firstEan = preview.preview[0]?.values.ean?.trim()
+  const query = firstTitle || firstEan
+  if (!query) return null
+  try {
+    const list = await listOwnProducts({ q: query, sort: "newest" })
+    return recoverImportCommitFromOwnProducts(list.products || [], preview)
+  } catch {
+    return null
+  }
 }
 
 export function productImportTemplateUrl(format: "xlsx" | "csv") {

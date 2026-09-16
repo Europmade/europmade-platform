@@ -1,12 +1,13 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
-import { persistMediaReference } from "@europmade/utils"
+import { defaultCanonicalForSlug, persistMediaReference } from "@europmade/utils"
 import { CMS_MODULE } from "../../../../modules/cms"
 import type CmsModuleService from "../../../../modules/cms/service"
 import { requestBackendOrigin } from "../../../request-backend-origin"
 import {
   asLocalized,
   emptyLocalized,
+  persistCmsPageDocument,
   serializePage,
 } from "../../../cms/serialize"
 
@@ -50,7 +51,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     seo_canonical:
       typeof body.seo_canonical === "string" && body.seo_canonical.trim()
         ? body.seo_canonical.trim()
-        : `/pagina/${slug}`,
+        : defaultCanonicalForSlug(slug),
     published: Boolean(body.published),
     visible: body.visible !== false,
     sort_order: Number(body.sort_order ?? 0) || 0,
@@ -61,7 +62,9 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
         ? persistMediaReference(body.cover_url)
         : null,
     document:
-      body.document && typeof body.document === "object" ? body.document : {},
+      body.document && typeof body.document === "object"
+        ? persistCmsPageDocument(body.document)
+        : {},
     i18n_meta:
       body.i18n_meta && typeof body.i18n_meta === "object"
         ? body.i18n_meta

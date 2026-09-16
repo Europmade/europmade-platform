@@ -11,6 +11,8 @@ import {
   assignProductMadeInEurope,
   getProductManager,
   patchProductInformation,
+  patchProductCategories,
+  listProductCloudCategories,
   addProductMediaByUrl,
   uploadProductMediaFile,
   deleteProductMedia,
@@ -25,7 +27,12 @@ import {
   type MadeInEuropeEvidenceResponse,
 } from "../../_lib/product-cloud-api"
 import { resolveSellerMediaUrl } from "../../_lib/media-url"
-import { listSellerBrands, getSellerBrand } from "../../_lib/brands-api"
+import {
+  BrandApiError,
+  createSellerBrand,
+  listSellerBrands,
+  getSellerBrand,
+} from "../../_lib/brands-api"
 import type { ManageableBrand } from "../../_lib/brands-api"
 import {
   patchOffer,
@@ -567,6 +574,10 @@ export default function SellerProductDetailPage() {
   const [mediaBusy, setMediaBusy] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
+  const [pcCategories, setPcCategories] = useState<
+    Array<{ id: string; name: string }>
+  >([])
+  const [categoryPick, setCategoryPick] = useState("")
   const [attrDraft, setAttrDraft] = useState<Record<string, string>>({})
   const [offerDraft, setOfferDraft] = useState<OfferDraft | null>(null)
   const [regularPriceDraft, setRegularPriceDraft] = useState("")
@@ -597,6 +608,9 @@ export default function SellerProductDetailPage() {
   const [facilityId, setFacilityId] = useState("")
   const [selectedBrandId, setSelectedBrandId] = useState("")
   const [brands, setBrands] = useState<ManageableBrand[]>([])
+  const [showNewBrand, setShowNewBrand] = useState(false)
+  const [newBrandName, setNewBrandName] = useState("")
+  const [brandCreateBusy, setBrandCreateBusy] = useState(false)
   const [facilities, setFacilities] = useState<
     Array<{
       id: string
@@ -665,6 +679,14 @@ export default function SellerProductDetailPage() {
         setSelectedBrandId(res.product.brand_id || "")
         setTitle(res.product.title || "")
         setDescription(res.product.description || "")
+        setCategoryPick(res.product.category_names?.[0] || "")
+        void listProductCloudCategories()
+          .then((cats) =>
+            setPcCategories(
+              (cats.categories || []).map((c) => ({ id: c.id, name: c.name }))
+            )
+          )
+          .catch(() => undefined)
         const draft: Record<string, string> = {}
         for (const field of res.product.schema || []) {
           draft[field.id] = field.value || ""
@@ -1044,6 +1066,52 @@ export default function SellerProductDetailPage() {
     setSelectedOfferId(offer.offer_id)
     setOfferDraft(draftFromOffer(offer, offer.identifier_id))
     setTab("offer")
+  }
+
+  async function handleCreateBrand() {
+    const name = newBrandName.trim()
+    if (!name) {
+      setError(t("sellerProductNewBrandRequired", locale))
+      return
+    }
+    setBrandCreateBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const created = await createSellerBrand({ name })
+      const brand = created.brand
+      setBrands((prev) =>
+        prev.some((row) => row.id === brand.id) ? prev : [...prev, brand]
+      )
+      setSelectedBrandId(brand.id)
+      if (!brandIsNotManufacturer) {
+        const match = manufacturers.find((m) =>
+          manufacturerNameMatchesBrand(m.name, brand.name)
+        )
+        setManufacturerId(match?.id || "")
+      }
+      setShowNewBrand(false)
+      setNewBrandName("")
+      setNotice(t("brandCreated", locale))
+      void listSellerBrands()
+        .then((res) => {
+          const next = res.brands || []
+          if (next.some((row) => row.id === brand.id)) {
+            setBrands(next)
+          }
+        })
+        .catch(() => {
+          /* keep locally added brand so it stays selectable */
+        })
+    } catch (err) {
+      setError(
+        err instanceof BrandApiError
+          ? err.message
+          : t("brandCreateFailed", locale)
+      )
+    } finally {
+      setBrandCreateBusy(false)
+    }
   }
 
   async function handleCreateManufacturer() {
@@ -1784,7 +1852,9 @@ export default function SellerProductDetailPage() {
             <span>EAN: {product.identifier_value || "—"}</span>
             <span>{t("commonBrand", locale)}: {brand}</span>
             <span>
-              {t("commonCategory", locale)}: {(product.category_names || []).join(", ") || "—"}
+              {t("commonCategory", locale)}:{" "}
+              {(product.category_names || []).join(", ") ||
+                "Categorie moet nog worden toegewezen"}
             </span>
             <span className="font-mono">{product.id}</span>
           </div>
@@ -1942,11 +2012,51 @@ export default function SellerProductDetailPage() {
                 value={brand && brand !== "—" ? brand : t("pdpChooseBrandAtMie", locale)}
                 disabled
               />
-              <Input
-                label={t("commonCategory", locale)}
-                value={(product.category_names || []).join(", ")}
-                disabled
-              />
+              {!(product.category_names || []).length ? (
+                <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+                  {t("commonCategory", locale)}
+                  <select
+                    className="mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal normal-case tracking-normal text-wf-800"
+                    value={categoryPick}
+                    disabled={saving}
+                    onChange={(e) => {
+                      const next = e.target.value
+                      setCategoryPick(next)
+                      if (!next) return
+                      setSaving(true)
+                      void patchProductCategories(productId, [next])
+                        .then(() => {
+                          setNotice("Categorie toegewezen.")
+                          load()
+                        })
+                        .catch((err) =>
+                          setError(
+                            err instanceof ProductCloudApiError
+                              ? err.message
+                              : "Categorie kon niet worden toegewezen."
+                          )
+                        )
+                        .finally(() => setSaving(false))
+                    }}
+                  >
+                    <option value="">— kies een EuropMade-categorie —</option>
+                    {pcCategories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block font-normal normal-case tracking-normal text-amber-800">
+                    Categorie niet herkend — kies een EuropMade-categorie.
+                  </span>
+                </label>
+              ) : (
+                <Input
+                  label={t("commonCategory", locale)}
+                  value={(product.category_names || []).join(", ")}
+                  disabled
+                />
+              )}
               <div className="tablet:col-span-2">
                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
                   {t("pdpDescription", locale)}
@@ -2097,6 +2207,33 @@ export default function SellerProductDetailPage() {
                 ) : null}
               </select>
             </label>
+            <div className="space-y-2">
+              <Button
+                size="sm"
+                type="button"
+                variant="secondary"
+                onClick={() => setShowNewBrand((v) => !v)}
+              >
+                {t("pdpAddBrand", locale)}
+              </Button>
+              {showNewBrand ? (
+                <div className="space-y-2 rounded border border-wf-300 p-2">
+                  <Input
+                    label={t("brandNamePlaceholder", locale)}
+                    value={newBrandName}
+                    onChange={(e) => setNewBrandName(e.target.value)}
+                  />
+                  <Button
+                    size="sm"
+                    type="button"
+                    disabled={brandCreateBusy}
+                    onClick={() => void handleCreateBrand()}
+                  >
+                    {t("commonSave", locale)}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
 
             <div className="space-y-1">
               <p className="text-[11px] font-semibold text-wf-800">
@@ -3341,8 +3478,70 @@ export default function SellerProductDetailPage() {
 
           {product.approval_rejection_reason ? (
             <p className="rounded border border-red-200 bg-red-50 p-2 text-xs text-red-900">
-              {t("pubRejectedLabel", locale)}{product.approval_rejection_reason}
+              {product.admin_review_outcome === "needs_info"
+                ? "Aanvulling gevraagd: "
+                : t("pubRejectedLabel", locale)}
+              {product.approval_rejection_reason}
             </p>
+          ) : null}
+
+          {Array.isArray(product.section_reviews) &&
+          product.section_reviews.some(
+            (s) =>
+              s.status === "needs_info" ||
+              s.status === "rejected" ||
+              (s.status === "unreviewed" && !!s.comment)
+          ) ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+              <p className="mb-2 font-semibold">Beoordeling per onderdeel</p>
+              <ul className="space-y-2 text-xs">
+                {product.section_reviews.map((s) => {
+                  if (s.status === "ok") {
+                    return (
+                      <li key={s.section_key}>
+                        ✓ {s.label_nl || s.section_key}
+                      </li>
+                    )
+                  }
+                  if (s.status === "needs_info") {
+                    return (
+                      <li key={s.section_key}>
+                        ⚠ {s.label_nl || s.section_key} — Aanvulling gevraagd
+                        {s.comment ? (
+                          <span className="mt-0.5 block text-amber-900">
+                            {s.comment}
+                          </span>
+                        ) : null}
+                      </li>
+                    )
+                  }
+                  if (s.status === "unreviewed" && s.comment) {
+                    return (
+                      <li key={s.section_key} className="text-blue-900">
+                        ↻ {s.label_nl || s.section_key} — Aanvulling ingediend,
+                        wacht op beoordeling
+                        <span className="mt-0.5 block text-amber-900">
+                          Eerdere opmerking: {s.comment}
+                        </span>
+                      </li>
+                    )
+                  }
+                  if (s.status === "rejected") {
+                    return (
+                      <li key={s.section_key}>
+                        ✕ {s.label_nl || s.section_key} — Afgewezen
+                        {s.comment ? (
+                          <span className="mt-0.5 block text-amber-900">
+                            {s.comment}
+                          </span>
+                        ) : null}
+                      </li>
+                    )
+                  }
+                  return null
+                })}
+              </ul>
+            </div>
           ) : null}
 
           {product.publication_status === "In review" ? (

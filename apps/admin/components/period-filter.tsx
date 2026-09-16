@@ -1,18 +1,25 @@
 "use client"
 
-import { PERIOD_OPTIONS, type PeriodKey } from "../lib/period"
+import {
+  PERIOD_OPTIONS,
+  type PeriodKey,
+  type PeriodOption,
+} from "../lib/period"
 
 type PeriodFilterProps = {
   value: PeriodKey
   onChange: (key: PeriodKey) => void
   className?: string
+  /** Beperk de dropdown tot een subset (bijv. Control Center). */
+  options?: PeriodOption[]
 }
 
-/** Generieke periodefilter — later te koppelen aan KPI-queries. */
+/** Generieke periodefilter — koppelt aan KPI-periodes in Control Center. */
 export function PeriodFilter({
   value,
   onChange,
   className = "",
+  options = PERIOD_OPTIONS,
 }: PeriodFilterProps) {
   return (
     <div
@@ -32,7 +39,7 @@ export function PeriodFilter({
         onChange={(e) => onChange(e.target.value as PeriodKey)}
         className="h-9 min-w-[160px] rounded-[5px] border border-wf-400 bg-white px-3 text-xs text-wf-800"
       >
-        {PERIOD_OPTIONS.map((opt) => (
+        {options.map((opt) => (
           <option key={opt.key} value={opt.key}>
             {opt.label}
           </option>

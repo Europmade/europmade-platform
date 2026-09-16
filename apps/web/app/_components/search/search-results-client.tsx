@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import type { ListingProduct } from "../../_lib/listing-products"
 import {
@@ -60,10 +60,45 @@ export function SearchResultsClient({
     return tFormat("searchResultsForCount", locale, { count: totalCount, query })
   }, [locale, totalCount, query])
 
+  const [draftQ, setDraftQ] = useState(query)
+  const [draftCategory, setDraftCategory] = useState(category)
+  const [draftBrand, setDraftBrand] = useState(brand)
+  const [draftManufacturer, setDraftManufacturer] = useState(manufacturer)
+
+  useEffect(() => {
+    setDraftQ(query)
+    setDraftCategory(category)
+    setDraftBrand(brand)
+    setDraftManufacturer(manufacturer)
+  }, [query, category, brand, manufacturer])
+
   function navigate(values: Record<string, string | undefined>) {
     const next = updateQuery(params, values)
     router.push(`${pathname}?${next.toString()}`)
   }
+
+  useEffect(() => {
+    if (
+      draftQ === query &&
+      draftCategory === category &&
+      draftBrand === brand &&
+      draftManufacturer === manufacturer
+    ) {
+      return
+    }
+    const timer = window.setTimeout(() => {
+      navigate({
+        q: draftQ || undefined,
+        categorie: draftCategory || undefined,
+        merk: draftBrand || undefined,
+        manufacturer: draftManufacturer || undefined,
+        page: "1",
+      })
+    }, 400)
+    return () => window.clearTimeout(timer)
+    // Debounce sidebar text filters; navigate is stable enough for this page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftQ, draftCategory, draftBrand, draftManufacturer])
 
   return (
     <div className="grid gap-5 px-4 pb-10 pt-3 tablet:grid-cols-[250px_1fr] tablet:px-8">
@@ -73,26 +108,26 @@ export function SearchResultsClient({
         </h2>
         <div className="space-y-2">
           <input
-            value={query}
-            onChange={(e) => navigate({ q: e.target.value, page: "1" })}
+            value={draftQ}
+            onChange={(e) => setDraftQ(e.target.value)}
             placeholder={t("searchPlaceholder", locale)}
             className="h-9 w-full rounded border border-wf-300 px-2 text-sm"
           />
           <input
-            value={category}
-            onChange={(e) => navigate({ categorie: e.target.value, page: "1" })}
+            value={draftCategory}
+            onChange={(e) => setDraftCategory(e.target.value)}
             placeholder={t("searchFilterCategory", locale)}
             className="h-9 w-full rounded border border-wf-300 px-2 text-sm"
           />
           <input
-            value={brand}
-            onChange={(e) => navigate({ merk: e.target.value, page: "1" })}
+            value={draftBrand}
+            onChange={(e) => setDraftBrand(e.target.value)}
             placeholder={t("searchFilterBrand", locale)}
             className="h-9 w-full rounded border border-wf-300 px-2 text-sm"
           />
           <input
-            value={manufacturer}
-            onChange={(e) => navigate({ manufacturer: e.target.value, page: "1" })}
+            value={draftManufacturer}
+            onChange={(e) => setDraftManufacturer(e.target.value)}
             placeholder={t("searchFilterManufacturer", locale)}
             className="h-9 w-full rounded border border-wf-300 px-2 text-sm"
           />

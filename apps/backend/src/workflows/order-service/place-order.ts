@@ -19,6 +19,11 @@ import type ProductCloudModuleService from "../../modules/product-cloud/service"
 import { executeRecomputeBuyBox } from "../commerce-cloud/recompute-buy-box"
 import { executeAttributeConversion } from "../affiliate/workflows"
 import { executeFinanceOnOrderSplit } from "../finance/workflows"
+import {
+  normalizeCountryCode,
+  parseOrderAddress,
+  resolveDestinationVatRate,
+} from "@europmade/utils"
 
 export type CheckoutLineInput = {
   offer_id: string
@@ -32,6 +37,8 @@ export type PlaceOrderInput = {
   payment_mode: "simulated" | "stripe"
   shipping_address: string
   billing_address: string
+  /** ISO-2 delivery country — drives OSS VAT on line snapshots. */
+  delivery_country?: string | null
   lines: CheckoutLineInput[]
   /** Affiliate-attributie (S3-07-03) — exact één route. */
   affiliate_click_id?: string | null
@@ -84,7 +91,8 @@ function assertSimulatedPaymentAllowed(payment_mode: string) {
 
 export async function revalidateCheckoutLines(
   container: MedusaContainer,
-  lines: CheckoutLineInput[]
+  lines: CheckoutLineInput[],
+  deliveryCountry?: string | null
 ): Promise<RevalidatedLine[]> {
   const commerce = container.resolve(
     COMMERCE_CLOUD_MODULE
@@ -99,6 +107,11 @@ export async function revalidateCheckoutLines(
       "Geen checkout-regels."
     )
   }
+
+  const destinationCode =
+    normalizeCountryCode(deliveryCountry) ||
+    "NL"
+  const destinationVat = resolveDestinationVatRate(destinationCode)
 
   const result: RevalidatedLine[] = []
   for (const line of lines) {
@@ -140,7 +153,9 @@ export async function revalidateCheckoutLines(
     )
 
     const unit = Number(price.base_price)
-    const shipping = Number(price.shipping_cost)
+    const extra =
+      price.extra_delivery_cost != null ? Number(price.extra_delivery_cost) : 0
+    const shipping = Number(price.shipping_cost) + extra
     result.push({
       offer_id: offer.id,
       seller_id: offer.seller_id,
@@ -150,7 +165,8 @@ export async function revalidateCheckoutLines(
       quantity_available: available,
       unit_price: unit,
       shipping_cost: shipping,
-      vat_rate: Number(price.vat_rate),
+      // OSS: destination country standard rate (not seller/offer-only hardcode).
+      vat_rate: destinationVat,
       total_unit_price: unit + shipping,
       region_code: offer.region_code,
     })
@@ -215,7 +231,16 @@ export async function executePlaceOrder(
     }
   }
 
-  const validated = await revalidateCheckoutLines(container, input.lines)
+  const validated = await revalidateCheckoutLines(
+    container,
+    input.lines,
+    input.delivery_country
+  )
+
+  const shippingCountry =
+    normalizeCountryCode(input.delivery_country) ||
+    parseOrderAddress(input.shipping_address).country_code ||
+    "NL"
 
   // Snapshot unit price = base only; shipping aggregated per seller in totals later.
   // Blueprint line snapshot is unit_price + vat; shipping is offer-level — we store
@@ -237,6 +262,7 @@ export async function executePlaceOrder(
       payment_reference,
       shipping_address: input.shipping_address.trim(),
       billing_address: input.billing_address.trim(),
+      shipping_country_code: shippingCountry,
       lines: graphLines,
     })
   } catch (err) {

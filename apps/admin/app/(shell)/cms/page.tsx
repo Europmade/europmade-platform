@@ -91,6 +91,7 @@ export default function CmsIndexPage() {
     { href: "/cms/categories", title: "Categorieën", body: `${counts.cats} documenten` },
     { href: "/cms/products", title: "Productpagina's", body: "Zoek in Product Cloud" },
     { href: "/cms/pages", title: "Pagina's", body: `${counts.pages} pagina's` },
+    { href: "/cms/actions", title: "Acties", body: "Landingspagina's met productset" },
     { href: "/cms/banners", title: "Banners", body: `${counts.banners} banners` },
     { href: "/cms/translations", title: "Vertalingen", body: "DeepL-status" },
   ]

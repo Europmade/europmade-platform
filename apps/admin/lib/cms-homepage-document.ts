@@ -108,12 +108,12 @@ export type HomepageCmsDoc = {
   categories: Array<{
     id: string
     slug: string
+    categoryId?: string | null
     visible: boolean
     sortOrder: number
     title: LocalizedCms
     subtitle?: LocalizedCms
     image?: string | null
-    productCountHint: number
   }>
   whyItems: HomepageWhyItemDoc[]
   newsletter: {
@@ -363,12 +363,17 @@ export function normalizeHomepageDocument(raw: unknown): HomepageCmsDoc {
         return {
           id: typeof c.id === "string" ? c.id : `cat_${i}`,
           slug: typeof c.slug === "string" ? c.slug : "",
+          categoryId:
+            typeof c.categoryId === "string"
+              ? c.categoryId
+              : typeof c.category_id === "string"
+                ? c.category_id
+                : null,
           visible: c.visible !== false,
           sortOrder: Number(c.sortOrder ?? i * 10) || 0,
           title: loc(c.title),
           subtitle: loc(c.subtitle),
           image: typeof c.image === "string" ? c.image : null,
-          productCountHint: Number(c.productCountHint ?? 0) || 0,
         }
       })
     : []

@@ -4,9 +4,10 @@
  */
 
 import type { ImageFormatVariants, ProductMediaMetadata } from "@europmade/utils"
-import { detectPngHasAlpha } from "@europmade/utils"
+import { detectPngHasAlpha, persistMediaReference } from "@europmade/utils"
 
 const WIDTHS = [400, 800, 1200] as const
+const VARIANT_NAME_RE = /-(400|800|1200)\.(webp|avif|jpe?g|png)$/i
 
 export type ProcessedImageFile = {
   filename: string
@@ -21,10 +22,90 @@ export type ProcessedImageResult = {
   display_reference: string
 }
 
+export type UploadedFileRow = {
+  url?: string | null
+  id?: string | null
+  filename?: string | null
+  file_name?: string | null
+  key?: string | null
+}
+
 function variantFilename(base: string, width: number, ext: string): string {
   const dot = base.lastIndexOf(".")
   const stem = dot > 0 ? base.slice(0, dot) : base
   return `${stem}-${width}.${ext}`
+}
+
+function sanitizeUploadFilename(originalFilename: string): string {
+  return originalFilename.replace(/[^\w.\-() ]+/g, "_")
+}
+
+function decodeFileName(raw: string): string {
+  try {
+    return decodeURIComponent(raw)
+  } catch {
+    return raw
+  }
+}
+
+/** Basename from Medusa FileDTO / URL (`1788-name-800.webp` or `/static/...`). */
+export function uploadedFileBasename(row: UploadedFileRow): string {
+  const explicit = row.filename || row.file_name || row.key || ""
+  if (explicit) {
+    const leaf = explicit.includes("/")
+      ? explicit.split("/").pop() || explicit
+      : explicit
+    return decodeFileName(leaf)
+  }
+  const ref = persistMediaReference(row.url || row.id) || row.url || row.id || ""
+  const leaf = ref.split("/").pop()?.split("?")[0] || ""
+  return decodeFileName(leaf)
+}
+
+/**
+ * Map Medusa upload results onto variant + original refs.
+ * Local file provider prefixes filenames with `{timestamp}-`; never require exact name equality.
+ */
+export function mapUploadedProductImageRefs(
+  uploaded: UploadedFileRow[] | null | undefined,
+  originalFilename: string
+): {
+  variants: ImageFormatVariants
+  original_reference: string | null
+} {
+  const sanitized = sanitizeUploadFilename(originalFilename)
+  const variants: ImageFormatVariants = { webp: {}, avif: {}, jpeg: {} }
+  let original_reference: string | null = null
+
+  for (const row of uploaded ?? []) {
+    const ref = persistMediaReference(row.url || row.id)
+    if (!ref) continue
+    const name = uploadedFileBasename(row)
+    if (!name) continue
+
+    for (const width of WIDTHS) {
+      const w = String(width) as "400" | "800" | "1200"
+      if (name.includes(`-${w}.webp`)) variants.webp![w] = ref
+      if (name.includes(`-${w}.avif`)) variants.avif![w] = ref
+      if (name.includes(`-${w}.jpg`) || name.includes(`-${w}.jpeg`)) {
+        variants.jpeg![w] = ref
+      }
+      if (name.includes(`-${w}.png`)) {
+        variants.png = { ...variants.png, [w]: ref }
+      }
+    }
+
+    if (VARIANT_NAME_RE.test(name)) continue
+    if (
+      name === sanitized ||
+      name.endsWith(`-${sanitized}`) ||
+      name.endsWith(sanitized)
+    ) {
+      original_reference = ref
+    }
+  }
+
+  return { variants, original_reference }
 }
 
 export async function processProductImageBuffer(

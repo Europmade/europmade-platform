@@ -10,25 +10,41 @@ import {
   Modules,
 } from "@medusajs/framework/utils"
 import type { MedusaContainer } from "@medusajs/framework/types"
+import {
+  RETURN_PERIOD_DAYS,
+  computeReturnPeriod,
+  buildTrackingUrl,
+} from "@europmade/utils"
 import { ORDER_MODULE } from "../../modules/order-service"
 import type OrderServiceModuleService from "../../modules/order-service/service"
+import {
+  getRefundService,
+  toStoredRefundStatus,
+} from "../../modules/order-service/refund-service"
 
-/** EU herroepingsrecht — returns-and-refunds/spec.md §6 (ADR-0023). */
-export const RETURN_COOLING_OFF_DAYS = 14
+/** EuropMade marketplace return window — ADR-0040. */
+export const RETURN_COOLING_OFF_DAYS = RETURN_PERIOD_DAYS
 
 export type ReturnStatus =
   | "Aangevraagd"
   | "Bevestigd"
+  | "Onderweg"
   | "Ontvangen"
   | "Verwerkt"
   | "Afgewezen"
   | "Geëscaleerd"
 
-export type RefundStatus = "Pending" | "Uitgevoerd" | "Geforceerd"
+export type RefundStatus =
+  | "requested"
+  | "processing"
+  | "processed"
+  | "failed"
+  | "forced"
 
 const OPEN_STATUSES: ReturnStatus[] = [
   "Aangevraagd",
   "Bevestigd",
+  "Onderweg",
   "Ontvangen",
   "Geëscaleerd",
 ]
@@ -45,18 +61,6 @@ async function emitReturnEvent(
 ) {
   const eventBus = container.resolve(Modules.EVENT_BUS)
   await eventBus.emit({ name, data })
-}
-
-function assertSimulatedRefundAllowed() {
-  if (process.env.NODE_ENV === "production") {
-    const allow = process.env.ALLOW_SIMULATED_REFUND === "true"
-    if (!allow) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "Gesimuleerde refund is in productie uitgeschakeld (ADR-0023)."
-      )
-    }
-  }
 }
 
 export function toMoneyNumber(value: unknown): number {
@@ -89,24 +93,52 @@ function roundMoney(n: number): number {
   return Math.round(n * 100) / 100
 }
 
-export function coolingOffEndsAt(orderCreatedAt: Date | string): Date {
-  const start = new Date(orderCreatedAt)
-  const end = new Date(start)
-  end.setUTCDate(end.getUTCDate() + RETURN_COOLING_OFF_DAYS)
-  return end
+export function coolingOffEndsAt(deliveredAt: Date | string): Date {
+  const period = computeReturnPeriod({ deliveredAt })
+  if (!period.deadline_at) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Retourtermijn start pas na aflevering."
+    )
+  }
+  return new Date(period.deadline_at)
 }
 
 export function assertWithinCoolingOff(
-  orderCreatedAt: Date | string,
+  deliveredAt: Date | string | null | undefined,
   now: Date = new Date()
 ) {
-  const ends = coolingOffEndsAt(orderCreatedAt)
-  if (now.getTime() > ends.getTime()) {
+  const period = computeReturnPeriod({
+    deliveredAt: deliveredAt ?? null,
+    now,
+  })
+  if (!period.delivered_at) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Retour is pas mogelijk nadat de order is afgeleverd."
+    )
+  }
+  if (!period.is_open) {
     throw new MedusaError(
       MedusaError.Types.NOT_ALLOWED,
       `Retourtermijn van ${RETURN_COOLING_OFF_DAYS} dagen is verstreken.`
     )
   }
+}
+
+async function latestDeliveredAt(
+  orders: OrderServiceModuleService,
+  orderId: string
+): Promise<Date | string | null> {
+  const shipments = await orders.listShipments({ order_id: orderId })
+  const delivered = shipments
+    .filter((s) => s.delivered_at)
+    .sort(
+      (a, b) =>
+        new Date(b.delivered_at as Date).getTime() -
+        new Date(a.delivered_at as Date).getTime()
+    )
+  return delivered[0]?.delivered_at ?? null
 }
 
 async function loadReturnContext(
@@ -146,7 +178,8 @@ export async function executeRequestReturn(
     )
   }
 
-  assertWithinCoolingOff(order.created_at)
+  const deliveredAt = await latestDeliveredAt(orders, order.id)
+  assertWithinCoolingOff(deliveredAt)
 
   const existing = await orders.listEmReturns({
     order_line_id: line.id,
@@ -171,11 +204,14 @@ export async function executeRequestReturn(
     seller_decision_reason: null,
     force_reason: null,
     force_admin_user_id: null,
-    cooling_off_ends_at: coolingOffEndsAt(order.created_at),
+    cooling_off_ends_at: coolingOffEndsAt(deliveredAt!),
     refund_amount,
-    refund_status: "Pending",
+    refund_status: "requested",
     refund_reference: null,
     refund_executed_at: null,
+    carrier: null,
+    tracking_code: null,
+    tracking_url: null,
   })
 
   await emitReturnEvent(container, "ReturnRequested", {
@@ -216,22 +252,44 @@ async function executeSimulatedRefund(
     from_status: ReturnStatus
   }
 ) {
-  assertSimulatedRefundAllowed()
   const { ret, line, order } = await loadReturnContext(orders, returnId)
   const amount =
     ret.refund_amount != null
       ? toMoneyNumber(ret.refund_amount)
       : roundMoney(toMoneyNumber(line.unit_price_snapshot) * line.quantity)
-  const refund_reference = `sim_ref_${ret.id}_${Date.now()}`
-  const refund_status: RefundStatus = opts.forced ? "Geforceerd" : "Uitgevoerd"
 
+  await orders.updateEmReturns({
+    id: ret.id,
+    refund_status: "processing",
+  })
+
+  const refundService = getRefundService()
+  const result = await refundService.executeRefund({
+    return_id: ret.id,
+    amount,
+    forced: opts.forced,
+  })
+
+  if (result.status === "failed") {
+    await orders.updateEmReturns({
+      id: ret.id,
+      refund_status: "failed",
+      refund_reference: result.reference,
+    })
+    throw new MedusaError(
+      MedusaError.Types.UNEXPECTED_STATE,
+      "Refund kon niet worden verwerkt."
+    )
+  }
+
+  const refund_status = toStoredRefundStatus(result.status)
   const updated = await orders.updateEmReturns({
     id: ret.id,
     status: "Verwerkt",
     refund_amount: amount,
     refund_status,
-    refund_reference,
-    refund_executed_at: new Date(),
+    refund_reference: result.reference,
+    refund_executed_at: new Date(result.executed_at),
     force_reason: opts.forced ? (opts.force_reason ?? null) : ret.force_reason,
     force_admin_user_id: opts.forced
       ? (opts.force_admin_user_id ?? null)
@@ -255,13 +313,14 @@ async function executeSimulatedRefund(
     customer_id: order.customer_id,
     refund_amount: amount,
     refund_status,
-    refund_reference,
+    refund_reference: result.reference,
     forced: opts.forced,
+    provider: result.provider,
   })
 
   const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
   logger.info(
-    `[return] simulated refund ${refund_reference} amount=${amount} forced=${opts.forced}`
+    `[return] refund ${result.reference} amount=${amount} status=${refund_status} provider=${result.provider}`
   )
 
   return { return: Array.isArray(updated) ? updated[0] : updated }
@@ -306,10 +365,10 @@ export async function executeSellerReturnTransition(
   }
 
   if (input.action === "receive") {
-    if (current !== "Bevestigd") {
+    if (current !== "Bevestigd" && current !== "Onderweg") {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
-        "Alleen status Bevestigd kan als Ontvangen worden gemarkeerd."
+        "Alleen status Bevestigd of Onderweg kan als Ontvangen worden gemarkeerd."
       )
     }
     const updated = await orders.updateEmReturns({
@@ -348,7 +407,7 @@ export async function executeSellerReturnTransition(
         "Afwijzing vereist een reden (min. 3 tekens)."
       )
     }
-    if (!["Aangevraagd", "Bevestigd", "Ontvangen"].includes(current)) {
+    if (!["Aangevraagd", "Bevestigd", "Onderweg", "Ontvangen"].includes(current)) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
         "Deze retour kan niet meer worden afgewezen."
@@ -448,6 +507,148 @@ export async function executeForceRefund(
     force_admin_user_id: input.admin_user_id,
     from_status: current,
   })
+}
+
+export type SellerCreateReturnInput = {
+  seller_id: string
+  order_line_id: string
+  reason: string
+}
+
+/** Seller initiates a return on behalf of / for an order line they own. */
+export async function executeSellerCreateReturn(
+  container: MedusaContainer,
+  input: SellerCreateReturnInput
+) {
+  const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
+  const line = await orders.retrieveOrderLine(input.order_line_id)
+  const order = await orders.retrieveEmOrder(line.order_id)
+
+  if (order.seller_id !== input.seller_id) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Retour alleen op eigen orders."
+    )
+  }
+  if (order.payment_status !== "Betaald") {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Retour alleen mogelijk voor betaalde orders."
+    )
+  }
+
+  const deliveredAt = await latestDeliveredAt(orders, order.id)
+  assertWithinCoolingOff(deliveredAt)
+
+  const existing = await orders.listEmReturns({ order_line_id: line.id })
+  const open = existing.find((r) =>
+    OPEN_STATUSES.includes(r.status as ReturnStatus)
+  )
+  if (open) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "Er loopt al een open retour voor deze orderregel."
+    )
+  }
+
+  const refund_amount = roundMoney(
+    toMoneyNumber(line.unit_price_snapshot) * line.quantity
+  )
+  const created = await orders.createEmReturns({
+    order_line_id: line.id,
+    reason: input.reason.trim(),
+    status: "Aangevraagd",
+    seller_decision_reason: null,
+    force_reason: null,
+    force_admin_user_id: null,
+    cooling_off_ends_at: coolingOffEndsAt(deliveredAt!),
+    refund_amount,
+    refund_status: "requested",
+    refund_reference: null,
+    refund_executed_at: null,
+    carrier: null,
+    tracking_code: null,
+    tracking_url: null,
+  })
+
+  await emitReturnEvent(container, "ReturnRequested", {
+    return_id: created.id,
+    order_id: order.id,
+    order_line_id: line.id,
+    seller_id: order.seller_id,
+    customer_id: order.customer_id,
+    status: created.status,
+    initiated_by: "seller",
+  })
+
+  return { return: created, order_id: order.id }
+}
+
+export type UpdateReturnTrackingInput = {
+  return_id: string
+  seller_id: string
+  carrier?: string | null
+  tracking_code?: string | null
+  tracking_url?: string | null
+  mark_in_transit?: boolean
+}
+
+export async function executeUpdateReturnTracking(
+  container: MedusaContainer,
+  input: UpdateReturnTrackingInput
+) {
+  const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
+  const { ret, order } = await loadReturnContext(orders, input.return_id)
+  if (order.seller_id !== input.seller_id) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Retour hoort niet bij deze seller."
+    )
+  }
+
+  const carrier =
+    input.carrier !== undefined ? input.carrier?.trim() || null : ret.carrier
+  const tracking_code =
+    input.tracking_code !== undefined
+      ? input.tracking_code?.trim() || null
+      : ret.tracking_code
+  const tracking_url =
+    input.tracking_url !== undefined
+      ? input.tracking_url?.trim() || null
+      : ret.tracking_url
+  const resolvedUrl = buildTrackingUrl(carrier, tracking_code, tracking_url)
+
+  let status = ret.status as ReturnStatus
+  if (
+    input.mark_in_transit &&
+    (status === "Aangevraagd" ||
+      status === "Bevestigd" ||
+      status === "Onderweg")
+  ) {
+    // Tracking means the return parcel is in transit
+    status = "Onderweg"
+  }
+
+  const updated = await orders.updateEmReturns({
+    id: ret.id,
+    carrier,
+    tracking_code,
+    tracking_url: resolvedUrl,
+    status,
+  })
+
+  if (status !== ret.status) {
+    await emitReturnEvent(container, "ReturnStatusChanged", {
+      return_id: ret.id,
+      from_status: ret.status,
+      to_status: status,
+      order_id: order.id,
+      seller_id: order.seller_id,
+      customer_id: order.customer_id,
+    })
+  }
+
+  return { return: Array.isArray(updated) ? updated[0] : updated }
 }
 
 const requestReturnStep = createStep(

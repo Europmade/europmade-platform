@@ -1,8 +1,9 @@
 import { z } from "@medusajs/framework/zod"
+import { IDENTIFIER_TYPES } from "../../../modules/product-cloud/identifier-types"
 
 export const AdminEanMatchBody = z.object({
   identifier_value: z.string().trim().min(1),
-  identifier_type: z.enum(["GTIN", "MPN"]).optional(),
+  identifier_type: z.enum(IDENTIFIER_TYPES).optional(),
   country_scope: z.string().trim().min(1).nullable().optional(),
   draft_product_id: z.string().trim().min(1).optional(),
   candidate_product_ids: z.array(z.string().trim().min(1)).optional(),
@@ -17,7 +18,7 @@ export const AdminSeedProductWithEanBody = z.object({
   title: z.string().trim().min(1),
   description: z.string().trim().min(1).optional(),
   identifier_value: z.string().trim().min(1),
-  identifier_type: z.enum(["GTIN", "MPN"]).optional().default("GTIN"),
+  identifier_type: z.enum(IDENTIFIER_TYPES).optional().default("GTIN"),
   country_scope: z.string().trim().min(1).nullable().optional(),
   variant_type: z
     .enum([

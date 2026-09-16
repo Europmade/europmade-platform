@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // LAN-collega's openen http://192.168.2.17:3000; Next blokkeert anders /_next en API-routes.
+  allowedDevOrigins: ["192.168.2.17"],
   transpilePackages: ["@europmade/ui", "@europmade/utils", "@europmade/types"],
   // Monorepo: Next layout typegen botst met dual @types/react (app vs packages/ui).
   // Functionele code compileert; typecheck elders via tsc blijft beschikbaar.

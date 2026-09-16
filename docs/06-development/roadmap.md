@@ -1,8 +1,10 @@
 # Roadmap
 
-**Status:** Placeholder — hoofdlijnen uit de Blueprint, gedetailleerde sprintplanning volgt na de wireframe-fase.
+**Status:** Verwezen — de actuele fasering 0–12 staat in het implementatie-masterdocument [`../11-blueprint-v2/README.md`](../11-blueprint-v2/README.md) §21.
 
-## Fasering (Blueprint H15.7)
+Onderstaande H15.7-fasen blijven de **oorspronkelijke Blueprint-hoofdlijnen** (historisch). Ze zijn geen vervanging van Fase 0–12.
+
+## Fasering (Blueprint H15.7, historisch)
 
 ### Fase 1 — MVP (2–3 maanden)
 
@@ -22,4 +24,4 @@ Introduceert: mobiele apps, Digital Product Passport-ondersteuning, uitgebreide 
 
 ## Volgende stap
 
-Deze roadmap wordt na de wireframe-fase omgezet in concrete sprintdoelen in [`sprint-01.md`](./sprint-01.md) en verder.
+Zie Fase 5 in [`../11-blueprint-v2/README.md`](../11-blueprint-v2/README.md) (echte EU-producten en merken). Historische sprintbestanden: [`sprint-01.md`](./sprint-01.md).

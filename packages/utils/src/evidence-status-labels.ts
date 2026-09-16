@@ -18,8 +18,8 @@ const LABELS_NL: Record<string, string> = {
   approved: "Goedgekeurd",
   rejected: "Afgekeurd",
   not_required: "Niet vereist",
-  needs_info: "Extra informatie nodig",
-  request_info: "Extra informatie nodig",
+  needs_info: "Aanvulling gevraagd",
+  request_info: "Aanvulling gevraagd",
 }
 
 export function evidenceStatusLabelNl(

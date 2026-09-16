@@ -28,6 +28,7 @@ import {
   ProductRelation,
   ChangeProposal,
   ProductFieldChange,
+  ProductSectionReview,
 } from "./models"
 import type { ProductCloudIdentifierType } from "./identifier-types"
 import {
@@ -138,6 +139,7 @@ class ProductCloudModuleService extends MedusaService({
   ProductRelation,
   ChangeProposal,
   ProductFieldChange,
+  ProductSectionReview,
 }) {
   @InjectManager()
   async createProductGraph(

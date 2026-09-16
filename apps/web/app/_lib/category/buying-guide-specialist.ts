@@ -861,9 +861,6 @@ export function getSpecialistGuide(
   label: string,
   locale: StorefrontLocale
 ): SpecialistGuide {
-  if (slug === "elektronica" || slug === "kantoor" || slug === "verlichting") {
-    return electronics(locale, label)
-  }
   if (slug === "tuin" || slug === "outdoor" || slug === "plant-bloem") {
     return garden(locale, label)
   }
@@ -886,6 +883,8 @@ export function getSpecialistGuide(
   }
   return generic(locale, label)
 }
+
+void electronics
 
 /** Short explanation for a topic label — presentation only. */
 export function topicBlurbFor(

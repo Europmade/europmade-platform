@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
@@ -15,6 +15,7 @@ import {
   ProductCloudApiError,
   type CatalogProduct,
 } from "../_lib/product-cloud-api"
+import { resolveSellerMediaUrl } from "../_lib/media-url"
 import { patchOffer, CommerceCloudApiError } from "../_lib/commerce-cloud-api"
 import {
   listShippingProfiles,
@@ -26,6 +27,14 @@ import { t } from "../../_lib/i18n/messages"
 import { statusLabel } from "../../_lib/i18n/status-labels"
 import { gpsrHint } from "../_lib/gpsr-hints"
 import { listSellerBrands, listSellerFacilities } from "../_lib/brands-api"
+import {
+  canEditCatalogInformation,
+  isSellerCatalogOwner,
+  sellerCatalogInformationHref,
+  sellerCatalogTabHref,
+  sellerOfferHref,
+  sellerProductHref,
+} from "../_lib/seller-list-actions"
 
 type ListFilter =
   | "all"
@@ -854,26 +863,30 @@ export default function SellerProductsPage() {
                 p.sku_hint
               const actions = p.actions || {}
               const pub = publicationGateLabel(p, locale)
+              const imageSrc = resolveSellerMediaUrl(p.primary_image_url)
+              const catalogOwner = isSellerCatalogOwner(p)
+              const catalogInformationHref = sellerCatalogInformationHref(p)
+              const catalogHistoryHref = sellerCatalogTabHref(p, "history")
 
               return (
                 <article
                   key={p.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => router.push(`/seller/products/${p.id}`)}
+                  onClick={() => router.push(sellerProductHref(p))}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault()
-                      router.push(`/seller/products/${p.id}`)
+                      router.push(sellerProductHref(p))
                     }
                   }}
                   className="relative cursor-pointer rounded-lg border border-wf-300 bg-white p-3 text-left transition hover:border-wf-500"
                 >
                   <div className="flex gap-3">
-                    {p.primary_image_url ? (
+                    {imageSrc ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={p.primary_image_url}
+                        src={imageSrc}
                         alt=""
                         className="h-16 w-16 shrink-0 rounded object-cover"
                       />
@@ -930,7 +943,7 @@ export default function SellerProductsPage() {
                         setOpenMenu((cur) => (cur === p.id ? null : p.id))
                       }}
                     >
-                      ⋯
+                      ⋮
                     </button>
                   </div>
                   {openMenu === p.id ? (
@@ -939,31 +952,34 @@ export default function SellerProductsPage() {
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Link
-                        href={`/seller/products/${p.id}`}
+                        href={sellerProductHref(p)}
                         className="block px-3 py-1.5 hover:bg-wf-50"
                       >
-                        Beheer product
+                        {catalogOwner ? "Beheer product" : "Verkoopinformatie"}
                       </Link>
-                      {actions.edit_information !== false ? (
+                      {canEditCatalogInformation(p, actions) &&
+                      catalogInformationHref ? (
                         <Link
-                          href={`/seller/products/${p.id}?step=information`}
+                          href={catalogInformationHref}
                           className="block px-3 py-1.5 hover:bg-wf-50"
                         >
                           Bewerk productinformatie
                         </Link>
                       ) : null}
                       <Link
-                        href={`/seller/products/${p.id}?step=offer`}
+                        href={sellerOfferHref(p)}
                         className="block px-3 py-1.5 hover:bg-wf-50"
                       >
-                        Verkoopinformatie
+                        {catalogOwner ? "Verkoopinformatie" : "Eigen aanbod"}
                       </Link>
-                      <Link
-                        href={`/seller/products/${p.id}?tab=history`}
-                        className="block px-3 py-1.5 hover:bg-wf-50"
-                      >
-                        Geschiedenis
-                      </Link>
+                      {catalogHistoryHref ? (
+                        <Link
+                          href={catalogHistoryHref}
+                          className="block px-3 py-1.5 hover:bg-wf-50"
+                        >
+                          Geschiedenis
+                        </Link>
+                      ) : null}
                       {actions.pause_offer ? (
                         <button
                           type="button"
@@ -1051,6 +1067,16 @@ export default function SellerProductsPage() {
                   const variants = p.variant_count ?? 0
                   const actions = p.actions || {}
                   const selected = selection.has(p.id)
+                  const imageSrc = resolveSellerMediaUrl(p.primary_image_url)
+                  const catalogOwner = isSellerCatalogOwner(p)
+                  const catalogInformationHref = sellerCatalogTabHref(
+                    p,
+                    "information"
+                  )
+                  const catalogVariantsHref = sellerCatalogTabHref(p, "variants")
+                  const catalogHistoryHref = sellerCatalogTabHref(p, "history")
+                  const catalogChangesHref = sellerCatalogTabHref(p, "changes")
+                  const catalogMediaHref = sellerCatalogTabHref(p, "media")
 
                   return (
                     <tr
@@ -1066,10 +1092,10 @@ export default function SellerProductsPage() {
                         />
                       </td>
                       <td className="px-2 py-2">
-                        {p.primary_image_url ? (
+                        {imageSrc ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={p.primary_image_url}
+                            src={imageSrc}
                             alt=""
                             className="h-9 w-9 rounded object-cover"
                           />
@@ -1081,7 +1107,7 @@ export default function SellerProductsPage() {
                       </td>
                       <td className="max-w-[13rem] px-2 py-2">
                         <Link
-                          href={`/seller/products/${p.id}`}
+                          href={sellerProductHref(p)}
                           className="font-semibold text-wf-900 underline-offset-2 hover:underline"
                         >
                           {p.title || t("pdpUntitledProduct", locale)}
@@ -1107,36 +1133,51 @@ export default function SellerProductsPage() {
                         {(p.category_names || []).join(", ") || "—"}
                       </td>
                       <td className="whitespace-nowrap px-2 py-2">
-                        {variants > 0 ? (
+                        {variants > 0 && catalogVariantsHref ? (
                           <Link
-                            href={`/seller/products/${p.id}?tab=variants`}
+                            href={catalogVariantsHref}
                             className="text-wf-800 underline-offset-2 hover:underline"
                           >
                             {variants === 1
                               ? "1 variant"
                               : `${variants} varianten`}
                           </Link>
+                        ) : variants > 0 ? (
+                          variants === 1 ? "1 variant" : `${variants} varianten`
                         ) : (
                           "—"
                         )}
                       </td>
                       <td className="px-2 py-2">
-                        <Link
-                          href={`/seller/products/${p.id}?tab=information`}
-                          className={info.className}
-                        >
-                          {info.label}
-                          {typeof info.pct === "number" ? (
-                            <span className="ml-1 font-normal text-wf-500">
-                              {info.pct}%
-                            </span>
-                          ) : null}
-                        </Link>
+                        {catalogInformationHref ? (
+                          <Link
+                            href={catalogInformationHref}
+                            className={info.className}
+                          >
+                            {info.label}
+                            {typeof info.pct === "number" ? (
+                              <span className="ml-1 font-normal text-wf-500">
+                                {info.pct}%
+                              </span>
+                            ) : null}
+                          </Link>
+                        ) : (
+                          <span className={info.className}>
+                            {info.label}
+                            {typeof info.pct === "number" ? (
+                              <span className="ml-1 font-normal text-wf-500">
+                                {info.pct}%
+                              </span>
+                            ) : null}
+                          </span>
+                        )}
                       </td>
                       <td className={`px-2 py-2 ${comp.className}`}>
-                        <Link href={`/seller/products/${p.id}?tab=information`}>
-                          {comp.label}
-                        </Link>
+                        {catalogInformationHref ? (
+                          <Link href={catalogInformationHref}>{comp.label}</Link>
+                        ) : (
+                          <span>{comp.label}</span>
+                        )}
                       </td>
                       <td
                         className={`whitespace-nowrap px-2 py-2 ${
@@ -1192,7 +1233,7 @@ export default function SellerProductsPage() {
                             setOpenMenu((cur) => (cur === p.id ? null : p.id))
                           }}
                         >
-                          ⋯
+                          ⋮
                         </button>
                         {openMenu === p.id ? (
                           <div
@@ -1200,43 +1241,50 @@ export default function SellerProductsPage() {
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Link
-                              href={`/seller/products/${p.id}`}
+                              href={sellerProductHref(p)}
                               className="block px-3 py-1.5 hover:bg-wf-50"
                             >
-                              Beheer product
+                              {catalogOwner ? "Beheer product" : "Verkoopinformatie"}
                             </Link>
-                            {actions.edit_information !== false ? (
+                            {canEditCatalogInformation(p, actions) &&
+                            catalogInformationHref ? (
                               <Link
-                                href={`/seller/products/${p.id}?tab=information`}
+                                href={catalogInformationHref}
                                 className="block px-3 py-1.5 hover:bg-wf-50"
                               >
                                 Bewerk productinformatie
                               </Link>
                             ) : null}
+                            {catalogVariantsHref ? (
+                              <Link
+                                href={catalogVariantsHref}
+                                className="block px-3 py-1.5 hover:bg-wf-50"
+                              >
+                                Varianten
+                              </Link>
+                            ) : null}
                             <Link
-                              href={`/seller/products/${p.id}?tab=variants`}
+                              href={sellerOfferHref(p)}
                               className="block px-3 py-1.5 hover:bg-wf-50"
                             >
-                              Varianten
+                              {catalogOwner ? "Verkoopaanbod" : "Eigen aanbod"}
                             </Link>
-                            <Link
-                              href={`/seller/products/${p.id}?tab=offer`}
-                              className="block px-3 py-1.5 hover:bg-wf-50"
-                            >
-                              Verkoopaanbod
-                            </Link>
-                            <Link
-                              href={`/seller/products/${p.id}?tab=changes`}
-                              className="block px-3 py-1.5 hover:bg-wf-50"
-                            >
-                              Gewijzigde productinformatie
-                            </Link>
-                            <Link
-                              href={`/seller/products/${p.id}?tab=media`}
-                              className="block px-3 py-1.5 hover:bg-wf-50"
-                            >
-                              Media
-                            </Link>
+                            {catalogChangesHref ? (
+                              <Link
+                                href={catalogChangesHref}
+                                className="block px-3 py-1.5 hover:bg-wf-50"
+                              >
+                                Gewijzigde productinformatie
+                              </Link>
+                            ) : null}
+                            {catalogMediaHref ? (
+                              <Link
+                                href={catalogMediaHref}
+                                className="block px-3 py-1.5 hover:bg-wf-50"
+                              >
+                                Media
+                              </Link>
+                            ) : null}
                             {actions.pause_offer ? (
                               <button
                                 type="button"
@@ -1257,12 +1305,14 @@ export default function SellerProductsPage() {
                                 Hervatten
                               </button>
                             ) : null}
+                            {catalogHistoryHref ? (
                             <Link
-                              href={`/seller/products/${p.id}?tab=history`}
+                              href={catalogHistoryHref}
                               className="block px-3 py-1.5 hover:bg-wf-50"
                             >
                               Geschiedenis
                             </Link>
+                            ) : null}
                           </div>
                         ) : null}
                       </td>

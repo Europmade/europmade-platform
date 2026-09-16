@@ -173,6 +173,7 @@ export async function resolveListingProducts(opts?: {
   priceMin?: number
   priceMax?: number
   verified?: boolean
+  ids?: string[]
   sort?: "popularity" | "price_asc" | "price_desc" | "rating_desc" | "name_asc" | "name_desc"
   offset?: number
   limit?: number
@@ -184,6 +185,7 @@ export async function resolveListingProducts(opts?: {
     const res = await listCatalogProducts({
       category: opts?.categorySlug,
       q: opts?.query,
+      ids: opts?.ids,
       brand: opts?.brand,
       manufacturer: opts?.manufacturer,
       country: opts?.country,
@@ -239,8 +241,28 @@ export async function resolveBrandPage(
       locale,
     })
     const backendOrigin = await getPageBackendOrigin()
+    const doc = page.brand.page_document
     return {
-      brand: page.brand,
+      brand: {
+        ...page.brand,
+        logo_url: resolveMediaUrl(page.brand.logo_url, backendOrigin),
+        hero_image_url: resolveMediaUrl(
+          page.brand.hero_image_url ?? null,
+          backendOrigin
+        ),
+        story_image_url: resolveMediaUrl(
+          page.brand.story_image_url ?? null,
+          backendOrigin
+        ),
+        page_document: {
+          category_slugs: doc?.category_slugs ?? [],
+          product_ids: doc?.product_ids ?? [],
+          extra_sections: (doc?.extra_sections ?? []).map((section) => ({
+            ...section,
+            image_url: resolveMediaUrl(section.image_url ?? null, backendOrigin),
+          })),
+        },
+      },
       products: page.products
         .filter(hasValidCommerceOffer)
         .map((item) => mapListItem(item, locale, backendOrigin)),
@@ -253,7 +275,6 @@ export async function resolveBrandPage(
     return null
   }
 }
-
 
 export async function resolveSellerPage(
   slug: string,
@@ -359,6 +380,7 @@ function mapOffers(
   return commerceOffers.map((o, index) => ({
     id: o.offer_id,
     retailer: o.seller_name,
+    sellerSlug: o.seller_slug || undefined,
     rating: detail.seller_review_aggregate.average_score ?? 0,
     priceCents: eurosToCents(o.total_price),
     delivery: resolveOfferDeliveryLabel(
@@ -561,27 +583,56 @@ async function mapApiDetail(
   }
 }
 
+function isRenderableGalleryImage(item: CatalogMediaItem): boolean {
+  if (item.media_type === "Video") return false
+  const meta =
+    item.metadata && typeof item.metadata === "object"
+      ? (item.metadata as Record<string, unknown>)
+      : null
+  if (meta?.purpose === "compliance_evidence") return false
+  const mime = typeof meta?.mime_type === "string" ? meta.mime_type : ""
+  if (mime && !mime.startsWith("image/")) return false
+  const ref = (item.storage_reference || "").trim()
+  if (!ref) return false
+  if (/\.pdf(\?|#|$)/i.test(ref)) return false
+  // External product-page / non-image URLs must not become gallery slides.
+  if (
+    /^https?:\/\//i.test(ref) &&
+    !/\.(avif|webp|jpe?g|png|gif)(\?|#|$)/i.test(ref)
+  ) {
+    return false
+  }
+  return true
+}
+
+/**
+ * Same primary source as product cards (`image_url` / Hoofdafbeelding), then
+ * remaining gallery images. Primary must lead so CMS thumbnailCount cannot
+ * slice it away when it has a late sort_order.
+ */
 function buildGallerySlides(
   detail: CatalogProductDetail,
   backendOrigin: string
 ): PdpGallerySlide[] {
   const media = detail.product.media ?? []
+  const imageItems = media
+    .filter(isRenderableGalleryImage)
+    .sort((a, b) => {
+      const aPrimary = a.media_type === "Hoofdafbeelding" ? 0 : 1
+      const bPrimary = b.media_type === "Hoofdafbeelding" ? 0 : 1
+      if (aPrimary !== bPrimary) return aPrimary - bPrimary
+      return Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
+    })
+
   const slides: PdpGallerySlide[] = []
 
-  for (const item of media) {
-    if (item.media_type === "Video" && item.embed_url) {
-      slides.push({
-        kind: "video",
-        embedUrl: item.embed_url,
-        provider: item.video_provider ?? null,
-      })
-      continue
-    }
+  for (const item of imageItems) {
+    const isPrimary = item.media_type === "Hoofdafbeelding"
     const url = resolveOptimizedImageUrl(
       item.storage_reference,
       item.metadata,
       backendOrigin,
-      { preferTransparent: item.media_type === "Hoofdafbeelding" }
+      { preferTransparent: isPrimary }
     )
     if (!url) continue
     const webpSrcSet =
@@ -603,15 +654,31 @@ function buildGallerySlides(
       url,
       srcSet: webpSrcSet,
       avifSrcSet,
-      isPrimary: item.media_type === "Hoofdafbeelding",
-      loading: item.media_type === "Hoofdafbeelding" ? "eager" : "lazy",
+      isPrimary,
+      loading: isPrimary ? "eager" : "lazy",
     })
   }
 
-  if (slides.length === 0) {
+  for (const item of media) {
+    if (item.media_type === "Video" && item.embed_url) {
+      slides.push({
+        kind: "video",
+        embedUrl: item.embed_url,
+        provider: item.video_provider ?? null,
+      })
+    }
+  }
+
+  if (slides.length === 0 || !slides.some((s) => s.kind === "image" && s.isPrimary)) {
     const fallback = resolveMediaUrl(detail.product.image_url ?? null, backendOrigin)
     if (fallback) {
-      slides.push({ kind: "image", url: fallback, isPrimary: true, loading: "eager" })
+      const withoutDuplicate = slides.filter(
+        (s) => !(s.kind === "image" && s.url === fallback)
+      )
+      return [
+        { kind: "image", url: fallback, isPrimary: true, loading: "eager" },
+        ...withoutDuplicate,
+      ]
     }
   }
 

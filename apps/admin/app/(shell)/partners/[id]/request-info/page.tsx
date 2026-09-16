@@ -25,7 +25,7 @@ export default function PartnerRequestInfoPage() {
     setError(null);
     try {
       await requestAdditionalInfo(id, message.trim());
-      router.push("/partners");
+      router.push(`/partners/${id}`);
     } catch (err) {
       setError(
         err instanceof PartnerAdminApiError

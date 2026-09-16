@@ -5,7 +5,7 @@
 
 import type { StorefrontMessageKey } from "../../../_lib/i18n/messages"
 
-export type MarketingModuleStatus = "available" | "prepared" | "unavailable"
+export type MarketingModuleStatus = "available" | "prepared" | "unavailable" | "coming_soon"
 
 export type MarketingModuleDefinition = {
   id: string
@@ -32,8 +32,8 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
     id: "sponsored_products",
     titleKey: "sellerMktSponsoredTitle",
     descriptionKey: "sellerMktSponsoredDesc",
-    href: "/seller/marketing/sponsored",
-    status: "available",
+    href: null,
+    status: "coming_soon",
     kind: "mvp",
     navigatiepositie: 20,
   },
@@ -54,6 +54,15 @@ export const MARKETING_MODULES: MarketingModuleDefinition[] = [
     status: "available",
     kind: "mvp",
     navigatiepositie: 40,
+  },
+  {
+    id: "brand_page",
+    titleKey: "sellerMktBrandPageTitle",
+    descriptionKey: "sellerMktBrandPageDesc",
+    href: "/seller/marketing/brand-pages",
+    status: "available",
+    kind: "mvp",
+    navigatiepositie: 50,
   },
   // Uitbreidpunten — nog geen UI-routes (titles kept for registry slots only).
   {

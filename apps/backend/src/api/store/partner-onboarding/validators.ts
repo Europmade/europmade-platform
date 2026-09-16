@@ -11,6 +11,8 @@ import { z } from "@medusajs/framework/zod"
 export const StoreStartPartnerOnboarding = z.object({
   is_retailer: z.boolean().optional().default(false),
   is_producer_or_brand_owner: z.boolean().optional().default(false),
+  is_brand_owner: z.boolean().optional().default(false),
+  is_producer: z.boolean().optional().default(false),
   is_distributor: z.boolean().optional().default(false),
 })
 export type StoreStartPartnerOnboardingInput = z.infer<
@@ -28,6 +30,8 @@ export const StoreCompanyDraftForUpdate = z.object({
 export const StoreUpdatePartnerOnboardingDraft = z.object({
   is_retailer: z.boolean().optional(),
   is_producer_or_brand_owner: z.boolean().optional(),
+  is_brand_owner: z.boolean().optional(),
+  is_producer: z.boolean().optional(),
   is_distributor: z.boolean().optional(),
   company: StoreCompanyDraftForUpdate.optional(),
 })

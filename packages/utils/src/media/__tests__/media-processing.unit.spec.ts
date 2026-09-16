@@ -1,5 +1,7 @@
 import {
   detectPngHasAlpha,
+  mediaAcceptAttribute,
+  normalizeMediaMimeType,
   validateMedia,
 } from "../validate"
 import { getMediaRequirements } from "../requirements"
@@ -96,6 +98,30 @@ describe("media validation — primary vs gallery", () => {
     })
     expect(result.ok).toBe(true)
   })
+
+  it("accepts action banner below old 4:1 cms_banner floor", () => {
+    const result = validateMedia({
+      placement: "cms_action_banner",
+      mimeType: "image/jpeg",
+      sizeBytes: 400_000,
+      width: 1000,
+      height: 400,
+      hasAlpha: false,
+    })
+    expect(result.ok).toBe(true)
+  })
+
+  it("rejects undersized action banner", () => {
+    const result = validateMedia({
+      placement: "cms_action_banner",
+      mimeType: "image/jpeg",
+      sizeBytes: 20_000,
+      width: 400,
+      height: 100,
+      hasAlpha: false,
+    })
+    expect(result.ok).toBe(false)
+  })
 })
 
 describe("detectPngHasAlpha", () => {
@@ -159,6 +185,68 @@ describe("optimized image resolver", () => {
   })
 })
 
+describe("media validation — MIME normalization", () => {
+  it("accepts image/jpg alias for brand_story_photo", () => {
+    const result = validateMedia({
+      placement: "brand_story_photo",
+      mimeType: "image/jpg",
+      sizeBytes: 400_000,
+      fileName: "merk.jpg",
+    })
+    expect(result.ok).toBe(true)
+  })
+
+  it("accepts empty MIME with .jpeg extension", () => {
+    const result = validateMedia({
+      placement: "homepage_hero",
+      mimeType: "",
+      sizeBytes: 400_000,
+      fileName: "hero.jpeg",
+    })
+    expect(result.ok).toBe(true)
+  })
+
+  it("accepts application/octet-stream with .webp extension", () => {
+    const result = validateMedia({
+      placement: "brand_story_photo",
+      mimeType: "application/octet-stream",
+      sizeBytes: 200_000,
+      fileName: "logo.webp",
+    })
+    expect(result.ok).toBe(true)
+  })
+
+  it("rejects unsupported types with clear JPEG/JPG wording", () => {
+    const result = validateMedia({
+      placement: "brand_story_photo",
+      mimeType: "image/gif",
+      sizeBytes: 100_000,
+      fileName: "x.gif",
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.message).toContain("JPEG/JPG")
+      expect(result.message).toContain("PNG")
+      expect(result.message).toContain("WEBP")
+    }
+  })
+})
+
+describe("media accept helpers", () => {
+  it("builds accept with mime + extensions", () => {
+    const accept = mediaAcceptAttribute(["image/jpeg", "image/png", "image/webp"])
+    expect(accept).toContain("image/jpeg")
+    expect(accept).toContain(".jpg")
+    expect(accept).toContain(".jpeg")
+    expect(accept).toContain(".png")
+    expect(accept).toContain(".webp")
+  })
+
+  it("normalizes image/pjpeg", () => {
+    expect(normalizeMediaMimeType("image/pjpeg", "x.jpg")).toBe("image/jpeg")
+  })
+})
+
 describe("media requirements", () => {
   it("primary uses capable transparency policy", () => {
     expect(getMediaRequirements("product_main").transparency).toBe("capable")
@@ -169,5 +257,60 @@ describe("media requirements", () => {
 
   it("gallery allows background", () => {
     expect(getMediaRequirements("product_other").transparency).toBe("allowed")
+  })
+
+  it("rejects JPEG and SVG for commercial nav icons", () => {
+    const jpeg = validateMedia({
+      placement: "commercial_nav_icon",
+      mimeType: "image/jpeg",
+      sizeBytes: 20_000,
+      width: 128,
+      height: 128,
+      fileName: "icon.jpg",
+    })
+    expect(jpeg.ok).toBe(false)
+
+    const svg = validateMedia({
+      placement: "commercial_nav_icon",
+      mimeType: "image/svg+xml",
+      sizeBytes: 2_000,
+      fileName: "icon.svg",
+    })
+    expect(svg.ok).toBe(false)
+  })
+
+  it("rejects oversized commercial nav icons", () => {
+    const tooHeavy = validateMedia({
+      placement: "commercial_nav_icon",
+      mimeType: "image/png",
+      sizeBytes: 501 * 1024,
+      width: 128,
+      height: 128,
+      fileName: "icon.png",
+    })
+    expect(tooHeavy.ok).toBe(false)
+    if (!tooHeavy.ok) expect(tooHeavy.message).toContain("500 KB")
+
+    const tooWide = validateMedia({
+      placement: "commercial_nav_icon",
+      mimeType: "image/png",
+      sizeBytes: 20_000,
+      width: 300,
+      height: 300,
+      fileName: "icon.png",
+    })
+    expect(tooWide.ok).toBe(false)
+  })
+
+  it("allows non-square commercial nav icons within bounds", () => {
+    const result = validateMedia({
+      placement: "commercial_nav_icon",
+      mimeType: "image/webp",
+      sizeBytes: 40_000,
+      width: 128,
+      height: 96,
+      fileName: "icon.webp",
+    })
+    expect(result.ok).toBe(true)
   })
 })

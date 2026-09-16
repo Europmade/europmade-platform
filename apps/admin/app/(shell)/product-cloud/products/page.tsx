@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import { Badge, Notice } from "@europmade/ui"
+import { Badge, Button, Notice } from "@europmade/ui"
 import {
   LIFECYCLE_STATUS_FILTERS,
   PUBLICATION_STATUS_FILTERS,
@@ -20,6 +20,8 @@ function formatDate(value: string | null | undefined) {
   })
 }
 
+const PAGE_SIZE = 100
+
 /**
  * Admin Product Management overzicht (P2.20).
  */
@@ -31,6 +33,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("")
   const [publicationStatus, setPublicationStatus] = useState("")
   const [lifecycleStatus, setLifecycleStatus] = useState("")
+  const [page, setPage] = useState(1)
 
   const load = useCallback(async () => {
     setError(null)
@@ -40,7 +43,8 @@ export default function AdminProductsPage() {
         q: search || undefined,
         publication_status: publicationStatus || undefined,
         lifecycle_status: lifecycleStatus || undefined,
-        limit: 100,
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
       })
       setRows(res.products)
       setCount(res.count)
@@ -53,7 +57,7 @@ export default function AdminProductsPage() {
       setRows([])
       setCount(0)
     }
-  }, [search, publicationStatus, lifecycleStatus])
+  }, [search, publicationStatus, lifecycleStatus, page])
 
   useEffect(() => {
     void load()
@@ -77,7 +81,7 @@ export default function AdminProductsPage() {
           href="/product-cloud/products/approvals"
           className="rounded bg-wf-900 px-3 py-2 text-[11px] font-semibold text-white"
         >
-          Approval queue
+          Productgoedkeuringen
         </Link>
       </div>
 
@@ -93,6 +97,7 @@ export default function AdminProductsPage() {
           onSubmit={(e) => {
             e.preventDefault()
             setSearch(q.trim())
+            setPage(1)
           }}
         >
           <input
@@ -104,7 +109,10 @@ export default function AdminProductsPage() {
         </form>
         <select
           value={publicationStatus}
-          onChange={(e) => setPublicationStatus(e.target.value)}
+          onChange={(e) => {
+            setPublicationStatus(e.target.value)
+            setPage(1)
+          }}
           className="h-9 rounded-[5px] border border-wf-400 px-2 text-xs text-wf-800"
         >
           {PUBLICATION_STATUS_FILTERS.map((f) => (
@@ -115,7 +123,10 @@ export default function AdminProductsPage() {
         </select>
         <select
           value={lifecycleStatus}
-          onChange={(e) => setLifecycleStatus(e.target.value)}
+          onChange={(e) => {
+            setLifecycleStatus(e.target.value)
+            setPage(1)
+          }}
           className="h-9 rounded-[5px] border border-wf-400 px-2 text-xs text-wf-800"
         >
           {LIFECYCLE_STATUS_FILTERS.map((f) => (
@@ -228,9 +239,47 @@ export default function AdminProductsPage() {
               </tbody>
             </table>
           </div>
-          <p className="px-3 py-3.5 text-[11px] text-wf-500">
-            1–{rows.length} van {count}
-          </p>
+          <div className="flex flex-col gap-2 px-3 py-3.5 text-[11px] text-wf-600 tablet:flex-row tablet:flex-wrap tablet:items-center tablet:justify-between">
+            <p>
+              {count === 0
+                ? "0 van 0 producten"
+                : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, count)} van ${count} producten`}
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={page <= 1 ? "disabled" : "secondary"}
+                disabled={page <= 1 || rows === "loading"}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Vorige
+              </Button>
+              <span className="px-1 font-semibold text-wf-800">
+                Pagina {page} van {Math.max(1, Math.ceil(count / PAGE_SIZE))}
+              </span>
+              <Button
+                type="button"
+                size="sm"
+                variant={
+                  page >= Math.max(1, Math.ceil(count / PAGE_SIZE))
+                    ? "disabled"
+                    : "secondary"
+                }
+                disabled={
+                  page >= Math.max(1, Math.ceil(count / PAGE_SIZE)) ||
+                  rows === "loading"
+                }
+                onClick={() =>
+                  setPage((p) =>
+                    Math.min(Math.max(1, Math.ceil(count / PAGE_SIZE)), p + 1)
+                  )
+                }
+              >
+                Volgende
+              </Button>
+            </div>
+          </div>
         </>
       )}
     </div>

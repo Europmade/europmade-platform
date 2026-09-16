@@ -14,11 +14,15 @@ import {
   slugifyCategoryName,
   type RequirementTier,
 } from "../../../modules/product-cloud/category-attributes"
-import { applyGpsrComplianceAttributes } from "../../../modules/product-cloud/gpsr-manufacturer"
-import type { ManufacturerGpsrSource } from "../../../modules/product-cloud/gpsr-manufacturer"
+import {
+  applyGpsrComplianceAttributes,
+  manufacturerIsOutsideEu,
+  type ManufacturerGpsrSource,
+} from "../../../modules/product-cloud/gpsr-manufacturer"
 import { resolveCatalogGtinValue } from "../../../modules/product-cloud/concept-identifier"
 import { resolveEffectiveManufacturerId } from "../../../modules/product-cloud/manufacturer-completeness"
 import { buildDocumentInputs, evidenceKindOf, type EvidenceRow } from "../../../modules/product-cloud/compliance-gates"
+import { buildTranslationDocumentInputs } from "../../../modules/product-cloud/translation/completeness"
 import type VerificationModuleService from "../../../modules/verification/service"
 import { VERIFICATION_MODULE } from "../../../modules/verification"
 import { buildProductCloudPreview } from "./product-preview"
@@ -28,6 +32,9 @@ import {
   resolveProductActions,
   resolveWorkflowStatus,
 } from "../../../modules/product-cloud/workflow-status"
+import { latestActivityIso } from "../../../modules/product-cloud/seller-product-list"
+import { listSectionReviewsForProduct } from "../../../modules/product-cloud/section-review-helpers"
+import type { SellerListDataCache } from "./seller-product-list-cache"
 
 export { resolveProductActions, resolveWorkflowStatus }
 
@@ -38,11 +45,13 @@ type VersionRow = {
   title: string
   description: string
   publication_status: string
+  source_language_code?: string | null
   created_by_seller_id: string
   approval_requested_at?: Date | string | null
   approval_rejection_reason?: string | null
   approval_decided_at?: Date | string | null
   approval_decided_by?: string | null
+  admin_review_outcome?: string | null
 }
 
 type MediaRow = {
@@ -50,6 +59,34 @@ type MediaRow = {
   product_version_id: string
   media_type: string
   storage_reference: string
+  metadata?: Record<string, unknown> | null
+}
+
+/** Prefer optimized variant path; fall back to storage_reference (legacy-safe). */
+function preferredPrimaryImageReference(
+  primary: MediaRow | null
+): string | null {
+  if (!primary) return null
+  const meta = primary.metadata
+  const variants =
+    meta && typeof meta === "object"
+      ? (meta as { variants?: Record<string, Record<string, string>> }).variants
+      : null
+  if (variants) {
+    for (const format of ["webp", "avif", "jpeg", "png"] as const) {
+      const ref =
+        variants[format]?.["800"] ||
+        variants[format]?.["400"] ||
+        variants[format]?.["1200"]
+      if (ref) return ref
+    }
+  }
+  const original =
+    meta && typeof meta === "object"
+      ? (meta as { original_reference?: string }).original_reference
+      : null
+  if (original) return original
+  return primary.storage_reference || null
 }
 
 type AttrDefRow = {
@@ -96,9 +133,25 @@ type OfferEntity = {
   seller_sku?: string | null
   sales_status?: string | null
   delivery_days_max?: number | null
+  created_at?: Date | string | null
+  updated_at?: Date | string | null
 }
 
-function pickWorkingVersion(versions: VersionRow[]): VersionRow | null {
+const LIST_QUERY_TAKE = 2000
+
+function groupByKey<T>(rows: T[], key: (row: T) => string | null | undefined): Map<string, T[]> {
+  const map = new Map<string, T[]>()
+  for (const row of rows) {
+    const k = key(row)
+    if (!k) continue
+    const list = map.get(k) || []
+    list.push(row)
+    map.set(k, list)
+  }
+  return map
+}
+
+export function pickWorkingVersion(versions: VersionRow[]): VersionRow | null {
   const concept = versions
     .filter(
       (v) =>
@@ -169,6 +222,7 @@ export type SellerProductManagerRow = {
   title: string | null
   description: string | null
   category_names: string[]
+  category_assignment_status: "linked" | "category_pending"
   primary_image_url: string | null
   identifier_id: string | null
   identifier_type: string | null
@@ -192,6 +246,10 @@ export type SellerProductManagerRow = {
     min_shipping_cost: number | null
   } | null
   actions: ReturnType<typeof resolveProductActions>
+  /** True when the logged-in seller owns the Product Cloud record. */
+  catalog_owner: boolean
+  /** Latest own-offer (or product) activity, used for Nieuwste. */
+  list_activity_at: string | null
 }
 
 export type OfferLookupMaps = {
@@ -204,6 +262,7 @@ export type OfferLookupMaps = {
     }
   >
   stockByOffer: Map<string, number>
+  activityByIdentifier: Map<string, string>
 }
 
 export async function loadSellerOfferLookup(
@@ -214,18 +273,27 @@ export async function loadSellerOfferLookup(
     byIdentifier: new Map(),
     priceByOffer: new Map(),
     stockByOffer: new Map(),
+    activityByIdentifier: new Map(),
   }
   if (!commerce) return empty
 
-  const offers = (await commerce.listOffers({
-    seller_id: sellerId,
-  })) as OfferEntity[]
+  const offers = (await commerce.listOffers(
+    { seller_id: sellerId },
+    { take: LIST_QUERY_TAKE }
+  )) as OfferEntity[]
 
   const byIdentifier = new Map<string, OfferEntity[]>()
+  const activityByIdentifier = new Map<string, string>()
   for (const offer of offers) {
     const list = byIdentifier.get(offer.identifier_id) || []
     list.push(offer)
     byIdentifier.set(offer.identifier_id, list)
+    const activity = latestActivityIso([offer.updated_at, offer.created_at])
+    if (!activity) continue
+    const prev = activityByIdentifier.get(offer.identifier_id)
+    if (!prev || Date.parse(activity) > Date.parse(prev)) {
+      activityByIdentifier.set(offer.identifier_id, activity)
+    }
   }
 
   const priceByOffer = new Map<
@@ -236,22 +304,84 @@ export async function loadSellerOfferLookup(
     }
   >()
   const stockByOffer = new Map<string, number>()
-
-  for (const offer of offers) {
-    const [price] = await commerce.listOfferPrices({ offer_id: offer.id })
-    const [inv] = await commerce.listOfferInventories({ offer_id: offer.id })
-    if (price) {
-      priceByOffer.set(offer.id, {
-        base_price: price.base_price,
-        shipping_cost: price.shipping_cost,
-      })
+  const offerIds = offers.map((offer) => offer.id)
+  if (offerIds.length > 0) {
+    try {
+      const prices = (await commerce.listOfferPrices(
+        { offer_id: offerIds },
+        { take: LIST_QUERY_TAKE }
+      )) as Array<{
+        offer_id?: string
+        offer?: { id?: string }
+        base_price: unknown
+        shipping_cost: unknown
+      }>
+      for (const price of prices) {
+        const offerId = price.offer_id || price.offer?.id
+        if (!offerId) continue
+        priceByOffer.set(offerId, {
+          base_price: price.base_price,
+          shipping_cost: price.shipping_cost,
+        })
+      }
+      const inventories = (await commerce.listOfferInventories(
+        { offer_id: offerIds },
+        { take: LIST_QUERY_TAKE }
+      )) as Array<{
+        offer_id?: string
+        offer?: { id?: string }
+        quantity_available?: unknown
+      }>
+      for (const inv of inventories) {
+        const offerId = inv.offer_id || inv.offer?.id
+        if (!offerId) continue
+        stockByOffer.set(offerId, Number(inv.quantity_available))
+      }
+    } catch {
+      priceByOffer.clear()
+      stockByOffer.clear()
     }
-    if (inv) {
-      stockByOffer.set(offer.id, Number(inv.quantity_available))
+    if (priceByOffer.size === 0 && stockByOffer.size === 0) {
+      for (const offer of offers) {
+        const [price] = await commerce.listOfferPrices({ offer_id: offer.id })
+        const [inv] = await commerce.listOfferInventories({ offer_id: offer.id })
+        if (price) {
+          priceByOffer.set(offer.id, {
+            base_price: price.base_price,
+            shipping_cost: price.shipping_cost,
+          })
+        }
+        if (inv) {
+          stockByOffer.set(offer.id, Number(inv.quantity_available))
+        }
+      }
     }
   }
 
-  return { byIdentifier, priceByOffer, stockByOffer }
+  return { byIdentifier, priceByOffer, stockByOffer, activityByIdentifier }
+}
+
+export async function productIdsForSellerOffers(
+  productCloud: ProductCloudModuleService,
+  maps: OfferLookupMaps
+): Promise<string[]> {
+  const identifierIds = [...maps.byIdentifier.keys()]
+  if (identifierIds.length === 0) return []
+  const identifiers = (await productCloud.listIdentifiers(
+    { id: identifierIds },
+    { take: LIST_QUERY_TAKE }
+  )) as Array<{ id: string; product_variant_id: string }>
+  const variantIds = [
+    ...new Set(identifiers.map((row) => row.product_variant_id).filter(Boolean)),
+  ]
+  if (variantIds.length === 0) return []
+  const variants = (await productCloud.listProductVariants(
+    { id: variantIds },
+    { take: LIST_QUERY_TAKE }
+  )) as Array<{ id: string; product_id: string }>
+  return [
+    ...new Set(variants.map((row) => row.product_id).filter(Boolean)),
+  ]
 }
 
 function summarizeOffer(
@@ -484,6 +614,8 @@ export async function buildSellerProductManagerRow(
     manufacturer_id: string
     lifecycle_status: string
     current_owner_seller_id: string
+    updated_at?: Date | string | null
+    created_at?: Date | string | null
   },
   sellerId: string,
   opts?: {
@@ -492,32 +624,40 @@ export async function buildSellerProductManagerRow(
     brandNameCache?: Map<string, string | null>
     verification?: VerificationModuleService | null
     container?: MedusaContainer | null
+    listCache?: SellerListDataCache | null
   }
 ): Promise<SellerProductManagerRow> {
-  const preview = await buildProductCloudPreview(productCloud, product.id)
-  const versions = (await productCloud.listProductVersions({
-    product_id: product.id,
-  })) as VersionRow[]
+  const cache = opts?.listCache ?? null
+  const preview =
+    cache?.previewByProduct.get(product.id) ??
+    (await buildProductCloudPreview(productCloud, product.id))
+  const versions = (cache?.versionsByProduct.get(product.id) ??
+    (await productCloud.listProductVersions({
+      product_id: product.id,
+    }))) as VersionRow[]
   const working = pickWorkingVersion(versions)
   const media = working
-    ? ((await productCloud.listProductMedias(
-        { product_version_id: working.id },
-        { order: { sort_order: "ASC" } }
-      )) as MediaRow[])
+    ? ((cache?.mediaByVersion.get(working.id) ??
+        (await productCloud.listProductMedias(
+          { product_version_id: working.id },
+          { order: { sort_order: "ASC" } }
+        ))) as MediaRow[])
     : []
   const primary =
-    media.find((m) => m.media_type === "Hoofdafbeelding") || media[0] || null
+    media.find((m) => m.media_type === "Hoofdafbeelding") || null
 
-  const variants = (await productCloud.listProductVariants({
-    product_id: product.id,
-  })) as VariantRow[]
+  const variants = (cache?.variantsByProduct.get(product.id) ??
+    (await productCloud.listProductVariants({
+      product_id: product.id,
+    }))) as VariantRow[]
 
   const identifierIds: string[] = []
   let mpnValue: string | null = null
   for (const v of variants) {
-    const ids = (await productCloud.listIdentifiers({
-      product_variant_id: v.id,
-    })) as IdentifierRow[]
+    const ids = (cache?.identifiersByVariant.get(v.id) ??
+      (await productCloud.listIdentifiers({
+        product_variant_id: v.id,
+      }))) as IdentifierRow[]
     for (const idRow of ids) {
       identifierIds.push(idRow.id)
       if (idRow.identifier_type === "MPN" && !mpnValue) {
@@ -526,37 +666,49 @@ export async function buildSellerProductManagerRow(
     }
   }
 
-  const links = await productCloud.listProductCategories({
-    product_id: product.id,
-  })
+  const links = cache
+    ? (cache.categoryIdsByProduct.get(product.id) || []).map((category_id) => ({
+        category_id,
+      }))
+    : await productCloud.listProductCategories({
+        product_id: product.id,
+      })
   const categoryIds = links.map((l: { category_id: string }) => l.category_id)
   const categories =
     categoryIds.length > 0
-      ? await productCloud.listCategories({ id: categoryIds })
+      ? cache
+        ? categoryIds
+            .map((id) => cache.categoriesById.get(id))
+            .filter(Boolean)
+        : await productCloud.listCategories({ id: categoryIds })
       : []
 
-  for (const cat of categories as Array<{
-    id: string
-    slug?: string | null
-    name: string
-  }>) {
-    if (cat.slug) {
-      await productCloud.ensureCategoryAttributeCatalog(cat.id, cat.slug)
+  if (!cache?.skipEnsureCatalog) {
+    for (const cat of categories as Array<{
+      id: string
+      slug?: string | null
+      name: string
+    }>) {
+      if (cat.slug) {
+        await productCloud.ensureCategoryAttributeCatalog(cat.id, cat.slug)
+      }
     }
   }
 
   const defs: AttrDefRow[] = []
   for (const catId of categoryIds) {
-    const rows = (await productCloud.listAttributeDefinitions({
-      category_id: catId,
-    })) as AttrDefRow[]
+    const rows = (cache?.defsByCategory.get(catId) ??
+      (await productCloud.listAttributeDefinitions({
+        category_id: catId,
+      }))) as AttrDefRow[]
     defs.push(...rows.filter((d) => d.is_active !== false))
   }
 
   const values = working
-    ? ((await productCloud.listAttributeValues({
-        product_version_id: working.id,
-      })) as AttrValRow[])
+    ? ((cache?.valuesByVersion.get(working.id) ??
+        (await productCloud.listAttributeValues({
+          product_version_id: working.id,
+        }))) as AttrValRow[])
     : []
   const valueByDef = new Map(
     values.map((v) => [v.attribute_definition_id, v.value])
@@ -590,12 +742,38 @@ export async function buildSellerProductManagerRow(
     offerSummaries[0] ||
     emptyOffer(preview.identifier_id)
 
-  const resolvedManufacturer = await resolveManufacturerForCompleteness(
-    opts?.partner ?? null,
-    product.manufacturer_id,
-    opts?.container ?? null,
-    product.id
-  )
+  const cachedManufacturer = cache?.manufacturerById.get(product.manufacturer_id)
+  let resolvedManufacturer =
+    cachedManufacturer !== undefined
+      ? cachedManufacturer
+      : await resolveManufacturerForCompleteness(
+          opts?.partner ?? null,
+          product.manufacturer_id,
+          cache ? null : opts?.container ?? null,
+          product.id
+        )
+  if (cache) {
+    const facility = cache.mieByProduct.get(product.id)?.facility
+    const hasGpsrCore = Boolean(
+      resolvedManufacturer?.name?.trim() &&
+        resolvedManufacturer?.country_code?.trim() &&
+        resolvedManufacturer?.contact_email?.trim()
+    )
+    if (!hasGpsrCore && facility?.name && facility.country_code) {
+      resolvedManufacturer = {
+        name: resolvedManufacturer?.name?.trim() || facility.name,
+        street: resolvedManufacturer?.street ?? facility.street ?? null,
+        house_number:
+          resolvedManufacturer?.house_number ?? facility.house_number ?? null,
+        postal_code:
+          resolvedManufacturer?.postal_code ?? facility.postal_code ?? null,
+        city: resolvedManufacturer?.city ?? facility.city ?? null,
+        country_code:
+          resolvedManufacturer?.country_code ?? facility.country_code ?? null,
+        contact_email: resolvedManufacturer?.contact_email ?? null,
+      }
+    }
+  }
 
   const attributes = applyGpsrComplianceAttributes(
     defs.map((d) => ({
@@ -621,7 +799,12 @@ export async function buildSellerProductManagerRow(
   let mieClaimed = false
   let mieFacilityId: string | null = null
   let evidenceRows: Array<Record<string, unknown>> = []
-  if (opts?.verification) {
+  const cachedMie = cache?.mieByProduct.get(product.id)
+  if (cache) {
+    evidenceRows = cache.evidenceByProduct.get(product.id) || []
+    mieClaimed = Boolean(cachedMie?.claimed)
+    mieFacilityId = cachedMie?.facilityId ?? null
+  } else if (opts?.verification) {
     try {
       evidenceRows = (await opts.verification.listProductOriginEvidences({
         product_id: product.id,
@@ -630,7 +813,7 @@ export async function buildSellerProductManagerRow(
       evidenceRows = []
     }
   }
-  if (opts?.container) {
+  if (!cache && opts?.container) {
     try {
       const mie = await loadMadeInEuropeForProduct(opts.container, product.id)
       mieClaimed = Boolean(mie?.score?.is_made_in_europe)
@@ -661,7 +844,9 @@ export async function buildSellerProductManagerRow(
     (product as { shipping_profile_id?: string | null }).shipping_profile_id ??
     null
   let shippingProfileSummary: SellerProductManagerRow["shipping_profile"] = null
-  if (shippingProfileId && commerce) {
+  if (shippingProfileId && cache?.shippingById.has(shippingProfileId)) {
+    shippingProfileSummary = cache.shippingById.get(shippingProfileId) ?? null
+  } else if (shippingProfileId && commerce) {
     try {
       const [profile] = await commerce.listSellerShippingProfiles({
         id: shippingProfileId,
@@ -683,6 +868,43 @@ export async function buildSellerProductManagerRow(
       shippingProfileSummary = null
     }
   }
+
+  let translationRows: Array<{
+    field_name: string
+    language_code: string
+    translation_status: string
+    value?: string | null
+  }> = []
+  if (working?.id && cache?.translationsByVersion.has(working.id)) {
+    translationRows = cache.translationsByVersion.get(working.id) || []
+  } else if (working?.id) {
+    try {
+      const rows = (await productCloud.listProductTranslations({
+        entity_type: "product_version",
+        entity_id: working.id,
+      })) as Array<{
+        field_name: string
+        language_code: string
+        translation_status: string
+        value?: string | null
+      }>
+      translationRows = rows
+    } catch {
+      translationRows = []
+    }
+  }
+
+  const complianceDocuments = buildDocumentInputs({
+    mieClaimed,
+    ceValue,
+    collectsData,
+    ceRequiredForCategory,
+    evidence: evidenceRows,
+  })
+  const translationDocuments = buildTranslationDocumentInputs({
+    source_language_code: working?.source_language_code ?? "nl",
+    translations: translationRows,
+  })
 
   const completeness = computeProductCompleteness({
     basis: {
@@ -710,18 +932,16 @@ export async function buildSellerProductManagerRow(
       ce_required_for_category: ceRequiredForCategory,
       mie_claimed: mieClaimed,
       publication_status: working?.publication_status ?? null,
+      manufacturer_outside_eu: manufacturerIsOutsideEu(resolvedManufacturer),
     },
-    documents: buildDocumentInputs({
-      mieClaimed,
-      ceValue,
-      collectsData,
-      ceRequiredForCategory,
-      evidence: evidenceRows,
-    }),
+    documents: complianceDocuments,
+    translation_documents: translationDocuments,
   })
 
   let brand_name: string | null = null
-  if (opts?.brandNameCache?.has(product.brand_id)) {
+  if (cache?.brandNameById.has(product.brand_id)) {
+    brand_name = cache.brandNameById.get(product.brand_id) ?? null
+  } else if (opts?.brandNameCache?.has(product.brand_id)) {
     brand_name = opts.brandNameCache.get(product.brand_id) ?? null
   } else {
     brand_name = await resolveBrandName(opts?.partner ?? null, product.brand_id)
@@ -738,7 +958,9 @@ export async function buildSellerProductManagerRow(
     title: working?.title ?? preview.title,
     description: working?.description ?? null,
     category_names: preview.category_names,
-    primary_image_url: primary?.storage_reference ?? null,
+    category_assignment_status:
+      preview.category_names.length > 0 ? "linked" : "category_pending",
+    primary_image_url: preferredPrimaryImageReference(primary),
     identifier_id: preview.identifier_id,
     identifier_type: preview.identifier_type,
     identifier_value: preview.identifier_value,
@@ -746,18 +968,24 @@ export async function buildSellerProductManagerRow(
     publication_status: working?.publication_status ?? null,
     version_id: working?.id ?? null,
     approval_status:
-      working?.publication_status === "In review"
-        ? "pending_admin_approval"
-        : working?.publication_status === "Gepubliceerd"
-          ? "approved"
-          : working?.approval_rejection_reason
-            ? "rejected"
-            : "none",
+      working?.admin_review_outcome === "needs_info"
+        ? "needs_information"
+        : working?.publication_status === "In review"
+          ? "pending_admin_approval"
+          : working?.publication_status === "Gepubliceerd" ||
+              working?.admin_review_outcome === "approved"
+            ? "approved"
+            : working?.admin_review_outcome === "rejected" ||
+                working?.approval_rejection_reason
+              ? "rejected"
+              : "none",
     approval_rejection_reason: working?.approval_rejection_reason ?? null,
+    admin_review_outcome: working?.admin_review_outcome ?? null,
     approval_requested_at: working?.approval_requested_at ?? null,
     workflow_status: resolveWorkflowStatus({
       publication_status: working?.publication_status ?? null,
       approval_rejection_reason: working?.approval_rejection_reason ?? null,
+      admin_review_outcome: working?.admin_review_outcome ?? null,
       completeness,
       offer_paused: offersAgg.sales_status === "paused",
     }),
@@ -769,6 +997,14 @@ export async function buildSellerProductManagerRow(
     sku_hint: offersAgg.sku_display,
     shipping_profile_id: shippingProfileId,
     shipping_profile: shippingProfileSummary,
+    catalog_owner: product.current_owner_seller_id === sellerId,
+    list_activity_at: latestActivityIso([
+      ...(maps
+        ? identifierIds.map((id) => maps.activityByIdentifier.get(id) ?? null)
+        : []),
+      product.updated_at,
+      product.created_at,
+    ]),
   }
 
   return {
@@ -907,6 +1143,11 @@ export async function buildSellerProductManagerDetail(
     { order: { created_at: "DESC" } }
   )
 
+  const section_reviews = await listSectionReviewsForProduct(
+    productCloud,
+    productId
+  )
+
   return {
     ...row,
     working_version: working,
@@ -916,6 +1157,7 @@ export async function buildSellerProductManagerDetail(
     schema,
     variants: variantViews,
     field_changes: fieldChanges,
+    section_reviews,
   }
 }
 
@@ -985,13 +1227,11 @@ export function filterAndSortProductRows(
       return (a.offers.price ?? Number.POSITIVE_INFINITY) -
         (b.offers.price ?? Number.POSITIVE_INFINITY)
     }
-    // newest — id/time proxy: reverse id lexical is weak; keep input order (listProducts order)
-    return 0
+    const tb = Date.parse(String(b.list_activity_at || "")) || 0
+    const ta = Date.parse(String(a.list_activity_at || "")) || 0
+    if (tb !== ta) return tb - ta
+    return b.id.localeCompare(a.id)
   })
-
-  if (sort === "newest") {
-    out = out.reverse()
-  }
 
   return out
 }

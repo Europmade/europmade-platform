@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge, Button, Notice } from "@europmade/ui"
 import {
@@ -108,6 +109,7 @@ export function ProductDetailPage({
   locale?: StorefrontLocale
 }) {
   const { addLine } = useCart()
+  const router = useRouter()
   const [colorId, setColorId] = useState(detail.selectedColorId)
   const [sizeId, setSizeId] = useState(detail.selectedSizeId)
   const [offers, setOffers] = useState<PdpOffer[]>(detail.offers)
@@ -186,6 +188,14 @@ export function ProductDetailPage({
   function selectOffer(id: string) {
     if (!id.startsWith("offr_")) return
     setOffers((prev) => prev.map((o) => ({ ...o, selected: o.id === id })))
+  }
+
+  function openSellerPage(offer: PdpOffer) {
+    selectOffer(offer.id)
+    const href = offer.sellerSlug
+      ? `/partner/${offer.sellerSlug}`
+      : partnerHref(offer.retailer)
+    router.push(href)
   }
 
   const tabs: { id: TabId; label: string }[] = [
@@ -454,37 +464,42 @@ export function ProductDetailPage({
             </>
           ) : null}
 
-          {showBadges ? (
-            <>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                <Link
-                  href="/verified"
-                  className="inline-flex h-7 items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 text-[11px] font-bold leading-none text-white"
-                >
-                  ✓ {t("euVerified", locale)}™
-                </Link>
-                <span className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800">
-                  {t("madeInLabel", locale)} {detail.listing.countryLabel}
-                </span>
-                <Link
-                  href={`/merk/${brandSlug}#productie`}
-                  className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
-                >
-                  {t("producerLabel", locale)} {detail.manufacturer} ›
-                </Link>
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <Link href={`/merk/${brandSlug}`}>
-                  <Badge variant="outline">
-                    {t("brandLabel", locale)} {detail.listing.brand}
-                  </Badge>
-                </Link>
-              </div>
-            </>
-          ) : null}
           {detail.madeInEurope ? (
-            <div className="mt-3 max-w-md">
-              <MadeInEuropeScoreCard data={detail.madeInEurope} locale={locale} />
+            <div className="mt-2 max-w-md">
+              <MadeInEuropeScoreCard
+                data={detail.madeInEurope}
+                locale={locale}
+                countryLabel={detail.listing.countryLabel}
+                manufacturer={detail.manufacturer}
+                brandSlug={brandSlug}
+              />
+            </div>
+          ) : showBadges ? (
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <Link
+                href="/verified"
+                className="inline-flex h-7 items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 text-[11px] font-bold leading-none text-white"
+              >
+                ✓ {t("euVerified", locale)}™
+              </Link>
+              <span className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800">
+                {t("madeInLabel", locale)} {detail.listing.countryLabel}
+              </span>
+              <Link
+                href={`/merk/${brandSlug}#productie`}
+                className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
+              >
+                {t("producerLabel", locale)} {detail.manufacturer} ›
+              </Link>
+            </div>
+          ) : null}
+          {showBadges ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <Link href={`/merk/${brandSlug}`}>
+                <Badge variant="outline">
+                  {t("brandLabel", locale)} {detail.listing.brand}
+                </Badge>
+              </Link>
             </div>
           ) : null}
 
@@ -703,7 +718,7 @@ export function ProductDetailPage({
                     <span className="inline-flex items-center gap-2">
                       <span className="inline-block h-[18px] w-[18px] rounded-full bg-wf-300" />
                       <Link
-                        href={partnerHref(o.retailer)}
+                        href={o.sellerSlug ? `/partner/${o.sellerSlug}` : partnerHref(o.retailer)}
                         className="font-semibold underline-offset-2 hover:underline"
                       >
                         {o.retailer}
@@ -736,7 +751,7 @@ export function ProductDetailPage({
                       type="button"
                       variant="secondary"
                       size="sm"
-                      onClick={() => selectOffer(o.id)}
+                      onClick={() => openSellerPage(o)}
                     >
                       {t("showThisSeller", locale)}
                     </Button>
@@ -787,7 +802,7 @@ export function ProductDetailPage({
                   type="button"
                   variant="secondary"
                   className="mt-3 w-full"
-                  onClick={() => selectOffer(o.id)}
+                  onClick={() => openSellerPage(o)}
                 >
                   {t("showThisSeller", locale)}
                 </Button>
@@ -1236,7 +1251,11 @@ function BuyBox({
       <div className="mt-2.5 flex items-center gap-1.5 text-xs text-wf-700">
         <span className="inline-block h-[18px] w-[18px] rounded-full bg-wf-300" />
         <Link
-          href={partnerHref(selected.retailer)}
+          href={
+            selected.sellerSlug
+              ? `/partner/${selected.sellerSlug}`
+              : partnerHref(selected.retailer)
+          }
           className="font-semibold text-wf-800 underline-offset-2 hover:underline"
         >
           {selected.retailer}

@@ -7,6 +7,9 @@ import CmsProduct from "./cms-product"
 import AdCampaign from "./ad-campaign"
 import AdCampaignWeek from "./ad-campaign-week"
 import AdPricing from "./ad-pricing"
+import CommercialNavRank from "./commercial-nav-rank"
+import CommercialNavVisit from "./commercial-nav-visit"
+import CommercialNavIcon from "./commercial-nav-icon"
 
 export {
   CmsHomepage,
@@ -18,4 +21,7 @@ export {
   AdCampaign,
   AdCampaignWeek,
   AdPricing,
+  CommercialNavRank,
+  CommercialNavVisit,
+  CommercialNavIcon,
 }

@@ -3,11 +3,12 @@
  */
 
 import {
-  PRODUCT_CLOUD_ACTIVE_LANGUAGES,
+  getActiveProductCloudLanguages,
   normalizeLanguageCode,
   targetLanguagesForSource,
 } from "../languages"
 import {
+  translationReviewLabel,
   translationStatusUiLabel,
   worstTranslationStatus,
   type BackendTranslationStatus,
@@ -28,8 +29,10 @@ export type LanguageCoverage = {
   language_code: string
   translation_status: BackendTranslationStatus
   ui_status: TranslationUiStatusLabel
+  review_label: ReturnType<typeof translationReviewLabel>
   field_count: number
   has_manual: boolean
+  missing_fields: string[]
 }
 
 export function buildLanguageCoverage(input: {
@@ -43,7 +46,7 @@ export function buildLanguageCoverage(input: {
   const source = input.source_language_code
     ? normalizeLanguageCode(input.source_language_code)
     : null
-  const active = input.active_languages ?? PRODUCT_CLOUD_ACTIVE_LANGUAGES
+  const active = input.active_languages ?? getActiveProductCloudLanguages()
   const targets = source
     ? targetLanguagesForSource(source, active)
     : active.map((c) => normalizeLanguageCode(c)).filter(Boolean)
@@ -57,12 +60,20 @@ export function buildLanguageCoverage(input: {
       const status = rows.length
         ? worstTranslationStatus(rows.map((r) => r.translation_status))
         : ("Ontbreekt" as BackendTranslationStatus)
+      const required = ["title", "description"]
+      const missing_fields = required.filter((field) => {
+        const row = rows.find((r) => r.field_name === field)
+        return !row || !String(row.value || "").trim()
+      })
+      const origin = rows.find((r) => r.origin)?.origin ?? null
       return {
         language_code,
         translation_status: status,
         ui_status: translationStatusUiLabel(status),
+        review_label: translationReviewLabel(status, origin),
         field_count: rows.length,
         has_manual: rows.some((r) => r.origin === "manual"),
+        missing_fields,
       }
     }),
   }

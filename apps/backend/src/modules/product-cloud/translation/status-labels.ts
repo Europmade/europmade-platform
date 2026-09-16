@@ -43,6 +43,38 @@ export function translationStatusUiLabel(
   return "Ontbreekt"
 }
 
+/**
+ * Seller/admin review labels (tekst + kleur). Maps ADR-0039 status/origin
+ * without duplicating the database enum.
+ */
+export type TranslationReviewLabel =
+  | "AI-vertaald"
+  | "Handmatig aangepast"
+  | "Handmatig gecontroleerd"
+  | "Admincontrole nodig"
+  | "Goedgekeurd"
+  | "Ontbreekt"
+
+export function translationReviewLabel(
+  status: string | null | undefined,
+  origin?: string | null
+): TranslationReviewLabel {
+  const s = status || "Ontbreekt"
+  if (s === "Gepubliceerd") return "Goedgekeurd"
+  if (s === "Beoordeeld" && origin === "manual") return "Handmatig gecontroleerd"
+  if (origin === "manual") return "Handmatig aangepast"
+  if (s === "Machine" || s === "Concept") return "AI-vertaald"
+  if (
+    s === "Ontbreekt" ||
+    s === "Mislukt" ||
+    s === "Verouderd"
+  ) {
+    return "Admincontrole nodig"
+  }
+  if (s === "Beoordeeld") return "Admincontrole nodig"
+  return "Admincontrole nodig"
+}
+
 /** Lower = more attention needed. */
 const SEVERITY: Record<string, number> = {
   Mislukt: 0,

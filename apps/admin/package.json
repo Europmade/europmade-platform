@@ -12,17 +12,23 @@
     "clean": "rm -rf .next .turbo node_modules"
   },
   "dependencies": {
+    "@europmade/types": "workspace:*",
     "@europmade/ui": "workspace:*",
     "@europmade/utils": "workspace:*",
-    "@europmade/types": "workspace:*",
+    "@tiptap/extension-link": "2",
+    "@tiptap/extension-placeholder": "2",
+    "@tiptap/extension-underline": "2",
+    "@tiptap/pm": "2",
+    "@tiptap/react": "2",
+    "@tiptap/starter-kit": "2",
     "next": "^15.0.3",
     "next-auth": "5.0.0-beta.25",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@europmade/config": "workspace:*",
     "@eslint/js": "^9.14.0",
+    "@europmade/config": "workspace:*",
     "@next/eslint-plugin-next": "^15.0.3",
     "@types/node": "^22.9.0",
     "@types/react": "^19.0.0",

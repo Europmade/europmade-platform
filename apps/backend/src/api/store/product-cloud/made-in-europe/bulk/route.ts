@@ -5,6 +5,7 @@ import type {
 import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../resolve-seller"
+import { assertPermission } from "../../../../../modules/partner/permissions"
 import type { StoreBulkMadeInEuropeBodyInput } from "../../validators"
 import { upsertProductMadeInEurope } from "../../made-in-europe-helpers"
 
@@ -20,6 +21,7 @@ export async function POST(
     req.scope,
     req.auth_context.actor_id
   )
+  assertPermission(seller, "mie.manage")
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService

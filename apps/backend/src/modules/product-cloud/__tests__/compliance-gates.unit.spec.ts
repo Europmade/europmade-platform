@@ -6,13 +6,33 @@ import {
 import { computeProductCompleteness } from "../completeness"
 
 describe("compliance gates", () => {
-  it("never auto-approves on upload — pending stays pending", () => {
+  it("maps needs_info evidence to needs_info gate (aanvulling)", () => {
     const doc = summarizeEvidenceKind(
       [
         {
           evidence_kind: "made_in_europe",
+          verification_status: "needs_info",
+          verification_notes: "Toon productielocatie",
+        },
+      ],
+      "made_in_europe",
+      true,
+      "Made in Europe-bewijs"
+    )
+    expect(doc.status).toBe("needs_info")
+    expect(doc.rejection_reason).toContain("productielocatie")
+  })
+
+  it("reopens pending_review when new pending evidence arrives after needs_info", () => {
+    const doc = summarizeEvidenceKind(
+      [
+        {
+          evidence_kind: "made_in_europe",
+          verification_status: "needs_info",
+        },
+        {
+          evidence_kind: "made_in_europe",
           verification_status: "pending",
-          verification_result: "PASS",
         },
       ],
       "made_in_europe",
@@ -20,7 +40,6 @@ describe("compliance gates", () => {
       "Made in Europe-bewijs"
     )
     expect(doc.status).toBe("pending_review")
-    expect(doc.present).toBe(true)
   })
 
   it("allows multiple MiE evidence files and stays pending until one is approved", () => {
@@ -266,10 +285,16 @@ describe("compliance gates", () => {
     expect(ce?.required).toBe(true)
   })
 
-  it("lets one production document cover both Made in Europe and CE", () => {
+  it("lets one upload cover CE and Made in Europe when both kinds are registered", () => {
     const shared = [
       {
         evidence_kind: "made_in_europe" as const,
+        verification_status: "pending",
+        storage_reference: "https://example.com/label.jpg",
+        mime_type: "image/jpeg",
+      },
+      {
+        evidence_kind: "ce_marking" as const,
         verification_status: "pending",
         storage_reference: "https://example.com/label.jpg",
         mime_type: "image/jpeg",
@@ -287,6 +312,25 @@ describe("compliance gates", () => {
     expect(docs.find((d) => d.code === "doc.ce_marking")?.status).toBe(
       "pending_review"
     )
+  })
+
+  it("does not treat Made in Europe alone as CE evidence", () => {
+    const docs = buildDocumentInputs({
+      mieClaimed: true,
+      ceValue: "Zichtbaar",
+      collectsData: "Nee",
+      ceRequiredForCategory: true,
+      evidence: [
+        {
+          evidence_kind: "made_in_europe",
+          verification_status: "pending",
+          storage_reference: "https://example.com/label.jpg",
+          mime_type: "image/jpeg",
+        },
+      ],
+    })
+    expect(docs.find((d) => d.code === "doc.made_in_europe")?.present).toBe(true)
+    expect(docs.find((d) => d.code === "doc.ce_marking")?.present).toBe(false)
   })
 
   it("does not treat a Made in Europe photo as a data-usage document", () => {

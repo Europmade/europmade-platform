@@ -2,6 +2,7 @@
  * Admin CMS API client — Medusa /admin/cms/*
  */
 
+import { adminFetch } from "./admin-fetch"
 import { medusaBackendUrl } from "./medusa-backend-url"
 import { normalizeMediaMimeType, readImageDimensions } from "@europmade/utils"
 
@@ -15,16 +16,7 @@ export class CmsAdminApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${medusaBackendUrl()}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      ...(init.body instanceof FormData
-        ? {}
-        : { "Content-Type": "application/json" }),
-      ...init.headers,
-    },
-  })
+  const response = await adminFetch(path, init)
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
     const message =
@@ -317,4 +309,39 @@ export async function uploadCmsMedia(file: File, placement: string) {
       height: number | null
     }
   }>("/admin/cms/media", { method: "POST", body: form })
+}
+
+export type CommercialNavIconDto = {
+  key: string
+  slug: string
+  name: string
+  icon_url: string | null
+  storage_reference: string | null
+  has_icon: boolean
+}
+
+export function listCommercialNavIcons() {
+  return request<{ icons: CommercialNavIconDto[] }>(
+    "/admin/cms/commercial-nav/icons"
+  )
+}
+
+export function saveCommercialNavIcon(key: string, storageReference: string) {
+  return request<{
+    icon: {
+      key: string
+      storage_reference: string
+      icon_url: string | null
+    }
+  }>(`/admin/cms/commercial-nav/icons/${encodeURIComponent(key)}`, {
+    method: "PUT",
+    body: JSON.stringify({ storage_reference: storageReference }),
+  })
+}
+
+export function deleteCommercialNavIcon(key: string) {
+  return request<{ deleted: boolean; key: string }>(
+    `/admin/cms/commercial-nav/icons/${encodeURIComponent(key)}`,
+    { method: "DELETE" }
+  )
 }

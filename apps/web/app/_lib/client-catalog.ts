@@ -38,7 +38,7 @@ type CatalogOffer = {
   shipping_cost: number
 }
 
-async function catalogFetch<T>(path: string): Promise<T> {
+async function catalogFetch<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${medusaBackendUrl()}${path}`, {
     credentials: "omit",
     headers: {
@@ -47,9 +47,39 @@ async function catalogFetch<T>(path: string): Promise<T> {
         ? { "x-publishable-api-key": PUBLISHABLE_KEY }
         : {}),
     },
+    signal,
   })
   if (!response.ok) throw new Error("Catalog fetch failed")
   return response.json() as Promise<T>
+}
+
+export type StorefrontSearchSuggestion = {
+  id: string
+  title: string
+  brand: string
+  imageUrl: string | null
+}
+
+export async function suggestStorefrontSearch(
+  q: string,
+  opts?: { limit?: number; signal?: AbortSignal }
+): Promise<StorefrontSearchSuggestion[]> {
+  const query = q.trim()
+  if (query.length < 2) return []
+  const limit = Math.min(8, Math.max(1, opts?.limit ?? 6))
+  const qs = new URLSearchParams()
+  qs.set("q", query)
+  qs.set("limit", String(limit))
+  qs.set("region_code", "NL")
+  const response = await fetch(`/api/catalog/suggest?${qs}`, {
+    signal: opts?.signal,
+    credentials: "same-origin",
+  })
+  if (!response.ok) throw new Error("Catalog fetch failed")
+  const res = (await response.json()) as {
+    products?: StorefrontSearchSuggestion[]
+  }
+  return (res.products ?? []).slice(0, limit)
 }
 
 function toListing(item: CatalogListProduct): ListingProduct {
@@ -80,8 +110,11 @@ function toListing(item: CatalogListProduct): ListingProduct {
 
 export async function fetchStorefrontListings(limit = 12): Promise<ListingProduct[]> {
   try {
+    const qs = new URLSearchParams()
+    qs.set("limit", String(Math.min(48, Math.max(1, limit))))
+    qs.set("region_code", "NL")
     const res = await catalogFetch<{ products: CatalogListProduct[] }>(
-      "/store/catalog/products"
+      `/store/catalog/products?${qs}`
     )
     return res.products
       .filter((p) => p.offer_count > 0 && (p.from_price ?? 0) > 0)

@@ -12,7 +12,12 @@ import {
   IconTranslate,
   IconUsers,
 } from "../_components/commercial/commercial-icons"
+import { CmsPageView } from "../_components/cms/cms-page-view"
 import { PublicStorefrontChrome } from "../_components/marketplace/public-storefront-chrome"
+import {
+  loadFixedCmsPage,
+  metadataFromCmsPage,
+} from "../_lib/cms/fixed-cms-page"
 import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
 import { countryDisplayLabel, t } from "../_lib/i18n/messages"
 import {
@@ -22,7 +27,7 @@ import {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getStorefrontLocaleFromCookies()
-  return {
+  const fallback: Metadata = {
     title: `${t("whySellTitle", locale)} — EuropMade`,
     description: t("whySellMetaDesc", locale),
     alternates: { canonical: "/waarom-verkopen" },
@@ -33,6 +38,9 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
     },
   }
+  const cms = await loadFixedCmsPage({ path: "/waarom-verkopen", locale })
+  if (cms) return metadataFromCmsPage(cms, fallback)
+  return fallback
 }
 
 const MARKET_CODES = ["NL", "DE", "FR", "BE", "AT", "ES", "IT"] as const
@@ -65,9 +73,12 @@ const HOW_STEPS = [
 
 /**
  * B2B landingspagina — visueel + conversion naar registratie (Sprint 8/9 UX).
+ * CMS page slug "waarom-verkopen" overrides when published + live.
  */
 export default async function WhySellPage() {
   const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/waarom-verkopen", locale })
+  if (cms) return <CmsPageView page={cms} locale={locale} />
 
   const faqJsonLd = {
     "@context": "https://schema.org",
@@ -169,16 +180,21 @@ export default async function WhySellPage() {
             {t("whySellNoCostBody", locale)}
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-lg border border-wf-200 bg-white px-3 py-3 text-center">
-              <IconEuro className="mx-auto h-6 w-6 text-wf-800" />
-              <p className="mt-2 text-xl font-bold text-wf-950">€0</p>
-              <p className="text-[11px] font-semibold text-wf-600">
+            <div className="flex h-full flex-col items-center justify-start rounded-lg border border-wf-200 bg-white px-3 py-3 text-center">
+              <IconEuro className="h-6 w-6 shrink-0 text-wf-800" aria-hidden />
+              <p className="mt-2 text-xl font-bold leading-none tabular-nums text-wf-950">
+                €0
+              </p>
+              <p className="mt-2 text-[11px] font-semibold leading-snug text-wf-600">
                 {t("whySellNoCostZero", locale)}
               </p>
             </div>
-            <div className="rounded-lg border border-wf-200 bg-white px-3 py-3 text-center">
-              <p className="text-xl font-bold text-wf-950">10%</p>
-              <p className="text-[11px] font-semibold text-wf-600">
+            <div className="flex h-full flex-col items-center justify-start rounded-lg border border-wf-200 bg-white px-3 py-3 text-center">
+              <span className="block h-6 w-6 shrink-0" aria-hidden />
+              <p className="mt-2 text-xl font-bold leading-none tabular-nums text-wf-950">
+                10%
+              </p>
+              <p className="mt-2 text-[11px] font-semibold leading-snug text-wf-600">
                 {t("whySellNoCostCommission", locale)}
               </p>
             </div>

@@ -2,8 +2,7 @@
  * Admin Product Cloud translations API client.
  */
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { adminFetch } from "./admin-fetch"
 
 export class ProductCloudTranslationsApiError extends Error {
   status?: number
@@ -15,14 +14,7 @@ export class ProductCloudTranslationsApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-  })
+  const response = await adminFetch(path, init)
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
     const message =
@@ -41,8 +33,10 @@ export type LanguageCoverage = {
   language_code: string
   translation_status: string
   ui_status: string
+  review_label?: string
   field_count: number
   has_manual: boolean
+  missing_fields?: string[]
 }
 
 export type OverviewItem = {
@@ -230,4 +224,17 @@ export function uiStatusLabel(status: string | null | undefined): string {
     default:
       return status ? status : "Ontbreekt"
   }
+}
+
+/** Review label (tekst, niet alleen kleur) — zelfde mapping als Product Cloud. */
+export function reviewStatusLabel(
+  status: string | null | undefined,
+  origin?: string | null
+): string {
+  const s = status || "Ontbreekt"
+  if (s === "Gepubliceerd") return "Goedgekeurd"
+  if (s === "Beoordeeld" && origin === "manual") return "Handmatig gecontroleerd"
+  if (origin === "manual") return "Handmatig aangepast"
+  if (s === "Machine" || s === "Concept") return "AI-vertaald"
+  return "Admincontrole nodig"
 }

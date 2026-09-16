@@ -32,6 +32,7 @@ export function PartnerCard({
   backgroundKey = "light",
   viewLabel = "Bekijk merk",
   productsSuffix = "producten",
+  href,
 }: {
   slug: string
   name: string
@@ -44,6 +45,7 @@ export function PartnerCard({
   backgroundKey?: PartnerCardBackgroundKey
   viewLabel?: string
   productsSuffix?: string
+  href?: string | null
 }) {
   const profile = findPartnerProfile(slug)
   const resolvedCountry = country || profile?.productionCountry || "Europa"
@@ -129,12 +131,16 @@ export function PartnerCard({
             </span>
           ) : null}
         </p>
-        <Link
-          href={`/merk/${slug}`}
-          className="mt-2 inline-flex h-7 items-center justify-center rounded-lg border border-wf-300 bg-white px-2 text-[11.5px] font-semibold text-wf-800 transition group-hover:border-wf-900 group-hover:bg-wf-900 group-hover:text-white"
-        >
-          {viewLabel}
-        </Link>
+        {href ? (
+          <Link
+            href={href}
+            className="mt-2 inline-flex h-7 items-center justify-center rounded-lg border border-wf-300 bg-white px-2 text-[11.5px] font-semibold text-wf-800 transition group-hover:border-wf-900 group-hover:bg-wf-900 group-hover:text-white"
+          >
+            {viewLabel}
+          </Link>
+        ) : (
+          <p className="mt-2 text-[11px] text-wf-500">{name}</p>
+        )}
       </div>
     </article>
   )
@@ -159,7 +165,7 @@ export function HomepageProducerGrid({
   viewLabel?: string
   productsSuffix?: string
 }) {
-  const list = partners ?? []
+  const list = (partners ?? []).filter((row) => Boolean(row.slug?.trim()))
   if (list.length === 0) {
     return (
       <p className="text-[13px] text-wf-500">Geen merken ingesteld</p>
@@ -182,6 +188,7 @@ export function HomepageProducerGrid({
             backgroundKey={r.backgroundKey}
             viewLabel={viewLabel}
             productsSuffix={productsSuffix}
+            href={`/merk/${r.slug}`}
           />
         </li>
       ))}

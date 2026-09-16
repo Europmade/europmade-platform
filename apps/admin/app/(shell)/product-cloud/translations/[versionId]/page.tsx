@@ -11,6 +11,7 @@ import {
   ProductCloudTranslationsApiError,
   retranslate,
   saveManualTranslation,
+  reviewStatusLabel,
   uiStatusLabel,
   type TranslationRow,
 } from "../../../../../lib/product-cloud-translations-api"
@@ -323,7 +324,8 @@ export default function ProductCloudTranslationDetailPage() {
                   <td className="py-2 pr-2 uppercase">{row.language_code}</td>
                   <td className="py-2 pr-2">
                     <Badge variant="outline">
-                      {uiStatusLabel(row.translation_status)}
+                      {reviewStatusLabel(row.translation_status, row.origin)}{" "}
+                      · {uiStatusLabel(row.translation_status)}
                     </Badge>
                   </td>
                   <td className="py-2 pr-2">{row.origin ?? "—"}</td>

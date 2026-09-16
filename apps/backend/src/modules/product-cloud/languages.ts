@@ -5,6 +5,15 @@
 
 /** Talen waarvoor Product Cloud-vertalingen in MVP actief worden beheerd. */
 export const PRODUCT_CLOUD_ACTIVE_LANGUAGES = ["nl", "en", "fr", "de"] as const
+/**
+ * Verplichte doeltalen voor publish-completeness.
+ * Standaard blijft huidige flow: NL bron -> EN/FR/DE.
+ */
+export const PRODUCT_CLOUD_REQUIRED_TARGET_LANGUAGES = [
+  "en",
+  "fr",
+  "de",
+] as const
 
 export type ProductCloudActiveLanguage =
   (typeof PRODUCT_CLOUD_ACTIVE_LANGUAGES)[number]
@@ -56,18 +65,119 @@ export function isActiveProductCloudLanguage(
   code: string
 ): code is ProductCloudActiveLanguage {
   const n = normalizeLanguageCode(code)
-  return (PRODUCT_CLOUD_ACTIVE_LANGUAGES as readonly string[]).includes(n)
+  return getActiveProductCloudLanguages().includes(n)
+}
+
+function parseLanguageList(
+  raw: string | undefined,
+  fallback: readonly string[]
+): string[] {
+  if (!raw?.trim()) return [...fallback]
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const chunk of raw.split(",")) {
+    const code = normalizeLanguageCode(chunk)
+    if (!code || seen.has(code) || !isKnownProductCloudLanguage(code)) continue
+    seen.add(code)
+    out.push(code)
+  }
+  return out.length > 0 ? out : [...fallback]
+}
+
+/** Actieve talen (uit env of fallback) op één centrale plek. */
+export function getActiveProductCloudLanguages(
+  env: NodeJS.ProcessEnv = process.env
+): string[] {
+  return parseLanguageList(
+    env.PRODUCT_CLOUD_ACTIVE_LANGUAGES,
+    PRODUCT_CLOUD_ACTIVE_LANGUAGES
+  )
+}
+
+/** Nederlandse weergavenamen — centrale config, niet per scherm hardcoden. */
+export const PRODUCT_CLOUD_LANGUAGE_NAMES_NL: Record<string, string> = {
+  nl: "Nederlands",
+  en: "Engels",
+  fr: "Frans",
+  de: "Duits",
+  es: "Spaans",
+  it: "Italiaans",
+  pt: "Portugees",
+  pl: "Pools",
+  cs: "Tsjechisch",
+  sk: "Slowaaks",
+  hu: "Hongaars",
+  ro: "Roemeens",
+  bg: "Bulgaars",
+  hr: "Kroatisch",
+  sl: "Sloveens",
+  el: "Grieks",
+  da: "Deens",
+  sv: "Zweeds",
+  fi: "Fins",
+  et: "Ests",
+  lv: "Lets",
+  lt: "Litouws",
+  ga: "Iers",
+  mt: "Maltees",
+}
+
+export function productCloudLanguageNameNl(code: string): string {
+  const n = normalizeLanguageCode(code)
+  return PRODUCT_CLOUD_LANGUAGE_NAMES_NL[n] || n.toUpperCase()
+}
+
+export function listActiveProductCloudLanguageOptions(
+  env: NodeJS.ProcessEnv = process.env
+): Array<{ code: string; name: string }> {
+  return getActiveProductCloudLanguages(env).map((code) => ({
+    code,
+    name: productCloudLanguageNameNl(code),
+  }))
+}
+
+/**
+ * Verplichte doeltalen voor de translation-gate.
+ * Filtert automatisch op actieve talen.
+ */
+export function getRequiredProductCloudTargetLanguages(
+  env: NodeJS.ProcessEnv = process.env,
+  active = getActiveProductCloudLanguages(env)
+): string[] {
+  const configured = parseLanguageList(
+    env.PRODUCT_CLOUD_REQUIRED_TARGET_LANGUAGES,
+    PRODUCT_CLOUD_REQUIRED_TARGET_LANGUAGES
+  )
+  const activeSet = new Set(active.map((code) => normalizeLanguageCode(code)))
+  const filtered = configured.filter((code) => activeSet.has(code))
+  return filtered.length > 0 ? filtered : [...active]
 }
 
 /** Alle actieve talen behalve de brontaal (generiek source → targets). */
 export function targetLanguagesForSource(
   sourceLanguage: string,
-  active: readonly string[] = PRODUCT_CLOUD_ACTIVE_LANGUAGES
+  active: readonly string[] = getActiveProductCloudLanguages()
 ): string[] {
   const source = normalizeLanguageCode(sourceLanguage)
   return active
     .map((c) => normalizeLanguageCode(c))
     .filter((c) => c && c !== source)
+}
+
+/**
+ * Verplichte publish-doeltalen behalve brontaal.
+ * Gebruikt centrale required-config; fallback = alle actieve talen behalve bron.
+ */
+export function requiredTargetLanguagesForSource(
+  sourceLanguage: string,
+  env: NodeJS.ProcessEnv = process.env
+): string[] {
+  const source = normalizeLanguageCode(sourceLanguage)
+  const active = getActiveProductCloudLanguages(env)
+  const required = getRequiredProductCloudTargetLanguages(env, active)
+  const targets = required.filter((c) => c !== source)
+  if (targets.length > 0) return targets
+  return targetLanguagesForSource(source, active)
 }
 
 /**

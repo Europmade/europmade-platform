@@ -92,6 +92,18 @@ describe("media validation — primary vs gallery", () => {
     })
     expect(result.ok).toBe(true)
   })
+
+  it("allows action banner that would fail cms_banner 4:1 floor", () => {
+    const result = validateMedia({
+      placement: "cms_action_banner",
+      mimeType: "image/jpeg",
+      sizeBytes: 400_000,
+      width: 1000,
+      height: 400,
+      hasAlpha: false,
+    })
+    expect(result.ok).toBe(true)
+  })
 })
 
 describe("PNG alpha detection", () => {
@@ -178,5 +190,61 @@ describe("media requirements", () => {
     expect(getMediaRequirements("product_other").mimeTypes).toContain(
       "image/avif"
     )
+  })
+
+  it("rejects JPEG and SVG for commercial nav icons", () => {
+    expect(
+      validateMedia({
+        placement: "commercial_nav_icon",
+        mimeType: "image/jpeg",
+        sizeBytes: 20_000,
+        width: 128,
+        height: 128,
+        fileName: "icon.jpg",
+      }).ok
+    ).toBe(false)
+    expect(
+      validateMedia({
+        placement: "commercial_nav_icon",
+        mimeType: "image/svg+xml",
+        sizeBytes: 2_000,
+        fileName: "icon.svg",
+      }).ok
+    ).toBe(false)
+  })
+
+  it("rejects oversized commercial nav icons and allows contained non-square", () => {
+    const tooHeavy = validateMedia({
+      placement: "commercial_nav_icon",
+      mimeType: "image/png",
+      sizeBytes: 501 * 1024,
+      width: 128,
+      height: 128,
+      fileName: "icon.png",
+    })
+    expect(tooHeavy.ok).toBe(false)
+    if (!tooHeavy.ok) expect(tooHeavy.message).toContain("500 KB")
+
+    expect(
+      validateMedia({
+        placement: "commercial_nav_icon",
+        mimeType: "image/png",
+        sizeBytes: 20_000,
+        width: 300,
+        height: 300,
+        fileName: "icon.png",
+      }).ok
+    ).toBe(false)
+
+    expect(
+      validateMedia({
+        placement: "commercial_nav_icon",
+        mimeType: "image/webp",
+        sizeBytes: 40_000,
+        width: 128,
+        height: 96,
+        fileName: "icon.webp",
+      }).ok
+    ).toBe(true)
   })
 })

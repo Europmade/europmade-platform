@@ -102,10 +102,10 @@ export type HomepageSectionCms = CmsPublishMeta & {
 export type HomepageCategoryCms = CmsPublishMeta & {
   id: string
   slug: string
+  categoryId?: string | null
   title: LocalizedString
   subtitle?: LocalizedString
   image?: string | null
-  productCountHint: number
 }
 
 export type HomepageWhyItemCms = CmsPublishMeta & {
@@ -358,7 +358,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Fournitures scolaires, sacs et électronique européens — prêts pour la rentrée."
       ),
       ctaLabel: L("Shop nu", "Shop now", "Jetzt shoppen", "Acheter"),
-      href: "/zoeken?q=school&collectie=back-to-school",
+      href: "/acties/back-to-school",
       image: null,
       imageAlt: L(
         "Back to School campagne",
@@ -381,7 +381,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Jardin, outdoor et cuisine d’origine européenne — offres limitées."
       ),
       ctaLabel: L("Shop nu", "Shop now", "Jetzt shoppen", "Acheter"),
-      href: "/zoeken?q=zomer&collectie=zomerdeals",
+      href: "/acties/zomerdeals",
       image: null,
       imageAlt: L("Zomerdeals campagne", "Summer deals campaign", "Sommer-Kampagne", "Campagne été"),
       accentHue: 42,
@@ -399,7 +399,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Les meilleures offres totales de fabricants européens — jamais de Buy Box sponsorisée."
       ),
       ctaLabel: L("Shop nu", "Shop now", "Jetzt shoppen", "Acheter"),
-      href: "/zoeken?collectie=black-friday",
+      href: "/acties/black-friday",
       image: null,
       imageAlt: L("Black Friday campagne", "Black Friday campaign", "Black-Friday-Kampagne", "Campagne Black Friday"),
       accentHue: 0,
@@ -417,7 +417,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Offres week-end sélectionnées de producteurs et détaillants officiels."
       ),
       ctaLabel: L("Shop nu", "Shop now", "Jetzt shoppen", "Acheter"),
-      href: "/zoeken?collectie=weekend-deals",
+      href: "/acties/weekend-deals",
       image: null,
       imageAlt: L("Weekend Deals campagne", "Weekend Deals campaign", "Wochenend-Kampagne", "Campagne week-end"),
       accentHue: 160,
@@ -435,7 +435,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Cadeaux durables avec origine Verified™ — pour tous les budgets et âges."
       ),
       ctaLabel: L("Shop nu", "Shop now", "Jetzt shoppen", "Acheter"),
-      href: "/zoeken?q=cadeau&collectie=kerstcadeaus",
+      href: "/acties/kerstcadeaus",
       image: null,
       imageAlt: L("Kerstcadeaus campagne", "Holiday gifts campaign", "Weihnachts-Kampagne", "Campagne Noël"),
       accentHue: 350,
@@ -458,7 +458,7 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
         "Découvrez des producteurs et marques récemment rejoints partout en Europe."
       ),
       ctaLabel: L("Shop nu", "Shop now", "Jetzt shoppen", "Acheter"),
-      href: "/zoeken?collectie=nieuwe-merken",
+      href: "/acties/nieuwe-merken",
       image: null,
       imageAlt: L(
         "Nieuwe Europese merken campagne",
@@ -679,7 +679,6 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
       title: L("Tuin", "Garden", "Garten", "Jardin"),
       subtitle: L("", "", "", ""),
       image: null,
-      productCountHint: 128,
     },
     {
       id: "cat_elektronica",
@@ -688,7 +687,6 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
       sortOrder: 20,
       title: L("Elektronica", "Electronics", "Elektronik", "Électronique"),
       image: null,
-      productCountHint: 96,
     },
     {
       id: "cat_mode",
@@ -697,7 +695,6 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
       sortOrder: 30,
       title: L("Mode", "Fashion", "Mode", "Mode"),
       image: null,
-      productCountHint: 84,
     },
     {
       id: "cat_wonen",
@@ -706,7 +703,6 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
       sortOrder: 40,
       title: L("Wonen", "Home", "Wohnen", "Maison"),
       image: null,
-      productCountHint: 112,
     },
     {
       id: "cat_sport",
@@ -715,7 +711,6 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
       sortOrder: 50,
       title: L("Sport", "Sports", "Sport", "Sport"),
       image: null,
-      productCountHint: 64,
     },
     {
       id: "cat_voeding",
@@ -724,7 +719,6 @@ export const HOMEPAGE_CMS_MOCK: HomepageCmsDocument = {
       sortOrder: 60,
       title: L("Voeding", "Food", "Lebensmittel", "Alimentation"),
       image: null,
-      productCountHint: 72,
     },
   ],
 

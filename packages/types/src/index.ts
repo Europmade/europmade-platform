@@ -5,8 +5,17 @@
  * gescheiden — Offer verwijst nooit naar product_id.
  */
 
-/** Ondersteunde landen bij MVP-lancering (Blueprint H14.10). */
-export type SupportedCountry = "NL" | "BE" | "DE" | "FR" | "ES" | "IT"
+export {
+  EU_MARKET_CODES,
+  isEuMarketCode,
+  normalizeMarketCode,
+  isVisibleInMarket,
+  type EuMarketCode,
+  type MarketCode,
+  type MarketScope,
+  type MarketTargeting,
+  type SupportedCountry,
+} from "./markets"
 
 export type {
   MediaTransparencyPolicy,

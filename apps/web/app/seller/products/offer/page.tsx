@@ -157,6 +157,7 @@ function SellerProductOfferInner() {
   const [basePrice, setBasePrice] = useState("")
   const [shipping, setShipping] = useState("")
   const [quantity, setQuantity] = useState("")
+  const [sellerSku, setSellerSku] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
@@ -187,6 +188,7 @@ function SellerProductOfferInner() {
         if (hit?.inventory) {
           setQuantity(String(hit.inventory.quantity_available))
         }
+        setSellerSku(hit?.offer.seller_sku || "")
         if (hit?.offer.id) {
           const detail = await getOffer(hit.offer.id)
           if (!cancelled) setBuyBox(detail.buy_box)
@@ -252,22 +254,15 @@ function SellerProductOfferInner() {
         shipping_cost: ship,
         quantity_available: qty,
         vat_rate: 0.21,
+        seller_sku: sellerSku.trim() || null,
       })
       setSavedMessage(
         result.created
           ? t("sellerOfferCreated", locale)
           : t("sellerOfferUpdated", locale)
       )
-      const refreshed = await listOffers({
-        identifier_id: identifierId,
-        region_code: regionCode,
-      })
-      const hit = refreshed.offers[0] ?? null
-      setExisting(hit)
-      if (hit?.offer.id) {
-        const detail = await getOffer(hit.offer.id)
-        setBuyBox(detail.buy_box)
-      }
+      router.push("/seller/products")
+      return
     } catch (err: unknown) {
       setError(
         err instanceof CommerceCloudApiError
@@ -306,18 +301,6 @@ function SellerProductOfferInner() {
         <p className="text-sm text-wf-600">{t("commonLoading", locale)}</p>
       ) : (
         <>
-          <div className="mb-4 flex flex-wrap gap-2 text-[11px] text-wf-500">
-            <span className="rounded-wf border border-wf-400 bg-wf-100 px-2.5 py-1 font-semibold text-wf-800">
-              {t("sellerOfferCommercial", locale)}
-            </span>
-            <span className="rounded-wf border border-transparent px-2.5 py-1">
-              {t("commonStock", locale)}
-            </span>
-            <span className="rounded-wf border border-transparent px-2.5 py-1">
-              {t("sellerOrderShipping", locale)}
-            </span>
-          </div>
-
           <div className="grid gap-5 desktop:grid-cols-[1.7fr_1fr]">
             <div>
               <div className="mb-4 rounded-lg border border-wf-200 p-5">
@@ -364,6 +347,16 @@ function SellerProductOfferInner() {
                     placeholder="42"
                   />
                 </div>
+                <div className="mb-3.5">
+                  <label className="mb-1.5 block text-xs font-semibold text-wf-700">
+                    {t("sellerOfferSkuLabel", locale)}
+                  </label>
+                  <Input
+                    value={sellerSku}
+                    onChange={(e) => setSellerSku(e.target.value)}
+                    placeholder="ART-123"
+                  />
+                </div>
               </div>
             </div>
 
@@ -396,7 +389,11 @@ function SellerProductOfferInner() {
               disabled={busy || !identifierId}
               onClick={() => void onSave()}
             >
-              {busy ? t("commonSaving", locale) : t("commonSave", locale)}
+              {busy
+                ? t("commonSaving", locale)
+                : existing && existing !== "loading" && existing
+                  ? t("commonSave", locale)
+                  : t("sellerProductCreateOffer", locale)}
             </Button>
           </div>
         </>

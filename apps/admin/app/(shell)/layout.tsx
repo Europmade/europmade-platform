@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminShell } from "../../components/admin-shell";
-import { listPartners } from "../../lib/partner-admin-api";
+import { getSession, MedusaAdminAuthError } from "../../lib/medusa-admin-auth";
 
 export default function ShellLayout({
   children,
@@ -15,27 +15,36 @@ export default function ShellLayout({
 
   useEffect(() => {
     let cancelled = false;
-    listPartners({ tab: "all", limit: 1 })
-      .then(() => {
-        if (!cancelled) setReady(true);
+    getSession()
+      .then((session) => {
+        if (cancelled) return;
+        if (!session.user?.id) {
+          router.replace("/login");
+          return;
+        }
+        setReady(true);
       })
-      .catch(() => {
-        if (!cancelled) router.replace("/login");
+      .catch((err) => {
+        if (cancelled) return;
+        if (err instanceof MedusaAdminAuthError && err.status === 401) {
+          router.replace("/login");
+          return;
+        }
+        router.replace("/login");
       });
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  // Always mount AdminShell + children so the App Router page slot stays alive.
-  return (
-    <>
-      <AdminShell>{children}</AdminShell>
-      {!ready ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-wf-100/80 text-sm text-wf-600">
-          Laden…
-        </div>
-      ) : null}
-    </>
-  );
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-wf-100 text-sm text-wf-600">
+        Laden…
+      </div>
+    );
+  }
+
+  // Mount shell + children only after a valid Medusa user session/token.
+  return <AdminShell>{children}</AdminShell>;
 }

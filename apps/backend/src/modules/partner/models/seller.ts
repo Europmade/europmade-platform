@@ -31,6 +31,8 @@ const Seller = model
       .nullable(),
     is_retailer: model.boolean(),
     is_producer_or_brand_owner: model.boolean(),
+    is_brand_owner: model.boolean().default(false),
+    is_producer: model.boolean().default(false),
     is_distributor: model.boolean(),
     // Letterlijke statuswaarden uit de Blueprint (Deel A.3) — geen eigen
     // slug-/codeschema verzonnen, de Blueprint zelf noemt geen andere tokens.

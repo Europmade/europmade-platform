@@ -12,8 +12,10 @@ import {
   withdrawOfferWorkflow,
 } from "../../../../../workflows/commerce-cloud"
 import { resolveApprovedSeller } from "../../../product-cloud/resolve-seller"
+import { assertPermission } from "../../../../../modules/partner/permissions"
 import { buildProductCloudPreview } from "../../../product-cloud/product-preview"
 import { loadBuyBoxForIdentifier } from "../../buy-box-helpers"
+import { buildEffectivePriceView } from "../../../../../modules/commerce-cloud/offer-pricing"
 import type { StorePatchOfferBodyInput } from "../../validators"
 
 type RouteParams = { id: string }
@@ -88,14 +90,31 @@ export async function GET(
     offer.region_code
   )
 
+  const view =
+    price != null
+      ? buildEffectivePriceView({
+          base_price: Number(price.base_price),
+          shipping_cost: Number(price.shipping_cost),
+          extra_delivery_cost:
+            price.extra_delivery_cost != null
+              ? Number(price.extra_delivery_cost)
+              : null,
+          promo_price:
+            price.promo_price != null ? Number(price.promo_price) : null,
+          promo_starts_at: price.promo_starts_at ?? null,
+          promo_ends_at: price.promo_ends_at ?? null,
+        })
+      : null
+
   res.json({
     offer,
     inventory: inventory ?? null,
     price: price ?? null,
-    total_price:
-      price != null
-        ? Number(price.base_price) + Number(price.shipping_cost)
-        : null,
+    total_price: view?.total_customer_price ?? null,
+    is_sellable:
+      (offer.sales_status ?? "active") === "active" &&
+      inventory != null &&
+      Number(inventory.quantity_available) > 0,
     product_preview,
     buy_box: mapOwnBuyBox(buy_box, offer.id),
   })
@@ -110,6 +129,7 @@ export async function PATCH(
     req.scope,
     req.auth_context.actor_id
   )
+  assertPermission(seller, "offers.manage")
   const { id } = req.params as RouteParams
   const body = req.validatedBody
 
@@ -121,6 +141,16 @@ export async function PATCH(
       base_price: body.base_price,
       shipping_cost: body.shipping_cost,
       vat_rate: body.vat_rate,
+      seller_sku: body.seller_sku,
+      sales_status: body.sales_status,
+      delivery_days_max: body.delivery_days_max,
+      extra_delivery_cost: body.extra_delivery_cost,
+      regular_customer_price: body.regular_customer_price,
+      promo_price: body.promo_price,
+      promo_starts_at: body.promo_starts_at,
+      promo_ends_at: body.promo_ends_at,
+      clear_promo: body.clear_promo,
+      actor_customer_id: req.auth_context.actor_id,
     },
   })
 
@@ -142,6 +172,7 @@ export async function DELETE(
     req.scope,
     req.auth_context.actor_id
   )
+  assertPermission(seller, "offers.manage")
   const { id } = req.params as RouteParams
 
   const { result } = await withdrawOfferWorkflow(req.scope).run({

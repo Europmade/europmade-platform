@@ -1,5 +1,4 @@
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
+import { adminFetch } from "./admin-fetch"
 
 export class ProductApprovalAdminApiError extends Error {
   status?: number
@@ -11,14 +10,7 @@ export class ProductApprovalAdminApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
-    ...init,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-  })
+  const response = await adminFetch(path, init)
   const body: unknown = await response.json().catch(() => undefined)
   if (!response.ok) {
     const message =
@@ -31,6 +23,33 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ProductApprovalAdminApiError(message, response.status)
   }
   return body as T
+}
+
+export type SectionReviewStatus =
+  | "unreviewed"
+  | "ok"
+  | "needs_info"
+  | "rejected"
+
+export type SectionReviewKey =
+  | "product_info"
+  | "seller"
+  | "media"
+  | "made_in_europe"
+  | "ce_compliance"
+  | "content"
+  | "claims"
+  | "other"
+
+export type SectionReviewRow = {
+  id: string | null
+  section_key: SectionReviewKey
+  label_nl: string
+  status: SectionReviewStatus
+  comment: string | null
+  decided_by: string | null
+  decided_at: string | null
+  product_version_id: string | null
 }
 
 export type ApprovalProductRow = {
@@ -59,12 +78,17 @@ export type ApprovalProductRow = {
   publication_status?: string | null
   lifecycle_status?: string | null
   workflow_status?: string | null
+  admin_review_outcome?: string | null
   offers?: { offer_count?: number; sales_status?: string | null }
   requested_at?: string | null
   made_in_europe_status?: string | null
   description?: string | null
   created_at?: string | null
   updated_at?: string | null
+  action_needed?: string[]
+  action_needed_label?: string
+  queue_status_label?: string
+  section_reviews?: SectionReviewRow[]
   media?: Array<{
     id?: string
     media_type?: string
@@ -77,6 +101,8 @@ export type ApprovalProductRow = {
     field_code?: string
     new_value?: string
     status?: string
+    reason?: string | null
+    created_at?: string
   }>
   variant_count?: number
   regular_customer_price?: number | null
@@ -105,6 +131,14 @@ export type AdminProductDetail = {
   seller_onboarding_status: string | null
   seller_verification_status: string | null
   seller_made_in_europe_status: string | null
+  section_reviews: SectionReviewRow[]
+  review_summary: {
+    needs_info_count: number
+    rejected_count: number
+    ok_count: number
+    unreviewed_count: number
+    all_mandatory_ok: boolean
+  }
   approval_actions: {
     approve: boolean
     reject: boolean
@@ -117,7 +151,7 @@ export type AdminProductDetail = {
 /** Backend-supported publication_status values (product_version). */
 export const PUBLICATION_STATUS_FILTERS = [
   { key: "", label: "Alle publicatiestatussen" },
-  { key: "In review", label: "In review" },
+  { key: "In review", label: "In beoordeling" },
   { key: "Concept", label: "Concept" },
   { key: "Gepubliceerd", label: "Gepubliceerd" },
   { key: "Goedgekeurd", label: "Goedgekeurd" },
@@ -128,7 +162,7 @@ export const PUBLICATION_STATUS_FILTERS = [
 /** Backend-supported lifecycle_status values (pc_product). */
 export const LIFECYCLE_STATUS_FILTERS = [
   { key: "", label: "Alle lifecycle-statussen" },
-  { key: "Retailer Created", label: "Retailer Created" },
+  { key: "Retailer Created", label: "Retailer aangemaakt" },
   { key: "Concept gecontroleerd", label: "Concept gecontroleerd" },
   { key: "Actief", label: "Actief" },
   { key: "Verified™", label: "Verified™" },
@@ -166,12 +200,37 @@ export function getAdminProduct(id: string) {
   return request<AdminProductDetail>(`/admin/product-cloud/products/${id}`)
 }
 
+export function saveSectionReview(
+  productId: string,
+  body: {
+    section_key: SectionReviewKey
+    status: SectionReviewStatus
+    comment?: string | null
+  }
+) {
+  return request<{
+    section_review: SectionReviewRow
+    section_reviews: SectionReviewRow[]
+  }>(`/admin/product-cloud/products/${productId}/section-reviews`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  })
+}
+
 export function decideProductApproval(
   productId: string,
-  body: { decision: "approved" | "rejected"; reason?: string }
+  body: {
+    decision: "approved" | "rejected" | "request_info"
+    reason?: string
+  }
 ) {
-  return request<{ decision: string; version: unknown; lifecycle_status?: string }>(
-    `/admin/product-cloud/products/${productId}/approval`,
-    { method: "POST", body: JSON.stringify(body) }
-  )
+  return request<{
+    decision: string
+    version: unknown
+    lifecycle_status?: string
+    section_reviews?: SectionReviewRow[]
+  }>(`/admin/product-cloud/products/${productId}/approval`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
 }

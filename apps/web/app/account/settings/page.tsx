@@ -7,9 +7,8 @@ import { BuyerGate } from "../_components/buyer-gate"
 import { endSession } from "../../(auth)/_lib/medusa-auth"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
 import { t } from "../../_lib/i18n/messages"
+import { medusaBackendUrl } from "../../_lib/medusa-backend-url"
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 type CustomerMe = {
@@ -29,7 +28,7 @@ export default function AccountSettingsPage() {
 
   useEffect(() => {
     let cancelled = false
-    fetch(`${BACKEND_URL}/store/customers/me`, {
+    fetch(`${medusaBackendUrl()}/store/customers/me`, {
       credentials: "include",
       headers: {
         ...(PUBLISHABLE_KEY

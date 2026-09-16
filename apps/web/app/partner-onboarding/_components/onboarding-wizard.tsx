@@ -38,7 +38,7 @@ import type { StorefrontLocale } from "../../_lib/i18n/locales";
  * businesslogica, uitsluitend formulierstatus en API-aanroepen.
  */
 
-type RoleKey = "is_retailer" | "is_producer_or_brand_owner" | "is_distributor";
+type RoleKey = "is_retailer" | "is_brand_owner" | "is_producer" | "is_distributor";
 
 const ROLE_OPTION_KEYS: {
   key: RoleKey;
@@ -51,9 +51,14 @@ const ROLE_OPTION_KEYS: {
     descriptionKey: "partnerRoleRetailerDesc",
   },
   {
-    key: "is_producer_or_brand_owner",
-    titleKey: "partnerRoleProducer",
-    descriptionKey: "partnerRoleProducerDesc",
+    key: "is_brand_owner",
+    titleKey: "partnerRoleBrandOwner",
+    descriptionKey: "partnerRoleBrandOwnerDesc",
+  },
+  {
+    key: "is_producer",
+    titleKey: "partnerRoleProducerOnly",
+    descriptionKey: "partnerRoleProducerOnlyDesc",
   },
   {
     key: "is_distributor",
@@ -152,7 +157,8 @@ export function OnboardingWizard() {
 
   const [roles, setRoles] = useState<Record<RoleKey, boolean>>({
     is_retailer: false,
-    is_producer_or_brand_owner: false,
+    is_brand_owner: false,
+    is_producer: false,
     is_distributor: false,
   });
   const [company, setCompany] = useState<CompanyFormState>(EMPTY_COMPANY);
@@ -200,7 +206,10 @@ export function OnboardingWizard() {
         setOnboarding(existing);
         setRoles({
           is_retailer: existing.is_retailer,
-          is_producer_or_brand_owner: existing.is_producer_or_brand_owner,
+          is_brand_owner:
+            existing.is_brand_owner ?? existing.is_producer_or_brand_owner,
+          is_producer:
+            existing.is_producer ?? existing.is_producer_or_brand_owner,
           is_distributor: existing.is_distributor,
         });
         // `company` bestaat pas nadat de Bedrijfsgegevens-stap is opgeslagen
@@ -233,8 +242,23 @@ export function OnboardingWizard() {
     setRoles((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
-  const anyRoleSelected = roles.is_retailer || roles.is_producer_or_brand_owner || roles.is_distributor;
-  const needsProductionVerification = roles.is_producer_or_brand_owner || roles.is_distributor;
+  const anyRoleSelected =
+    roles.is_retailer ||
+    roles.is_brand_owner ||
+    roles.is_producer ||
+    roles.is_distributor;
+  const needsProductionVerification =
+    roles.is_brand_owner || roles.is_producer || roles.is_distributor;
+
+  function rolesPayload() {
+    return {
+      is_retailer: roles.is_retailer,
+      is_brand_owner: roles.is_brand_owner,
+      is_producer: roles.is_producer,
+      is_producer_or_brand_owner: roles.is_brand_owner || roles.is_producer,
+      is_distributor: roles.is_distributor,
+    };
+  }
 
   function handleStartAanmelding() {
     // De S3-02-02-API vereist minstens één geselecteerde rol bij het aanmaken
@@ -270,14 +294,14 @@ export function OnboardingWizard() {
     setIsBusy(true);
     try {
       if (onboarding) {
-        const { onboarding: updated } = await updateOnboardingDraft({ ...roles });
+        const { onboarding: updated } = await updateOnboardingDraft(rolesPayload());
         setOnboarding(updated);
       } else {
         // Server-side e-mailverificatie-gate (spec §1.8) — afgedwongen door de
         // bestaande S3-02-02-API zelf, hier uitsluitend afgevangen. Slaat
         // uitsluitend de rolkeuze op; er wordt hier geen company aangemaakt
         // (die ontstaat pas bij handleCompanyNext hieronder).
-        const { onboarding: created } = await startOnboarding(roles);
+        const { onboarding: created } = await startOnboarding(rolesPayload());
         setOnboarding(created);
       }
       goToStep(1);
@@ -323,7 +347,7 @@ export function OnboardingWizard() {
   const requiredDocumentsPresent =
     documents.identity_document &&
     documents.chamber_of_commerce_extract &&
-    (!roles.is_producer_or_brand_owner || documents.production_proof) &&
+    (!roles.is_brand_owner && !roles.is_producer || documents.production_proof) &&
     (!roles.is_distributor || documents.authorization_proof);
 
   async function handleDocumentsNext() {
@@ -699,7 +723,7 @@ export function OnboardingWizard() {
                 setDocuments((d) => ({ ...d, chamber_of_commerce_extract: file }))
               }
             />
-            {roles.is_producer_or_brand_owner && (
+            {(roles.is_brand_owner || roles.is_producer) && (
               <FileUpload
                 label={t("partnerDocProduction", locale)}
                 requirementLabel={t("partnerReqProducer", locale)}

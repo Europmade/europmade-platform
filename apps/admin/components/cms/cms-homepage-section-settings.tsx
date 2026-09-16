@@ -1,6 +1,13 @@
 "use client"
 
-import type { Dispatch, ReactNode, SetStateAction } from "react"
+import {
+  useEffect,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react"
+import { rewriteCollectionHrefToAction } from "@europmade/utils"
 import { Button } from "@europmade/ui"
 import {
   emptyLocalized,
@@ -17,6 +24,10 @@ import {
 import { CmsLocalizedField } from "./cms-localized-field"
 import { CmsImageField } from "./cms-image-field"
 import { CmsHomepageProductRailSettings } from "./cms-homepage-product-rail-settings"
+import {
+  listTaxonomyCategories,
+  type AdminTaxonomyCategory,
+} from "../../lib/category-admin-api"
 
 const BRAND_BACKGROUNDS: Array<{
   key: HomepagePartnerDoc["backgroundKey"]
@@ -94,16 +105,16 @@ function locObj(value: unknown): LocalizedCms {
   }
 }
 
-const POPULAR_CATEGORY_SLUGS: Array<{ slug: string; label: string }> = [
-  { slug: "tuin-buitenleven", label: "Tuin & buitenleven" },
-  { slug: "wonen-interieur", label: "Wonen & interieur" },
-  { slug: "keuken-koken", label: "Keuken & koken" },
-  { slug: "mode-accessoires", label: "Mode & accessoires" },
-  { slug: "sport-vrije-tijd", label: "Sport & vrije tijd" },
-  { slug: "verzorging-beauty", label: "Verzorging & beauty" },
-  { slug: "elektronica", label: "Elektronica" },
-  { slug: "baby-kind", label: "Baby & kind" },
-]
+function campaignHrefForSlug(href: string, slug: string): string {
+  const next = slug.trim().toLowerCase()
+  if (!next) return href
+  const rewritten = rewriteCollectionHrefToAction(href, next)
+  if (rewritten !== href) return rewritten
+  if (!href.trim() || href === "/zoeken" || href.startsWith("/acties/")) {
+    return `/acties/${next}`
+  }
+  return href
+}
 
 type PartnerDoc = HomepagePartnerDoc
 
@@ -518,6 +529,17 @@ export function CmsHomepageSectionSettings(props: {
   onError: (msg: string) => void
 }) {
   const { section, doc, setDoc, meta, setMeta, banners, onError } = props
+  const [pcCategories, setPcCategories] = useState<AdminTaxonomyCategory[]>([])
+
+  useEffect(() => {
+    listTaxonomyCategories()
+      .then((r) =>
+        setPcCategories(
+          (r.categories ?? []).filter((c) => Boolean(c.slug))
+        )
+      )
+      .catch(() => setPcCategories([]))
+  }, [])
 
   function patchSection(patch: Partial<HomepageSectionDoc>) {
     setDoc((d) => ({
@@ -563,25 +585,26 @@ export function CmsHomepageSectionSettings(props: {
         <ItemListActions
           addLabel="Categorie toevoegen"
           onAdd={() => {
-            const pick = POPULAR_CATEGORY_SLUGS[0]!
+            const pick = pcCategories[0]
+            if (!pick?.slug) return
             setDoc((d) => ({
               ...d,
               categories: [
                 ...d.categories,
                 {
                   id: `cat_${Date.now()}`,
-                  slug: pick.slug,
+                  slug: pick.slug!,
+                  categoryId: pick.id,
                   visible: true,
                   sortOrder: (d.categories.length + 1) * 10,
                   title: {
-                    nl: pick.label,
-                    en: pick.label,
-                    de: pick.label,
-                    fr: pick.label,
+                    nl: pick.name,
+                    en: pick.name,
+                    de: pick.name,
+                    fr: pick.name,
                   },
                   subtitle: emptyLocalized(),
                   image: null,
-                  productCountHint: 0,
                 },
               ],
             }))
@@ -596,44 +619,46 @@ export function CmsHomepageSectionSettings(props: {
                 className="space-y-2 rounded-lg border border-wf-200 p-2"
               >
                 <label className="block text-sm font-semibold">
-                  Slug
+                  Product Cloud-categorie
                   <select
                     className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
-                    value={cat.slug}
+                    value={cat.categoryId || cat.slug}
                     onChange={(e) => {
-                      const slug = e.target.value
-                      const known = POPULAR_CATEGORY_SLUGS.find(
-                        (c) => c.slug === slug
-                      )
+                      const value = e.target.value
+                      const known =
+                        pcCategories.find((c) => c.id === value) ||
+                        pcCategories.find((c) => c.slug === value)
+                      if (!known?.slug) return
                       setDoc((d) => ({
                         ...d,
                         categories: d.categories.map((c) =>
                           c.id === cat.id
                             ? {
                                 ...c,
-                                slug,
-                                title: known
-                                  ? {
-                                      nl: known.label,
-                                      en: known.label,
-                                      de: known.label,
-                                      fr: known.label,
-                                    }
-                                  : c.title,
+                                slug: known.slug!,
+                                categoryId: known.id,
+                                title: {
+                                  nl: known.name,
+                                  en: known.name,
+                                  de: known.name,
+                                  fr: known.name,
+                                },
                               }
                             : c
                         ),
                       }))
                     }}
                   >
-                    {POPULAR_CATEGORY_SLUGS.map((c) => (
-                      <option key={c.slug} value={c.slug}>
-                        {c.label} ({c.slug})
+                    {pcCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.slug})
                       </option>
                     ))}
                     {cat.slug &&
-                    !POPULAR_CATEGORY_SLUGS.some((c) => c.slug === cat.slug) ? (
-                      <option value={cat.slug}>{cat.slug}</option>
+                    !pcCategories.some(
+                      (c) => c.slug === cat.slug || c.id === cat.categoryId
+                    ) ? (
+                      <option value={cat.slug}>{cat.slug} (niet in taxonomie)</option>
                     ) : null}
                   </select>
                 </label>
@@ -669,29 +694,9 @@ export function CmsHomepageSectionSettings(props: {
                   }
                   onError={onError}
                 />
-                <label className="block text-sm font-semibold">
-                  Productaantal-hint (optioneel)
-                  <input
-                    className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
-                    type="number"
-                    min={0}
-                    value={String(cat.productCountHint || 0)}
-                    onChange={(e) =>
-                      setDoc((d) => ({
-                        ...d,
-                        categories: d.categories.map((c) =>
-                          c.id === cat.id
-                            ? {
-                                ...c,
-                                productCountHint:
-                                  Number(e.target.value) || 0,
-                              }
-                            : c
-                        ),
-                      }))
-                    }
-                  />
-                </label>
+                <p className="text-[11px] text-wf-500">
+                  Storefront-link: /categorie/{cat.slug || "…"}
+                </p>
                 <div className="flex flex-wrap gap-2 text-[11px]">
                   <button
                     type="button"
@@ -808,7 +813,7 @@ export function CmsHomepageSectionSettings(props: {
                     de: "Jetzt shoppen",
                     fr: "Acheter",
                   },
-                  href: "/zoeken",
+                  href: "/acties/campagne",
                   image: null,
                   imageAlt: emptyLocalized(),
                   accentHue: 200,
@@ -831,7 +836,13 @@ export function CmsHomepageSectionSettings(props: {
                     setDoc((d) => ({
                       ...d,
                       campaigns: campaigns.map((c) =>
-                        c.id === camp.id ? { ...c, slug: e.target.value } : c
+                        c.id === camp.id
+                          ? {
+                              ...c,
+                              slug: e.target.value,
+                              href: campaignHrefForSlug(c.href, e.target.value),
+                            }
+                          : c
                       ),
                     }))
                   }
@@ -896,8 +907,12 @@ export function CmsHomepageSectionSettings(props: {
                       ),
                     }))
                   }
+                  placeholder="/acties/slug"
                 />
               </label>
+              <p className="text-[11px] text-wf-500">
+                Echte actie: /acties/&#123;slug&#125; (geen collectie= query).
+              </p>
                 <CmsImageField
                 label="Afbeelding"
                 advice="Adviesformaat: 1200 × 495 px (16:6,6). Bij deze verhouding vult de afbeelding het bovenste kaartvlak volledig. Andere verhoudingen worden gecropt (object-cover)."

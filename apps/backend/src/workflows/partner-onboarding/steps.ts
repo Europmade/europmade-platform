@@ -9,6 +9,7 @@ import {
 } from "@medusajs/framework/utils"
 import PartnerModuleService from "../../modules/partner/service"
 import { PARTNER_MODULE } from "../../modules/partner"
+import { normalizeRoleFlags } from "../../modules/partner/permissions"
 import {
   assertTransitionAllowed,
   EDITABLE_STATUSES,
@@ -139,12 +140,15 @@ export const createOnboardingDraftStep = createStep(
     assertAtLeastOneRoleSelected(input.roles)
 
     const partnerService: PartnerModuleService = container.resolve(PARTNER_MODULE)
+    const roles = normalizeRoleFlags(input.roles)
 
     const seller = await partnerService.createSellers({
       customer_id: input.customerId,
-      is_retailer: input.roles.is_retailer,
-      is_producer_or_brand_owner: input.roles.is_producer_or_brand_owner,
-      is_distributor: input.roles.is_distributor,
+      is_retailer: roles.is_retailer,
+      is_producer_or_brand_owner: roles.is_producer_or_brand_owner,
+      is_brand_owner: roles.is_brand_owner,
+      is_producer: roles.is_producer,
+      is_distributor: roles.is_distributor,
       onboarding_status: "Concept",
       approved_at: null,
     })
@@ -199,17 +203,25 @@ export const updateOnboardingDraftStep = createStep(
     const previousSeller = {
       is_retailer: seller.is_retailer,
       is_producer_or_brand_owner: seller.is_producer_or_brand_owner,
+      is_brand_owner: (seller as { is_brand_owner?: boolean }).is_brand_owner,
+      is_producer: (seller as { is_producer?: boolean }).is_producer,
       is_distributor: seller.is_distributor,
     }
     const previousCompany = seller.company ? { ...seller.company } : null
 
-    const nextRoles: OnboardingRoleSelection = {
+    const nextRoles = normalizeRoleFlags({
       is_retailer: input.roles?.is_retailer ?? seller.is_retailer,
       is_producer_or_brand_owner:
         input.roles?.is_producer_or_brand_owner ??
         seller.is_producer_or_brand_owner,
+      is_brand_owner:
+        input.roles?.is_brand_owner ??
+        (seller as { is_brand_owner?: boolean }).is_brand_owner,
+      is_producer:
+        input.roles?.is_producer ??
+        (seller as { is_producer?: boolean }).is_producer,
       is_distributor: input.roles?.is_distributor ?? seller.is_distributor,
-    }
+    })
     assertAtLeastOneRoleSelected(nextRoles)
 
     // Company vóór de seller-update aanmaken/bijwerken, zodat de

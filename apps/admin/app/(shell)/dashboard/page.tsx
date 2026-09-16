@@ -1,37 +1,29 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { Notice } from "@europmade/ui"
-import { DashboardSection } from "../../../components/dashboard-section"
 import { KpiCard } from "../../../components/kpi-card"
 import { PeriodFilter } from "../../../components/period-filter"
 import {
   loadAdminDashboard,
   type AdminDashboardData,
+  type AdCampaignRow,
   type DashboardMetric,
+  type ProductQueueRow,
+  type RecentOrderRow,
+  type SellerQueueRow,
 } from "../../../lib/dashboard-api"
 import {
-  DASHBOARD_DOMAIN_SECTIONS,
-  type DashboardKpiDefinition,
-} from "../../../lib/dashboard-sections"
-import {
-  buildFinanceManagementKpis,
-  FINANCE_MANAGEMENT_KPI_DEFS,
-} from "../../../lib/finance-dashboard"
-import {
-  buildMarketplacePerformanceKpis,
-  MARKETPLACE_PERFORMANCE_KPI_DEFS,
-  type PerformanceKpi,
-} from "../../../lib/marketplace-performance"
-import {
-  PERIOD_OPTIONS,
-  resolvePeriodRange,
-  type PeriodKey,
-} from "../../../lib/period"
+  buildControlCenterPlatformKpis,
+  CONTROL_CENTER_PERIOD_OPTIONS,
+  PLATFORM_KPI_DISPLAY,
+} from "../../../lib/control-center"
+import type { PeriodKey } from "../../../lib/period"
 
 /**
- * Centrale Admin-cockpit (scherm #54) — Marketplace Performance + operationele blokken.
+ * P2.21 — Admin Control Center 2.0
+ * Eén operationeel overzicht; geen dubbele marketplace/finance-widgets.
  */
 export default function AdminDashboardPage() {
   const [data, setData] = useState<AdminDashboardData | null>(null)
@@ -56,69 +48,64 @@ export default function AdminDashboardPage() {
     }
   }, [])
 
-  const financeKpis = useMemo(() => {
+  const platformKpis = useMemo(() => {
     if (!data) return null
-    return buildFinanceManagementKpis(data.financeSource, period)
+    return buildControlCenterPlatformKpis(
+      {
+        sellersOk: data.sources.partners,
+        activeSellersOk: data.sources.activeSellers,
+        sellerQueueOk: data.sources.sellerQueue,
+        productsOk: data.sources.products,
+        productApprovalsOk: data.sources.productApprovals,
+        ordersOk: data.sources.orders,
+        payoutsOk: data.sources.payouts,
+        totalSellers: data.platform.totalSellers.numeric,
+        activeSellers: data.platform.activeSellers.numeric,
+        pendingSellerApprovals: data.platform.pendingSellerApprovals.numeric,
+        totalProducts: data.platform.totalProducts.numeric,
+        pendingProductApprovals: data.platform.pendingProductApprovals.numeric,
+        openPayouts: data.platform.openPayouts.numeric,
+        orders: data.financeSource.orders,
+      },
+      period
+    )
   }, [data, period])
-
-  const performanceKpis = useMemo(() => {
-    if (!data || !financeKpis) return null
-    return buildMarketplacePerformanceKpis(data, financeKpis, period)
-  }, [data, financeKpis, period])
 
   if (error) {
     return <Notice variant="warning">{error}</Notice>
   }
 
-  if (!data) {
+  if (!data || !platformKpis) {
     return (
       <div>
-        <h1 className="text-[19px] font-bold text-wf-900">Admin Dashboard</h1>
+        <h1 className="text-[19px] font-bold text-wf-900">Control Center</h1>
         <p className="mt-3 text-xs text-wf-600">Dashboard laden…</p>
       </div>
     )
   }
 
   const periodLabel =
-    PERIOD_OPTIONS.find((o) => o.key === period)?.label ?? period
-  const range = resolvePeriodRange(period)
-
-  const sectionsBeforeFinance = DASHBOARD_DOMAIN_SECTIONS.filter(
-    (s) => s.id === "marketplace" || s.id === "orders"
-  )
-  const sectionsAfterFinance = DASHBOARD_DOMAIN_SECTIONS.filter(
-    (s) => s.id === "moderation"
-  )
-
-  const primaryDefs = MARKETPLACE_PERFORMANCE_KPI_DEFS.filter((d) =>
-    ["revenue", "commissions", "orders"].includes(d.id)
-  )
-  const secondaryDefs = MARKETPLACE_PERFORMANCE_KPI_DEFS.filter(
-    (d) => !["revenue", "commissions", "orders"].includes(d.id)
-  )
+    CONTROL_CENTER_PERIOD_OPTIONS.find((o) => o.key === period)?.label ??
+    period
 
   return (
     <div>
-      <p className="mb-4 text-[11.5px] text-wf-500">
-        Dashboard &gt;{" "}
-        <b className="font-semibold text-wf-800">Admin Dashboard</b>
-      </p>
-
       <div className="mb-5 flex flex-col gap-3 tablet:flex-row tablet:items-end tablet:justify-between">
         <div>
-          <h1 className="text-[19px] font-bold text-wf-900">Admin Dashboard</h1>
+          <h1 className="text-[19px] font-bold text-wf-900">Control Center</h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            Platform-KPI&apos;s en snelle toegang tot beheermodules.
+            Overzicht van de belangrijkste EuropMade-platformactiviteiten.
           </p>
         </div>
-        <PeriodFilter value={period} onChange={setPeriod} />
+        <PeriodFilter
+          value={period}
+          onChange={setPeriod}
+          options={CONTROL_CENTER_PERIOD_OPTIONS}
+        />
       </div>
 
       <p className="mb-5 text-[10.5px] text-wf-500">
-        Periode: {periodLabel}
-        {range.from
-          ? ` · vanaf ${range.from.toLocaleDateString("nl-NL")}`
-          : " · gehele historie"}
+        Periode: <span className="font-medium text-wf-700">{periodLabel}</span>
       </p>
 
       {!data.backendReachable ? (
@@ -127,43 +114,33 @@ export default function AdminDashboardPage() {
         </Notice>
       ) : null}
 
-      <DashboardSection
-        title="Marketplace Performance"
-        extensions={[
-          "top_partners",
-          "top_products",
-          "top_categories",
-          "top_risers",
-          "top_fallers",
-        ]}
-        wrapChildren={false}
-      >
-        {performanceKpis ? (
-          <>
-            <div className="mb-4 grid grid-cols-1 gap-4 tablet:grid-cols-3">
-              {primaryDefs.map((def) => (
-                <PerformanceKpiCard
-                  key={def.id}
-                  label={def.label}
-                  metric={performanceKpis[def.id]}
-                  periodKey={period}
-                />
-              ))}
-            </div>
-            <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2 desktop:grid-cols-3">
-              {secondaryDefs.map((def) => (
-                <PerformanceKpiCard
-                  key={def.id}
-                  label={def.label}
-                  metric={performanceKpis[def.id]}
-                  periodKey={period}
-                />
-              ))}
-            </div>
-          </>
-        ) : null}
-      </DashboardSection>
+      {/* B. Platform KPI's */}
+      <section className="mb-8">
+        <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
+          Platform KPI&apos;s
+        </h2>
+        <div className="grid grid-cols-1 gap-4 tablet:grid-cols-2 desktop:grid-cols-4">
+          {PLATFORM_KPI_DISPLAY.map((def) => {
+            const metric = platformKpis[def.id]
+            return (
+              <KpiCard
+                key={def.id}
+                value={metric.value}
+                label={
+                  def.lifetime ? `${def.label} (lifetime)` : def.label
+                }
+                href={metric.href}
+                source={metric.source}
+                note={metric.note}
+                periodKey={period}
+                valueFormat={def.format ?? "number"}
+              />
+            )
+          })}
+        </div>
+      </section>
 
+      {/* C. Aandacht vereist */}
       <section className="mb-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
           Aandacht vereist
@@ -176,22 +153,21 @@ export default function AdminDashboardPage() {
           ) : (
             data.attention.map((item) => (
               <div
-                key={item.label}
+                key={`${item.href}-${item.description}`}
                 className="flex items-center justify-between gap-3 border-b border-wf-200 px-[18px] py-3 text-xs text-wf-700 last:border-b-0"
               >
-                <span>
-                  {item.severity === "warning" ? (
-                    <span className="mr-2 inline-block rounded-full border border-wf-700 px-2 py-0.5 text-[10px] font-semibold uppercase">
-                      Actie
-                    </span>
-                  ) : null}
-                  {item.label}
+                <span className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="inline-block rounded-full border border-wf-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.03em]">
+                    {item.status}
+                  </span>
+                  <span className="font-semibold text-wf-900">{item.count}</span>
+                  <span>{item.description}</span>
                 </span>
                 <Link
                   href={item.href}
-                  className="shrink-0 text-[11px] text-wf-800 underline"
+                  className="shrink-0 text-[11px] font-medium text-wf-800 underline"
                 >
-                  Openen
+                  Openen →
                 </Link>
               </div>
             ))
@@ -199,68 +175,33 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      {sectionsBeforeFinance.map((section) => (
-        <DashboardSection
-          key={section.id}
-          title={section.title}
-          extensions={section.extensions}
-        >
-          {section.kpis.map((def) => (
-            <MetricKpi
-              key={def.id}
-              def={def}
-              data={data}
-              periodKey={period}
-            />
-          ))}
-        </DashboardSection>
-      ))}
+      {/* D–G: Orders, Sellers, Products, Advertising */}
+      <div className="mb-8 grid grid-cols-1 gap-6 desktop:grid-cols-2">
+        <OrdersPanel
+          rows={data.controlCenter.recentOrders}
+          available={data.sources.orders}
+        />
+        <SellersPanel
+          rows={data.controlCenter.pendingSellerApplications}
+          available={data.sources.sellerQueue}
+        />
+        <ProductsPanel
+          rows={data.controlCenter.pendingProductApprovals}
+          available={data.sources.productApprovals}
+        />
+        <AdvertisingPanel
+          rows={data.controlCenter.pendingAdCampaigns}
+          available={data.sources.ads}
+        />
+      </div>
 
-      <DashboardSection title="Finance" extensions={["revenue_trend", "growth"]}>
-        {financeKpis
-          ? FINANCE_MANAGEMENT_KPI_DEFS.map((def) => {
-              const metric = def.select(financeKpis)
-              return (
-                <KpiCard
-                  key={def.id}
-                  value={metric.value}
-                  label={def.label}
-                  href={metric.href}
-                  source={metric.source}
-                  note={metric.note}
-                  periodKey={period}
-                  currentValue={metric.currentValue}
-                  previousValue={metric.previousValue}
-                  difference={metric.difference}
-                  percentageDifference={metric.percentageDifference}
-                  trend={metric.trend}
-                  comparisonLabel={metric.comparisonLabel}
-                  valueFormat={
-                    def.id === "open_payouts" ? "number" : "euro"
-                  }
-                />
-              )
-            })
-          : null}
-      </DashboardSection>
+      {/* H. Finance + I. Moderatie */}
+      <div className="mb-8 grid grid-cols-1 gap-6 desktop:grid-cols-2">
+        <FinancePanel snapshot={data.financeSnapshot} />
+        <ModerationPanel snapshot={data.moderationSnapshot} />
+      </div>
 
-      {sectionsAfterFinance.map((section) => (
-        <DashboardSection
-          key={section.id}
-          title={section.title}
-          extensions={section.extensions}
-        >
-          {section.kpis.map((def) => (
-            <MetricKpi
-              key={def.id}
-              def={def}
-              data={data}
-              periodKey={period}
-            />
-          ))}
-        </DashboardSection>
-      ))}
-
+      {/* J. Systeemstatus */}
       <section className="mb-8">
         <h2 className="mb-2.5 text-[12px] uppercase tracking-[0.04em] text-wf-500">
           Systeemstatus
@@ -309,66 +250,282 @@ export default function AdminDashboardPage() {
   )
 }
 
-function PerformanceKpiCard({
-  label,
-  metric,
-  periodKey,
+function PanelHeader({
+  title,
+  href,
 }: {
-  label: string
-  metric: PerformanceKpi
-  periodKey: PeriodKey
+  title: string
+  href: string
 }) {
   return (
-    <KpiCard
-      value={metric.value}
-      label={label}
-      href={metric.href}
-      source={metric.source}
-      note={metric.note}
-      periodKey={periodKey}
-      currentValue={metric.currentValue}
-      previousValue={metric.previousValue}
-      difference={metric.difference}
-      percentageDifference={metric.percentageDifference}
-      trend={metric.trend}
-      comparisonLabel={metric.comparisonLabel}
-      valueFormat={metric.valueFormat}
-      emphasis={metric.emphasis}
-      averageOrderValue={metric.averageOrderValue}
-      conversionRate={metric.conversionRate}
-      returnRate={metric.returnRate}
-      growthRate={metric.growthRate}
-      netCommission={metric.netCommission}
-      revenueGrowth={metric.revenueGrowth}
-    />
+    <div className="flex items-center justify-between border-b border-wf-200 px-4 py-3">
+      <h2 className="text-[12px] font-semibold uppercase tracking-[0.04em] text-wf-700">
+        {title}
+      </h2>
+      <Link href={href} className="text-[11px] text-wf-800 underline">
+        Alle
+      </Link>
+    </div>
   )
 }
 
-function MetricKpi({
-  def,
-  data,
-  periodKey,
+function OrdersPanel({
+  rows,
+  available,
 }: {
-  def: DashboardKpiDefinition
-  data: AdminDashboardData
-  periodKey: PeriodKey
+  rows: RecentOrderRow[]
+  available: boolean
 }) {
-  const metric: DashboardMetric = def.select(data)
   return (
-    <KpiCard
-      value={metric.value}
-      label={def.label}
-      href={metric.href}
-      linkLabel={def.linkLabel}
-      source={metric.source}
-      note={metric.note}
-      periodKey={periodKey}
-      currentValue={metric.currentValue}
-      previousValue={metric.previousValue}
-      difference={metric.difference}
-      percentageDifference={metric.percentageDifference}
-      trend={metric.trend}
-      comparisonLabel={metric.comparisonLabel}
-    />
+    <ActivityPanel title="Recente orders" href="/orders">
+      {!available ? (
+        <p className="px-4 py-4 text-xs text-wf-600">
+          Ordergegevens niet beschikbaar.
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="px-4 py-4 text-xs text-wf-600">Geen orders gevonden.</p>
+      ) : (
+        rows.map((row) => (
+          <Link
+            key={row.id}
+            href={row.href}
+            className="block border-b border-wf-200 px-4 py-3 text-xs last:border-b-0 hover:bg-wf-50"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold text-wf-900">{row.orderNumber}</p>
+                <p className="mt-0.5 text-[11px] text-wf-500">
+                  {new Date(row.date).toLocaleDateString("nl-NL")}
+                </p>
+                <p className="mt-1 text-wf-700">{row.sellerLabel}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-wf-800">{row.amount}</p>
+                <p className="mt-0.5 text-[11px] text-wf-500">{row.status}</p>
+              </div>
+            </div>
+          </Link>
+        ))
+      )}
+    </ActivityPanel>
+  )
+}
+
+function SellersPanel({
+  rows,
+  available,
+}: {
+  rows: SellerQueueRow[]
+  available: boolean
+}) {
+  return (
+    <ActivityPanel title="Nieuwe seller-aanvragen" href="/partners">
+      {!available ? (
+        <p className="px-4 py-4 text-xs text-wf-600">
+          Seller-aanvragen niet beschikbaar.
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="px-4 py-4 text-xs text-wf-600">
+          Geen openstaande seller-aanvragen.
+        </p>
+      ) : (
+        rows.map((row) => (
+          <Link
+            key={row.id}
+            href={row.href}
+            className="flex items-center justify-between gap-3 border-b border-wf-200 px-4 py-3 text-xs text-wf-700 last:border-b-0 hover:bg-wf-50"
+          >
+            <div>
+              <p className="font-medium text-wf-800">{row.companyName}</p>
+              <p className="mt-0.5 text-[11px] text-wf-500">{row.status}</p>
+            </div>
+            <p className="text-[10px] text-wf-500">
+              {new Date(row.date).toLocaleDateString("nl-NL")}
+            </p>
+          </Link>
+        ))
+      )}
+    </ActivityPanel>
+  )
+}
+
+function ProductsPanel({
+  rows,
+  available,
+}: {
+  rows: ProductQueueRow[]
+  available: boolean
+}) {
+  return (
+    <ActivityPanel
+      title="Producten wachtend op goedkeuring"
+      href="/product-cloud/products/approvals"
+    >
+      {!available ? (
+        <p className="px-4 py-4 text-xs text-wf-600">
+          Productgoedkeuring niet beschikbaar.
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="px-4 py-4 text-xs text-wf-600">
+          Geen producten wachten op goedkeuring.
+        </p>
+      ) : (
+        rows.map((row) => (
+          <Link
+            key={row.id}
+            href={row.href}
+            className="flex items-center justify-between gap-3 border-b border-wf-200 px-4 py-3 text-xs text-wf-700 last:border-b-0 hover:bg-wf-50"
+          >
+            <div>
+              <p className="font-medium text-wf-800">{row.productName}</p>
+              <p className="mt-0.5 text-[11px] text-wf-500">
+                {row.sellerLabel} · {row.status}
+              </p>
+            </div>
+            {row.date ? (
+              <p className="text-[10px] text-wf-500">
+                {new Date(row.date).toLocaleDateString("nl-NL")}
+              </p>
+            ) : null}
+          </Link>
+        ))
+      )}
+    </ActivityPanel>
+  )
+}
+
+function AdvertisingPanel({
+  rows,
+  available,
+}: {
+  rows: AdCampaignRow[]
+  available: boolean
+}) {
+  return (
+    <ActivityPanel
+      title="Openstaande advertising-campagnes"
+      href="/advertising/campaigns"
+    >
+      {!available ? (
+        <p className="px-4 py-4 text-xs text-wf-600">
+          Advertisinggegevens niet beschikbaar.
+        </p>
+      ) : rows.length === 0 ? (
+        <p className="px-4 py-4 text-xs text-wf-600">
+          Geen campagnes in beoordeling.
+        </p>
+      ) : (
+        rows.map((row) => (
+          <Link
+            key={row.id}
+            href={row.href}
+            className="block border-b border-wf-200 px-4 py-3 text-xs last:border-b-0 hover:bg-wf-50"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-medium text-wf-800">{row.name}</p>
+                <p className="mt-0.5 text-[11px] text-wf-500">
+                  {row.sellerLabel} · {row.placement}
+                </p>
+                <p className="mt-0.5 text-[10px] text-wf-500">
+                  {row.periodLabel}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-wf-800">{row.amount}</p>
+                <p className="mt-0.5 text-[11px] text-wf-500">{row.status}</p>
+              </div>
+            </div>
+          </Link>
+        ))
+      )}
+    </ActivityPanel>
+  )
+}
+
+function FinancePanel({
+  snapshot,
+}: {
+  snapshot: AdminDashboardData["financeSnapshot"]
+}) {
+  const items: Array<{ label: string; metric: DashboardMetric }> = [
+    { label: "Open payouts", metric: snapshot.openPayoutCount },
+    { label: "Totaal open payout-bedrag", metric: snapshot.openPayoutAmount },
+    { label: "Advertising omzet", metric: snapshot.advertisingRevenue },
+    { label: "Open commissies", metric: snapshot.openCommissions },
+    { label: "Openstaande facturen", metric: snapshot.openInvoices },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-wf-300 bg-white">
+      <PanelHeader title="Finance" href="/finance" />
+      <div className="divide-y divide-wf-200">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="flex items-start justify-between gap-3 px-4 py-3 text-xs"
+          >
+            <div>
+              <p className="text-wf-600">{item.label}</p>
+              {item.metric.source === "unavailable" && item.metric.note ? (
+                <p className="mt-0.5 text-[10px] text-wf-500">{item.metric.note}</p>
+              ) : null}
+            </div>
+            <p className="font-semibold text-wf-900">{item.metric.value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ModerationPanel({
+  snapshot,
+}: {
+  snapshot: AdminDashboardData["moderationSnapshot"]
+}) {
+  const items: Array<{ label: string; metric: DashboardMetric }> = [
+    { label: "Open moderatiezaken", metric: snapshot.openCases },
+    { label: "Fraudesignalen", metric: snapshot.fraudSignals },
+    { label: "Geschillen / claims", metric: snapshot.disputes },
+  ]
+
+  return (
+    <section className="overflow-hidden rounded-lg border border-wf-300 bg-white">
+      <PanelHeader title="Moderatie" href="/moderation" />
+      <div className="divide-y divide-wf-200">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="flex items-start justify-between gap-3 px-4 py-3 text-xs"
+          >
+            <div>
+              <p className="text-wf-600">{item.label}</p>
+              {item.metric.source === "unavailable" && item.metric.note ? (
+                <p className="mt-0.5 text-[10px] text-wf-500">{item.metric.note}</p>
+              ) : null}
+            </div>
+            <p className="font-semibold text-wf-900">{item.metric.value}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ActivityPanel({
+  title,
+  href,
+  children,
+}: {
+  title: string
+  href: string
+  children: ReactNode
+}) {
+  return (
+    <section className="overflow-hidden rounded-lg border border-wf-300 bg-white">
+      <PanelHeader title={title} href={href} />
+      {children}
+    </section>
   )
 }

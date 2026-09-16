@@ -49,4 +49,5 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0039](./0039-translation-layer-mvp.md) | Translation Layer MVP: EN, DeepL, versioning, manual | Geaccepteerd | Product Cloud, i18n |
 | [0040](./0040-delivery-return-period-and-fulfil-documents.md) | Leveringsdatum als anker voor retourtermijn + seller fulfilment-documenten | Geaccepteerd | Order-service, Retouren |
 | [0041](./0041-partner-roles-brand-owner-producer.md) | Eén Partner-account: RETAILER / BRAND_OWNER / PRODUCER | Geaccepteerd | Partner, Seller Dashboard |
-| [0042](./0042-canonical-storefront-taxonomy-pc-category.md) | Storefront taxonomy uses Product Cloud categories as canonical taxonomy | Proposed / Ter review (migratie later) | Product Cloud, Storefront, Taxonomie |
+| [0042](./0042-canonical-storefront-taxonomy-pc-category.md) | Storefront taxonomy uses Product Cloud categories as canonical taxonomy | Geaccepteerd | Product Cloud, Storefront, Taxonomie |
+| [0043](./0043-eu-product-data-layer-authority.md) | EU Product Data-laag: Product Cloud blijft autoriteit; MVP zonder live externe productdatabase | Geaccepteerd | Product Cloud, Verification, Integraties |

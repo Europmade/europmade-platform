@@ -3,6 +3,7 @@ import OrderSet from "./order-set"
 import OrderLine from "./order-line"
 import Shipment from "./shipment"
 import OrderMessage from "./message"
+import OrderDocument from "./order-document"
 
 /**
  * em_order — Blueprint Deel D.2 `order` (ADR-0021: prefix vermijdt Medusa `order`).
@@ -23,6 +24,8 @@ const EmOrder = model
       .nullable(),
     shipping_address: model.text(),
     billing_address: model.text(),
+    /** ISO-3166-1 alpha-2 destination country (OSS VAT). */
+    shipping_country_code: model.text().nullable(),
     exception_reason: model.text().nullable(),
     lines: model.hasMany(() => OrderLine, {
       mappedBy: "order",
@@ -31,6 +34,9 @@ const EmOrder = model
       mappedBy: "order",
     }),
     messages: model.hasMany(() => OrderMessage, {
+      mappedBy: "order",
+    }),
+    documents: model.hasMany(() => OrderDocument, {
       mappedBy: "order",
     }),
   })

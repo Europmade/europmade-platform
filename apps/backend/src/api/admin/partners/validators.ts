@@ -35,3 +35,14 @@ export const AdminRequestPartnerOnboardingInfo = z.object({
 export type AdminRequestPartnerOnboardingInfoInput = z.infer<
   typeof AdminRequestPartnerOnboardingInfo
 >
+
+export const AdminPatchPartnerRolesBody = z.object({
+  is_retailer: z.boolean().optional(),
+  is_brand_owner: z.boolean().optional(),
+  is_producer: z.boolean().optional(),
+  is_producer_or_brand_owner: z.boolean().optional(),
+  is_distributor: z.boolean().optional(),
+})
+export type AdminPatchPartnerRolesBodyInput = z.infer<
+  typeof AdminPatchPartnerRolesBody
+>

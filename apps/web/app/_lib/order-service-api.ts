@@ -12,9 +12,8 @@ import {
   getGuestCheckoutToken,
   readPendingGuestOrder,
 } from "./guest-checkout-token"
+import { medusaBackendUrl } from "./medusa-backend-url"
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 export class OrderServiceApiError extends Error {
@@ -29,7 +28,7 @@ export class OrderServiceApiError extends Error {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const guest = getGuestCartToken()
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     ...init,
     credentials: "include",
     headers: {
@@ -180,12 +179,13 @@ export function placeOrder(input: {
   payment_reference: string
   shipping_address: string
   billing_address: string
+  delivery_country?: string
   lines: Array<{ offer_id: string; quantity: number }>
   affiliate_click_id?: string | null
   affiliate_coupon_code?: string | null
   guest_checkout?: boolean
 }) {
-  const { guest_checkout, ...payload } = input
+  const { guest_checkout, delivery_country, ...payload } = input
   const guest_checkout_token = guest_checkout
     ? getGuestCheckoutToken()
     : undefined
@@ -194,7 +194,7 @@ export function placeOrder(input: {
     body: JSON.stringify({
       ...payload,
       payment_mode: "simulated",
-      delivery_country: "NL",
+      delivery_country: (delivery_country || "NL").slice(0, 2).toUpperCase(),
       guest_checkout_token,
     }),
   })
@@ -273,6 +273,127 @@ export type ReturnView = {
   force_reason: string | null
   cooling_off_ends_at: string
   created_at: string
+  carrier?: string | null
+  tracking_code?: string | null
+  tracking_url?: string | null
+  product_name?: string
+  variant_name?: string | null
+  sku?: string | null
+  quantity?: number
+  unit_price_snapshot?: unknown
+}
+
+export type ReturnPeriodView = {
+  anchor_at: string | null
+  anchor_source: "delivered_at" | null
+  period_days: number
+  deadline_at: string | null
+  days_remaining: number | null
+  is_open: boolean
+  delivered_at: string | null
+  starts_after_delivery?: boolean
+}
+
+export type OrderAddressView = {
+  name: string | null
+  street: string | null
+  postal_code: string | null
+  city: string | null
+  province: string | null
+  country: string | null
+  country_code: string | null
+  formatted: string
+  raw: string
+}
+
+export type SellerOrderBundle = {
+  order: {
+    id: string
+    order_number: string
+    customer_id: string
+    seller_id: string
+    payment_status: string
+    shipping_address: string
+    billing_address: string
+    shipping_address_structured?: OrderAddressView
+    billing_address_structured?: OrderAddressView
+    shipping_country_code?: string | null
+    created_at: string
+    customer_name: string | null
+    customer_email: string | null
+    shipping_status: string
+    shipped_at?: string | null
+    delivered_at: string | null
+    carrier: string | null
+    tracking_code: string | null
+    tracking_number?: string | null
+    tracking_url: string | null
+  }
+  lines: Array<{
+    id: string
+    product_variant_id: string
+    offer_id: string
+    quantity: number
+    unit_price_snapshot: unknown
+    unit_price?: number
+    line_total?: number
+    vat_rate_snapshot?: number
+    vat_amount?: number
+    product_name?: string
+    variant_name?: string | null
+    sku?: string | null
+    product_label: string
+  }>
+  shipments: Array<{
+    id: string
+    carrier: string | null
+    tracking_code: string | null
+    tracking_number?: string | null
+    tracking_url: string | null
+    status: string
+    shipped_at?: string | null
+    delivered_at: string | null
+  }>
+  returns: Array<
+    ReturnView & {
+      order_id: string
+      order_number: string
+      tracking_url?: string | null
+      quantity?: number
+      product_name?: string
+      variant_name?: string | null
+      sku?: string | null
+    }
+  >
+  documents: Array<{
+    id: string
+    type: string
+    url: string
+    filename: string
+    uploaded_at: string | null
+  }>
+  invoice: {
+    id: string
+    url: string
+    filename: string
+    uploaded_at: string | null
+  } | null
+  packing_slip: {
+    id: string
+    url: string
+    filename: string
+    uploaded_at: string | null
+  } | null
+  conversation_id: string | null
+  return_period: ReturnPeriodView
+  totals: {
+    subtotal: number
+    shipping_cost: number
+    vat: number
+    vat_rate?: number | null
+    delivery_country_code?: string | null
+    total: number
+  }
 }
 
 export type BuyerOrderListItem = {
@@ -355,12 +476,117 @@ export function escalateReturn(id: string) {
 export function listSellerOrders() {
   return request<{
     orders: Array<{
-      order: BuyerOrderListItem["order"] & { customer_id: string }
-      lines: OrderLineView[]
+      order: BuyerOrderListItem["order"] & {
+        customer_id: string
+        shipping_status?: string
+        delivered_at?: string | null
+        carrier?: string | null
+        tracking_code?: string | null
+        tracking_url?: string | null
+        customer_name?: string | null
+        customer_email?: string | null
+        promised_delivery_date?: string | null
+        promised_delivery_urgency?: "due_tomorrow" | "overdue" | null
+      }
+      lines: Array<
+        OrderLineView & {
+          product_name?: string
+          variant_name?: string | null
+          sku?: string | null
+          product_label?: string
+        }
+      >
       returns: ReturnView[]
     }>
     count: number
   }>("/store/order-service/seller/orders")
+}
+
+export function getSellerOrder(id: string) {
+  return request<SellerOrderBundle>(
+    `/store/order-service/seller/orders/${encodeURIComponent(id)}`
+  )
+}
+
+export function upsertSellerShipment(
+  orderId: string,
+  body: {
+    carrier?: string | null
+    tracking_code?: string | null
+    tracking_number?: string | null
+    tracking_url?: string | null
+    status?: string | null
+    expected_delivery_at?: string | null
+    shipped_at?: string | null
+    delivered_at?: string | null
+  }
+) {
+  return request<SellerOrderBundle>(
+    `/store/order-service/seller/orders/${encodeURIComponent(orderId)}/shipment`,
+    {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
+export function uploadSellerOrderDocument(
+  orderId: string,
+  type: "invoice",
+  file: File
+) {
+  const form = new FormData()
+  form.append("type", type)
+  form.append("files", file)
+  return requestForm<SellerOrderBundle>(
+    `/store/order-service/seller/orders/${encodeURIComponent(orderId)}/documents`,
+    form
+  )
+}
+
+export function generateSellerPackingSlip(orderId: string) {
+  return request<SellerOrderBundle>(
+    `/store/order-service/seller/orders/${encodeURIComponent(orderId)}/documents/packing-slip/generate`,
+    { method: "POST", body: "{}" }
+  )
+}
+
+export function ensureSellerOrderMessage(
+  orderId: string,
+  body?: string,
+  subject?: string
+) {
+  const text = body?.trim()
+  if (!text) {
+    return Promise.reject(
+      new OrderServiceApiError("Berichttekst is verplicht.", 400)
+    )
+  }
+  return request<{
+    conversation_id: string
+    message: {
+      id: string
+      order_id: string | null
+      sender_customer_id: string
+      body: string
+      created_at: string
+    }
+  }>(
+    `/store/order-service/seller/orders/${encodeURIComponent(orderId)}/message`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        body: text,
+        subject: subject ?? undefined,
+      }),
+    }
+  )
+}
+
+export function getSellerOrderConversation(orderId: string) {
+  return request<{ conversation_id: string | null }>(
+    `/store/order-service/seller/orders/${encodeURIComponent(orderId)}/message`
+  )
 }
 
 export function listSellerReturns() {
@@ -374,6 +600,34 @@ export function listSellerReturns() {
       }
     >
   }>("/store/order-service/seller/returns")
+}
+
+export function createSellerReturn(order_line_id: string, reason: string) {
+  return request<{ return: ReturnView; order_id: string }>(
+    "/store/order-service/seller/returns",
+    {
+      method: "POST",
+      body: JSON.stringify({ order_line_id, reason }),
+    }
+  )
+}
+
+export function updateSellerReturnTracking(
+  id: string,
+  payload: {
+    carrier?: string | null
+    tracking_code?: string | null
+    tracking_url?: string | null
+    mark_in_transit?: boolean
+  }
+) {
+  return request<{ return: ReturnView }>(
+    `/store/order-service/seller/returns/${encodeURIComponent(id)}/tracking`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }
+  )
 }
 
 export function sellerReturnAction(
@@ -394,22 +648,57 @@ export function sellerReturnAction(
   })
 }
 
+export type MessageAttachmentView = {
+  id: string
+  url: string
+  filename: string
+  mime_type: string
+  size_bytes: number
+}
+
 export type MessageView = {
   id: string
-  order_id: string
+  order_id: string | null
   sender_customer_id: string
   body: string
   created_at: string
+  attachments?: MessageAttachmentView[]
 }
 
+export type ConversationStatus =
+  | "waiting_for_seller"
+  | "waiting_for_customer"
+  | "resolved"
+
 export type MessageThreadSummary = {
-  order_id: string
-  order_number: string
+  id?: string
+  conversation_id?: string
+  order_id: string | null
+  order_number: string | null
   seller_id: string
   customer_id: string
+  customer_email?: string | null
+  customer_name?: string | null
+  subject?: string | null
+  status?: ConversationStatus
   message_count: number
   last_message_at: string | null
   last_body_preview: string | null
+  unread?: boolean
+  requires_attention?: boolean
+}
+
+export type ConversationReadView = {
+  conversation_id: string
+  read_at: string
+}
+
+export type SellerCustomerOption = {
+  customer_id: string
+  email: string
+  name: string
+  order_ids: string[]
+  order_numbers: string[]
 }
 
 export function listMessageThreads() {
@@ -418,9 +707,125 @@ export function listMessageThreads() {
   )
 }
 
-export function listSellerMessageThreads() {
-  return request<{ threads: MessageThreadSummary[]; count: number }>(
-    "/store/order-service/seller/messages"
+export function listSellerMessageThreads(status?: string, q?: string) {
+  const params = new URLSearchParams()
+  if (status) params.set("status", status)
+  if (q?.trim()) params.set("q", q.trim())
+  const qs = params.toString() ? `?${params.toString()}` : ""
+  return request<{
+    threads: MessageThreadSummary[]
+    count: number
+    unread_count: number
+    attention_count: number
+  }>(`/store/order-service/seller/messages${qs}`)
+}
+
+export function listSellerMessageReads() {
+  return request<{ reads: ConversationReadView[]; count: number }>(
+    "/store/order-service/seller/messages/reads"
+  )
+}
+
+export function markSellerMessageRead(conversationId: string) {
+  return request<ConversationReadView>(
+    `/store/order-service/seller/messages/${encodeURIComponent(conversationId)}/read`,
+    { method: "POST" }
+  )
+}
+
+export function listSellerCustomers(q?: string) {
+  const qs = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""
+  return request<{ customers: SellerCustomerOption[]; count: number }>(
+    `/store/order-service/seller/customers${qs}`
+  )
+}
+
+export type SellerOrderOption = {
+  id: string
+  order_number: string
+}
+
+export function listSellerCustomerOrders(customerId: string, q?: string) {
+  const params = new URLSearchParams({ customer_id: customerId })
+  if (q?.trim()) params.set("q", q.trim())
+  return request<{ orders: SellerOrderOption[]; count: number }>(
+    `/store/order-service/seller/orders/lookup?${params.toString()}`
+  )
+}
+
+export function getSellerConversation(id: string) {
+  return request<{
+    conversation: {
+      id: string
+      status: ConversationStatus
+      subject: string | null
+      seller_id: string
+      customer_id: string
+      customer_email: string | null
+      customer_name: string | null
+      order_id: string | null
+      order_number: string | null
+      last_message_at: string | null
+    }
+    messages: MessageView[]
+    viewer_customer_id: string
+    order_summary: SellerOrderBundle | null
+  }>(`/store/order-service/seller/conversations/${encodeURIComponent(id)}`)
+}
+
+export function replySellerConversation(
+  id: string,
+  body: string,
+  files?: File[]
+) {
+  if (files && files.length > 0) {
+    const form = new FormData()
+    form.append("body", body)
+    for (const file of files) form.append("files", file)
+    return requestForm<{ message: MessageView; status: ConversationStatus }>(
+      `/store/order-service/seller/conversations/${encodeURIComponent(id)}`,
+      form
+    )
+  }
+  return request<{ message: MessageView; status: ConversationStatus }>(
+    `/store/order-service/seller/conversations/${encodeURIComponent(id)}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    }
+  )
+}
+
+export function createSellerConversation(input: {
+  customer_id: string
+  order_id?: string | null
+  subject?: string | null
+  body: string
+  files?: File[]
+}) {
+  const form = new FormData()
+  form.append("customer_id", input.customer_id)
+  form.append("body", input.body)
+  if (input.order_id) form.append("order_id", input.order_id)
+  if (input.subject) form.append("subject", input.subject)
+  for (const file of input.files ?? []) form.append("files", file)
+  return requestForm<{
+    message: MessageView
+    conversation_id: string
+    status: ConversationStatus
+  }>("/store/order-service/seller/conversations", form)
+}
+
+export function patchSellerConversationStatus(
+  id: string,
+  status: ConversationStatus
+) {
+  return request<{ conversation: { id: string; status: ConversationStatus } }>(
+    `/store/order-service/seller/conversations/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }
   )
 }
 
@@ -435,7 +840,20 @@ export function listOrderMessages(orderId: string) {
   }>(`/store/order-service/orders/${orderId}/messages`)
 }
 
-export function sendOrderMessage(orderId: string, body: string) {
+export function sendOrderMessage(
+  orderId: string,
+  body: string,
+  files?: File[]
+) {
+  if (files && files.length > 0) {
+    const form = new FormData()
+    form.append("body", body)
+    for (const file of files) form.append("files", file)
+    return requestForm<{ message: MessageView }>(
+      `/store/order-service/orders/${orderId}/messages`,
+      form
+    )
+  }
   return request<{ message: MessageView }>(
     `/store/order-service/orders/${orderId}/messages`,
     {
@@ -443,4 +861,61 @@ export function sendOrderMessage(orderId: string, body: string) {
       body: JSON.stringify({ body }),
     }
   )
+}
+
+export function getStoreConversation(id: string) {
+  return request<{
+    conversation: {
+      id: string
+      status: ConversationStatus
+      subject: string | null
+      order_id: string | null
+      order_number: string | null
+      customer_id: string
+      seller_id: string
+    }
+    messages: MessageView[]
+    viewer_customer_id: string
+  }>(`/store/order-service/conversations/${encodeURIComponent(id)}`)
+}
+
+export function replyStoreConversation(
+  id: string,
+  body: string,
+  files?: File[]
+) {
+  const form = new FormData()
+  form.append("body", body)
+  for (const file of files ?? []) form.append("files", file)
+  return requestForm<{ message: MessageView }>(
+    `/store/order-service/conversations/${encodeURIComponent(id)}`,
+    form
+  )
+}
+
+async function requestForm<T>(path: string, form: FormData): Promise<T> {
+  const guest = getGuestCartToken()
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(PUBLISHABLE_KEY
+        ? { "x-publishable-api-key": PUBLISHABLE_KEY }
+        : {}),
+      ...(guest ? { "x-guest-cart-token": guest } : {}),
+    },
+    body: form,
+  })
+  const body: unknown = await response.json().catch(() => undefined)
+  if (!response.ok) {
+    const message =
+      body &&
+      typeof body === "object" &&
+      "message" in body &&
+      typeof body.message === "string"
+        ? body.message
+        : "Er is iets misgegaan. Probeer het opnieuw."
+    throw new OrderServiceApiError(message, response.status)
+  }
+  return body as T
 }

@@ -6,7 +6,7 @@ import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../resolve-seller"
 import type { StorePatchProductCategoriesBodyInput } from "../../validators"
-import { slugifyCategoryName } from "../../../../../modules/product-cloud/category-attributes"
+import { resolveImportCategory, uniqueImportCategoryCatalog } from "../../../../../modules/product-cloud/import-category"
 
 type RouteParams = { id: string }
 type ProductCategoryLink = { product_id: string; category_id: string }
@@ -92,23 +92,21 @@ export async function PATCH(
   })) as ProductCategoryLink[]
   const existingCategoryIds = new Set(existingLinks.map((link) => link.category_id))
 
+  const catalog = uniqueImportCategoryCatalog(
+    (await productCloud.listCategories(
+      {},
+      { take: 500 }
+    )) as Array<{ id: string; name: string; slug?: string | null }>
+  )
+
   for (const categoryName of uniqueNames) {
-    let category = ((await productCloud.listCategories({
-      name: categoryName,
-    })) as CategoryRow[])[0]
+    const resolved = resolveImportCategory(categoryName, catalog)
+    const category = resolved.matched
     if (!category) {
-      const slug = slugifyCategoryName(categoryName)
-      category = (await productCloud.createCategories({
-        name: categoryName,
-        slug,
-      })) as CategoryRow
-      await productCloud.ensureCategoryAttributeCatalog(category.id, slug)
-    } else if (!category.slug) {
-      const updated = (await productCloud.updateCategories({
-        id: category.id,
-        slug: slugifyCategoryName(categoryName),
-      })) as CategoryRow | CategoryRow[]
-      category = Array.isArray(updated) ? updated[0] : updated
+      res.status(400).json({
+        message: `Categorie niet herkend — kies een EuropMade-categorie.`,
+      })
+      return
     }
 
     if (!existingCategoryIds.has(category.id)) {

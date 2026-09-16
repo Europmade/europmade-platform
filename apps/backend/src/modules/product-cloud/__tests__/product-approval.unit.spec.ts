@@ -61,6 +61,20 @@ describe("product approval workflow status", () => {
       })
     ).toBe("rejected")
   })
+
+  it("maps admin_review_outcome needs_info to needs_information", () => {
+    expect(
+      resolveWorkflowStatus({
+        publication_status: "Concept",
+        admin_review_outcome: "needs_info",
+        approval_rejection_reason: "MiE aanvullen",
+        completeness: {
+          ...incomplete,
+          compliance_review_status: "pending_review",
+        },
+      })
+    ).toBe("needs_information")
+  })
 })
 
 describe("product approval actions", () => {

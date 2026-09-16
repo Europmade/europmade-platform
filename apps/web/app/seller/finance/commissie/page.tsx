@@ -1,28 +1,49 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Badge } from "@europmade/ui"
 import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
-import { DEMO_ORDERS } from "../../_lib/demo-data"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
 import { t } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
+import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
 
-const DEMO_COMMISSIONS = DEMO_ORDERS.slice(0, 10).map((o, i) => ({
-  id: `com_${i}`,
-  order_number: o.order_number,
-  date: o.created_at,
-  base: o.total,
-  rate: 0.12,
-  amount: Math.round(o.total * 0.12 * 100) / 100,
-  status: i % 3 === 0 ? "Open" : "Verwerkt",
-}))
+type CommissionRow = {
+  id: string
+  order_number: string
+  order_subtotal: number
+  amount: number
+  percentage: number
+  status: string
+  created_at: string
+}
 
 export default function SellerFinanceCommissiePage() {
   const locale = useStorefrontLocale()
   const intl = storefrontIntlLocale(locale)
+  const [commissions, setCommissions] = useState<CommissionRow[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const PK = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+    fetch(`${medusaBackendUrl()}/store/finance/seller`, {
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        ...(PK ? { "x-publishable-api-key": PK } : {}),
+      },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        setCommissions(d?.commissions ?? [])
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
   return (
     <SellerGate
       breadcrumb={[
@@ -38,7 +59,7 @@ export default function SellerFinanceCommissiePage() {
         {t("sellerFinanceCommissionIntro", locale)}
       </p>
 
-      {DEMO_COMMISSIONS.length === 0 ? (
+      {!loading && commissions.length === 0 ? (
         <div className="mt-6">
           <EmptyState
             title={t("sellerFinanceCommissionEmptyTitle", locale)}
@@ -68,14 +89,21 @@ export default function SellerFinanceCommissiePage() {
               </tr>
             </thead>
             <tbody>
-              {DEMO_COMMISSIONS.map((row) => (
-                <tr key={row.id} className="border-b border-wf-200 last:border-b-0">
+              {commissions.map((row) => (
+                <tr
+                  key={row.id}
+                  className="border-b border-wf-200 last:border-b-0"
+                >
                   <td className="px-4 py-2.5">{row.order_number}</td>
                   <td className="px-4 py-2.5">
-                    {new Date(row.date).toLocaleDateString(intl)}
+                    {new Date(row.created_at).toLocaleDateString(intl)}
                   </td>
-                  <td className="px-4 py-2.5">{formatEuro(row.base)}</td>
-                  <td className="px-4 py-2.5">{row.rate * 100}%</td>
+                  <td className="px-4 py-2.5">
+                    {formatEuro(row.order_subtotal)}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {(row.percentage * 100).toFixed(1)}%
+                  </td>
                   <td className="px-4 py-2.5">{formatEuro(row.amount)}</td>
                   <td className="px-4 py-2.5">
                     <Badge variant="outline">

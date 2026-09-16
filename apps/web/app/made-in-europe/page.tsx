@@ -7,24 +7,35 @@ import {
   IconMaterials,
   IconParts,
 } from "../_components/commercial/commercial-icons"
+import { CmsPageView } from "../_components/cms/cms-page-view"
 import { PublicStorefrontChrome } from "../_components/marketplace/public-storefront-chrome"
+import {
+  loadFixedCmsPage,
+  metadataFromCmsPage,
+} from "../_lib/cms/fixed-cms-page"
 import { getStorefrontLocaleFromCookies } from "../_lib/i18n/get-storefront-locale"
 import { t } from "../_lib/i18n/messages"
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getStorefrontLocaleFromCookies()
-  return {
+  const fallback: Metadata = {
     title: `${t("miePageTitle", locale)} — EuropMade`,
     description: t("miePageIntro", locale),
     alternates: { canonical: "/made-in-europe" },
   }
+  const cms = await loadFixedCmsPage({ path: "/made-in-europe", locale })
+  if (cms) return metadataFromCmsPage(cms, fallback)
+  return fallback
 }
 
 /**
  * Centrale uitleg Made in Europe — visuele score + drempel (Sprint 8 UX).
+ * CMS page slug "made-in-europe" overrides when published + live.
  */
 export default async function MadeInEuropePage() {
   const locale = await getStorefrontLocaleFromCookies()
+  const cms = await loadFixedCmsPage({ path: "/made-in-europe", locale })
+  if (cms) return <CmsPageView page={cms} locale={locale} />
 
   return (
     <PublicStorefrontChrome locale={locale}>

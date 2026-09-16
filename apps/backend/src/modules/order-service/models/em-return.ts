@@ -2,7 +2,8 @@ import { model } from "@medusajs/framework/utils"
 import OrderLine from "./order-line"
 
 /**
- * em_return — Blueprint Deel D.5 + returns-and-refunds/spec.md (ADR-0023).
+ * em_return — Blueprint Deel D.5 + ADR-0023/0040.
+ * Status: Aangevraagd → Bevestigd → Onderweg → Ontvangen → Verwerkt
  */
 const EmReturn = model
   .define("em_return", {
@@ -15,6 +16,7 @@ const EmReturn = model
     status: model.enum([
       "Aangevraagd",
       "Bevestigd",
+      "Onderweg",
       "Ontvangen",
       "Verwerkt",
       "Afgewezen",
@@ -26,10 +28,13 @@ const EmReturn = model
     cooling_off_ends_at: model.dateTime(),
     refund_amount: model.bigNumber().nullable(),
     refund_status: model
-      .enum(["Pending", "Uitgevoerd", "Geforceerd"])
+      .enum(["requested", "processing", "processed", "failed", "forced"])
       .nullable(),
     refund_reference: model.text().nullable(),
     refund_executed_at: model.dateTime().nullable(),
+    carrier: model.text().nullable(),
+    tracking_code: model.text().nullable(),
+    tracking_url: model.text().nullable(),
   })
   .indexes([
     { on: ["order_line_id"] },

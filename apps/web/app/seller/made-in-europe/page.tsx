@@ -7,26 +7,29 @@ import { listOwnProducts, type CatalogProduct } from "../_lib/product-cloud-api"
 import {
   getSellerBrand,
   listSellerBrands,
+  listSellerFacilities,
   upsertSellerBrandFacility,
 } from "../_lib/brands-api"
 import { useStorefrontLocale } from "../../_lib/i18n/use-storefront-locale"
 import { t } from "../../_lib/i18n/messages"
+import { medusaBackendUrl } from "../../_lib/medusa-backend-url"
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
 type FacilityOption = {
   id: string
   name: string
   brand_id: string
+  brand_name?: string
+  country_code?: string
+  city?: string | null
   assembly_eu_band?: string | null
   parts_eu_level?: string | null
   materials_eu_level?: string | null
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${BACKEND_URL}${path}`, {
+  const response = await fetch(`${medusaBackendUrl()}${path}`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -53,6 +56,14 @@ export default function SellerMadeInEuropePage() {
   const [facilities, setFacilities] = useState<FacilityOption[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [facilityId, setFacilityId] = useState("")
+  const [showNewFacility, setShowNewFacility] = useState(false)
+  const [newFacilityName, setNewFacilityName] = useState("")
+  const [newFacilityStreet, setNewFacilityStreet] = useState("")
+  const [newFacilityHouse, setNewFacilityHouse] = useState("")
+  const [newFacilityPostal, setNewFacilityPostal] = useState("")
+  const [newFacilityCity, setNewFacilityCity] = useState("")
+  const [newFacilityCountry, setNewFacilityCountry] = useState("NL")
+  const [newFacilityBrandId, setNewFacilityBrandId] = useState("")
   const [assembly, setAssembly] = useState("eu_100")
   const [parts, setParts] = useState("eu_majority")
   const [materials, setMaterials] = useState("eu_majority")
@@ -70,24 +81,37 @@ export default function SellerMadeInEuropePage() {
         const list = await listOwnProducts()
         setProducts(list.products)
         const brands = await listSellerBrands()
-        const allFacilities: FacilityOption[] = []
-        for (const brand of brands.brands) {
-          const detail = await getSellerBrand(brand.id)
-          const rows = (detail.facilities ?? []) as Array<Record<string, unknown>>
-          for (const row of rows) {
-            if (typeof row.id === "string" && typeof row.name === "string") {
-              allFacilities.push({
-                id: row.id,
-                name: row.name,
-                brand_id: brand.id,
-                assembly_eu_band: (row.assembly_eu_band as string) ?? null,
-                parts_eu_level: (row.parts_eu_level as string) ?? null,
-                materials_eu_level: (row.materials_eu_level as string) ?? null,
-              })
+        const facRes = await listSellerFacilities().catch(() => ({
+          brands: brands.brands,
+          facilities: [] as FacilityOption[],
+        }))
+        const brandOptions = facRes.brands?.length ? facRes.brands : brands.brands
+        if (brandOptions[0]?.id) setNewFacilityBrandId(brandOptions[0].id)
+        else if (list.products[0]?.brand_id)
+          setNewFacilityBrandId(list.products[0].brand_id)
+        const fromApi = (facRes.facilities || []) as FacilityOption[]
+        if (fromApi.length) {
+          setFacilities(fromApi)
+        } else {
+          const allFacilities: FacilityOption[] = []
+          for (const brand of brandOptions) {
+            const detail = await getSellerBrand(brand.id)
+            const rows = (detail.facilities ?? []) as Array<Record<string, unknown>>
+            for (const row of rows) {
+              if (typeof row.id === "string" && typeof row.name === "string") {
+                allFacilities.push({
+                  id: row.id,
+                  name: row.name,
+                  brand_id: brand.id,
+                  assembly_eu_band: (row.assembly_eu_band as string) ?? null,
+                  parts_eu_level: (row.parts_eu_level as string) ?? null,
+                  materials_eu_level: (row.materials_eu_level as string) ?? null,
+                })
+              }
             }
           }
+          setFacilities(allFacilities)
         }
-        setFacilities(allFacilities)
       } catch (err) {
         setError(err instanceof Error ? err.message : "Load failed")
       }
@@ -176,6 +200,58 @@ export default function SellerMadeInEuropePage() {
     }
   }
 
+  async function createFacility() {
+    if (!newFacilityBrandId || !newFacilityCountry.trim()) {
+      setError(t("mieBrandCountryRequired", locale))
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await upsertSellerBrandFacility(newFacilityBrandId, {
+        name: newFacilityName.trim() || null,
+        country_code: newFacilityCountry,
+        street: newFacilityStreet.trim() || null,
+        house_number: newFacilityHouse.trim() || null,
+        postal_code: newFacilityPostal.trim() || null,
+        city: newFacilityCity.trim() || null,
+        assembly_eu_band: assembly,
+        parts_eu_level: parts,
+        materials_eu_level: materials,
+        primary_assembly_country: country,
+      })
+      const created = res as { facility?: { id?: string; name?: string } }
+      const row = created.facility
+      if (row?.id && row.name) {
+        setFacilities((prev) => [
+          ...prev,
+          {
+            id: row.id,
+            name: row.name,
+            brand_id: newFacilityBrandId,
+            assembly_eu_band: assembly,
+            parts_eu_level: parts,
+            materials_eu_level: materials,
+          },
+        ])
+        setFacilityId(row.id)
+      }
+      setShowNewFacility(false)
+      setNewFacilityName("")
+      setNewFacilityStreet("")
+      setNewFacilityHouse("")
+      setNewFacilityPostal("")
+      setNewFacilityCity("")
+      setNotice(t("mieFacilitySavedSelected", locale))
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : t("mieFacilityCreateFailed", locale)
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function saveFacilityProfile() {
     if (!selectedFacility) return
     setBusy(true)
@@ -190,9 +266,11 @@ export default function SellerMadeInEuropePage() {
         materials_eu_level: materials,
         primary_assembly_country: country,
       })
-      setNotice("Facility profile saved")
+      setNotice(t("mieFacilityProfileSaved", locale))
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Facility save failed")
+      setError(
+        err instanceof Error ? err.message : t("mieFacilitySaveFailed", locale)
+      )
     } finally {
       setBusy(false)
     }
@@ -203,6 +281,12 @@ export default function SellerMadeInEuropePage() {
       <div className="mx-auto max-w-5xl px-4 py-6">
         <h1 className="text-xl font-bold text-wf-900">{t("sellerMieTitle", locale)}</h1>
         <p className="mt-1 text-sm text-wf-600">{t("sellerMieIntro", locale)}</p>
+        <Notice className="mt-3" variant="info">
+          De Made in Europe-score wordt automatisch berekend uit de gekozen
+          assemblage-/onderdelen-/materialen-banden. Je vult geen vrij percentage
+          in. Voor verified-status is goedgekeurd productbewijs vereist — na bulk
+          upload je bewijs per product op de productdetailpagina.
+        </Notice>
 
         {notice ? <Notice className="mt-3">{notice}</Notice> : null}
         {error ? (
@@ -213,20 +297,110 @@ export default function SellerMadeInEuropePage() {
 
         <section className="mt-6 grid gap-4 rounded border border-wf-300 p-4 tablet:grid-cols-2">
           <label className="text-xs font-semibold text-wf-700">
-            Facility
+            Productielocatie
             <select
               className="mt-1 h-10 w-full rounded border border-wf-300 px-2"
               value={facilityId}
               onChange={(e) => setFacilityId(e.target.value)}
             >
-              <option value="">—</option>
+              <option value="">— selecteer productielocatie —</option>
               {facilities.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.name}
+                  {f.name} ({(f.country_code || "").toUpperCase() || "??"}) ·{" "}
+                  {f.brand_name || f.brand_id}
                 </option>
               ))}
             </select>
+            {facilities.length === 0 ? (
+              <p className="mt-1 text-[10px] text-amber-800">
+                Nog geen productielocatie. Kies hieronder
+                &quot;+ Productielocatie toevoegen&quot;.
+              </p>
+            ) : null}
+            <p className="mt-1 text-[10px] text-wf-600">
+              Daadwerkelijke productielocatie: de locatie waar het product
+              daadwerkelijk wordt geproduceerd of geassembleerd.
+            </p>
           </label>
+          <div className="tablet:col-span-2">
+            <button
+              type="button"
+              className="text-xs font-semibold text-wf-800 underline"
+              onClick={() => setShowNewFacility((v) => !v)}
+            >
+              + Productielocatie toevoegen
+            </button>
+            {showNewFacility ? (
+              <div className="mt-2 grid gap-2 rounded border border-wf-300 p-3 tablet:grid-cols-2">
+                <label className="text-xs font-semibold text-wf-700">
+                  Naam productielocatie (optioneel)
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-300 px-2"
+                    value={newFacilityName}
+                    onChange={(e) => setNewFacilityName(e.target.value)}
+                  />
+                </label>
+                <label className="text-xs font-semibold text-wf-700">
+                  Straat
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-300 px-2"
+                    value={newFacilityStreet}
+                    onChange={(e) => setNewFacilityStreet(e.target.value)}
+                  />
+                </label>
+                <label className="text-xs font-semibold text-wf-700">
+                  Huisnummer
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-300 px-2"
+                    value={newFacilityHouse}
+                    onChange={(e) => setNewFacilityHouse(e.target.value)}
+                  />
+                </label>
+                <label className="text-xs font-semibold text-wf-700">
+                  Postcode
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-300 px-2"
+                    value={newFacilityPostal}
+                    onChange={(e) => setNewFacilityPostal(e.target.value)}
+                  />
+                </label>
+                <label className="text-xs font-semibold text-wf-700">
+                  Plaats
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-300 px-2"
+                    value={newFacilityCity}
+                    onChange={(e) => setNewFacilityCity(e.target.value)}
+                  />
+                </label>
+                <label className="text-xs font-semibold text-wf-700">
+                  Land (verplicht)
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-300 px-2 uppercase"
+                    maxLength={2}
+                    value={newFacilityCountry}
+                    onChange={(e) =>
+                      setNewFacilityCountry(e.target.value.toUpperCase())
+                    }
+                  />
+                </label>
+                <p className="tablet:col-span-2 text-[11px] text-wf-600">
+                  Alleen het land is verplicht. De overige gegevens zijn
+                  optioneel en kunnen worden ingevuld wanneer deze beschikbaar
+                  zijn.
+                </p>
+                <div className="flex items-end">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => void createFacility()}
+                  >
+                    Productielocatie opslaan
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
           <label className="text-xs font-semibold text-wf-700">
             {t("mieAssembly", locale)}
             <select
@@ -277,7 +451,7 @@ export default function SellerMadeInEuropePage() {
 
         <div className="mt-3 flex flex-wrap gap-2">
           <Button type="button" disabled={busy || selected.size === 0} onClick={() => void applyBulk()}>
-            Bulk apply ({selected.size})
+            Toepassen op geselecteerde producten ({selected.size})
           </Button>
           <Button
             type="button"
@@ -285,8 +459,11 @@ export default function SellerMadeInEuropePage() {
             disabled={busy || !selectedFacility}
             onClick={() => void saveFacilityProfile()}
           >
-            Save facility profile
+            Profiel productielocatie opslaan
           </Button>
+          <p className="text-[10px] text-wf-500">
+            Toepassen vult alleen gegevens in — geen automatische compliance-goedkeuring.
+          </p>
         </div>
 
         <section className="mt-6 overflow-x-auto rounded border border-wf-300">
@@ -302,6 +479,7 @@ export default function SellerMadeInEuropePage() {
                 </th>
                 <th className="px-3 py-2">Product</th>
                 <th className="px-3 py-2">ID</th>
+                <th className="px-3 py-2">Detail</th>
               </tr>
             </thead>
             <tbody>
@@ -323,6 +501,14 @@ export default function SellerMadeInEuropePage() {
                   </td>
                   <td className="px-3 py-2">{p.title ?? p.id}</td>
                   <td className="px-3 py-2 font-mono text-xs">{p.id}</td>
+                  <td className="px-3 py-2">
+                    <a
+                      href={`/seller/products/${p.id}?tab=information`}
+                      className="text-xs font-semibold underline"
+                    >
+                      Bewijs
+                    </a>
+                  </td>
                 </tr>
               ))}
             </tbody>

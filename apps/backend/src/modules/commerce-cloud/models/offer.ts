@@ -22,6 +22,8 @@ const Offer = model
     sales_status: model.enum(["active", "paused"]).default("active"),
     /** Upper bound promised delivery window in calendar/business days (seller-set). */
     delivery_days_max: model.number().nullable(),
+    /** Optional link to seller shipping profile (bulk country rates). */
+    shipping_profile_id: model.text().nullable(),
     inventory: model.hasOne(() => OfferInventory, {
       mappedBy: "offer",
     }),

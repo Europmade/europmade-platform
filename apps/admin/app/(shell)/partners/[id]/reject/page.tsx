@@ -25,7 +25,7 @@ export default function PartnerRejectPage() {
     setError(null);
     try {
       await rejectPartner(id, reason.trim());
-      router.push("/partners");
+      router.push(`/partners/${id}`);
     } catch (err) {
       setError(
         err instanceof PartnerAdminApiError

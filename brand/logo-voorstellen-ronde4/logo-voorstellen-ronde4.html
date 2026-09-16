@@ -1,0 +1,723 @@
+<title>EuropMade Logovoorstellen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#FAFAFB; --surface:#FFFFFF; --line:#E3E6EB; --line-soft:#EDEFF3;
+    --ink:#14161B; --ink-2:#39404B; --muted:#6A7280;
+    --brand:#10396B; --r:5px;
+    --display:"Bricolage Grotesque","Segoe UI",Helvetica,Arial,sans-serif;
+    --body:"IBM Plex Sans","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0F1115; --surface:#161A20; --line:#282D36; --line-soft:#1F242C;
+      --ink:#ECEEF3; --ink-2:#C2C8D2; --muted:#8C94A2;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0F1115; --surface:#161A20; --line:#282D36; --line-soft:#1F242C;
+    --ink:#ECEEF3; --ink-2:#C2C8D2; --muted:#8C94A2;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--body); font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px; margin:0 auto; padding:clamp(28px,5vw,72px) clamp(20px,5vw,48px) 96px}
+  h1,h2,h3{font-family:var(--display); font-weight:700; letter-spacing:-.02em; text-wrap:balance; margin:0}
+  p{margin:0}
+  a{color:inherit}
+  code{font-family:var(--mono)}
+  :focus-visible{outline:2px solid var(--ink); outline-offset:3px; border-radius:2px}
+
+  .eyebrow{font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--muted)}
+  header.top{display:flex; flex-direction:column; gap:20px; padding-bottom:40px}
+  header.top h1{font-size:clamp(2.1rem,5.4vw,3.4rem); line-height:1.05}
+  .lead{max-width:64ch; color:var(--ink-2); font-size:clamp(1rem,1.6vw,1.125rem)}
+  .lead em{font-style:normal; color:var(--ink); font-weight:500}
+  nav.jump{display:flex; flex-wrap:wrap; gap:8px; margin-top:6px}
+  nav.jump a{display:inline-flex; align-items:baseline; gap:8px; text-decoration:none;
+    border:1px solid var(--line); border-radius:var(--r); padding:7px 14px;
+    font-size:14px; font-weight:500; background:var(--surface); transition:border-color .15s ease}
+  nav.jump a span{font-family:var(--mono); font-size:11px; color:var(--muted)}
+  nav.jump a:hover{border-color:var(--ink)}
+
+  .deel{border-top:1px solid var(--line); margin-top:72px; padding-top:30px}
+  .deel > h2{font-size:clamp(1.5rem,3vw,2rem)}
+  .deel > .sub{color:var(--muted); font-size:1.02rem; margin-top:8px; max-width:64ch}
+
+  .concept{margin-top:52px}
+  .concept-head{display:flex; gap:20px; align-items:flex-start; margin-bottom:22px}
+  .nr{font-family:var(--mono); font-size:13px; color:var(--muted); padding-top:9px; letter-spacing:.06em}
+  .concept-head h2{font-size:clamp(1.35rem,2.8vw,1.9rem); line-height:1.12}
+  .tag{color:var(--muted); font-size:1rem; margin-top:3px}
+
+  /* artboards altijd op licht papier */
+  .stage{background:#F5F6F8; border:1px solid #E6E8ED; border-radius:var(--r);
+    padding:clamp(26px,5vw,54px); display:flex; justify-content:center; align-items:center}
+  .lockup{width:clamp(240px,44vw,440px); height:auto; display:block}
+  .lockup.sm{width:160px}
+  .lockup.grid{width:100%; max-width:230px; height:auto}
+  .ico{display:block}
+  .ico.sz-160{width:150px;height:150px}
+  .ico.sz-56{width:56px;height:56px}
+  .ico.sz-32{width:32px;height:32px}
+  .ico.sz-16{width:16px;height:16px}
+
+  .tests{display:flex; flex-wrap:wrap; gap:12px; margin-top:12px}
+  .tests figure{margin:0; flex:1 1 170px; min-width:150px}
+  .test-box{background:#FFFFFF; border:1px solid #E6E8ED; border-radius:var(--r);
+    height:104px; display:flex; align-items:center; justify-content:center; padding:14px; gap:20px}
+  .test-box.dark{background:var(--brand); border-color:var(--brand)}
+  .tests figcaption, .glyphs figcaption{font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); margin-top:8px; text-align:center}
+
+  .glyphs{display:flex; flex-wrap:wrap; gap:12px}
+  .glyphs figure{margin:0; flex:1 1 180px; min-width:150px}
+  .glyph-box{background:#FFFFFF; border:1px solid #E6E8ED; border-radius:var(--r);
+    height:150px; display:flex; align-items:center; justify-content:center; padding:18px; color:var(--brand)}
+  .glyph{height:100%; width:auto; display:block}
+
+  .cols{display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);
+    gap:clamp(28px,5vw,56px); margin-top:32px}
+  @media (max-width:820px){ .cols{grid-template-columns:1fr} }
+  .cols h3{font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:14px}
+  .col-idee p{max-width:60ch; color:var(--ink-2)}
+  .col-idee p + p{margin-top:12px}
+  .letter{font-size:14.5px; line-height:1.6; color:var(--ink-2)}
+  .letter em, .col-idee em{font-style:normal; font-weight:600; color:var(--ink)}
+  .files{list-style:none; margin:16px 0 0; padding:14px 0 0; border-top:1px solid var(--line-soft);
+    display:grid; gap:3px}
+  .files code{font-size:11.5px; color:var(--muted); word-break:break-all}
+
+  /* uitleg draaiing */
+  .draai{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
+    gap:clamp(24px,4vw,48px); align-items:center; margin-top:26px}
+  @media (max-width:820px){ .draai{grid-template-columns:1fr} }
+  .draai-beeld{display:flex; gap:14px; align-items:stretch}
+  .draai-beeld figure{margin:0; flex:1}
+  .draai p{color:var(--ink-2); max-width:60ch}
+  .draai p + p{margin-top:12px}
+  .draai strong{color:var(--ink); font-weight:600}
+
+  /* combinatieraster */
+  .raster{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:24px}
+  @media (max-width:820px){ .raster{grid-template-columns:repeat(2,minmax(0,1fr))} }
+  @media (max-width:520px){ .raster{grid-template-columns:1fr} }
+  .cel{background:#FFFFFF; border:1px solid #E6E8ED; border-radius:var(--r);
+    padding:18px 14px 12px; display:flex; flex-direction:column; align-items:center; gap:12px}
+  .cel span{font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase;
+    color:#7A8290; text-align:center}
+
+  .next{list-style:none; margin:0; padding:0; display:grid; gap:12px; counter-reset:n}
+  .next li{position:relative; font-size:14.5px; line-height:1.55; color:var(--ink-2);
+    border-top:1px solid var(--line-soft); padding:12px 0 0 32px}
+  .next li::before{counter-increment:n; content:counter(n,decimal-leading-zero);
+    position:absolute; left:0; top:13px; font-family:var(--mono); font-size:11px; color:var(--muted)}
+  .colofon{margin-top:60px; border-top:1px solid var(--line); padding-top:18px;
+    font-family:var(--mono); font-size:11.5px; line-height:1.8; color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">EuropMade · Merkidentiteit · Ronde 4</span>
+    <h1>Antraciet of zilver, en een M die de E is</h1>
+    <p class="lead">Twee losse keuzes op deze pagina. Eerst de <em>kleurstelling</em> van het beeldmerk: drie
+      manieren om de ring en de kern te verdelen. Daarna de <em>letters</em>: de E en de M zijn nu
+      letterlijk dezelfde getekende vorm, waarbij de M een kwartslag met de klok mee staat. Onderaan staan
+      alle negen combinaties naast elkaar.</p>
+    <nav class="jump" aria-label="Snel naar"><a href="#kleur-antraciet"><span>A</span>Antraciet glanzend</a><a href="#kleur-antracietstip"><span>B</span>Antraciete punten</a><a href="#kleur-zilverstip"><span>C</span>Zilveren punten</a><a href="#letter-boog"><span>01</span>Boog</a><a href="#letter-zacht"><span>02</span>Zacht</a><a href="#letter-strak"><span>03</span>Strak</a></nav>
+  </header>
+
+  <section class="deel" id="kleur">
+    <h2>Deel 1 — de kleurstelling</h2>
+    <p class="sub">Diepblauw blijft <code>#10396B</code>. Wat verschilt is welk deel van het beeldmerk het
+      metaal krijgt en welk deel het blauw. Alle drie hebben een vlakke terugval voor 16 px, borduursel en
+      één-kleur drukwerk — een verloop overleeft die situaties niet.</p>
+    
+<section class="concept" id="kleur-antraciet">
+  <header class="concept-head"><span class="nr">A</span>
+    <div><h2>Antraciet glanzend</h2><p class="tag">Blauwe punten, antraciete kern.</p></div></header>
+  <div class="stage"><svg class="ico sz-160" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="antstantraciet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antstantraciet)"/></svg></div>
+  <div class="tests">
+    <figure><div class="test-box"><svg class="ico sz-56" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="antaantraciet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antaantraciet)"/></svg></div><figcaption>Verloop 56 px</figcaption></figure>
+    <figure><div class="test-box"><svg class="ico sz-32" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="#2B3037"/></svg><svg class="ico sz-16" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="#2B3037"/></svg></div><figcaption>Vlak 32 en 16 px</figcaption></figure>
+    <figure><div class="test-box dark"><svg class="ico sz-56" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32" cy="32" r="11.2" fill="#FFFFFF"/></svg></div><figcaption>Negatief</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="col-idee"><h3>Waarom</h3><p>De kern wordt gepolijst antraciet: een diagonaal verloop van #7A828D naar #1E2329 met een lichte baan op 70%. Donkerder dan zilver, en daardoor rustiger — het metaal valt op door de glans, niet door de lichtheid. Dit is de directe opvolger van de zilveren kern uit ronde&nbsp;3.</p></div>
+    <div class="col-spec"><h3>Contrast</h3><p class="letter">De donkerste delen van de kern halen ruim 12:1 op wit; de lichte baan zakt naar ongeveer 4:1 en dient alleen als glans.</p></div>
+  </div>
+</section>
+<section class="concept" id="kleur-antracietstip">
+  <header class="concept-head"><span class="nr">B</span>
+    <div><h2>Antraciete punten</h2><p class="tag">Zwart-antraciete punten, blauwe kern.</p></div></header>
+  <div class="stage"><svg class="ico sz-160" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg></div>
+  <div class="tests">
+    <figure><div class="test-box"><svg class="ico sz-56" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg></div><figcaption>Verloop 56 px</figcaption></figure>
+    <figure><div class="test-box"><svg class="ico sz-32" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg><svg class="ico sz-16" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg></div><figcaption>Vlak 32 en 16 px</figcaption></figure>
+    <figure><div class="test-box dark"><svg class="ico sz-56" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32" cy="32" r="11.2" fill="#FFFFFF"/></svg></div><figcaption>Negatief</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="col-idee"><h3>Waarom</h3><p>De verhouding draait om: de twaalf punten worden bijna zwart (#23282E) en de kern wordt diepblauw. Daardoor gaat alle aandacht naar het midden in plaats van naar de ring — het leest als één sterk punt met een omlijsting eromheen.</p></div>
+    <div class="col-spec"><h3>Contrast</h3><p class="letter">Beide kleuren zijn massief: #23282E haalt 14,9:1 op wit, #10396B 11,5:1. Dit is de variant die het beste standhoudt op klein formaat en in slechte druk.</p></div>
+  </div>
+</section>
+<section class="concept" id="kleur-zilverstip">
+  <header class="concept-head"><span class="nr">C</span>
+    <div><h2>Zilveren punten</h2><p class="tag">Donkerzilveren punten, blauwe kern.</p></div></header>
+  <div class="stage"><svg class="ico sz-160" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="zilstzilverstip" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="56"><stop offset="0" stop-color="#A2B0C0"/><stop offset=".34" stop-color="#566579"/><stop offset=".54" stop-color="#3F4E62"/><stop offset=".72" stop-color="#8390A2"/><stop offset="1" stop-color="#4C5B70"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="url(#zilstzilverstip)"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg></div>
+  <div class="tests">
+    <figure><div class="test-box"><svg class="ico sz-56" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="zilazilverstip" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="56"><stop offset="0" stop-color="#A2B0C0"/><stop offset=".34" stop-color="#566579"/><stop offset=".54" stop-color="#3F4E62"/><stop offset=".72" stop-color="#8390A2"/><stop offset="1" stop-color="#4C5B70"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="url(#zilazilverstip)"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg></div><figcaption>Verloop 56 px</figcaption></figure>
+    <figure><div class="test-box"><svg class="ico sz-32" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#5F6E81"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#5F6E81"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#5F6E81"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#5F6E81"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#5F6E81"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#5F6E81"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#5F6E81"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#5F6E81"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#5F6E81"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#5F6E81"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#5F6E81"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#5F6E81"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg><svg class="ico sz-16" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#5F6E81"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#5F6E81"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#5F6E81"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#5F6E81"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#5F6E81"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#5F6E81"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#5F6E81"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#5F6E81"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#5F6E81"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#5F6E81"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#5F6E81"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#5F6E81"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/></svg></div><figcaption>Vlak 32 en 16 px</figcaption></figure>
+    <figure><div class="test-box dark"><svg class="ico sz-56" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32.00" cy="8.40" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32" cy="32" r="11.2" fill="#FFFFFF"/></svg></div><figcaption>Negatief</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="col-idee"><h3>Waarom</h3><p>De twaalf punten krijgen het zilververloop, nu flink donkerder dan in ronde 3, en het verloop loopt over de hele ring in plaats van per punt. Daardoor lijkt het licht van linksboven te komen en krijgt de ring diepte zonder dat je het als een effect leest.</p></div>
+    <div class="col-spec"><h3>Contrast</h3><p class="letter">De donkere kant van de ring haalt 8,5:1 op wit, de lichte kant 2,2:1. Die lichte punten zijn de glans en mogen zwak zijn — maar bij 16 px en in drukwerk gebruik je de vlakke versie (#5F6E81, 5,6:1).</p></div>
+  </div>
+</section>
+  </section>
+
+  <section class="deel" id="vorm">
+    <h2>Deel 2 — de letters</h2>
+    <p class="sub">Eén vorm, twee letters. De vorm is een stam met drie armen; rechtop is het een E,
+      een kwartslag met de klok mee is het een M.</p>
+    <div class="draai">
+      <div class="draai-beeld">
+        <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 110 146" role="img" aria-label="E"><g transform="translate(12.000 29.750)" fill="none" stroke="currentColor" stroke-width="19.500" stroke-linecap="butt"><path d="M85.485 9.750 H31.275 A21.525 21.525 0 0 0 9.750 31.275 V72.975 A21.525 21.525 0 0 0 31.275 94.500 H85.485"/><path d="M9.750 52.125 H85.485"/></g></svg></div><figcaption>Rechtop</figcaption></figure>
+        <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 152 146" role="img" aria-label="M"><g transform="translate(139.134 29.750) rotate(90) scale(1.220)" fill="none" stroke="currentColor" stroke-width="19.500" stroke-linecap="butt"><path d="M85.485 9.750 H31.275 A21.525 21.525 0 0 0 9.750 31.275 V72.975 A21.525 21.525 0 0 0 31.275 94.500 H85.485"/><path d="M9.750 52.125 H85.485"/></g></svg></div><figcaption>90° met de klok mee</figcaption></figure>
+      </div>
+      <div>
+        <p>Twee dingen volgen dwingend uit die regel. <strong>De drie armen moeten even lang zijn</strong> —
+          bij een gewone E is de middelste korter, maar gedraaid zou dat middelste been van de M dan boven de
+          basislijn blijven hangen.</p>
+        <p><strong>En de M wordt automatisch zwaarder dan de E.</strong> De vorm moet na het draaien namelijk
+          worden opgeschaald om weer op kaphoogte te komen, en de lijndikte schaalt mee. Dat is geen bijeffect
+          maar precies wat je wilt: <em>Made</em> is vet, <em>Europ</em> is dat niet — het gewichtsverschil
+          dat je vanaf ronde 1 goed vond, komt hier gratis uit de constructie.</p>
+        <p>De drie varianten hieronder verschillen alleen in de bochtstraal van de vorm. Alles wat je aan de
+          E verandert, verandert dus mee aan de M.</p>
+      </div>
+    </div>
+    
+<section class="concept" id="letter-boog">
+  <header class="concept-head"><span class="nr">01</span>
+    <div><h2>Boog</h2><p class="tag">Maximale bocht: de M wordt twee volle bogen.</p></div></header>
+  <div class="stage"><svg class="lockup " viewBox="0 0 337 64" role="img" aria-label="EuropMade"><defs><linearGradient id="antLboog" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antLboog)"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M138.73 23.09V47.00H132.64V43.98Q131.48 45.53 129.60 46.42Q127.72 47.30 125.52 47.30Q122.71 47.30 120.56 46.12Q118.40 44.93 117.17 42.62Q115.94 40.31 115.94 37.12V23.09H121.98V36.25Q121.98 39.10 123.40 40.63Q124.83 42.17 127.29 42.17Q129.79 42.17 131.22 40.63Q132.64 39.10 132.64 36.25V23.09ZM157.42 22.74V29.09H155.82Q152.97 29.09 151.53 30.42Q150.08 31.76 150.08 35.09V47.00H144.04V23.09H150.08V26.80Q151.25 24.90 153.12 23.82Q155.00 22.74 157.42 22.74ZM159.32 35.04Q159.32 31.37 160.94 28.57Q162.56 25.76 165.36 24.23Q168.17 22.70 171.62 22.70Q175.07 22.70 177.88 24.23Q180.68 25.76 182.30 28.57Q183.92 31.37 183.92 35.04Q183.92 38.71 182.26 41.52Q180.60 44.32 177.77 45.86Q174.94 47.39 171.45 47.39Q167.99 47.39 165.23 45.86Q162.47 44.32 160.89 41.52Q159.32 38.71 159.32 35.04ZM177.71 35.04Q177.71 31.63 175.92 29.80Q174.12 27.96 171.53 27.96Q168.94 27.96 167.20 29.80Q165.45 31.63 165.45 35.04Q165.45 38.45 167.15 40.29Q168.86 42.12 171.45 42.12Q173.09 42.12 174.53 41.32Q175.98 40.53 176.84 38.93Q177.71 37.33 177.71 35.04ZM201.66 22.70Q204.73 22.70 207.21 24.21Q209.69 25.72 211.14 28.50Q212.58 31.29 212.58 34.96Q212.58 38.63 211.14 41.45Q209.69 44.28 207.21 45.83Q204.73 47.39 201.66 47.39Q199.03 47.39 197.02 46.31Q195.02 45.23 193.76 43.59V58.40H187.72V23.09H193.76V26.54Q194.93 24.90 196.98 23.80Q199.03 22.70 201.66 22.70ZM200.07 28.01Q198.43 28.01 196.98 28.85Q195.53 29.69 194.65 31.29Q193.76 32.88 193.76 35.04Q193.76 37.20 194.65 38.80Q195.53 40.40 196.98 41.24Q198.43 42.08 200.07 42.08Q201.75 42.08 203.20 41.22Q204.64 40.35 205.53 38.76Q206.41 37.16 206.41 34.96Q206.41 32.80 205.53 31.22Q204.64 29.65 203.20 28.83Q201.75 28.01 200.07 28.01Z" fill="#10396B"/>
+    <g transform="translate(249.108 17.000) rotate(90) scale(1.163)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M263.31 22.57Q265.86 22.57 267.78 23.60Q269.70 24.64 270.73 26.32V22.91H278.12V47.00H270.73V43.59Q269.65 45.27 267.73 46.31Q265.81 47.35 263.27 47.35Q260.33 47.35 257.91 45.81Q255.50 44.28 254.09 41.45Q252.69 38.63 252.69 34.91Q252.69 31.20 254.09 28.40Q255.50 25.59 257.91 24.08Q260.33 22.57 263.31 22.57ZM265.47 29.00Q263.27 29.00 261.73 30.58Q260.20 32.15 260.20 34.91Q260.20 37.68 261.73 39.29Q263.27 40.91 265.47 40.91Q267.67 40.91 269.20 39.32Q270.73 37.72 270.73 34.96Q270.73 32.19 269.20 30.60Q267.67 29.00 265.47 29.00ZM291.97 22.57Q294.35 22.57 296.31 23.56Q298.27 24.55 299.40 26.24V15.06H306.78V47.00H299.40V43.55Q298.36 45.27 296.44 46.31Q294.52 47.35 291.97 47.35Q288.99 47.35 286.58 45.81Q284.16 44.28 282.76 41.45Q281.35 38.63 281.35 34.91Q281.35 31.20 282.76 28.40Q284.16 25.59 286.58 24.08Q288.99 22.57 291.97 22.57ZM294.13 29.00Q291.93 29.00 290.40 30.58Q288.86 32.15 288.86 34.91Q288.86 37.68 290.40 39.29Q291.93 40.91 294.13 40.91Q296.33 40.91 297.86 39.32Q299.40 37.72 299.40 34.96Q299.40 32.19 297.86 30.60Q296.33 29.00 294.13 29.00ZM334.06 36.73H317.35Q317.53 38.97 318.80 40.16Q320.07 41.35 321.93 41.35Q324.69 41.35 325.77 39.01H333.63Q333.02 41.39 331.45 43.29Q329.87 45.19 327.50 46.27Q325.12 47.35 322.19 47.35Q318.65 47.35 315.89 45.83Q313.12 44.32 311.57 41.52Q310.01 38.71 310.01 34.96Q310.01 31.20 311.55 28.40Q313.08 25.59 315.84 24.08Q318.60 22.57 322.19 22.57Q325.68 22.57 328.40 24.04Q331.12 25.50 332.65 28.22Q334.19 30.94 334.19 34.57Q334.19 35.60 334.06 36.73ZM326.63 32.63Q326.63 30.73 325.34 29.60Q324.04 28.48 322.10 28.48Q320.24 28.48 318.97 29.56Q317.70 30.64 317.40 32.63Z" fill="#10396B"/></svg></div>
+  <div class="glyphs" style="margin-top:12px">
+    <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 114 146" role="img" aria-label="E"><g transform="translate(12.000 29.750)" fill="none" stroke="currentColor" stroke-width="21.000" stroke-linecap="butt"><path d="M89.655 10.500 H52.125 A41.625 41.625 0 0 0 10.500 52.125 V52.125 A41.625 41.625 0 0 0 52.125 93.750 H89.655"/><path d="M10.500 52.125 H89.655"/></g></svg></div><figcaption>De vorm rechtop = E</figcaption></figure>
+    <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 146 146" role="img" aria-label="M"><g transform="translate(133.221 29.750) rotate(90) scale(1.163)" fill="none" stroke="currentColor" stroke-width="21.000" stroke-linecap="butt"><path d="M89.655 10.500 H52.125 A41.625 41.625 0 0 0 10.500 52.125 V52.125 A41.625 41.625 0 0 0 52.125 93.750 H89.655"/><path d="M10.500 52.125 H89.655"/></g></svg></div><figcaption>Dezelfde vorm, kwartslag = M</figcaption></figure>
+    <figure><div class="test-box dark" style="height:150px"><svg class="lockup sm" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><circle cx="32.00" cy="8.40" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32" cy="32" r="11.2" fill="#FFFFFF"/><g transform="translate(85.000 17.000)" fill="none" stroke="#FFFFFF" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M138.73 23.09V47.00H132.64V43.98Q131.48 45.53 129.60 46.42Q127.72 47.30 125.52 47.30Q122.71 47.30 120.56 46.12Q118.40 44.93 117.17 42.62Q115.94 40.31 115.94 37.12V23.09H121.98V36.25Q121.98 39.10 123.40 40.63Q124.83 42.17 127.29 42.17Q129.79 42.17 131.22 40.63Q132.64 39.10 132.64 36.25V23.09ZM157.42 22.74V29.09H155.82Q152.97 29.09 151.53 30.42Q150.08 31.76 150.08 35.09V47.00H144.04V23.09H150.08V26.80Q151.25 24.90 153.12 23.82Q155.00 22.74 157.42 22.74ZM159.32 35.04Q159.32 31.37 160.94 28.57Q162.56 25.76 165.36 24.23Q168.17 22.70 171.62 22.70Q175.07 22.70 177.88 24.23Q180.68 25.76 182.30 28.57Q183.92 31.37 183.92 35.04Q183.92 38.71 182.26 41.52Q180.60 44.32 177.77 45.86Q174.94 47.39 171.45 47.39Q167.99 47.39 165.23 45.86Q162.47 44.32 160.89 41.52Q159.32 38.71 159.32 35.04ZM177.71 35.04Q177.71 31.63 175.92 29.80Q174.12 27.96 171.53 27.96Q168.94 27.96 167.20 29.80Q165.45 31.63 165.45 35.04Q165.45 38.45 167.15 40.29Q168.86 42.12 171.45 42.12Q173.09 42.12 174.53 41.32Q175.98 40.53 176.84 38.93Q177.71 37.33 177.71 35.04ZM201.66 22.70Q204.73 22.70 207.21 24.21Q209.69 25.72 211.14 28.50Q212.58 31.29 212.58 34.96Q212.58 38.63 211.14 41.45Q209.69 44.28 207.21 45.83Q204.73 47.39 201.66 47.39Q199.03 47.39 197.02 46.31Q195.02 45.23 193.76 43.59V58.40H187.72V23.09H193.76V26.54Q194.93 24.90 196.98 23.80Q199.03 22.70 201.66 22.70ZM200.07 28.01Q198.43 28.01 196.98 28.85Q195.53 29.69 194.65 31.29Q193.76 32.88 193.76 35.04Q193.76 37.20 194.65 38.80Q195.53 40.40 196.98 41.24Q198.43 42.08 200.07 42.08Q201.75 42.08 203.20 41.22Q204.64 40.35 205.53 38.76Q206.41 37.16 206.41 34.96Q206.41 32.80 205.53 31.22Q204.64 29.65 203.20 28.83Q201.75 28.01 200.07 28.01Z" fill="#FFFFFF"/>
+    <g transform="translate(249.108 17.000) rotate(90) scale(1.163)" fill="none" stroke="#FFFFFF" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M263.31 22.57Q265.86 22.57 267.78 23.60Q269.70 24.64 270.73 26.32V22.91H278.12V47.00H270.73V43.59Q269.65 45.27 267.73 46.31Q265.81 47.35 263.27 47.35Q260.33 47.35 257.91 45.81Q255.50 44.28 254.09 41.45Q252.69 38.63 252.69 34.91Q252.69 31.20 254.09 28.40Q255.50 25.59 257.91 24.08Q260.33 22.57 263.31 22.57ZM265.47 29.00Q263.27 29.00 261.73 30.58Q260.20 32.15 260.20 34.91Q260.20 37.68 261.73 39.29Q263.27 40.91 265.47 40.91Q267.67 40.91 269.20 39.32Q270.73 37.72 270.73 34.96Q270.73 32.19 269.20 30.60Q267.67 29.00 265.47 29.00ZM291.97 22.57Q294.35 22.57 296.31 23.56Q298.27 24.55 299.40 26.24V15.06H306.78V47.00H299.40V43.55Q298.36 45.27 296.44 46.31Q294.52 47.35 291.97 47.35Q288.99 47.35 286.58 45.81Q284.16 44.28 282.76 41.45Q281.35 38.63 281.35 34.91Q281.35 31.20 282.76 28.40Q284.16 25.59 286.58 24.08Q288.99 22.57 291.97 22.57ZM294.13 29.00Q291.93 29.00 290.40 30.58Q288.86 32.15 288.86 34.91Q288.86 37.68 290.40 39.29Q291.93 40.91 294.13 40.91Q296.33 40.91 297.86 39.32Q299.40 37.72 299.40 34.96Q299.40 32.19 297.86 30.60Q296.33 29.00 294.13 29.00ZM334.06 36.73H317.35Q317.53 38.97 318.80 40.16Q320.07 41.35 321.93 41.35Q324.69 41.35 325.77 39.01H333.63Q333.02 41.39 331.45 43.29Q329.87 45.19 327.50 46.27Q325.12 47.35 322.19 47.35Q318.65 47.35 315.89 45.83Q313.12 44.32 311.57 41.52Q310.01 38.71 310.01 34.96Q310.01 31.20 311.55 28.40Q313.08 25.59 315.84 24.08Q318.60 22.57 322.19 22.57Q325.68 22.57 328.40 24.04Q331.12 25.50 332.65 28.22Q334.19 30.94 334.19 34.57Q334.19 35.60 334.06 36.73ZM326.63 32.63Q326.63 30.73 325.34 29.60Q324.04 28.48 322.10 28.48Q320.24 28.48 318.97 29.56Q317.70 30.64 317.40 32.63Z" fill="#FFFFFF"/></svg></div><figcaption>Negatief</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="col-idee"><h3>Het idee</h3><p>De bochtstraal is zo groot als de vorm toelaat. In de E wordt de linkerkant daardoor een halve cirkel; in de gedraaide stand worden de twee schouders volledige bogen. Dit is de variant die het dichtst bij de M ligt die je in ronde 3 koos.</p></div>
+    <div class="col-spec"><h3>Let op</h3><p class="letter">Om de M niet te breed te laten worden is de E hier wat forser; <em>Europ</em> staat daarom in SemiBold in plaats van Medium. Het verschil met <em>Made</em> is dus iets kleiner.</p>
+      <ul class="files">
+        <li><code>europmade-logo-boog-&lt;kleur&gt;.svg</code></li>
+        <li><code>europmade-logo-boog-mono.svg</code></li>
+        <li><code>europmade-logo-boog-wit.svg</code></li>
+      </ul></div>
+  </div>
+</section>
+<section class="concept" id="letter-zacht">
+  <header class="concept-head"><span class="nr">02</span>
+    <div><h2>Zacht</h2><p class="tag">Middenweg: ronde schouders, herkenbare E.</p></div></header>
+  <div class="stage"><svg class="lockup " viewBox="0 0 336 64" role="img" aria-label="EuropMade"><defs><linearGradient id="antLzacht" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antLzacht)"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M136.75 23.22V47.00H131.83V44.19Q130.66 45.66 128.79 46.50Q126.91 47.35 124.79 47.35Q121.99 47.35 119.77 46.18Q117.54 45.01 116.27 42.73Q115.00 40.44 115.00 37.20V23.22H119.87V36.47Q119.87 39.66 121.47 41.37Q123.07 43.07 125.83 43.07Q128.59 43.07 130.21 41.37Q131.83 39.66 131.83 36.47V23.22ZM154.62 22.83V27.92H153.37Q150.48 27.92 148.99 29.39Q147.50 30.86 147.50 34.48V47.00H142.58V23.22H147.50V26.67Q148.58 24.86 150.37 23.84Q152.16 22.83 154.62 22.83ZM156.91 35.09Q156.91 31.46 158.51 28.65Q160.10 25.85 162.87 24.34Q165.63 22.83 169.04 22.83Q172.45 22.83 175.21 24.34Q177.97 25.85 179.57 28.65Q181.17 31.46 181.17 35.09Q181.17 38.71 179.53 41.52Q177.89 44.32 175.06 45.86Q172.23 47.39 168.82 47.39Q165.46 47.39 162.74 45.86Q160.02 44.32 158.46 41.54Q156.91 38.76 156.91 35.09ZM176.12 35.09Q176.12 32.50 175.13 30.71Q174.13 28.91 172.49 28.01Q170.85 27.10 168.95 27.10Q167.05 27.10 165.43 28.01Q163.82 28.91 162.87 30.71Q161.92 32.50 161.92 35.09Q161.92 38.93 163.88 41.02Q165.84 43.12 168.82 43.12Q170.72 43.12 172.38 42.21Q174.05 41.30 175.08 39.49Q176.12 37.68 176.12 35.09ZM198.61 22.83Q201.72 22.83 204.28 24.36Q206.85 25.89 208.32 28.65Q209.79 31.42 209.79 35.00Q209.79 38.58 208.32 41.41Q206.85 44.24 204.28 45.81Q201.72 47.39 198.61 47.39Q195.89 47.39 193.77 46.29Q191.66 45.19 190.32 43.55V58.31H185.40V23.22H190.32V26.71Q191.57 25.07 193.73 23.95Q195.89 22.83 198.61 22.83ZM197.53 27.10Q195.67 27.10 194.01 28.05Q192.35 29.00 191.33 30.81Q190.32 32.63 190.32 35.09Q190.32 37.55 191.33 39.38Q192.35 41.22 194.01 42.17Q195.67 43.12 197.53 43.12Q199.43 43.12 201.09 42.14Q202.75 41.17 203.77 39.32Q204.78 37.46 204.78 35.00Q204.78 32.54 203.77 30.75Q202.75 28.96 201.09 28.03Q199.43 27.10 197.53 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.229 17.000) rotate(90) scale(1.220)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M262.43 22.57Q264.98 22.57 266.90 23.60Q268.82 24.64 269.85 26.32V22.91H277.24V47.00H269.85V43.59Q268.78 45.27 266.85 46.31Q264.93 47.35 262.39 47.35Q259.45 47.35 257.03 45.81Q254.62 44.28 253.21 41.45Q251.81 38.63 251.81 34.91Q251.81 31.20 253.21 28.40Q254.62 25.59 257.03 24.08Q259.45 22.57 262.43 22.57ZM264.59 29.00Q262.39 29.00 260.85 30.58Q259.32 32.15 259.32 34.91Q259.32 37.68 260.85 39.29Q262.39 40.91 264.59 40.91Q266.79 40.91 268.32 39.32Q269.85 37.72 269.85 34.96Q269.85 32.19 268.32 30.60Q266.79 29.00 264.59 29.00ZM291.09 22.57Q293.47 22.57 295.43 23.56Q297.39 24.55 298.52 26.24V15.06H305.90V47.00H298.52V43.55Q297.48 45.27 295.56 46.31Q293.64 47.35 291.09 47.35Q288.11 47.35 285.70 45.81Q283.28 44.28 281.88 41.45Q280.47 38.63 280.47 34.91Q280.47 31.20 281.88 28.40Q283.28 25.59 285.70 24.08Q288.11 22.57 291.09 22.57ZM293.25 29.00Q291.05 29.00 289.52 30.58Q287.98 32.15 287.98 34.91Q287.98 37.68 289.52 39.29Q291.05 40.91 293.25 40.91Q295.45 40.91 296.98 39.32Q298.52 37.72 298.52 34.96Q298.52 32.19 296.98 30.60Q295.45 29.00 293.25 29.00ZM333.18 36.73H316.47Q316.65 38.97 317.92 40.16Q319.19 41.35 321.05 41.35Q323.81 41.35 324.89 39.01H332.75Q332.14 41.39 330.57 43.29Q328.99 45.19 326.62 46.27Q324.24 47.35 321.31 47.35Q317.77 47.35 315.01 45.83Q312.24 44.32 310.69 41.52Q309.14 38.71 309.14 34.96Q309.14 31.20 310.67 28.40Q312.20 25.59 314.96 24.08Q317.72 22.57 321.31 22.57Q324.80 22.57 327.52 24.04Q330.24 25.50 331.78 28.22Q333.31 30.94 333.31 34.57Q333.31 35.60 333.18 36.73ZM325.75 32.63Q325.75 30.73 324.46 29.60Q323.16 28.48 321.22 28.48Q319.37 28.48 318.09 29.56Q316.82 30.64 316.52 32.63Z" fill="#10396B"/></svg></div>
+  <div class="glyphs" style="margin-top:12px">
+    <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 110 146" role="img" aria-label="E"><g transform="translate(12.000 29.750)" fill="none" stroke="currentColor" stroke-width="19.500" stroke-linecap="butt"><path d="M85.485 9.750 H31.275 A21.525 21.525 0 0 0 9.750 31.275 V72.975 A21.525 21.525 0 0 0 31.275 94.500 H85.485"/><path d="M9.750 52.125 H85.485"/></g></svg></div><figcaption>De vorm rechtop = E</figcaption></figure>
+    <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 152 146" role="img" aria-label="M"><g transform="translate(139.134 29.750) rotate(90) scale(1.220)" fill="none" stroke="currentColor" stroke-width="19.500" stroke-linecap="butt"><path d="M85.485 9.750 H31.275 A21.525 21.525 0 0 0 9.750 31.275 V72.975 A21.525 21.525 0 0 0 31.275 94.500 H85.485"/><path d="M9.750 52.125 H85.485"/></g></svg></div><figcaption>Dezelfde vorm, kwartslag = M</figcaption></figure>
+    <figure><div class="test-box dark" style="height:150px"><svg class="lockup sm" viewBox="0 0 336 64" role="img" aria-label="EuropMade"><circle cx="32.00" cy="8.40" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32" cy="32" r="11.2" fill="#FFFFFF"/><g transform="translate(85.000 17.000)" fill="none" stroke="#FFFFFF" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M136.75 23.22V47.00H131.83V44.19Q130.66 45.66 128.79 46.50Q126.91 47.35 124.79 47.35Q121.99 47.35 119.77 46.18Q117.54 45.01 116.27 42.73Q115.00 40.44 115.00 37.20V23.22H119.87V36.47Q119.87 39.66 121.47 41.37Q123.07 43.07 125.83 43.07Q128.59 43.07 130.21 41.37Q131.83 39.66 131.83 36.47V23.22ZM154.62 22.83V27.92H153.37Q150.48 27.92 148.99 29.39Q147.50 30.86 147.50 34.48V47.00H142.58V23.22H147.50V26.67Q148.58 24.86 150.37 23.84Q152.16 22.83 154.62 22.83ZM156.91 35.09Q156.91 31.46 158.51 28.65Q160.10 25.85 162.87 24.34Q165.63 22.83 169.04 22.83Q172.45 22.83 175.21 24.34Q177.97 25.85 179.57 28.65Q181.17 31.46 181.17 35.09Q181.17 38.71 179.53 41.52Q177.89 44.32 175.06 45.86Q172.23 47.39 168.82 47.39Q165.46 47.39 162.74 45.86Q160.02 44.32 158.46 41.54Q156.91 38.76 156.91 35.09ZM176.12 35.09Q176.12 32.50 175.13 30.71Q174.13 28.91 172.49 28.01Q170.85 27.10 168.95 27.10Q167.05 27.10 165.43 28.01Q163.82 28.91 162.87 30.71Q161.92 32.50 161.92 35.09Q161.92 38.93 163.88 41.02Q165.84 43.12 168.82 43.12Q170.72 43.12 172.38 42.21Q174.05 41.30 175.08 39.49Q176.12 37.68 176.12 35.09ZM198.61 22.83Q201.72 22.83 204.28 24.36Q206.85 25.89 208.32 28.65Q209.79 31.42 209.79 35.00Q209.79 38.58 208.32 41.41Q206.85 44.24 204.28 45.81Q201.72 47.39 198.61 47.39Q195.89 47.39 193.77 46.29Q191.66 45.19 190.32 43.55V58.31H185.40V23.22H190.32V26.71Q191.57 25.07 193.73 23.95Q195.89 22.83 198.61 22.83ZM197.53 27.10Q195.67 27.10 194.01 28.05Q192.35 29.00 191.33 30.81Q190.32 32.63 190.32 35.09Q190.32 37.55 191.33 39.38Q192.35 41.22 194.01 42.17Q195.67 43.12 197.53 43.12Q199.43 43.12 201.09 42.14Q202.75 41.17 203.77 39.32Q204.78 37.46 204.78 35.00Q204.78 32.54 203.77 30.75Q202.75 28.96 201.09 28.03Q199.43 27.10 197.53 27.10Z" fill="#FFFFFF"/>
+    <g transform="translate(248.229 17.000) rotate(90) scale(1.220)" fill="none" stroke="#FFFFFF" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M262.43 22.57Q264.98 22.57 266.90 23.60Q268.82 24.64 269.85 26.32V22.91H277.24V47.00H269.85V43.59Q268.78 45.27 266.85 46.31Q264.93 47.35 262.39 47.35Q259.45 47.35 257.03 45.81Q254.62 44.28 253.21 41.45Q251.81 38.63 251.81 34.91Q251.81 31.20 253.21 28.40Q254.62 25.59 257.03 24.08Q259.45 22.57 262.43 22.57ZM264.59 29.00Q262.39 29.00 260.85 30.58Q259.32 32.15 259.32 34.91Q259.32 37.68 260.85 39.29Q262.39 40.91 264.59 40.91Q266.79 40.91 268.32 39.32Q269.85 37.72 269.85 34.96Q269.85 32.19 268.32 30.60Q266.79 29.00 264.59 29.00ZM291.09 22.57Q293.47 22.57 295.43 23.56Q297.39 24.55 298.52 26.24V15.06H305.90V47.00H298.52V43.55Q297.48 45.27 295.56 46.31Q293.64 47.35 291.09 47.35Q288.11 47.35 285.70 45.81Q283.28 44.28 281.88 41.45Q280.47 38.63 280.47 34.91Q280.47 31.20 281.88 28.40Q283.28 25.59 285.70 24.08Q288.11 22.57 291.09 22.57ZM293.25 29.00Q291.05 29.00 289.52 30.58Q287.98 32.15 287.98 34.91Q287.98 37.68 289.52 39.29Q291.05 40.91 293.25 40.91Q295.45 40.91 296.98 39.32Q298.52 37.72 298.52 34.96Q298.52 32.19 296.98 30.60Q295.45 29.00 293.25 29.00ZM333.18 36.73H316.47Q316.65 38.97 317.92 40.16Q319.19 41.35 321.05 41.35Q323.81 41.35 324.89 39.01H332.75Q332.14 41.39 330.57 43.29Q328.99 45.19 326.62 46.27Q324.24 47.35 321.31 47.35Q317.77 47.35 315.01 45.83Q312.24 44.32 310.69 41.52Q309.14 38.71 309.14 34.96Q309.14 31.20 310.67 28.40Q312.20 25.59 314.96 24.08Q317.72 22.57 321.31 22.57Q324.80 22.57 327.52 24.04Q330.24 25.50 331.78 28.22Q333.31 30.94 333.31 34.57Q333.31 35.60 333.18 36.73ZM325.75 32.63Q325.75 30.73 324.46 29.60Q323.16 28.48 321.22 28.48Q319.37 28.48 318.09 29.56Q316.82 30.64 316.52 32.63Z" fill="#FFFFFF"/></svg></div><figcaption>Negatief</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="col-idee"><h3>Het idee</h3><p>Bochtstraal 30% van de kaphoogte. De E blijft onmiskenbaar een E en de M houdt duidelijk ronde schouders met een kort recht stuk ertussen. Van de drie is dit de variant die het minst om uitleg vraagt.</p></div>
+    <div class="col-spec"><h3>Let op</h3><p class="letter">Geen. Dit is de veiligste van de drie, en daarmee ook de minst uitgesproken.</p>
+      <ul class="files">
+        <li><code>europmade-logo-zacht-&lt;kleur&gt;.svg</code></li>
+        <li><code>europmade-logo-zacht-mono.svg</code></li>
+        <li><code>europmade-logo-zacht-wit.svg</code></li>
+      </ul></div>
+  </div>
+</section>
+<section class="concept" id="letter-strak">
+  <header class="concept-head"><span class="nr">03</span>
+    <div><h2>Strak</h2><p class="tag">Kleine bocht: hoekiger, technischer.</p></div></header>
+  <div class="stage"><svg class="lockup " viewBox="0 0 337 64" role="img" aria-label="EuropMade"><defs><linearGradient id="antLstrak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antLstrak)"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M135.55 23.22V47.00H130.63V44.19Q129.46 45.66 127.59 46.50Q125.71 47.35 123.59 47.35Q120.79 47.35 118.57 46.18Q116.34 45.01 115.07 42.73Q113.80 40.44 113.80 37.20V23.22H118.67V36.47Q118.67 39.66 120.27 41.37Q121.87 43.07 124.63 43.07Q127.39 43.07 129.01 41.37Q130.63 39.66 130.63 36.47V23.22ZM153.42 22.83V27.92H152.17Q149.28 27.92 147.79 29.39Q146.30 30.86 146.30 34.48V47.00H141.38V23.22H146.30V26.67Q147.38 24.86 149.17 23.84Q150.96 22.83 153.42 22.83ZM155.71 35.09Q155.71 31.46 157.31 28.65Q158.90 25.85 161.67 24.34Q164.43 22.83 167.84 22.83Q171.25 22.83 174.01 24.34Q176.77 25.85 178.37 28.65Q179.97 31.46 179.97 35.09Q179.97 38.71 178.33 41.52Q176.69 44.32 173.86 45.86Q171.03 47.39 167.62 47.39Q164.26 47.39 161.54 45.86Q158.82 44.32 157.26 41.54Q155.71 38.76 155.71 35.09ZM174.92 35.09Q174.92 32.50 173.93 30.71Q172.93 28.91 171.29 28.01Q169.65 27.10 167.75 27.10Q165.85 27.10 164.23 28.01Q162.62 28.91 161.67 30.71Q160.72 32.50 160.72 35.09Q160.72 38.93 162.68 41.02Q164.64 43.12 167.62 43.12Q169.52 43.12 171.18 42.21Q172.85 41.30 173.88 39.49Q174.92 37.68 174.92 35.09ZM197.41 22.83Q200.52 22.83 203.08 24.36Q205.65 25.89 207.12 28.65Q208.59 31.42 208.59 35.00Q208.59 38.58 207.12 41.41Q205.65 44.24 203.08 45.81Q200.52 47.39 197.41 47.39Q194.69 47.39 192.57 46.29Q190.46 45.19 189.12 43.55V58.31H184.20V23.22H189.12V26.71Q190.37 25.07 192.53 23.95Q194.69 22.83 197.41 22.83ZM196.33 27.10Q194.47 27.10 192.81 28.05Q191.15 29.00 190.13 30.81Q189.12 32.63 189.12 35.09Q189.12 37.55 190.13 39.38Q191.15 41.22 192.81 42.17Q194.47 43.12 196.33 43.12Q198.23 43.12 199.89 42.14Q201.55 41.17 202.57 39.32Q203.58 37.46 203.58 35.00Q203.58 32.54 202.57 30.75Q201.55 28.96 199.89 28.03Q198.23 27.10 196.33 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.905 17.000) rotate(90) scale(1.282)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M263.11 22.57Q265.65 22.57 267.57 23.60Q269.49 24.64 270.53 26.32V22.91H277.91V47.00H270.53V43.59Q269.45 45.27 267.53 46.31Q265.61 47.35 263.06 47.35Q260.13 47.35 257.71 45.81Q255.29 44.28 253.89 41.45Q252.49 38.63 252.49 34.91Q252.49 31.20 253.89 28.40Q255.29 25.59 257.71 24.08Q260.13 22.57 263.11 22.57ZM265.26 29.00Q263.06 29.00 261.53 30.58Q260.00 32.15 260.00 34.91Q260.00 37.68 261.53 39.29Q263.06 40.91 265.26 40.91Q267.47 40.91 269.00 39.32Q270.53 37.72 270.53 34.96Q270.53 32.19 269.00 30.60Q267.47 29.00 265.26 29.00ZM291.77 22.57Q294.14 22.57 296.11 23.56Q298.07 24.55 299.19 26.24V15.06H306.57V47.00H299.19V43.55Q298.16 45.27 296.24 46.31Q294.31 47.35 291.77 47.35Q288.79 47.35 286.37 45.81Q283.96 44.28 282.55 41.45Q281.15 38.63 281.15 34.91Q281.15 31.20 282.55 28.40Q283.96 25.59 286.37 24.08Q288.79 22.57 291.77 22.57ZM293.93 29.00Q291.72 29.00 290.19 30.58Q288.66 32.15 288.66 34.91Q288.66 37.68 290.19 39.29Q291.72 40.91 293.93 40.91Q296.13 40.91 297.66 39.32Q299.19 37.72 299.19 34.96Q299.19 32.19 297.66 30.60Q296.13 29.00 293.93 29.00ZM333.85 36.73H317.15Q317.32 38.97 318.60 40.16Q319.87 41.35 321.72 41.35Q324.49 41.35 325.57 39.01H333.42Q332.82 41.39 331.24 43.29Q329.67 45.19 327.29 46.27Q324.92 47.35 321.98 47.35Q318.44 47.35 315.68 45.83Q312.92 44.32 311.37 41.52Q309.81 38.71 309.81 34.96Q309.81 31.20 311.34 28.40Q312.88 25.59 315.64 24.08Q318.40 22.57 321.98 22.57Q325.48 22.57 328.20 24.04Q330.92 25.50 332.45 28.22Q333.98 30.94 333.98 34.57Q333.98 35.60 333.85 36.73ZM326.43 32.63Q326.43 30.73 325.13 29.60Q323.84 28.48 321.90 28.48Q320.04 28.48 318.77 29.56Q317.49 30.64 317.19 32.63Z" fill="#10396B"/></svg></div>
+  <div class="glyphs" style="margin-top:12px">
+    <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 106 146" role="img" aria-label="E"><g transform="translate(12.000 29.750)" fill="none" stroke="currentColor" stroke-width="18.000" stroke-linecap="butt"><path d="M81.315 9.000 H14.595 A5.595 5.595 0 0 0 9.000 14.595 V89.655 A5.595 5.595 0 0 0 14.595 95.250 H81.315"/><path d="M9.000 52.125 H81.315"/></g></svg></div><figcaption>De vorm rechtop = E</figcaption></figure>
+    <figure><div class="glyph-box"><svg class="glyph" viewBox="0 0 158 146" role="img" aria-label="M"><g transform="translate(145.654 29.750) rotate(90) scale(1.282)" fill="none" stroke="currentColor" stroke-width="18.000" stroke-linecap="butt"><path d="M81.315 9.000 H14.595 A5.595 5.595 0 0 0 9.000 14.595 V89.655 A5.595 5.595 0 0 0 14.595 95.250 H81.315"/><path d="M9.000 52.125 H81.315"/></g></svg></div><figcaption>Dezelfde vorm, kwartslag = M</figcaption></figure>
+    <figure><div class="test-box dark" style="height:150px"><svg class="lockup sm" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><circle cx="32.00" cy="8.40" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#FFFFFF"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#FFFFFF"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#FFFFFF"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#FFFFFF"/>
+    <circle cx="32" cy="32" r="11.2" fill="#FFFFFF"/><g transform="translate(85.000 17.000)" fill="none" stroke="#FFFFFF" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M135.55 23.22V47.00H130.63V44.19Q129.46 45.66 127.59 46.50Q125.71 47.35 123.59 47.35Q120.79 47.35 118.57 46.18Q116.34 45.01 115.07 42.73Q113.80 40.44 113.80 37.20V23.22H118.67V36.47Q118.67 39.66 120.27 41.37Q121.87 43.07 124.63 43.07Q127.39 43.07 129.01 41.37Q130.63 39.66 130.63 36.47V23.22ZM153.42 22.83V27.92H152.17Q149.28 27.92 147.79 29.39Q146.30 30.86 146.30 34.48V47.00H141.38V23.22H146.30V26.67Q147.38 24.86 149.17 23.84Q150.96 22.83 153.42 22.83ZM155.71 35.09Q155.71 31.46 157.31 28.65Q158.90 25.85 161.67 24.34Q164.43 22.83 167.84 22.83Q171.25 22.83 174.01 24.34Q176.77 25.85 178.37 28.65Q179.97 31.46 179.97 35.09Q179.97 38.71 178.33 41.52Q176.69 44.32 173.86 45.86Q171.03 47.39 167.62 47.39Q164.26 47.39 161.54 45.86Q158.82 44.32 157.26 41.54Q155.71 38.76 155.71 35.09ZM174.92 35.09Q174.92 32.50 173.93 30.71Q172.93 28.91 171.29 28.01Q169.65 27.10 167.75 27.10Q165.85 27.10 164.23 28.01Q162.62 28.91 161.67 30.71Q160.72 32.50 160.72 35.09Q160.72 38.93 162.68 41.02Q164.64 43.12 167.62 43.12Q169.52 43.12 171.18 42.21Q172.85 41.30 173.88 39.49Q174.92 37.68 174.92 35.09ZM197.41 22.83Q200.52 22.83 203.08 24.36Q205.65 25.89 207.12 28.65Q208.59 31.42 208.59 35.00Q208.59 38.58 207.12 41.41Q205.65 44.24 203.08 45.81Q200.52 47.39 197.41 47.39Q194.69 47.39 192.57 46.29Q190.46 45.19 189.12 43.55V58.31H184.20V23.22H189.12V26.71Q190.37 25.07 192.53 23.95Q194.69 22.83 197.41 22.83ZM196.33 27.10Q194.47 27.10 192.81 28.05Q191.15 29.00 190.13 30.81Q189.12 32.63 189.12 35.09Q189.12 37.55 190.13 39.38Q191.15 41.22 192.81 42.17Q194.47 43.12 196.33 43.12Q198.23 43.12 199.89 42.14Q201.55 41.17 202.57 39.32Q203.58 37.46 203.58 35.00Q203.58 32.54 202.57 30.75Q201.55 28.96 199.89 28.03Q198.23 27.10 196.33 27.10Z" fill="#FFFFFF"/>
+    <g transform="translate(248.905 17.000) rotate(90) scale(1.282)" fill="none" stroke="#FFFFFF" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M263.11 22.57Q265.65 22.57 267.57 23.60Q269.49 24.64 270.53 26.32V22.91H277.91V47.00H270.53V43.59Q269.45 45.27 267.53 46.31Q265.61 47.35 263.06 47.35Q260.13 47.35 257.71 45.81Q255.29 44.28 253.89 41.45Q252.49 38.63 252.49 34.91Q252.49 31.20 253.89 28.40Q255.29 25.59 257.71 24.08Q260.13 22.57 263.11 22.57ZM265.26 29.00Q263.06 29.00 261.53 30.58Q260.00 32.15 260.00 34.91Q260.00 37.68 261.53 39.29Q263.06 40.91 265.26 40.91Q267.47 40.91 269.00 39.32Q270.53 37.72 270.53 34.96Q270.53 32.19 269.00 30.60Q267.47 29.00 265.26 29.00ZM291.77 22.57Q294.14 22.57 296.11 23.56Q298.07 24.55 299.19 26.24V15.06H306.57V47.00H299.19V43.55Q298.16 45.27 296.24 46.31Q294.31 47.35 291.77 47.35Q288.79 47.35 286.37 45.81Q283.96 44.28 282.55 41.45Q281.15 38.63 281.15 34.91Q281.15 31.20 282.55 28.40Q283.96 25.59 286.37 24.08Q288.79 22.57 291.77 22.57ZM293.93 29.00Q291.72 29.00 290.19 30.58Q288.66 32.15 288.66 34.91Q288.66 37.68 290.19 39.29Q291.72 40.91 293.93 40.91Q296.13 40.91 297.66 39.32Q299.19 37.72 299.19 34.96Q299.19 32.19 297.66 30.60Q296.13 29.00 293.93 29.00ZM333.85 36.73H317.15Q317.32 38.97 318.60 40.16Q319.87 41.35 321.72 41.35Q324.49 41.35 325.57 39.01H333.42Q332.82 41.39 331.24 43.29Q329.67 45.19 327.29 46.27Q324.92 47.35 321.98 47.35Q318.44 47.35 315.68 45.83Q312.92 44.32 311.37 41.52Q309.81 38.71 309.81 34.96Q309.81 31.20 311.34 28.40Q312.88 25.59 315.64 24.08Q318.40 22.57 321.98 22.57Q325.48 22.57 328.20 24.04Q330.92 25.50 332.45 28.22Q333.98 30.94 333.98 34.57Q333.98 35.60 333.85 36.73ZM326.43 32.63Q326.43 30.73 325.13 29.60Q323.84 28.48 321.90 28.48Q320.04 28.48 318.77 29.56Q317.49 30.64 317.19 32.63Z" fill="#FFFFFF"/></svg></div><figcaption>Negatief</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="col-idee"><h3>Het idee</h3><p>Bochtstraal 14%. De vorm wordt bijna een rechthoekige kam; in de M levert dat vierkante schouders op. Het staat het dichtst bij Audiowide, waar je de E vandaan haalde.</p></div>
+    <div class="col-spec"><h3>Let op</h3><p class="letter">Dit is de minst ronde van de drie, terwijl je in de vorige ronde juist om ronder vroeg. Hij staat erbij als ijkpunt, niet als aanbeveling.</p>
+      <ul class="files">
+        <li><code>europmade-logo-strak-&lt;kleur&gt;.svg</code></li>
+        <li><code>europmade-logo-strak-mono.svg</code></li>
+        <li><code>europmade-logo-strak-wit.svg</code></li>
+      </ul></div>
+  </div>
+</section>
+  </section>
+
+  <section class="deel" id="raster">
+    <h2>Alle negen combinaties</h2>
+    <p class="sub">Kleurstelling en letter zijn los van elkaar te kiezen.</p>
+    <div class="raster"><div class="cel"><svg class="lockup grid" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><defs><linearGradient id="antgboogantraciet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antgboogantraciet)"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M138.73 23.09V47.00H132.64V43.98Q131.48 45.53 129.60 46.42Q127.72 47.30 125.52 47.30Q122.71 47.30 120.56 46.12Q118.40 44.93 117.17 42.62Q115.94 40.31 115.94 37.12V23.09H121.98V36.25Q121.98 39.10 123.40 40.63Q124.83 42.17 127.29 42.17Q129.79 42.17 131.22 40.63Q132.64 39.10 132.64 36.25V23.09ZM157.42 22.74V29.09H155.82Q152.97 29.09 151.53 30.42Q150.08 31.76 150.08 35.09V47.00H144.04V23.09H150.08V26.80Q151.25 24.90 153.12 23.82Q155.00 22.74 157.42 22.74ZM159.32 35.04Q159.32 31.37 160.94 28.57Q162.56 25.76 165.36 24.23Q168.17 22.70 171.62 22.70Q175.07 22.70 177.88 24.23Q180.68 25.76 182.30 28.57Q183.92 31.37 183.92 35.04Q183.92 38.71 182.26 41.52Q180.60 44.32 177.77 45.86Q174.94 47.39 171.45 47.39Q167.99 47.39 165.23 45.86Q162.47 44.32 160.89 41.52Q159.32 38.71 159.32 35.04ZM177.71 35.04Q177.71 31.63 175.92 29.80Q174.12 27.96 171.53 27.96Q168.94 27.96 167.20 29.80Q165.45 31.63 165.45 35.04Q165.45 38.45 167.15 40.29Q168.86 42.12 171.45 42.12Q173.09 42.12 174.53 41.32Q175.98 40.53 176.84 38.93Q177.71 37.33 177.71 35.04ZM201.66 22.70Q204.73 22.70 207.21 24.21Q209.69 25.72 211.14 28.50Q212.58 31.29 212.58 34.96Q212.58 38.63 211.14 41.45Q209.69 44.28 207.21 45.83Q204.73 47.39 201.66 47.39Q199.03 47.39 197.02 46.31Q195.02 45.23 193.76 43.59V58.40H187.72V23.09H193.76V26.54Q194.93 24.90 196.98 23.80Q199.03 22.70 201.66 22.70ZM200.07 28.01Q198.43 28.01 196.98 28.85Q195.53 29.69 194.65 31.29Q193.76 32.88 193.76 35.04Q193.76 37.20 194.65 38.80Q195.53 40.40 196.98 41.24Q198.43 42.08 200.07 42.08Q201.75 42.08 203.20 41.22Q204.64 40.35 205.53 38.76Q206.41 37.16 206.41 34.96Q206.41 32.80 205.53 31.22Q204.64 29.65 203.20 28.83Q201.75 28.01 200.07 28.01Z" fill="#10396B"/>
+    <g transform="translate(249.108 17.000) rotate(90) scale(1.163)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M263.31 22.57Q265.86 22.57 267.78 23.60Q269.70 24.64 270.73 26.32V22.91H278.12V47.00H270.73V43.59Q269.65 45.27 267.73 46.31Q265.81 47.35 263.27 47.35Q260.33 47.35 257.91 45.81Q255.50 44.28 254.09 41.45Q252.69 38.63 252.69 34.91Q252.69 31.20 254.09 28.40Q255.50 25.59 257.91 24.08Q260.33 22.57 263.31 22.57ZM265.47 29.00Q263.27 29.00 261.73 30.58Q260.20 32.15 260.20 34.91Q260.20 37.68 261.73 39.29Q263.27 40.91 265.47 40.91Q267.67 40.91 269.20 39.32Q270.73 37.72 270.73 34.96Q270.73 32.19 269.20 30.60Q267.67 29.00 265.47 29.00ZM291.97 22.57Q294.35 22.57 296.31 23.56Q298.27 24.55 299.40 26.24V15.06H306.78V47.00H299.40V43.55Q298.36 45.27 296.44 46.31Q294.52 47.35 291.97 47.35Q288.99 47.35 286.58 45.81Q284.16 44.28 282.76 41.45Q281.35 38.63 281.35 34.91Q281.35 31.20 282.76 28.40Q284.16 25.59 286.58 24.08Q288.99 22.57 291.97 22.57ZM294.13 29.00Q291.93 29.00 290.40 30.58Q288.86 32.15 288.86 34.91Q288.86 37.68 290.40 39.29Q291.93 40.91 294.13 40.91Q296.33 40.91 297.86 39.32Q299.40 37.72 299.40 34.96Q299.40 32.19 297.86 30.60Q296.33 29.00 294.13 29.00ZM334.06 36.73H317.35Q317.53 38.97 318.80 40.16Q320.07 41.35 321.93 41.35Q324.69 41.35 325.77 39.01H333.63Q333.02 41.39 331.45 43.29Q329.87 45.19 327.50 46.27Q325.12 47.35 322.19 47.35Q318.65 47.35 315.89 45.83Q313.12 44.32 311.57 41.52Q310.01 38.71 310.01 34.96Q310.01 31.20 311.55 28.40Q313.08 25.59 315.84 24.08Q318.60 22.57 322.19 22.57Q325.68 22.57 328.40 24.04Q331.12 25.50 332.65 28.22Q334.19 30.94 334.19 34.57Q334.19 35.60 334.06 36.73ZM326.63 32.63Q326.63 30.73 325.34 29.60Q324.04 28.48 322.10 28.48Q320.24 28.48 318.97 29.56Q317.70 30.64 317.40 32.63Z" fill="#10396B"/></svg><span>Boog · Antraciet glanzend</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><circle cx="32.00" cy="8.40" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M138.73 23.09V47.00H132.64V43.98Q131.48 45.53 129.60 46.42Q127.72 47.30 125.52 47.30Q122.71 47.30 120.56 46.12Q118.40 44.93 117.17 42.62Q115.94 40.31 115.94 37.12V23.09H121.98V36.25Q121.98 39.10 123.40 40.63Q124.83 42.17 127.29 42.17Q129.79 42.17 131.22 40.63Q132.64 39.10 132.64 36.25V23.09ZM157.42 22.74V29.09H155.82Q152.97 29.09 151.53 30.42Q150.08 31.76 150.08 35.09V47.00H144.04V23.09H150.08V26.80Q151.25 24.90 153.12 23.82Q155.00 22.74 157.42 22.74ZM159.32 35.04Q159.32 31.37 160.94 28.57Q162.56 25.76 165.36 24.23Q168.17 22.70 171.62 22.70Q175.07 22.70 177.88 24.23Q180.68 25.76 182.30 28.57Q183.92 31.37 183.92 35.04Q183.92 38.71 182.26 41.52Q180.60 44.32 177.77 45.86Q174.94 47.39 171.45 47.39Q167.99 47.39 165.23 45.86Q162.47 44.32 160.89 41.52Q159.32 38.71 159.32 35.04ZM177.71 35.04Q177.71 31.63 175.92 29.80Q174.12 27.96 171.53 27.96Q168.94 27.96 167.20 29.80Q165.45 31.63 165.45 35.04Q165.45 38.45 167.15 40.29Q168.86 42.12 171.45 42.12Q173.09 42.12 174.53 41.32Q175.98 40.53 176.84 38.93Q177.71 37.33 177.71 35.04ZM201.66 22.70Q204.73 22.70 207.21 24.21Q209.69 25.72 211.14 28.50Q212.58 31.29 212.58 34.96Q212.58 38.63 211.14 41.45Q209.69 44.28 207.21 45.83Q204.73 47.39 201.66 47.39Q199.03 47.39 197.02 46.31Q195.02 45.23 193.76 43.59V58.40H187.72V23.09H193.76V26.54Q194.93 24.90 196.98 23.80Q199.03 22.70 201.66 22.70ZM200.07 28.01Q198.43 28.01 196.98 28.85Q195.53 29.69 194.65 31.29Q193.76 32.88 193.76 35.04Q193.76 37.20 194.65 38.80Q195.53 40.40 196.98 41.24Q198.43 42.08 200.07 42.08Q201.75 42.08 203.20 41.22Q204.64 40.35 205.53 38.76Q206.41 37.16 206.41 34.96Q206.41 32.80 205.53 31.22Q204.64 29.65 203.20 28.83Q201.75 28.01 200.07 28.01Z" fill="#10396B"/>
+    <g transform="translate(249.108 17.000) rotate(90) scale(1.163)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M263.31 22.57Q265.86 22.57 267.78 23.60Q269.70 24.64 270.73 26.32V22.91H278.12V47.00H270.73V43.59Q269.65 45.27 267.73 46.31Q265.81 47.35 263.27 47.35Q260.33 47.35 257.91 45.81Q255.50 44.28 254.09 41.45Q252.69 38.63 252.69 34.91Q252.69 31.20 254.09 28.40Q255.50 25.59 257.91 24.08Q260.33 22.57 263.31 22.57ZM265.47 29.00Q263.27 29.00 261.73 30.58Q260.20 32.15 260.20 34.91Q260.20 37.68 261.73 39.29Q263.27 40.91 265.47 40.91Q267.67 40.91 269.20 39.32Q270.73 37.72 270.73 34.96Q270.73 32.19 269.20 30.60Q267.67 29.00 265.47 29.00ZM291.97 22.57Q294.35 22.57 296.31 23.56Q298.27 24.55 299.40 26.24V15.06H306.78V47.00H299.40V43.55Q298.36 45.27 296.44 46.31Q294.52 47.35 291.97 47.35Q288.99 47.35 286.58 45.81Q284.16 44.28 282.76 41.45Q281.35 38.63 281.35 34.91Q281.35 31.20 282.76 28.40Q284.16 25.59 286.58 24.08Q288.99 22.57 291.97 22.57ZM294.13 29.00Q291.93 29.00 290.40 30.58Q288.86 32.15 288.86 34.91Q288.86 37.68 290.40 39.29Q291.93 40.91 294.13 40.91Q296.33 40.91 297.86 39.32Q299.40 37.72 299.40 34.96Q299.40 32.19 297.86 30.60Q296.33 29.00 294.13 29.00ZM334.06 36.73H317.35Q317.53 38.97 318.80 40.16Q320.07 41.35 321.93 41.35Q324.69 41.35 325.77 39.01H333.63Q333.02 41.39 331.45 43.29Q329.87 45.19 327.50 46.27Q325.12 47.35 322.19 47.35Q318.65 47.35 315.89 45.83Q313.12 44.32 311.57 41.52Q310.01 38.71 310.01 34.96Q310.01 31.20 311.55 28.40Q313.08 25.59 315.84 24.08Q318.60 22.57 322.19 22.57Q325.68 22.57 328.40 24.04Q331.12 25.50 332.65 28.22Q334.19 30.94 334.19 34.57Q334.19 35.60 334.06 36.73ZM326.63 32.63Q326.63 30.73 325.34 29.60Q324.04 28.48 322.10 28.48Q320.24 28.48 318.97 29.56Q317.70 30.64 317.40 32.63Z" fill="#10396B"/></svg><span>Boog · Antraciete punten</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><defs><linearGradient id="zilgboogzilverstip" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="56"><stop offset="0" stop-color="#A2B0C0"/><stop offset=".34" stop-color="#566579"/><stop offset=".54" stop-color="#3F4E62"/><stop offset=".72" stop-color="#8390A2"/><stop offset="1" stop-color="#4C5B70"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="url(#zilgboogzilverstip)"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M138.73 23.09V47.00H132.64V43.98Q131.48 45.53 129.60 46.42Q127.72 47.30 125.52 47.30Q122.71 47.30 120.56 46.12Q118.40 44.93 117.17 42.62Q115.94 40.31 115.94 37.12V23.09H121.98V36.25Q121.98 39.10 123.40 40.63Q124.83 42.17 127.29 42.17Q129.79 42.17 131.22 40.63Q132.64 39.10 132.64 36.25V23.09ZM157.42 22.74V29.09H155.82Q152.97 29.09 151.53 30.42Q150.08 31.76 150.08 35.09V47.00H144.04V23.09H150.08V26.80Q151.25 24.90 153.12 23.82Q155.00 22.74 157.42 22.74ZM159.32 35.04Q159.32 31.37 160.94 28.57Q162.56 25.76 165.36 24.23Q168.17 22.70 171.62 22.70Q175.07 22.70 177.88 24.23Q180.68 25.76 182.30 28.57Q183.92 31.37 183.92 35.04Q183.92 38.71 182.26 41.52Q180.60 44.32 177.77 45.86Q174.94 47.39 171.45 47.39Q167.99 47.39 165.23 45.86Q162.47 44.32 160.89 41.52Q159.32 38.71 159.32 35.04ZM177.71 35.04Q177.71 31.63 175.92 29.80Q174.12 27.96 171.53 27.96Q168.94 27.96 167.20 29.80Q165.45 31.63 165.45 35.04Q165.45 38.45 167.15 40.29Q168.86 42.12 171.45 42.12Q173.09 42.12 174.53 41.32Q175.98 40.53 176.84 38.93Q177.71 37.33 177.71 35.04ZM201.66 22.70Q204.73 22.70 207.21 24.21Q209.69 25.72 211.14 28.50Q212.58 31.29 212.58 34.96Q212.58 38.63 211.14 41.45Q209.69 44.28 207.21 45.83Q204.73 47.39 201.66 47.39Q199.03 47.39 197.02 46.31Q195.02 45.23 193.76 43.59V58.40H187.72V23.09H193.76V26.54Q194.93 24.90 196.98 23.80Q199.03 22.70 201.66 22.70ZM200.07 28.01Q198.43 28.01 196.98 28.85Q195.53 29.69 194.65 31.29Q193.76 32.88 193.76 35.04Q193.76 37.20 194.65 38.80Q195.53 40.40 196.98 41.24Q198.43 42.08 200.07 42.08Q201.75 42.08 203.20 41.22Q204.64 40.35 205.53 38.76Q206.41 37.16 206.41 34.96Q206.41 32.80 205.53 31.22Q204.64 29.65 203.20 28.83Q201.75 28.01 200.07 28.01Z" fill="#10396B"/>
+    <g transform="translate(249.108 17.000) rotate(90) scale(1.163)" fill="none" stroke="#10396B" stroke-width="6.043" stroke-linecap="butt"><path d="M25.800 3.022 H15.000 A11.978 11.978 0 0 0 3.022 15.000 V15.000 A11.978 11.978 0 0 0 15.000 26.978 H25.800"/><path d="M3.022 15.000 H25.800"/></g>
+    <path d="M263.31 22.57Q265.86 22.57 267.78 23.60Q269.70 24.64 270.73 26.32V22.91H278.12V47.00H270.73V43.59Q269.65 45.27 267.73 46.31Q265.81 47.35 263.27 47.35Q260.33 47.35 257.91 45.81Q255.50 44.28 254.09 41.45Q252.69 38.63 252.69 34.91Q252.69 31.20 254.09 28.40Q255.50 25.59 257.91 24.08Q260.33 22.57 263.31 22.57ZM265.47 29.00Q263.27 29.00 261.73 30.58Q260.20 32.15 260.20 34.91Q260.20 37.68 261.73 39.29Q263.27 40.91 265.47 40.91Q267.67 40.91 269.20 39.32Q270.73 37.72 270.73 34.96Q270.73 32.19 269.20 30.60Q267.67 29.00 265.47 29.00ZM291.97 22.57Q294.35 22.57 296.31 23.56Q298.27 24.55 299.40 26.24V15.06H306.78V47.00H299.40V43.55Q298.36 45.27 296.44 46.31Q294.52 47.35 291.97 47.35Q288.99 47.35 286.58 45.81Q284.16 44.28 282.76 41.45Q281.35 38.63 281.35 34.91Q281.35 31.20 282.76 28.40Q284.16 25.59 286.58 24.08Q288.99 22.57 291.97 22.57ZM294.13 29.00Q291.93 29.00 290.40 30.58Q288.86 32.15 288.86 34.91Q288.86 37.68 290.40 39.29Q291.93 40.91 294.13 40.91Q296.33 40.91 297.86 39.32Q299.40 37.72 299.40 34.96Q299.40 32.19 297.86 30.60Q296.33 29.00 294.13 29.00ZM334.06 36.73H317.35Q317.53 38.97 318.80 40.16Q320.07 41.35 321.93 41.35Q324.69 41.35 325.77 39.01H333.63Q333.02 41.39 331.45 43.29Q329.87 45.19 327.50 46.27Q325.12 47.35 322.19 47.35Q318.65 47.35 315.89 45.83Q313.12 44.32 311.57 41.52Q310.01 38.71 310.01 34.96Q310.01 31.20 311.55 28.40Q313.08 25.59 315.84 24.08Q318.60 22.57 322.19 22.57Q325.68 22.57 328.40 24.04Q331.12 25.50 332.65 28.22Q334.19 30.94 334.19 34.57Q334.19 35.60 334.06 36.73ZM326.63 32.63Q326.63 30.73 325.34 29.60Q324.04 28.48 322.10 28.48Q320.24 28.48 318.97 29.56Q317.70 30.64 317.40 32.63Z" fill="#10396B"/></svg><span>Boog · Zilveren punten</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 336 64" role="img" aria-label="EuropMade"><defs><linearGradient id="antgzachtantraciet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antgzachtantraciet)"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M136.75 23.22V47.00H131.83V44.19Q130.66 45.66 128.79 46.50Q126.91 47.35 124.79 47.35Q121.99 47.35 119.77 46.18Q117.54 45.01 116.27 42.73Q115.00 40.44 115.00 37.20V23.22H119.87V36.47Q119.87 39.66 121.47 41.37Q123.07 43.07 125.83 43.07Q128.59 43.07 130.21 41.37Q131.83 39.66 131.83 36.47V23.22ZM154.62 22.83V27.92H153.37Q150.48 27.92 148.99 29.39Q147.50 30.86 147.50 34.48V47.00H142.58V23.22H147.50V26.67Q148.58 24.86 150.37 23.84Q152.16 22.83 154.62 22.83ZM156.91 35.09Q156.91 31.46 158.51 28.65Q160.10 25.85 162.87 24.34Q165.63 22.83 169.04 22.83Q172.45 22.83 175.21 24.34Q177.97 25.85 179.57 28.65Q181.17 31.46 181.17 35.09Q181.17 38.71 179.53 41.52Q177.89 44.32 175.06 45.86Q172.23 47.39 168.82 47.39Q165.46 47.39 162.74 45.86Q160.02 44.32 158.46 41.54Q156.91 38.76 156.91 35.09ZM176.12 35.09Q176.12 32.50 175.13 30.71Q174.13 28.91 172.49 28.01Q170.85 27.10 168.95 27.10Q167.05 27.10 165.43 28.01Q163.82 28.91 162.87 30.71Q161.92 32.50 161.92 35.09Q161.92 38.93 163.88 41.02Q165.84 43.12 168.82 43.12Q170.72 43.12 172.38 42.21Q174.05 41.30 175.08 39.49Q176.12 37.68 176.12 35.09ZM198.61 22.83Q201.72 22.83 204.28 24.36Q206.85 25.89 208.32 28.65Q209.79 31.42 209.79 35.00Q209.79 38.58 208.32 41.41Q206.85 44.24 204.28 45.81Q201.72 47.39 198.61 47.39Q195.89 47.39 193.77 46.29Q191.66 45.19 190.32 43.55V58.31H185.40V23.22H190.32V26.71Q191.57 25.07 193.73 23.95Q195.89 22.83 198.61 22.83ZM197.53 27.10Q195.67 27.10 194.01 28.05Q192.35 29.00 191.33 30.81Q190.32 32.63 190.32 35.09Q190.32 37.55 191.33 39.38Q192.35 41.22 194.01 42.17Q195.67 43.12 197.53 43.12Q199.43 43.12 201.09 42.14Q202.75 41.17 203.77 39.32Q204.78 37.46 204.78 35.00Q204.78 32.54 203.77 30.75Q202.75 28.96 201.09 28.03Q199.43 27.10 197.53 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.229 17.000) rotate(90) scale(1.220)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M262.43 22.57Q264.98 22.57 266.90 23.60Q268.82 24.64 269.85 26.32V22.91H277.24V47.00H269.85V43.59Q268.78 45.27 266.85 46.31Q264.93 47.35 262.39 47.35Q259.45 47.35 257.03 45.81Q254.62 44.28 253.21 41.45Q251.81 38.63 251.81 34.91Q251.81 31.20 253.21 28.40Q254.62 25.59 257.03 24.08Q259.45 22.57 262.43 22.57ZM264.59 29.00Q262.39 29.00 260.85 30.58Q259.32 32.15 259.32 34.91Q259.32 37.68 260.85 39.29Q262.39 40.91 264.59 40.91Q266.79 40.91 268.32 39.32Q269.85 37.72 269.85 34.96Q269.85 32.19 268.32 30.60Q266.79 29.00 264.59 29.00ZM291.09 22.57Q293.47 22.57 295.43 23.56Q297.39 24.55 298.52 26.24V15.06H305.90V47.00H298.52V43.55Q297.48 45.27 295.56 46.31Q293.64 47.35 291.09 47.35Q288.11 47.35 285.70 45.81Q283.28 44.28 281.88 41.45Q280.47 38.63 280.47 34.91Q280.47 31.20 281.88 28.40Q283.28 25.59 285.70 24.08Q288.11 22.57 291.09 22.57ZM293.25 29.00Q291.05 29.00 289.52 30.58Q287.98 32.15 287.98 34.91Q287.98 37.68 289.52 39.29Q291.05 40.91 293.25 40.91Q295.45 40.91 296.98 39.32Q298.52 37.72 298.52 34.96Q298.52 32.19 296.98 30.60Q295.45 29.00 293.25 29.00ZM333.18 36.73H316.47Q316.65 38.97 317.92 40.16Q319.19 41.35 321.05 41.35Q323.81 41.35 324.89 39.01H332.75Q332.14 41.39 330.57 43.29Q328.99 45.19 326.62 46.27Q324.24 47.35 321.31 47.35Q317.77 47.35 315.01 45.83Q312.24 44.32 310.69 41.52Q309.14 38.71 309.14 34.96Q309.14 31.20 310.67 28.40Q312.20 25.59 314.96 24.08Q317.72 22.57 321.31 22.57Q324.80 22.57 327.52 24.04Q330.24 25.50 331.78 28.22Q333.31 30.94 333.31 34.57Q333.31 35.60 333.18 36.73ZM325.75 32.63Q325.75 30.73 324.46 29.60Q323.16 28.48 321.22 28.48Q319.37 28.48 318.09 29.56Q316.82 30.64 316.52 32.63Z" fill="#10396B"/></svg><span>Zacht · Antraciet glanzend</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 336 64" role="img" aria-label="EuropMade"><circle cx="32.00" cy="8.40" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M136.75 23.22V47.00H131.83V44.19Q130.66 45.66 128.79 46.50Q126.91 47.35 124.79 47.35Q121.99 47.35 119.77 46.18Q117.54 45.01 116.27 42.73Q115.00 40.44 115.00 37.20V23.22H119.87V36.47Q119.87 39.66 121.47 41.37Q123.07 43.07 125.83 43.07Q128.59 43.07 130.21 41.37Q131.83 39.66 131.83 36.47V23.22ZM154.62 22.83V27.92H153.37Q150.48 27.92 148.99 29.39Q147.50 30.86 147.50 34.48V47.00H142.58V23.22H147.50V26.67Q148.58 24.86 150.37 23.84Q152.16 22.83 154.62 22.83ZM156.91 35.09Q156.91 31.46 158.51 28.65Q160.10 25.85 162.87 24.34Q165.63 22.83 169.04 22.83Q172.45 22.83 175.21 24.34Q177.97 25.85 179.57 28.65Q181.17 31.46 181.17 35.09Q181.17 38.71 179.53 41.52Q177.89 44.32 175.06 45.86Q172.23 47.39 168.82 47.39Q165.46 47.39 162.74 45.86Q160.02 44.32 158.46 41.54Q156.91 38.76 156.91 35.09ZM176.12 35.09Q176.12 32.50 175.13 30.71Q174.13 28.91 172.49 28.01Q170.85 27.10 168.95 27.10Q167.05 27.10 165.43 28.01Q163.82 28.91 162.87 30.71Q161.92 32.50 161.92 35.09Q161.92 38.93 163.88 41.02Q165.84 43.12 168.82 43.12Q170.72 43.12 172.38 42.21Q174.05 41.30 175.08 39.49Q176.12 37.68 176.12 35.09ZM198.61 22.83Q201.72 22.83 204.28 24.36Q206.85 25.89 208.32 28.65Q209.79 31.42 209.79 35.00Q209.79 38.58 208.32 41.41Q206.85 44.24 204.28 45.81Q201.72 47.39 198.61 47.39Q195.89 47.39 193.77 46.29Q191.66 45.19 190.32 43.55V58.31H185.40V23.22H190.32V26.71Q191.57 25.07 193.73 23.95Q195.89 22.83 198.61 22.83ZM197.53 27.10Q195.67 27.10 194.01 28.05Q192.35 29.00 191.33 30.81Q190.32 32.63 190.32 35.09Q190.32 37.55 191.33 39.38Q192.35 41.22 194.01 42.17Q195.67 43.12 197.53 43.12Q199.43 43.12 201.09 42.14Q202.75 41.17 203.77 39.32Q204.78 37.46 204.78 35.00Q204.78 32.54 203.77 30.75Q202.75 28.96 201.09 28.03Q199.43 27.10 197.53 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.229 17.000) rotate(90) scale(1.220)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M262.43 22.57Q264.98 22.57 266.90 23.60Q268.82 24.64 269.85 26.32V22.91H277.24V47.00H269.85V43.59Q268.78 45.27 266.85 46.31Q264.93 47.35 262.39 47.35Q259.45 47.35 257.03 45.81Q254.62 44.28 253.21 41.45Q251.81 38.63 251.81 34.91Q251.81 31.20 253.21 28.40Q254.62 25.59 257.03 24.08Q259.45 22.57 262.43 22.57ZM264.59 29.00Q262.39 29.00 260.85 30.58Q259.32 32.15 259.32 34.91Q259.32 37.68 260.85 39.29Q262.39 40.91 264.59 40.91Q266.79 40.91 268.32 39.32Q269.85 37.72 269.85 34.96Q269.85 32.19 268.32 30.60Q266.79 29.00 264.59 29.00ZM291.09 22.57Q293.47 22.57 295.43 23.56Q297.39 24.55 298.52 26.24V15.06H305.90V47.00H298.52V43.55Q297.48 45.27 295.56 46.31Q293.64 47.35 291.09 47.35Q288.11 47.35 285.70 45.81Q283.28 44.28 281.88 41.45Q280.47 38.63 280.47 34.91Q280.47 31.20 281.88 28.40Q283.28 25.59 285.70 24.08Q288.11 22.57 291.09 22.57ZM293.25 29.00Q291.05 29.00 289.52 30.58Q287.98 32.15 287.98 34.91Q287.98 37.68 289.52 39.29Q291.05 40.91 293.25 40.91Q295.45 40.91 296.98 39.32Q298.52 37.72 298.52 34.96Q298.52 32.19 296.98 30.60Q295.45 29.00 293.25 29.00ZM333.18 36.73H316.47Q316.65 38.97 317.92 40.16Q319.19 41.35 321.05 41.35Q323.81 41.35 324.89 39.01H332.75Q332.14 41.39 330.57 43.29Q328.99 45.19 326.62 46.27Q324.24 47.35 321.31 47.35Q317.77 47.35 315.01 45.83Q312.24 44.32 310.69 41.52Q309.14 38.71 309.14 34.96Q309.14 31.20 310.67 28.40Q312.20 25.59 314.96 24.08Q317.72 22.57 321.31 22.57Q324.80 22.57 327.52 24.04Q330.24 25.50 331.78 28.22Q333.31 30.94 333.31 34.57Q333.31 35.60 333.18 36.73ZM325.75 32.63Q325.75 30.73 324.46 29.60Q323.16 28.48 321.22 28.48Q319.37 28.48 318.09 29.56Q316.82 30.64 316.52 32.63Z" fill="#10396B"/></svg><span>Zacht · Antraciete punten</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 336 64" role="img" aria-label="EuropMade"><defs><linearGradient id="zilgzachtzilverstip" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="56"><stop offset="0" stop-color="#A2B0C0"/><stop offset=".34" stop-color="#566579"/><stop offset=".54" stop-color="#3F4E62"/><stop offset=".72" stop-color="#8390A2"/><stop offset="1" stop-color="#4C5B70"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="url(#zilgzachtzilverstip)"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M136.75 23.22V47.00H131.83V44.19Q130.66 45.66 128.79 46.50Q126.91 47.35 124.79 47.35Q121.99 47.35 119.77 46.18Q117.54 45.01 116.27 42.73Q115.00 40.44 115.00 37.20V23.22H119.87V36.47Q119.87 39.66 121.47 41.37Q123.07 43.07 125.83 43.07Q128.59 43.07 130.21 41.37Q131.83 39.66 131.83 36.47V23.22ZM154.62 22.83V27.92H153.37Q150.48 27.92 148.99 29.39Q147.50 30.86 147.50 34.48V47.00H142.58V23.22H147.50V26.67Q148.58 24.86 150.37 23.84Q152.16 22.83 154.62 22.83ZM156.91 35.09Q156.91 31.46 158.51 28.65Q160.10 25.85 162.87 24.34Q165.63 22.83 169.04 22.83Q172.45 22.83 175.21 24.34Q177.97 25.85 179.57 28.65Q181.17 31.46 181.17 35.09Q181.17 38.71 179.53 41.52Q177.89 44.32 175.06 45.86Q172.23 47.39 168.82 47.39Q165.46 47.39 162.74 45.86Q160.02 44.32 158.46 41.54Q156.91 38.76 156.91 35.09ZM176.12 35.09Q176.12 32.50 175.13 30.71Q174.13 28.91 172.49 28.01Q170.85 27.10 168.95 27.10Q167.05 27.10 165.43 28.01Q163.82 28.91 162.87 30.71Q161.92 32.50 161.92 35.09Q161.92 38.93 163.88 41.02Q165.84 43.12 168.82 43.12Q170.72 43.12 172.38 42.21Q174.05 41.30 175.08 39.49Q176.12 37.68 176.12 35.09ZM198.61 22.83Q201.72 22.83 204.28 24.36Q206.85 25.89 208.32 28.65Q209.79 31.42 209.79 35.00Q209.79 38.58 208.32 41.41Q206.85 44.24 204.28 45.81Q201.72 47.39 198.61 47.39Q195.89 47.39 193.77 46.29Q191.66 45.19 190.32 43.55V58.31H185.40V23.22H190.32V26.71Q191.57 25.07 193.73 23.95Q195.89 22.83 198.61 22.83ZM197.53 27.10Q195.67 27.10 194.01 28.05Q192.35 29.00 191.33 30.81Q190.32 32.63 190.32 35.09Q190.32 37.55 191.33 39.38Q192.35 41.22 194.01 42.17Q195.67 43.12 197.53 43.12Q199.43 43.12 201.09 42.14Q202.75 41.17 203.77 39.32Q204.78 37.46 204.78 35.00Q204.78 32.54 203.77 30.75Q202.75 28.96 201.09 28.03Q199.43 27.10 197.53 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.229 17.000) rotate(90) scale(1.220)" fill="none" stroke="#10396B" stroke-width="5.612" stroke-linecap="butt"><path d="M24.600 2.806 H9.000 A6.194 6.194 0 0 0 2.806 9.000 V21.000 A6.194 6.194 0 0 0 9.000 27.194 H24.600"/><path d="M2.806 15.000 H24.600"/></g>
+    <path d="M262.43 22.57Q264.98 22.57 266.90 23.60Q268.82 24.64 269.85 26.32V22.91H277.24V47.00H269.85V43.59Q268.78 45.27 266.85 46.31Q264.93 47.35 262.39 47.35Q259.45 47.35 257.03 45.81Q254.62 44.28 253.21 41.45Q251.81 38.63 251.81 34.91Q251.81 31.20 253.21 28.40Q254.62 25.59 257.03 24.08Q259.45 22.57 262.43 22.57ZM264.59 29.00Q262.39 29.00 260.85 30.58Q259.32 32.15 259.32 34.91Q259.32 37.68 260.85 39.29Q262.39 40.91 264.59 40.91Q266.79 40.91 268.32 39.32Q269.85 37.72 269.85 34.96Q269.85 32.19 268.32 30.60Q266.79 29.00 264.59 29.00ZM291.09 22.57Q293.47 22.57 295.43 23.56Q297.39 24.55 298.52 26.24V15.06H305.90V47.00H298.52V43.55Q297.48 45.27 295.56 46.31Q293.64 47.35 291.09 47.35Q288.11 47.35 285.70 45.81Q283.28 44.28 281.88 41.45Q280.47 38.63 280.47 34.91Q280.47 31.20 281.88 28.40Q283.28 25.59 285.70 24.08Q288.11 22.57 291.09 22.57ZM293.25 29.00Q291.05 29.00 289.52 30.58Q287.98 32.15 287.98 34.91Q287.98 37.68 289.52 39.29Q291.05 40.91 293.25 40.91Q295.45 40.91 296.98 39.32Q298.52 37.72 298.52 34.96Q298.52 32.19 296.98 30.60Q295.45 29.00 293.25 29.00ZM333.18 36.73H316.47Q316.65 38.97 317.92 40.16Q319.19 41.35 321.05 41.35Q323.81 41.35 324.89 39.01H332.75Q332.14 41.39 330.57 43.29Q328.99 45.19 326.62 46.27Q324.24 47.35 321.31 47.35Q317.77 47.35 315.01 45.83Q312.24 44.32 310.69 41.52Q309.14 38.71 309.14 34.96Q309.14 31.20 310.67 28.40Q312.20 25.59 314.96 24.08Q317.72 22.57 321.31 22.57Q324.80 22.57 327.52 24.04Q330.24 25.50 331.78 28.22Q333.31 30.94 333.31 34.57Q333.31 35.60 333.18 36.73ZM325.75 32.63Q325.75 30.73 324.46 29.60Q323.16 28.48 321.22 28.48Q319.37 28.48 318.09 29.56Q316.82 30.64 316.52 32.63Z" fill="#10396B"/></svg><span>Zacht · Zilveren punten</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><defs><linearGradient id="antgstrakantraciet" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7A828D"/><stop offset=".3" stop-color="#333A42"/><stop offset=".52" stop-color="#1E2329"/><stop offset=".7" stop-color="#616A76"/><stop offset="1" stop-color="#272D34"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#10396B"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#10396B"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#10396B"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#10396B"/>
+    <circle cx="32" cy="32" r="11.2" fill="url(#antgstrakantraciet)"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M135.55 23.22V47.00H130.63V44.19Q129.46 45.66 127.59 46.50Q125.71 47.35 123.59 47.35Q120.79 47.35 118.57 46.18Q116.34 45.01 115.07 42.73Q113.80 40.44 113.80 37.20V23.22H118.67V36.47Q118.67 39.66 120.27 41.37Q121.87 43.07 124.63 43.07Q127.39 43.07 129.01 41.37Q130.63 39.66 130.63 36.47V23.22ZM153.42 22.83V27.92H152.17Q149.28 27.92 147.79 29.39Q146.30 30.86 146.30 34.48V47.00H141.38V23.22H146.30V26.67Q147.38 24.86 149.17 23.84Q150.96 22.83 153.42 22.83ZM155.71 35.09Q155.71 31.46 157.31 28.65Q158.90 25.85 161.67 24.34Q164.43 22.83 167.84 22.83Q171.25 22.83 174.01 24.34Q176.77 25.85 178.37 28.65Q179.97 31.46 179.97 35.09Q179.97 38.71 178.33 41.52Q176.69 44.32 173.86 45.86Q171.03 47.39 167.62 47.39Q164.26 47.39 161.54 45.86Q158.82 44.32 157.26 41.54Q155.71 38.76 155.71 35.09ZM174.92 35.09Q174.92 32.50 173.93 30.71Q172.93 28.91 171.29 28.01Q169.65 27.10 167.75 27.10Q165.85 27.10 164.23 28.01Q162.62 28.91 161.67 30.71Q160.72 32.50 160.72 35.09Q160.72 38.93 162.68 41.02Q164.64 43.12 167.62 43.12Q169.52 43.12 171.18 42.21Q172.85 41.30 173.88 39.49Q174.92 37.68 174.92 35.09ZM197.41 22.83Q200.52 22.83 203.08 24.36Q205.65 25.89 207.12 28.65Q208.59 31.42 208.59 35.00Q208.59 38.58 207.12 41.41Q205.65 44.24 203.08 45.81Q200.52 47.39 197.41 47.39Q194.69 47.39 192.57 46.29Q190.46 45.19 189.12 43.55V58.31H184.20V23.22H189.12V26.71Q190.37 25.07 192.53 23.95Q194.69 22.83 197.41 22.83ZM196.33 27.10Q194.47 27.10 192.81 28.05Q191.15 29.00 190.13 30.81Q189.12 32.63 189.12 35.09Q189.12 37.55 190.13 39.38Q191.15 41.22 192.81 42.17Q194.47 43.12 196.33 43.12Q198.23 43.12 199.89 42.14Q201.55 41.17 202.57 39.32Q203.58 37.46 203.58 35.00Q203.58 32.54 202.57 30.75Q201.55 28.96 199.89 28.03Q198.23 27.10 196.33 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.905 17.000) rotate(90) scale(1.282)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M263.11 22.57Q265.65 22.57 267.57 23.60Q269.49 24.64 270.53 26.32V22.91H277.91V47.00H270.53V43.59Q269.45 45.27 267.53 46.31Q265.61 47.35 263.06 47.35Q260.13 47.35 257.71 45.81Q255.29 44.28 253.89 41.45Q252.49 38.63 252.49 34.91Q252.49 31.20 253.89 28.40Q255.29 25.59 257.71 24.08Q260.13 22.57 263.11 22.57ZM265.26 29.00Q263.06 29.00 261.53 30.58Q260.00 32.15 260.00 34.91Q260.00 37.68 261.53 39.29Q263.06 40.91 265.26 40.91Q267.47 40.91 269.00 39.32Q270.53 37.72 270.53 34.96Q270.53 32.19 269.00 30.60Q267.47 29.00 265.26 29.00ZM291.77 22.57Q294.14 22.57 296.11 23.56Q298.07 24.55 299.19 26.24V15.06H306.57V47.00H299.19V43.55Q298.16 45.27 296.24 46.31Q294.31 47.35 291.77 47.35Q288.79 47.35 286.37 45.81Q283.96 44.28 282.55 41.45Q281.15 38.63 281.15 34.91Q281.15 31.20 282.55 28.40Q283.96 25.59 286.37 24.08Q288.79 22.57 291.77 22.57ZM293.93 29.00Q291.72 29.00 290.19 30.58Q288.66 32.15 288.66 34.91Q288.66 37.68 290.19 39.29Q291.72 40.91 293.93 40.91Q296.13 40.91 297.66 39.32Q299.19 37.72 299.19 34.96Q299.19 32.19 297.66 30.60Q296.13 29.00 293.93 29.00ZM333.85 36.73H317.15Q317.32 38.97 318.60 40.16Q319.87 41.35 321.72 41.35Q324.49 41.35 325.57 39.01H333.42Q332.82 41.39 331.24 43.29Q329.67 45.19 327.29 46.27Q324.92 47.35 321.98 47.35Q318.44 47.35 315.68 45.83Q312.92 44.32 311.37 41.52Q309.81 38.71 309.81 34.96Q309.81 31.20 311.34 28.40Q312.88 25.59 315.64 24.08Q318.40 22.57 321.98 22.57Q325.48 22.57 328.20 24.04Q330.92 25.50 332.45 28.22Q333.98 30.94 333.98 34.57Q333.98 35.60 333.85 36.73ZM326.43 32.63Q326.43 30.73 325.13 29.60Q323.84 28.48 321.90 28.48Q320.04 28.48 318.77 29.56Q317.49 30.64 317.19 32.63Z" fill="#10396B"/></svg><span>Strak · Antraciet glanzend</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><circle cx="32.00" cy="8.40" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="#23282E"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="#23282E"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="#23282E"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="#23282E"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M135.55 23.22V47.00H130.63V44.19Q129.46 45.66 127.59 46.50Q125.71 47.35 123.59 47.35Q120.79 47.35 118.57 46.18Q116.34 45.01 115.07 42.73Q113.80 40.44 113.80 37.20V23.22H118.67V36.47Q118.67 39.66 120.27 41.37Q121.87 43.07 124.63 43.07Q127.39 43.07 129.01 41.37Q130.63 39.66 130.63 36.47V23.22ZM153.42 22.83V27.92H152.17Q149.28 27.92 147.79 29.39Q146.30 30.86 146.30 34.48V47.00H141.38V23.22H146.30V26.67Q147.38 24.86 149.17 23.84Q150.96 22.83 153.42 22.83ZM155.71 35.09Q155.71 31.46 157.31 28.65Q158.90 25.85 161.67 24.34Q164.43 22.83 167.84 22.83Q171.25 22.83 174.01 24.34Q176.77 25.85 178.37 28.65Q179.97 31.46 179.97 35.09Q179.97 38.71 178.33 41.52Q176.69 44.32 173.86 45.86Q171.03 47.39 167.62 47.39Q164.26 47.39 161.54 45.86Q158.82 44.32 157.26 41.54Q155.71 38.76 155.71 35.09ZM174.92 35.09Q174.92 32.50 173.93 30.71Q172.93 28.91 171.29 28.01Q169.65 27.10 167.75 27.10Q165.85 27.10 164.23 28.01Q162.62 28.91 161.67 30.71Q160.72 32.50 160.72 35.09Q160.72 38.93 162.68 41.02Q164.64 43.12 167.62 43.12Q169.52 43.12 171.18 42.21Q172.85 41.30 173.88 39.49Q174.92 37.68 174.92 35.09ZM197.41 22.83Q200.52 22.83 203.08 24.36Q205.65 25.89 207.12 28.65Q208.59 31.42 208.59 35.00Q208.59 38.58 207.12 41.41Q205.65 44.24 203.08 45.81Q200.52 47.39 197.41 47.39Q194.69 47.39 192.57 46.29Q190.46 45.19 189.12 43.55V58.31H184.20V23.22H189.12V26.71Q190.37 25.07 192.53 23.95Q194.69 22.83 197.41 22.83ZM196.33 27.10Q194.47 27.10 192.81 28.05Q191.15 29.00 190.13 30.81Q189.12 32.63 189.12 35.09Q189.12 37.55 190.13 39.38Q191.15 41.22 192.81 42.17Q194.47 43.12 196.33 43.12Q198.23 43.12 199.89 42.14Q201.55 41.17 202.57 39.32Q203.58 37.46 203.58 35.00Q203.58 32.54 202.57 30.75Q201.55 28.96 199.89 28.03Q198.23 27.10 196.33 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.905 17.000) rotate(90) scale(1.282)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M263.11 22.57Q265.65 22.57 267.57 23.60Q269.49 24.64 270.53 26.32V22.91H277.91V47.00H270.53V43.59Q269.45 45.27 267.53 46.31Q265.61 47.35 263.06 47.35Q260.13 47.35 257.71 45.81Q255.29 44.28 253.89 41.45Q252.49 38.63 252.49 34.91Q252.49 31.20 253.89 28.40Q255.29 25.59 257.71 24.08Q260.13 22.57 263.11 22.57ZM265.26 29.00Q263.06 29.00 261.53 30.58Q260.00 32.15 260.00 34.91Q260.00 37.68 261.53 39.29Q263.06 40.91 265.26 40.91Q267.47 40.91 269.00 39.32Q270.53 37.72 270.53 34.96Q270.53 32.19 269.00 30.60Q267.47 29.00 265.26 29.00ZM291.77 22.57Q294.14 22.57 296.11 23.56Q298.07 24.55 299.19 26.24V15.06H306.57V47.00H299.19V43.55Q298.16 45.27 296.24 46.31Q294.31 47.35 291.77 47.35Q288.79 47.35 286.37 45.81Q283.96 44.28 282.55 41.45Q281.15 38.63 281.15 34.91Q281.15 31.20 282.55 28.40Q283.96 25.59 286.37 24.08Q288.79 22.57 291.77 22.57ZM293.93 29.00Q291.72 29.00 290.19 30.58Q288.66 32.15 288.66 34.91Q288.66 37.68 290.19 39.29Q291.72 40.91 293.93 40.91Q296.13 40.91 297.66 39.32Q299.19 37.72 299.19 34.96Q299.19 32.19 297.66 30.60Q296.13 29.00 293.93 29.00ZM333.85 36.73H317.15Q317.32 38.97 318.60 40.16Q319.87 41.35 321.72 41.35Q324.49 41.35 325.57 39.01H333.42Q332.82 41.39 331.24 43.29Q329.67 45.19 327.29 46.27Q324.92 47.35 321.98 47.35Q318.44 47.35 315.68 45.83Q312.92 44.32 311.37 41.52Q309.81 38.71 309.81 34.96Q309.81 31.20 311.34 28.40Q312.88 25.59 315.64 24.08Q318.40 22.57 321.98 22.57Q325.48 22.57 328.20 24.04Q330.92 25.50 332.45 28.22Q333.98 30.94 333.98 34.57Q333.98 35.60 333.85 36.73ZM326.43 32.63Q326.43 30.73 325.13 29.60Q323.84 28.48 321.90 28.48Q320.04 28.48 318.77 29.56Q317.49 30.64 317.19 32.63Z" fill="#10396B"/></svg><span>Strak · Antraciete punten</span></div><div class="cel"><svg class="lockup grid" viewBox="0 0 337 64" role="img" aria-label="EuropMade"><defs><linearGradient id="zilgstrakzilverstip" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="56" y2="56"><stop offset="0" stop-color="#A2B0C0"/><stop offset=".34" stop-color="#566579"/><stop offset=".54" stop-color="#3F4E62"/><stop offset=".72" stop-color="#8390A2"/><stop offset="1" stop-color="#4C5B70"/></linearGradient></defs>
+    <circle cx="32.00" cy="8.40" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="43.80" cy="11.56" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="52.44" cy="20.20" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="55.60" cy="32.00" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="52.44" cy="43.80" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="43.80" cy="52.44" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="32.00" cy="55.60" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="20.20" cy="52.44" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="11.56" cy="43.80" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="8.40" cy="32.00" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="11.56" cy="20.20" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="20.20" cy="11.56" r="4.1" fill="url(#zilgstrakzilverstip)"/>
+    <circle cx="32" cy="32" r="11.2" fill="#10396B"/><g transform="translate(85.000 17.000)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M135.55 23.22V47.00H130.63V44.19Q129.46 45.66 127.59 46.50Q125.71 47.35 123.59 47.35Q120.79 47.35 118.57 46.18Q116.34 45.01 115.07 42.73Q113.80 40.44 113.80 37.20V23.22H118.67V36.47Q118.67 39.66 120.27 41.37Q121.87 43.07 124.63 43.07Q127.39 43.07 129.01 41.37Q130.63 39.66 130.63 36.47V23.22ZM153.42 22.83V27.92H152.17Q149.28 27.92 147.79 29.39Q146.30 30.86 146.30 34.48V47.00H141.38V23.22H146.30V26.67Q147.38 24.86 149.17 23.84Q150.96 22.83 153.42 22.83ZM155.71 35.09Q155.71 31.46 157.31 28.65Q158.90 25.85 161.67 24.34Q164.43 22.83 167.84 22.83Q171.25 22.83 174.01 24.34Q176.77 25.85 178.37 28.65Q179.97 31.46 179.97 35.09Q179.97 38.71 178.33 41.52Q176.69 44.32 173.86 45.86Q171.03 47.39 167.62 47.39Q164.26 47.39 161.54 45.86Q158.82 44.32 157.26 41.54Q155.71 38.76 155.71 35.09ZM174.92 35.09Q174.92 32.50 173.93 30.71Q172.93 28.91 171.29 28.01Q169.65 27.10 167.75 27.10Q165.85 27.10 164.23 28.01Q162.62 28.91 161.67 30.71Q160.72 32.50 160.72 35.09Q160.72 38.93 162.68 41.02Q164.64 43.12 167.62 43.12Q169.52 43.12 171.18 42.21Q172.85 41.30 173.88 39.49Q174.92 37.68 174.92 35.09ZM197.41 22.83Q200.52 22.83 203.08 24.36Q205.65 25.89 207.12 28.65Q208.59 31.42 208.59 35.00Q208.59 38.58 207.12 41.41Q205.65 44.24 203.08 45.81Q200.52 47.39 197.41 47.39Q194.69 47.39 192.57 46.29Q190.46 45.19 189.12 43.55V58.31H184.20V23.22H189.12V26.71Q190.37 25.07 192.53 23.95Q194.69 22.83 197.41 22.83ZM196.33 27.10Q194.47 27.10 192.81 28.05Q191.15 29.00 190.13 30.81Q189.12 32.63 189.12 35.09Q189.12 37.55 190.13 39.38Q191.15 41.22 192.81 42.17Q194.47 43.12 196.33 43.12Q198.23 43.12 199.89 42.14Q201.55 41.17 202.57 39.32Q203.58 37.46 203.58 35.00Q203.58 32.54 202.57 30.75Q201.55 28.96 199.89 28.03Q198.23 27.10 196.33 27.10Z" fill="#10396B"/>
+    <g transform="translate(248.905 17.000) rotate(90) scale(1.282)" fill="none" stroke="#10396B" stroke-width="5.180" stroke-linecap="butt"><path d="M23.400 2.590 H4.200 A1.610 1.610 0 0 0 2.590 4.200 V25.800 A1.610 1.610 0 0 0 4.200 27.410 H23.400"/><path d="M2.590 15.000 H23.400"/></g>
+    <path d="M263.11 22.57Q265.65 22.57 267.57 23.60Q269.49 24.64 270.53 26.32V22.91H277.91V47.00H270.53V43.59Q269.45 45.27 267.53 46.31Q265.61 47.35 263.06 47.35Q260.13 47.35 257.71 45.81Q255.29 44.28 253.89 41.45Q252.49 38.63 252.49 34.91Q252.49 31.20 253.89 28.40Q255.29 25.59 257.71 24.08Q260.13 22.57 263.11 22.57ZM265.26 29.00Q263.06 29.00 261.53 30.58Q260.00 32.15 260.00 34.91Q260.00 37.68 261.53 39.29Q263.06 40.91 265.26 40.91Q267.47 40.91 269.00 39.32Q270.53 37.72 270.53 34.96Q270.53 32.19 269.00 30.60Q267.47 29.00 265.26 29.00ZM291.77 22.57Q294.14 22.57 296.11 23.56Q298.07 24.55 299.19 26.24V15.06H306.57V47.00H299.19V43.55Q298.16 45.27 296.24 46.31Q294.31 47.35 291.77 47.35Q288.79 47.35 286.37 45.81Q283.96 44.28 282.55 41.45Q281.15 38.63 281.15 34.91Q281.15 31.20 282.55 28.40Q283.96 25.59 286.37 24.08Q288.79 22.57 291.77 22.57ZM293.93 29.00Q291.72 29.00 290.19 30.58Q288.66 32.15 288.66 34.91Q288.66 37.68 290.19 39.29Q291.72 40.91 293.93 40.91Q296.13 40.91 297.66 39.32Q299.19 37.72 299.19 34.96Q299.19 32.19 297.66 30.60Q296.13 29.00 293.93 29.00ZM333.85 36.73H317.15Q317.32 38.97 318.60 40.16Q319.87 41.35 321.72 41.35Q324.49 41.35 325.57 39.01H333.42Q332.82 41.39 331.24 43.29Q329.67 45.19 327.29 46.27Q324.92 47.35 321.98 47.35Q318.44 47.35 315.68 45.83Q312.92 44.32 311.37 41.52Q309.81 38.71 309.81 34.96Q309.81 31.20 311.34 28.40Q312.88 25.59 315.64 24.08Q318.40 22.57 321.98 22.57Q325.48 22.57 328.20 24.04Q330.92 25.50 332.45 28.22Q333.98 30.94 333.98 34.57Q333.98 35.60 333.85 36.73ZM326.43 32.63Q326.43 30.73 325.13 29.60Q323.84 28.48 321.90 28.48Q320.04 28.48 318.77 29.56Q317.49 30.64 317.19 32.63Z" fill="#10396B"/></svg><span>Strak · Zilveren punten</span></div></div>
+  </section>
+
+  <section class="deel">
+    <h2>Wat ik zou kiezen</h2>
+    <div class="cols">
+      <div class="col-idee">
+        <p>Kleurstelling <em>B — antraciete punten met een blauwe kern</em>. Twee massieve kleuren, geen
+          verloop dat kan mislukken, en het beeldmerk wijst naar het midden in plaats van naar de rand. Van
+          de drie is dit de enige die bij 16 px, in zeefdruk en in een zwart-witte factuur precies hetzelfde
+          blijft. Wil je per se metaal in het merk, dan is <em>A</em> de betere van de twee metaalvarianten:
+          één glanzend vlak is rustiger dan twaalf.</p>
+        <p>Letters: <em>02 — Zacht</em>. De boogvariant is mooier op één regel groot, maar dwingt
+          <em>Europ</em> in SemiBold en verkleint daarmee het contrast met <em>Made</em>. Zacht houdt dat
+          contrast, blijft duidelijk rond, en de E blijft op elk formaat een E.</p>
+        <p>Dus: <em>Zacht × B</em>. En omdat de twee keuzes los staan, kun je de kleurstelling later nog
+          wisselen zonder dat er aan de letters iets verandert.</p>
+      </div>
+      <div class="col-spec">
+        <h3>Zodra je kiest</h3>
+        <ol class="next">
+          <li>Faviconset 16/32/180/512 en <code>og-image</code>, met de vlakke versie op de kleine maten.</li>
+          <li>Woordmerk zonder beeldmerk voor smalle mobiele headers.</li>
+          <li>Verified™-badge in dezelfde taal.</li>
+          <li><code>docs/07-design-system/colors.md</code> en <code>packages/config/tailwind-preset</code> vullen.</li>
+          <li>Merkengemachtigde: figuratieve check en woordmerkcheck, zoals in ronde 3 beschreven.</li>
+          <li>Merkpagina met minimale afmeting, vrije ruimte en wat niet mag.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <p class="colofon">
+    Alle letters zijn vector; de E en de M zijn getekend, de kleine letters komen uit Poppins
+    (SIL Open Font License).<br>
+    Bestanden staan in EuropMade\brand\logo-voorstellen-ronde4\.
+  </p>
+</div>

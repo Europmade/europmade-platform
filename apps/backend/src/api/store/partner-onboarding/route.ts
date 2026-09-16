@@ -2,6 +2,7 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
+import { serializePartnerAccess } from "../../../modules/partner/permissions"
 import { PARTNER_MODULE } from "../../../modules/partner"
 import PartnerModuleService from "../../../modules/partner/service"
 import {
@@ -31,7 +32,11 @@ export async function GET(
     return
   }
 
-  res.json({ onboarding: seller })
+  res.json({
+    onboarding: seller
+      ? { ...seller, ...serializePartnerAccess(seller) }
+      : null,
+  })
 }
 
 /**
@@ -53,6 +58,8 @@ export async function POST(
       roles: {
         is_retailer: req.validatedBody.is_retailer,
         is_producer_or_brand_owner: req.validatedBody.is_producer_or_brand_owner,
+        is_brand_owner: req.validatedBody.is_brand_owner,
+        is_producer: req.validatedBody.is_producer,
         is_distributor: req.validatedBody.is_distributor,
       },
     },
@@ -89,6 +96,8 @@ export async function PATCH(
       roles: {
         is_retailer: req.validatedBody.is_retailer,
         is_producer_or_brand_owner: req.validatedBody.is_producer_or_brand_owner,
+        is_brand_owner: req.validatedBody.is_brand_owner,
+        is_producer: req.validatedBody.is_producer,
         is_distributor: req.validatedBody.is_distributor,
       },
       company: req.validatedBody.company,

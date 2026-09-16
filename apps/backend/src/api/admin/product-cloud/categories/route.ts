@@ -4,6 +4,7 @@ import type {
 } from "@medusajs/framework/http"
 import { PRODUCT_CLOUD_MODULE } from "../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../modules/product-cloud/service"
+import { parentIdOf } from "../../../../modules/product-cloud/category-admin"
 import {
   CATEGORY_ATTRIBUTE_CATALOGS,
   slugifyCategoryName,
@@ -22,9 +23,16 @@ export async function GET(
   ) as ProductCloudModuleService
   const categories = await productCloud.listCategories(
     {},
-    { order: { name: "ASC" } }
+    { order: { name: "ASC" }, relations: ["parent_category"] }
   )
-  res.status(200).json({ categories })
+  res.status(200).json({
+    categories: categories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug ?? null,
+      parent_category_id: parentIdOf(c),
+    })),
+  })
 }
 
 type EnsureBody = {
@@ -48,9 +56,12 @@ export async function POST(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
 
-  const slug = body.slug?.trim() || slugifyCategoryName(body.name)
+  const requestedSlug = body.slug?.trim()
+  const slug = requestedSlug || slugifyCategoryName(body.name)
   let category = (await productCloud.listCategories({ slug }))[0]
-  if (!category) {
+  // Name-fallback only when no explicit slug: otherwise "Baby & Kind" would
+  // reuse slug `baby-en-kind` instead of creating canonical `baby-kind`.
+  if (!category && !requestedSlug) {
     category = (
       await productCloud.listCategories({ name: body.name.trim() })
     )[0]

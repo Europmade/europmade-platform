@@ -8,10 +8,9 @@ import {
 } from "./marketplace-categories"
 
 export type HomepageCategory = MarketplaceCategory & {
-  /** Redactionele/geschatte productcount tot catalogus-counts beschikbaar zijn. */
-  productCountHint: number
-  /** Optional CMS image; falls back to mock visual when absent. */
+  /** Optional CMS image; empty uses no visual (no mock/seed). */
   image?: string | null
+  categoryId?: string | null
 }
 
 export type HomepageRetailer = {
@@ -34,9 +33,8 @@ export const HOMEPAGE_NAV_LINKS = [
 ] as const
 
 export const HOMEPAGE_CATEGORIES: HomepageCategory[] =
-  POPULAR_MARKETPLACE_CATEGORIES.map((cat, i) => ({
+  POPULAR_MARKETPLACE_CATEGORIES.map((cat) => ({
     ...cat,
-    productCountHint: [128, 96, 84, 112, 64, 72][i] ?? 48,
   }))
 
 export const HOMEPAGE_RETAILERS: HomepageRetailer[] = [

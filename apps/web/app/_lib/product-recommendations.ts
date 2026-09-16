@@ -1,10 +1,9 @@
 /**
  * MVP-aanbevelingen (frontend-only). Later vervangen door AI / koop- / klikdata.
- * Geen backend — catalogus-pool of LISTING_PRODUCTS + Local Storage.
+ * Catalogus-pool + Local Storage — geen seed-producten.
  */
 
 import {
-  LISTING_PRODUCTS,
   type ListingProduct,
 } from "./listing-products"
 import { readRecentlyViewed } from "./recently-viewed"
@@ -83,8 +82,8 @@ function scoreOthersViewed(seed: ListingProduct, candidate: ListingProduct): num
 }
 
 function resolvePool(pool?: ListingProduct[]): ListingProduct[] {
-  // undefined → seed fallback; expliciete [] → geen seed (alleen live catalogus).
-  if (pool === undefined) return LISTING_PRODUCTS
+  // Geen seed-fallback: ontbrekende pool = lege live catalogus.
+  if (pool === undefined) return []
   return pool
 }
 
