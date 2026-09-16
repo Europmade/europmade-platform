@@ -215,19 +215,52 @@ export function productIdsBlockingActivation(
   return candidateProductIds.filter((id) => taken.has(id))
 }
 
+export type ActiveLinkConflict = {
+  product_id: string
+  product_title?: string | null
+  group_id: string
+  group_name?: string | null
+}
+
+/** Admin-facing block copy: product + existing active group name. */
+export function formatActiveLinkBlockMessage(
+  conflicts: ActiveLinkConflict[]
+): string {
+  const parts = conflicts.map((conflict) => {
+    const product = trimText(conflict.product_title) || conflict.product_id
+    const groupName = trimText(conflict.group_name)
+    const group = groupName
+      ? `${groupName} (${conflict.group_id})`
+      : conflict.group_id
+    return `${product} in ${group}`
+  })
+  return `Product(en) zitten al in een actieve koppelgroep: ${parts.join("; ")}`
+}
+
 export function assertProductsFreeForActivation(
   candidateProductIds: string[],
-  productIdsAlreadyInActiveGroup: string[]
+  productIdsAlreadyInActiveGroup: string[],
+  conflictDetails: ActiveLinkConflict[] = []
 ): void {
   const blocking = productIdsBlockingActivation(
     candidateProductIds,
     productIdsAlreadyInActiveGroup
   )
-  if (blocking.length) {
-    fail(
-      `Product(en) zitten al in een actieve koppelgroep: ${blocking.join(", ")}`
+  if (!blocking.length) return
+  const byProduct = new Map(
+    conflictDetails.map((row) => [row.product_id, row] as const)
+  )
+  fail(
+    formatActiveLinkBlockMessage(
+      blocking.map(
+        (productId) =>
+          byProduct.get(productId) ?? {
+            product_id: productId,
+            group_id: "",
+          }
+      )
     )
-  }
+  )
 }
 
 export function assertAdminCanDecideProductLink(

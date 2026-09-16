@@ -981,11 +981,47 @@ class ProductCloudModuleService extends MedusaService({
               sharedContext
             )) as Array<{ product_id: string; group_id: string }>)
           : []
+      const otherSlots = activeSlots.filter((slot) => slot.group_id !== groupId)
+      const conflictGroupIds = [
+        ...new Set(otherSlots.map((slot) => slot.group_id)),
+      ]
+      const conflictGroups =
+        conflictGroupIds.length > 0
+          ? ((await this.listProductLinkGroups(
+              { id: conflictGroupIds },
+              {},
+              sharedContext
+            )) as Array<{ id: string; name: string }>)
+          : []
+      const groupNameById = new Map(
+        conflictGroups.map((row) => [row.id, row.name] as const)
+      )
+      const conflictProductIds = [
+        ...new Set(otherSlots.map((slot) => slot.product_id)),
+      ]
+      const conflictVersions =
+        conflictProductIds.length > 0
+          ? ((await this.listProductVersions(
+              { product_id: conflictProductIds },
+              { take: 200, order: { version_number: "DESC" } },
+              sharedContext
+            )) as Array<{ product_id: string; title: string }>)
+          : []
+      const titleByProduct = new Map<string, string>()
+      for (const version of conflictVersions) {
+        if (!titleByProduct.has(version.product_id)) {
+          titleByProduct.set(version.product_id, version.title)
+        }
+      }
       assertProductsFreeForActivation(
         productIds,
-        activeSlots
-          .filter((slot) => slot.group_id !== groupId)
-          .map((slot) => slot.product_id)
+        otherSlots.map((slot) => slot.product_id),
+        otherSlots.map((slot) => ({
+          product_id: slot.product_id,
+          product_title: titleByProduct.get(slot.product_id) ?? null,
+          group_id: slot.group_id,
+          group_name: groupNameById.get(slot.group_id) ?? null,
+        }))
       )
     }
 

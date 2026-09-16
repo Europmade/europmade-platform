@@ -258,6 +258,18 @@ describe("product link group proposals", () => {
     expect(() =>
       assertProductsFreeForActivation(["prod_B"], ["prod_A"])
     ).not.toThrow()
+    expect(() =>
+      assertProductsFreeForActivation(["prod_A"], ["prod_A"], [
+        {
+          product_id: "prod_A",
+          product_title: "MOEVE Superwuschel badlaken kleur snow",
+          group_id: "plgrp_smoke",
+          group_name: "Smoke DT990+MOEVE",
+        },
+      ])
+    ).toThrow(
+      /MOEVE Superwuschel badlaken kleur snow in Smoke DT990\+MOEVE \(plgrp_smoke\)/
+    )
   })
 })
 
@@ -467,6 +479,10 @@ describe("admin product link review wiring", () => {
     ),
     "utf8"
   )
+  const serviceSrc = readFileSync(
+    join(process.cwd(), "src/modules/product-cloud/service.ts"),
+    "utf8"
+  )
 
   it("uses the admin proposed queue API and renders rows", () => {
     expect(listPage).toContain('useState("proposed")')
@@ -477,5 +493,6 @@ describe("admin product link review wiring", () => {
     expect(apiSrc).toContain("/admin/product-cloud/product-link-groups?status=")
     expect(routeSrc).toContain("adminProductLinkGroupListFilter")
     expect(routeSrc).toContain("listSerializedProductLinkGroups")
+    expect(serviceSrc).toContain("group_name")
   })
 })
