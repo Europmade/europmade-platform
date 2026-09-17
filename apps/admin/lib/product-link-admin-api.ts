@@ -40,6 +40,8 @@ export type ProductLinkGroupRow = {
   name: string
   dimensions: string[]
   status: string
+  request_kind?: string
+  target_group_id?: string | null
   submitter_seller_id: string
   note: string | null
   decision_reason: string | null
@@ -78,6 +80,21 @@ export function decideProductLinkGroup(
       method: "POST",
       body: JSON.stringify({
         decision,
+        decision_reason: decision_reason || undefined,
+      }),
+    }
+  )
+}
+
+export function deactivateProductLinkGroup(
+  id: string,
+  decision_reason?: string
+) {
+  return request<{ product_link_group: ProductLinkGroupRow }>(
+    `/admin/product-cloud/product-link-groups/${id}/deactivate`,
+    {
+      method: "POST",
+      body: JSON.stringify({
         decision_reason: decision_reason || undefined,
       }),
     }

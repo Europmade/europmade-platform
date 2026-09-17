@@ -751,26 +751,31 @@ export async function loadCatalogProductDetail(
 
   const rawLinkGroup =
     await productCloud.getActiveProductLinkGroupForProduct(productId)
-  const publicLink = toPublicProductLinkGroup(rawLinkGroup)
-  let product_link_group = publicLink
-  if (publicLink) {
-    const members = []
-    for (const member of publicLink.members) {
+  let product_link_group = null as ReturnType<typeof toPublicProductLinkGroup>
+  if (rawLinkGroup && Array.isArray(rawLinkGroup.members)) {
+    const publicMembers = []
+    for (const member of rawLinkGroup.members) {
       let image_url: string | null = null
+      let publishedOk = false
       try {
         const published = (await productCloud.listProductVersions(
           { product_id: member.product_id, publication_status: "Gepubliceerd" },
           { order: { version_number: "DESC" }, take: 1 }
         )) as PublishedVersion[]
         if (published[0]) {
+          publishedOk = true
           image_url = await resolvePrimaryImageUrl(productCloud, published[0].id)
         }
       } catch {
         image_url = null
       }
-      members.push({ ...member, image_url })
+      if (!publishedOk) continue
+      publicMembers.push({ ...member, image_url })
     }
-    product_link_group = { ...publicLink, members }
+    product_link_group = toPublicProductLinkGroup({
+      ...rawLinkGroup,
+      members: publicMembers,
+    })
   }
 
   return {

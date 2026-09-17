@@ -248,6 +248,44 @@ describe("product link group proposals", () => {
     expect(result.members.map((m) => m.product_id)).toEqual(["prod_A", "prod_B"])
   })
 
+  it("accepts deactivate request without members", () => {
+    const result = normalizeProductLinkProposal(
+      {
+        name: "Deactivering",
+        dimensions: [],
+        members: [],
+        request_kind: "deactivate",
+        target_group_id: "plgrp_active",
+        note: "Niet meer dezelfde lijn",
+      },
+      "sel_c",
+      PRODUCTS
+    )
+    expect(result.request_kind).toBe("deactivate")
+    expect(result.target_group_id).toBe("plgrp_active")
+    expect(result.members).toHaveLength(0)
+  })
+
+  it("requires target_group_id for amend", () => {
+    expectInvalid(
+      () =>
+        normalizeProductLinkProposal(
+          {
+            name: "Amend",
+            dimensions: ["Kleur"],
+            members: [
+              { product_id: "prod_A", values: { Kleur: "Zwart" } },
+              { product_id: "prod_B", values: { Kleur: "Wit" } },
+            ],
+            request_kind: "amend",
+          },
+          "sel_c",
+          PRODUCTS
+        ),
+      "target_group_id"
+    )
+  })
+
   it("does not allow a product to join two active groups", () => {
     expect(
       productIdsBlockingActivation(["prod_A", "prod_B"], ["prod_A"])
@@ -420,6 +458,18 @@ describe("public product link group", () => {
         dimensions: ["Kleur"],
         status: "rejected",
         members: members.map((m) => ({ ...m, is_active_slot: false })),
+      })
+    ).toBeNull()
+  })
+
+  it("hides active groups with fewer than two public members", () => {
+    expect(
+      toPublicProductLinkGroup({
+        id: "plgrp_active",
+        name: "Kleurreeks",
+        dimensions: ["Kleur"],
+        status: "active",
+        members: [members[0]],
       })
     ).toBeNull()
   })

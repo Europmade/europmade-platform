@@ -71,6 +71,15 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         available: true,
       },
       {
+        id: "change-proposals",
+        naam: "Wijzigingsvoorstellen",
+        route: "/product-cloud/change-proposals",
+        icoon: "products",
+        permissie: "Beheerder",
+        navigatiepositie: 31.5,
+        available: true,
+      },
+      {
         id: "categories",
         naam: "Categorieën",
         route: "/product-cloud/categories",

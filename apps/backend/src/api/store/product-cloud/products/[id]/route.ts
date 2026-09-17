@@ -33,6 +33,21 @@ export async function GET(
       product_id: id,
       submitter_seller_id: seller.id,
     })
+    const versions = (await productCloud.listProductVersions(
+      { product_id: id },
+      { order: { version_number: "DESC" }, take: 5 }
+    )) as Array<{
+      id: string
+      title: string
+      description: string
+      publication_status: string
+      version_number: number
+    }>
+    const working =
+      versions.find((v) => v.publication_status === "Gepubliceerd") ||
+      versions[0] ||
+      null
+    const linkMap = await productCloud.listProductLinkSummariesForProducts([id])
     res.json({
       product: {
         id: product.id,
@@ -40,10 +55,25 @@ export async function GET(
         brand_id: product.brand_id,
         manufacturer_id: product.manufacturer_id,
         current_owner_seller_id: product.current_owner_seller_id,
+        catalog_owner: false,
+        title: working?.title ?? null,
+        description: working?.description ?? null,
+        publication_status: working?.publication_status ?? null,
       },
-      versions: [],
+      versions: working
+        ? [
+            {
+              id: working.id,
+              title: working.title,
+              description: working.description,
+              publication_status: working.publication_status,
+              version_number: working.version_number,
+            },
+          ]
+        : [],
       ownership_records: [],
       own_change_proposals: ownProposals,
+      product_link_group: linkMap.get(id) ?? null,
     })
     return
   }

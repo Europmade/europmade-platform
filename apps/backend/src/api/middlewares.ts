@@ -21,6 +21,7 @@ import {
   AdminArchiveProductBody,
   AdminDecideChangeProposalBody,
   AdminDecideProductLinkGroupBody,
+  AdminDeactivateProductLinkGroupBody,
 } from "./admin/product-cloud/validators"
 import {
   StoreEanMatchBody,
@@ -991,6 +992,11 @@ export default defineMiddlewares({
       middlewares: [adminAuth, validateAndTransformBody(AdminDecideClaimBody)],
     },
     {
+      matcher: "/admin/product-cloud/change-proposals",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/product-cloud/change-proposals/:id/decide",
       methods: ["POST"],
       middlewares: [
@@ -1014,6 +1020,14 @@ export default defineMiddlewares({
       middlewares: [
         adminAuth,
         validateAndTransformBody(AdminDecideProductLinkGroupBody),
+      ],
+    },
+    {
+      matcher: "/admin/product-cloud/product-link-groups/:id/deactivate",
+      methods: ["POST"],
+      middlewares: [
+        adminAuth,
+        validateAndTransformBody(AdminDeactivateProductLinkGroupBody),
       ],
     },
     {

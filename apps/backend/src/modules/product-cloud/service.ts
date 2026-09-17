@@ -803,22 +803,27 @@ class ProductCloudModuleService extends MedusaService({
         name: normalized.name,
         dimensions: normalized.dimensions,
         status: "proposed",
+        request_kind: normalized.request_kind,
+        target_group_id: normalized.target_group_id,
         submitter_seller_id: normalized.submitter_seller_id,
         note: normalized.note,
       },
       sharedContext
     )
-    const members = await this.createProductLinkMembers(
-      normalized.members.map((member) => ({
-        group_id: (group as { id: string }).id,
-        product_id: member.product_id,
-        values: member.values,
-        values_key: member.values_key,
-        sort_order: member.sort_order,
-        is_active_slot: false,
-      })),
-      sharedContext
-    )
+    const members =
+      normalized.members.length > 0
+        ? await this.createProductLinkMembers(
+            normalized.members.map((member) => ({
+              group_id: (group as { id: string }).id,
+              product_id: member.product_id,
+              values: member.values,
+              values_key: member.values_key,
+              sort_order: member.sort_order,
+              is_active_slot: false,
+            })),
+            sharedContext
+          )
+        : []
     return serializeProductLinkGroup(
       group as Parameters<typeof serializeProductLinkGroup>[0],
       members as Parameters<typeof serializeProductLinkGroup>[1]
@@ -945,6 +950,8 @@ class ProductCloudModuleService extends MedusaService({
     )) as Parameters<typeof serializeProductLinkGroup>[0] & {
       id: string
       status: string
+      request_kind?: string | null
+      target_group_id?: string | null
     }
     const members = (await this.listProductLinkMembers(
       { group_id: groupId },
@@ -957,98 +964,161 @@ class ProductCloudModuleService extends MedusaService({
         values_key: string
       }
     >
+    const requestKind = group.request_kind || "create"
     const decision = applyProductLinkGroupDecision({
       currentStatus: group.status,
       decision: input.decision,
       decision_reason: input.decision_reason,
       decided_by: actor.actor_id,
     })
-    if (decision.status === "active") {
-      const productIds = members.map((m) => m.product_id)
-      const found =
-        productIds.length > 0
-          ? await this.listProducts({ id: productIds }, {}, sharedContext)
-          : []
-      assertMembersReadyForActivation(
-        members,
-        new Set((found as Array<{ id: string }>).map((row) => row.id))
+
+    if (decision.status === "rejected") {
+      const updatedGroup = await this.updateProductLinkGroups(
+        {
+          id: groupId,
+          status: "rejected",
+          decision_reason: decision.decision_reason,
+          decided_by: decision.decided_by,
+          decided_at: decision.decided_at,
+        },
+        sharedContext
       )
-      const activeSlots =
-        productIds.length > 0
-          ? ((await this.listProductLinkMembers(
-              { product_id: productIds, is_active_slot: true },
-              {},
-              sharedContext
-            )) as Array<{ product_id: string; group_id: string }>)
-          : []
-      const otherSlots = activeSlots.filter((slot) => slot.group_id !== groupId)
-      const conflictGroupIds = [
-        ...new Set(otherSlots.map((slot) => slot.group_id)),
-      ]
-      const conflictGroups =
-        conflictGroupIds.length > 0
-          ? ((await this.listProductLinkGroups(
-              { id: conflictGroupIds },
-              {},
-              sharedContext
-            )) as Array<{ id: string; name: string }>)
-          : []
-      const groupNameById = new Map(
-        conflictGroups.map((row) => [row.id, row.name] as const)
+      const [enriched] = await this.enrichProductLinkGroupsWithTitles_(
+        [serializeProductLinkGroup(updatedGroup as Parameters<typeof serializeProductLinkGroup>[0], members)],
+        sharedContext
       )
-      const conflictProductIds = [
-        ...new Set(otherSlots.map((slot) => slot.product_id)),
-      ]
-      const conflictVersions =
-        conflictProductIds.length > 0
-          ? ((await this.listProductVersions(
-              { product_id: conflictProductIds },
-              { take: 200, order: { version_number: "DESC" } },
-              sharedContext
-            )) as Array<{ product_id: string; title: string }>)
-          : []
-      const titleByProduct = new Map<string, string>()
-      for (const version of conflictVersions) {
-        if (!titleByProduct.has(version.product_id)) {
-          titleByProduct.set(version.product_id, version.title)
-        }
+      return enriched
+    }
+
+    if (requestKind === "deactivate") {
+      const targetId = group.target_group_id
+      if (!targetId) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          "Deactivate-voorstel mist target_group_id."
+        )
       }
-      assertProductsFreeForActivation(
-        productIds,
-        otherSlots.map((slot) => slot.product_id),
-        otherSlots.map((slot) => ({
-          product_id: slot.product_id,
-          product_title: titleByProduct.get(slot.product_id) ?? null,
-          group_id: slot.group_id,
-          group_name: groupNameById.get(slot.group_id) ?? null,
-        }))
+      await this.deactivateProductLinkGroup_(
+        targetId,
+        {
+          actor_id: actor.actor_id,
+          reason: decision.decision_reason || "Seller-verzoek goedgekeurd",
+        },
+        sharedContext
+      )
+      const updatedGroup = await this.updateProductLinkGroups(
+        {
+          id: groupId,
+          status: "inactive",
+          decision_reason: decision.decision_reason,
+          decided_by: decision.decided_by,
+          decided_at: decision.decided_at,
+        },
+        sharedContext
+      )
+      const [enriched] = await this.enrichProductLinkGroupsWithTitles_(
+        [serializeProductLinkGroup(updatedGroup as Parameters<typeof serializeProductLinkGroup>[0], members)],
+        sharedContext
+      )
+      return enriched
+    }
+
+    const excludeGroupIds = new Set<string>([groupId])
+    if (requestKind === "amend" && group.target_group_id) {
+      excludeGroupIds.add(group.target_group_id)
+      await this.deactivateProductLinkGroup_(
+        group.target_group_id,
+        {
+          actor_id: actor.actor_id,
+          reason: decision.decision_reason || "Vervangen door nieuw voorstel",
+        },
+        sharedContext
       )
     }
+
+    const productIds = members.map((m) => m.product_id)
+    const found =
+      productIds.length > 0
+        ? await this.listProducts({ id: productIds }, {}, sharedContext)
+        : []
+    assertMembersReadyForActivation(
+      members,
+      new Set((found as Array<{ id: string }>).map((row) => row.id))
+    )
+    const activeSlots =
+      productIds.length > 0
+        ? ((await this.listProductLinkMembers(
+            { product_id: productIds, is_active_slot: true },
+            {},
+            sharedContext
+          )) as Array<{ product_id: string; group_id: string }>)
+        : []
+    const otherSlots = activeSlots.filter(
+      (slot) => !excludeGroupIds.has(slot.group_id)
+    )
+    const conflictGroupIds = [
+      ...new Set(otherSlots.map((slot) => slot.group_id)),
+    ]
+    const conflictGroups =
+      conflictGroupIds.length > 0
+        ? ((await this.listProductLinkGroups(
+            { id: conflictGroupIds },
+            {},
+            sharedContext
+          )) as Array<{ id: string; name: string }>)
+        : []
+    const groupNameById = new Map(
+      conflictGroups.map((row) => [row.id, row.name] as const)
+    )
+    const conflictProductIds = [
+      ...new Set(otherSlots.map((slot) => slot.product_id)),
+    ]
+    const conflictVersions =
+      conflictProductIds.length > 0
+        ? ((await this.listProductVersions(
+            { product_id: conflictProductIds },
+            { take: 200, order: { version_number: "DESC" } },
+            sharedContext
+          )) as Array<{ product_id: string; title: string }>)
+        : []
+    const titleByProduct = new Map<string, string>()
+    for (const version of conflictVersions) {
+      if (!titleByProduct.has(version.product_id)) {
+        titleByProduct.set(version.product_id, version.title)
+      }
+    }
+    assertProductsFreeForActivation(
+      productIds,
+      otherSlots.map((slot) => slot.product_id),
+      otherSlots.map((slot) => ({
+        product_id: slot.product_id,
+        product_title: titleByProduct.get(slot.product_id) ?? null,
+        group_id: slot.group_id,
+        group_name: groupNameById.get(slot.group_id) ?? null,
+      }))
+    )
 
     const updatedGroup = await this.updateProductLinkGroups(
       {
         id: groupId,
-        status: decision.status,
+        status: "active",
         decision_reason: decision.decision_reason,
         decided_by: decision.decided_by,
         decided_at: decision.decided_at,
       },
       sharedContext
     )
-    let updatedMembers = members
-    if (decision.members_active_slot) {
-      for (const member of members) {
-        await this.updateProductLinkMembers(
-          { id: member.id, is_active_slot: true },
-          sharedContext
-        )
-      }
-      updatedMembers = (await this.listProductLinkMembers(
-        { group_id: groupId },
-        { order: { sort_order: "ASC" } },
+    for (const member of members) {
+      await this.updateProductLinkMembers(
+        { id: member.id, is_active_slot: true },
         sharedContext
-      )) as typeof members
+      )
     }
+    const updatedMembers = (await this.listProductLinkMembers(
+      { group_id: groupId },
+      { order: { sort_order: "ASC" } },
+      sharedContext
+    )) as typeof members
 
     const serialized = serializeProductLinkGroup(
       updatedGroup as Parameters<typeof serializeProductLinkGroup>[0],
@@ -1059,6 +1129,157 @@ class ProductCloudModuleService extends MedusaService({
       sharedContext
     )
     return enriched
+  }
+
+  @InjectManager()
+  async deactivateProductLinkGroup(
+    groupId: string,
+    actor: { actor_id: string; reason?: string | null },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    return await this.deactivateProductLinkGroup_(groupId, actor, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async deactivateProductLinkGroup_(
+    groupId: string,
+    actor: { actor_id: string; reason?: string | null },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const group = (await this.retrieveProductLinkGroup(
+      groupId,
+      {},
+      sharedContext
+    )) as {
+      id: string
+      status: string
+    }
+    if (group.status !== "active") {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Alleen een actieve koppelgroep kan worden gedeactiveerd."
+      )
+    }
+    const members = (await this.listProductLinkMembers(
+      { group_id: groupId },
+      {},
+      sharedContext
+    )) as Array<{ id: string }>
+    for (const member of members) {
+      await this.updateProductLinkMembers(
+        { id: member.id, is_active_slot: false },
+        sharedContext
+      )
+    }
+    const updated = await this.updateProductLinkGroups(
+      {
+        id: groupId,
+        status: "inactive",
+        decision_reason: actor.reason?.trim() || "Gedeactiveerd door beheerder",
+        decided_by: actor.actor_id,
+        decided_at: new Date(),
+      },
+      sharedContext
+    )
+    const refreshed = (await this.listProductLinkMembers(
+      { group_id: groupId },
+      { order: { sort_order: "ASC" } },
+      sharedContext
+    )) as Parameters<typeof serializeProductLinkGroup>[1]
+    const [enriched] = await this.enrichProductLinkGroupsWithTitles_(
+      [
+        serializeProductLinkGroup(
+          updated as Parameters<typeof serializeProductLinkGroup>[0],
+          refreshed
+        ),
+      ],
+      sharedContext
+    )
+    return enriched
+  }
+
+  @InjectManager()
+  async listProductLinkSummariesForProducts(
+    productIds: string[],
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const ids = [...new Set(productIds.filter(Boolean))]
+    if (!ids.length) return new Map<string, unknown>()
+    const slots = (await this.listProductLinkMembers(
+      { product_id: ids },
+      {},
+      sharedContext
+    )) as Array<{
+      product_id: string
+      group_id: string
+      values: unknown
+      is_active_slot?: boolean
+    }>
+    if (!slots.length) return new Map<string, unknown>()
+    const groupIds = [...new Set(slots.map((s) => s.group_id))]
+    const groups = (await this.listProductLinkGroups(
+      { id: groupIds },
+      {},
+      sharedContext
+    )) as Array<{
+      id: string
+      name: string
+      status: string
+      dimensions: unknown
+    }>
+    const groupById = new Map(groups.map((g) => [g.id, g] as const))
+    const allMembers = (await this.listProductLinkMembers(
+      { group_id: groupIds },
+      { order: { sort_order: "ASC" } },
+      sharedContext
+    )) as Array<{
+      id: string
+      group_id: string
+      product_id: string
+      values: unknown
+      values_key: string
+      is_active_slot?: boolean
+    }>
+    const membersByGroup = new Map<string, typeof allMembers>()
+    for (const member of allMembers) {
+      const list = membersByGroup.get(member.group_id) || []
+      list.push(member)
+      membersByGroup.set(member.group_id, list)
+    }
+    const titles = await this.enrichProductLinkGroupsWithTitles_(
+      groups.map((g) =>
+        serializeProductLinkGroup(g as Parameters<typeof serializeProductLinkGroup>[0], membersByGroup.get(g.id) || [])
+      ),
+      sharedContext
+    )
+    const enrichedById = new Map(titles.map((g) => [g.id, g] as const))
+    const out = new Map<string, unknown>()
+    for (const productId of ids) {
+      const productSlots = slots.filter((s) => s.product_id === productId)
+      const active = productSlots.find((s) => s.is_active_slot)
+      const preferred =
+        (active && groupById.get(active.group_id)) ||
+        productSlots
+          .map((s) => groupById.get(s.group_id))
+          .find((g) => g && (g.status === "proposed" || g.status === "active"))
+      if (!preferred) continue
+      const enriched = enrichedById.get(preferred.id)
+      if (!enriched) continue
+      const self = enriched.members.find((m) => m.product_id === productId)
+      out.set(productId, {
+        id: enriched.id,
+        name: enriched.name,
+        status: enriched.status,
+        dimensions: enriched.dimensions,
+        own_values: self?.values ?? {},
+        members: enriched.members.map((m) => ({
+          product_id: m.product_id,
+          product_title: m.product_title ?? null,
+          values: m.values,
+        })),
+      })
+    }
+    return out
   }
 
   protected async enrichProductLinkGroupsWithTitles_(

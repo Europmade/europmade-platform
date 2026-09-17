@@ -94,9 +94,11 @@ export async function POST(
   const product_link_group = await productCloud.submitProductLinkGroupProposal(
     {
       name: body.name,
-      dimensions: body.dimensions,
-      members: body.members,
+      dimensions: body.dimensions || [],
+      members: body.members || [],
       note: body.note,
+      request_kind: body.request_kind,
+      target_group_id: body.target_group_id,
     },
     seller.id
   )

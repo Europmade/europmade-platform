@@ -38,6 +38,7 @@ import { gpsrHint } from "../_lib/gpsr-hints"
 import { listSellerBrands, listSellerFacilities } from "../_lib/brands-api"
 import {
   canEditCatalogInformation,
+  canProposeCatalogChange,
   isSellerCatalogOwner,
   sellerCatalogInformationHref,
   sellerCatalogTabHref,
@@ -1007,6 +1008,11 @@ export default function SellerProductsPage() {
                         <span className={`text-[10px] font-semibold ${info.className}`}>
                           {info.pct ?? 0}% compleet
                         </span>
+                        {p.product_link_group ? (
+                          <span className="rounded bg-wf-100 px-1.5 py-0.5 text-[10px] font-semibold text-wf-800">
+                            Gekoppeld · {p.product_link_group.status}
+                          </span>
+                        ) : null}
                       </div>
                       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-wf-700 tablet:grid-cols-4">
                         <div>
@@ -1050,23 +1056,28 @@ export default function SellerProductsPage() {
                         href={sellerProductHref(p)}
                         className="block px-3 py-1.5 hover:bg-wf-50"
                       >
-                        {catalogOwner ? "Beheer product" : "Verkoopinformatie"}
+                        {catalogOwner ? "Beheer product" : "Eigen aanbod"}
                       </Link>
-                      {canEditCatalogInformation(p, actions) &&
-                      catalogInformationHref ? (
+                      {catalogInformationHref ? (
                         <Link
                           href={catalogInformationHref}
                           className="block px-3 py-1.5 hover:bg-wf-50"
                         >
-                          Bewerk productinformatie
+                          {canEditCatalogInformation(p, actions)
+                            ? "Bewerk productinformatie"
+                            : canProposeCatalogChange(p)
+                              ? "Productinformatie / verbetering"
+                              : "Productinformatie"}
                         </Link>
                       ) : null}
-                      <Link
-                        href={sellerOfferHref(p)}
-                        className="block px-3 py-1.5 hover:bg-wf-50"
-                      >
-                        {catalogOwner ? "Verkoopinformatie" : "Eigen aanbod"}
-                      </Link>
+                      {catalogOwner ? (
+                        <Link
+                          href={sellerOfferHref(p)}
+                          className="block px-3 py-1.5 hover:bg-wf-50"
+                        >
+                          Verkoopinformatie
+                        </Link>
+                      ) : null}
                       {catalogHistoryHref ? (
                         <Link
                           href={catalogHistoryHref}
@@ -1339,15 +1350,18 @@ export default function SellerProductsPage() {
                               href={sellerProductHref(p)}
                               className="block px-3 py-1.5 hover:bg-wf-50"
                             >
-                              {catalogOwner ? "Beheer product" : "Verkoopinformatie"}
+                              {catalogOwner ? "Beheer product" : "Eigen aanbod"}
                             </Link>
-                            {canEditCatalogInformation(p, actions) &&
-                            catalogInformationHref ? (
+                            {catalogInformationHref ? (
                               <Link
                                 href={catalogInformationHref}
                                 className="block px-3 py-1.5 hover:bg-wf-50"
                               >
-                                Bewerk productinformatie
+                                {canEditCatalogInformation(p, actions)
+                                  ? "Bewerk productinformatie"
+                                  : canProposeCatalogChange(p)
+                                    ? "Productinformatie / verbetering"
+                                    : "Productinformatie"}
                               </Link>
                             ) : null}
                             {catalogVariantsHref ? (
@@ -1358,12 +1372,14 @@ export default function SellerProductsPage() {
                                 Varianten
                               </Link>
                             ) : null}
-                            <Link
-                              href={sellerOfferHref(p)}
-                              className="block px-3 py-1.5 hover:bg-wf-50"
-                            >
-                              {catalogOwner ? "Verkoopaanbod" : "Eigen aanbod"}
-                            </Link>
+                            {catalogOwner ? (
+                              <Link
+                                href={sellerOfferHref(p)}
+                                className="block px-3 py-1.5 hover:bg-wf-50"
+                              >
+                                Verkoopaanbod
+                              </Link>
+                            ) : null}
                             {catalogChangesHref ? (
                               <Link
                                 href={catalogChangesHref}

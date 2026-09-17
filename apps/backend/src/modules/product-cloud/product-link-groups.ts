@@ -22,10 +22,20 @@ export const PRODUCT_LINK_GROUP_STATUSES = [
   "proposed",
   "active",
   "rejected",
+  "inactive",
 ] as const
 
 export type ProductLinkGroupStatus =
   (typeof PRODUCT_LINK_GROUP_STATUSES)[number]
+
+export const PRODUCT_LINK_REQUEST_KINDS = [
+  "create",
+  "amend",
+  "deactivate",
+] as const
+
+export type ProductLinkRequestKind =
+  (typeof PRODUCT_LINK_REQUEST_KINDS)[number]
 
 /**
  * Admin list filter. Medusa/qs may pass status as a string, array, or object.
@@ -45,7 +55,13 @@ export function adminProductLinkGroupListFilter(
   const status = typeof value === "string" ? value.trim() : ""
   if (!status || status === "proposed") return { status: "proposed" }
   if (status === "all") return {}
-  if (status === "active" || status === "rejected") return { status }
+  if (
+    status === "active" ||
+    status === "rejected" ||
+    status === "inactive"
+  ) {
+    return { status }
+  }
   return { status: "proposed" }
 }
 
@@ -61,6 +77,8 @@ export type ProductLinkProposalInput = {
   note?: string | null
   status?: string | null
   submitter_seller_id?: string | null
+  request_kind?: string | null
+  target_group_id?: string | null
 }
 
 export type NormalizedProductLinkProposal = {
@@ -75,6 +93,8 @@ export type NormalizedProductLinkProposal = {
   note: string | null
   status: "proposed"
   submitter_seller_id: string
+  request_kind: ProductLinkRequestKind
+  target_group_id: string | null
 }
 
 const DIMENSION_SET = new Set<string>(PRODUCT_LINK_DIMENSIONS)
@@ -117,6 +137,29 @@ export function normalizeProductLinkProposal(
     fail("Een seller mag alleen een koppelvoorstel indienen (status proposed).")
   }
 
+  const kindRaw = trimText(input.request_kind) || "create"
+  if (
+    kindRaw !== "create" &&
+    kindRaw !== "amend" &&
+    kindRaw !== "deactivate"
+  ) {
+    fail("request_kind moet create, amend of deactivate zijn.")
+  }
+  const request_kind = kindRaw as ProductLinkRequestKind
+  const target_group_id = trimText(input.target_group_id) || null
+  if (request_kind === "create" && target_group_id) {
+    fail("Een nieuw koppelvoorstel mag geen target_group_id hebben.")
+  }
+  if (
+    (request_kind === "amend" || request_kind === "deactivate") &&
+    !target_group_id
+  ) {
+    fail("target_group_id is verplicht voor amend/deactivate.")
+  }
+  if (target_group_id && !target_group_id.startsWith("plgrp_")) {
+    fail("target_group_id moet een Product Link Group zijn.")
+  }
+
   const name = trimText(input.name)
   if (!name) {
     fail("name is verplicht.")
@@ -124,19 +167,35 @@ export function normalizeProductLinkProposal(
 
   const rawDimensions = Array.isArray(input.dimensions) ? input.dimensions : []
   const dimensions = rawDimensions.map((d) => trimText(d)).filter(Boolean)
-  if (dimensions.length === 0) {
-    fail("Minimaal één dimensie is verplicht.")
-  }
-  if (new Set(dimensions).size !== dimensions.length) {
-    fail("Dimensies mogen niet dubbel voorkomen.")
-  }
-  for (const dim of dimensions) {
-    if (!isProductLinkDimension(dim)) {
-      fail(`Ongeldige dimensie: ${dim}`)
+  if (request_kind !== "deactivate") {
+    if (dimensions.length === 0) {
+      fail("Minimaal één dimensie is verplicht.")
+    }
+    if (new Set(dimensions).size !== dimensions.length) {
+      fail("Dimensies mogen niet dubbel voorkomen.")
+    }
+    for (const dim of dimensions) {
+      if (!isProductLinkDimension(dim)) {
+        fail(`Ongeldige dimensie: ${dim}`)
+      }
     }
   }
 
   const membersIn = Array.isArray(input.members) ? input.members : []
+  if (request_kind === "deactivate") {
+    const note = trimText(input.note)
+    return {
+      name,
+      dimensions: dimensions as ProductLinkDimension[],
+      members: [],
+      note: note || null,
+      status: "proposed",
+      submitter_seller_id: sellerId,
+      request_kind,
+      target_group_id,
+    }
+  }
+
   if (membersIn.length < 1) {
     fail("Minimaal één product is verplicht.")
   }
@@ -203,6 +262,8 @@ export function normalizeProductLinkProposal(
     note: note || null,
     status: "proposed",
     submitter_seller_id: sellerId,
+    request_kind,
+    target_group_id,
   }
 }
 
@@ -377,25 +438,7 @@ export function toPublicProductLinkGroup(
     | undefined
 ): PublicProductLinkGroup | null {
   if (!group) return null
-  if (!isActiveConsumableLinkGroup(group, group.members)) return null
-  const dimensions = Array.isArray(group.dimensions)
-    ? group.dimensions.filter((d): d is string => typeof d === "string" && d.trim().length > 0)
-    : []
-  if (!dimensions.length) return null
-  return {
-    id: group.id,
-    name: group.name,
-    dimensions,
-    members: group.members.map((m) => ({
-      product_id: m.product_id,
-      product_title: m.product_title ?? null,
-      values:
-        m.values && typeof m.values === "object" && !Array.isArray(m.values)
-          ? (m.values as Record<string, string>)
-          : {},
-      image_url: m.image_url ?? null,
-    })),
-  }
+  return toPublicProductLinkGroupFromMembers(group, group.members)
 }
 
 export type ProductLinkMutations = {
@@ -428,6 +471,8 @@ export function serializeProductLinkGroup(
     decided_at?: Date | string | null
     created_at?: Date | string
     updated_at?: Date | string
+    request_kind?: string | null
+    target_group_id?: string | null
   },
   members: Array<{
     id: string
@@ -443,6 +488,8 @@ export function serializeProductLinkGroup(
     name: group.name,
     dimensions: group.dimensions,
     status: group.status,
+    request_kind: group.request_kind ?? "create",
+    target_group_id: group.target_group_id ?? null,
     submitter_seller_id: group.submitter_seller_id,
     note: group.note ?? null,
     decision_reason: group.decision_reason ?? null,
@@ -457,6 +504,52 @@ export function serializeProductLinkGroup(
       values_key: m.values_key,
       sort_order: m.sort_order ?? 0,
       is_active_slot: m.is_active_slot ?? false,
+    })),
+  }
+}
+
+/** Keep only storefront-ready members on the public PDP selector. */
+export function filterPublicProductLinkMembers<
+  T extends { product_id: string },
+>(members: T[], publicProductIds: Set<string>): T[] {
+  return members.filter((m) => publicProductIds.has(m.product_id))
+}
+
+export function toPublicProductLinkGroupFromMembers(
+  group: {
+    id: string
+    name: string
+    dimensions: unknown
+    status: string
+  },
+  members: Array<{
+    product_id: string
+    product_title?: string | null
+    values: unknown
+    is_active_slot?: boolean
+    image_url?: string | null
+  }>
+): PublicProductLinkGroup | null {
+  if (!isActiveConsumableLinkGroup(group, members)) return null
+  if (members.length < 2) return null
+  const dimensions = Array.isArray(group.dimensions)
+    ? group.dimensions.filter(
+        (d): d is string => typeof d === "string" && d.trim().length > 0
+      )
+    : []
+  if (!dimensions.length) return null
+  return {
+    id: group.id,
+    name: group.name,
+    dimensions,
+    members: members.map((m) => ({
+      product_id: m.product_id,
+      product_title: m.product_title ?? null,
+      values:
+        m.values && typeof m.values === "object" && !Array.isArray(m.values)
+          ? (m.values as Record<string, string>)
+          : {},
+      image_url: m.image_url ?? null,
     })),
   }
 }

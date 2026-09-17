@@ -104,7 +104,9 @@ describe("seller list actions: owner vs non-owner offer", () => {
   it("does not send a non-owner with an own offer to a manager URL (no 403 path)", () => {
     expect(isManagerProductPath(sellerProductHref(dt990))).toBe(false)
     expect(isManagerProductPath(sellerOfferHref(dt990))).toBe(false)
-    expect(sellerCatalogInformationHref(dt990)).toBeNull()
+    expect(sellerCatalogInformationHref(dt990)).toBe(
+      "/seller/products/catalog/prod_dt990"
+    )
     expect(sellerCatalogTabHref(dt990, "information")).toBeNull()
     expect(sellerCatalogTabHref(dt990, "offer")).toBeNull()
     expect(sellerCatalogTabHref(dt990, "media")).toBeNull()
@@ -128,7 +130,9 @@ describe("seller list actions: owner vs non-owner offer", () => {
 
   it("keeps central Product Cloud data protected for non-owners", () => {
     expect(canEditCatalogInformation(dt990)).toBe(false)
-    expect(sellerCatalogInformationHref(dt990)).toBeNull()
+    expect(sellerCatalogInformationHref(dt990)).toBe(
+      "/seller/products/catalog/prod_dt990"
+    )
   })
 
   it("uses the offer flow for DT 990 PRO", () => {

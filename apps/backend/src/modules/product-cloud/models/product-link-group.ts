@@ -11,7 +11,18 @@ const ProductLinkGroup = model
     name: model.text(),
     /** Ordered dimension names, e.g. ["Kleur", "Maat"]. */
     dimensions: model.json().default([]),
-    status: model.enum(["proposed", "active", "rejected"]).default("proposed"),
+    status: model
+      .enum(["proposed", "active", "rejected", "inactive"])
+      .default("proposed"),
+    /**
+     * create = new link group; amend = replace an active group;
+     * deactivate = request to turn an active group inactive.
+     */
+    request_kind: model
+      .enum(["create", "amend", "deactivate"])
+      .default("create"),
+    /** Active group this amend/deactivate request targets. */
+    target_group_id: model.text().nullable(),
     submitter_seller_id: model.text(),
     note: model.text().nullable(),
     decision_reason: model.text().nullable(),
@@ -22,6 +33,7 @@ const ProductLinkGroup = model
   .indexes([
     { on: ["submitter_seller_id"] },
     { on: ["status"] },
+    { on: ["target_group_id"] },
   ])
 
 export default ProductLinkGroup

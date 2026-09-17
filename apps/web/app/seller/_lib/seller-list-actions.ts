@@ -36,7 +36,7 @@ export function sellerProductHref(product: SellerListProductRef): string {
   return `/seller/products/${product.id}`
 }
 
-/** "Verkoopinformatie": owner → manager offer tab, non-owner → offer form. */
+/** "Verkoopinformatie" / "Eigen aanbod": owner → manager offer tab, non-owner → offer form. */
 export function sellerOfferHref(product: SellerListProductRef): string {
   if (!isSellerCatalogOwner(product)) {
     const identifierId = sellerListIdentifierId(product)
@@ -46,10 +46,22 @@ export function sellerOfferHref(product: SellerListProductRef): string {
   return `/seller/products/${product.id}?tab=offer`
 }
 
+/**
+ * Central Product Cloud info: owner edits in manager; non-owner reads + can propose changes.
+ */
 export function sellerCatalogInformationHref(
   product: SellerListProductRef
 ): string | null {
-  if (!isSellerCatalogOwner(product)) return null
+  if (!isSellerCatalogOwner(product)) {
+    return `/seller/products/catalog/${product.id}`
+  }
+  return `/seller/products/${product.id}?step=information`
+}
+
+export function sellerCatalogViewHref(product: SellerListProductRef): string {
+  if (!isSellerCatalogOwner(product)) {
+    return `/seller/products/catalog/${product.id}`
+  }
   return `/seller/products/${product.id}?step=information`
 }
 
@@ -70,12 +82,19 @@ export function canEditCatalogInformation(
   )
 }
 
+export function canProposeCatalogChange(
+  product: SellerListProductRef
+): boolean {
+  return !isSellerCatalogOwner(product)
+}
+
 export function isManagerProductPath(href: string): boolean {
   return (
     href.startsWith("/seller/products/") &&
     !href.startsWith("/seller/products/offer") &&
     !href.startsWith("/seller/products/add") &&
     !href.startsWith("/seller/products/new") &&
-    !href.startsWith("/seller/products/import")
+    !href.startsWith("/seller/products/import") &&
+    !href.startsWith("/seller/products/catalog")
   )
 }

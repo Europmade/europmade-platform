@@ -135,6 +135,19 @@ export type SellerOffersAggregate = {
   primary_offer_id: string | null
 }
 
+export type ProductLinkGroupSummary = {
+  id: string
+  name: string
+  status: string
+  dimensions: string[]
+  own_values: Record<string, string>
+  members: Array<{
+    product_id: string
+    product_title: string | null
+    values: Record<string, string>
+  }>
+}
+
 export type CatalogProduct = {
   id: string
   brand_id: string
@@ -173,6 +186,7 @@ export type CatalogProduct = {
   completeness?: CompletenessReport
   sku_hint?: string | null
   shipping_profile_id?: string | null
+  product_link_group?: ProductLinkGroupSummary | null
   shipping_profile?: {
     id: string
     name: string
@@ -374,12 +388,15 @@ export type ProductLinkGroupProposal = {
   name: string
   dimensions: string[]
   status: string
+  request_kind?: string
+  target_group_id?: string | null
   submitter_seller_id: string
   note: string | null
   created_at?: string
   members: Array<{
     id: string
     product_id: string
+    product_title?: string | null
     values: Record<string, string>
     values_key: string
     is_active_slot: boolean
@@ -397,9 +414,11 @@ export function listOwnProductLinkGroupProposals() {
 
 export function submitProductLinkGroupProposal(body: {
   name: string
-  dimensions: string[]
-  members: Array<{ product_id: string; values: Record<string, string> }>
+  dimensions?: string[]
+  members?: Array<{ product_id: string; values: Record<string, string> }>
   note?: string
+  request_kind?: "create" | "amend" | "deactivate"
+  target_group_id?: string | null
 }) {
   return request<{ product_link_group: ProductLinkGroupProposal }>(
     "/store/product-cloud/product-link-groups/proposals",
@@ -408,6 +427,63 @@ export function submitProductLinkGroupProposal(body: {
       body: JSON.stringify(body),
     }
   )
+}
+
+export type ChangeProposal = {
+  id: string
+  product_id: string
+  submitter_seller_id: string
+  proposed_title: string | null
+  proposed_description: string | null
+  toelichting: string
+  status: string
+  decision_reason: string | null
+  decided_at?: string | null
+  created_at?: string
+}
+
+export function listChangeProposals() {
+  return request<{
+    inbox: ChangeProposal[]
+    submitted: ChangeProposal[]
+    count_inbox: number
+  }>("/store/product-cloud/change-proposals", { cache: "no-store" })
+}
+
+export function submitChangeProposal(body: {
+  product_id: string
+  proposed_title?: string | null
+  proposed_description?: string | null
+  toelichting: string
+}) {
+  return request<{ change_proposal: ChangeProposal }>(
+    "/store/product-cloud/change-proposals",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
+export function getProductCloudProduct(productId: string) {
+  return request<{
+    product: {
+      id: string
+      title?: string | null
+      description?: string | null
+      publication_status?: string | null
+      catalog_owner?: boolean
+      current_owner_seller_id?: string
+    }
+    versions: Array<{
+      id: string
+      title: string
+      description: string
+      publication_status: string
+    }>
+    own_change_proposals?: ChangeProposal[]
+    product_link_group?: ProductLinkGroupSummary | null
+  }>(`/store/product-cloud/products/${productId}`, { cache: "no-store" })
 }
 
 export function getProductManager(productId: string) {

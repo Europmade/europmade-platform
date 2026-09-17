@@ -94,19 +94,59 @@ export type StoreDecideChangeProposalBodyInput = z.infer<
   typeof StoreDecideChangeProposalBody
 >
 
-export const StoreSubmitProductLinkGroupProposalBody = z.object({
-  name: z.string().trim().min(1),
-  dimensions: z.array(z.string().trim().min(1)).min(1),
-  members: z
-    .array(
-      z.object({
-        product_id: z.string().trim().min(1),
-        values: z.record(z.string(), z.string()),
+export const StoreSubmitProductLinkGroupProposalBody = z
+  .object({
+    name: z.string().trim().min(1),
+    dimensions: z.array(z.string().trim().min(1)).optional().default([]),
+    members: z
+      .array(
+        z.object({
+          product_id: z.string().trim().min(1),
+          values: z.record(z.string(), z.string()),
+        })
+      )
+      .optional()
+      .default([]),
+    note: z.string().trim().min(1).nullable().optional(),
+    request_kind: z
+      .enum(["create", "amend", "deactivate"])
+      .optional()
+      .default("create"),
+    target_group_id: z.string().trim().min(1).nullable().optional(),
+  })
+  .superRefine((body, ctx) => {
+    if (body.request_kind === "deactivate") {
+      if (!body.target_group_id) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "target_group_id is verplicht voor deactivate.",
+          path: ["target_group_id"],
+        })
+      }
+      return
+    }
+    if (!body.dimensions?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Minimaal één dimensie is verplicht.",
+        path: ["dimensions"],
       })
-    )
-    .min(1),
-  note: z.string().trim().min(1).nullable().optional(),
-})
+    }
+    if (!body.members?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Minimaal één product is verplicht.",
+        path: ["members"],
+      })
+    }
+    if (body.request_kind === "amend" && !body.target_group_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "target_group_id is verplicht voor amend.",
+        path: ["target_group_id"],
+      })
+    }
+  })
 export type StoreSubmitProductLinkGroupProposalBodyInput = z.infer<
   typeof StoreSubmitProductLinkGroupProposalBody
 >

@@ -169,9 +169,17 @@ export async function GET(
     : enriched
   const filtered = filterAndSortProductRows(scoped, { q, filter, sort })
 
+  const linkSummaries = await productCloud.listProductLinkSummariesForProducts(
+    filtered.map((p) => p.id)
+  )
+  const withLinks = filtered.map((row) => ({
+    ...row,
+    product_link_group: linkSummaries.get(row.id) ?? null,
+  }))
+
   res.json({
-    products: filtered,
-    count: filtered.length,
+    products: withLinks,
+    count: withLinks.length,
     total_unfiltered: products.length,
   })
 }

@@ -7,6 +7,7 @@ import { Badge, Button, Notice } from "@europmade/ui"
 import {
   ProductLinkAdminApiError,
   decideProductLinkGroup,
+  deactivateProductLinkGroup,
   getProductLinkGroup,
   type ProductLinkGroupRow,
 } from "../../../../../lib/product-link-admin-api"
@@ -71,6 +72,24 @@ export default function ProductLinkGroupDetailPage() {
         err instanceof ProductLinkAdminApiError
           ? err.message
           : "Beslissing opslaan mislukt."
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function deactivate() {
+    if (!id) return
+    setBusy(true)
+    setError(null)
+    try {
+      const res = await deactivateProductLinkGroup(id, reason.trim())
+      setRow(res.product_link_group)
+    } catch (err) {
+      setError(
+        err instanceof ProductLinkAdminApiError
+          ? err.message
+          : "Deactiveren mislukt."
       )
     } finally {
       setBusy(false)
@@ -153,6 +172,12 @@ export default function ProductLinkGroupDetailPage() {
 
           {row.status === "proposed" ? (
             <div className="rounded-lg border border-wf-300 bg-white p-4">
+              <p className="mb-2 text-xs text-wf-600">
+                Type: {row.request_kind || "create"}
+                {row.target_group_id
+                  ? ` · doelgroep ${row.target_group_id}`
+                  : ""}
+              </p>
               <label className="block text-xs text-wf-600">
                 Reden (optioneel)
                 <textarea
@@ -180,10 +205,35 @@ export default function ProductLinkGroupDetailPage() {
                 </Button>
               </div>
             </div>
+          ) : row.status === "active" ? (
+            <div className="rounded-lg border border-wf-300 bg-white p-4">
+              <p className="text-sm text-wf-600">
+                Deze koppeling is actief. Deactiveren verwijdert de publieke
+                selector; de geschiedenis blijft bewaard.
+              </p>
+              <label className="mt-3 block text-xs text-wf-600">
+                Reden (optioneel)
+                <textarea
+                  className="mt-1 w-full rounded border border-wf-300 px-2 py-1.5 text-sm"
+                  rows={2}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              </label>
+              <Button
+                type="button"
+                variant="secondary"
+                className="mt-3"
+                disabled={busy}
+                onClick={() => void deactivate()}
+              >
+                Deactiveren
+              </Button>
+            </div>
           ) : (
             <p className="text-sm text-wf-600">
-              Deze groep is al beslist en kan niet opnieuw worden
-              goedgekeurd of afgewezen.
+              Deze groep is {row.status} en kan niet opnieuw worden
+              goedgekeurd of afgewezen als voorstel.
             </p>
           )}
         </>

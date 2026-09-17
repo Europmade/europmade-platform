@@ -79,6 +79,7 @@ export default function ProductLinkGroupsPage() {
             <option value="proposed">Voorgesteld</option>
             <option value="active">Actief</option>
             <option value="rejected">Afgewezen</option>
+            <option value="inactive">Inactief</option>
             <option value="all">Alles</option>
           </select>
         </label>

@@ -70,3 +70,10 @@ export const AdminDecideProductLinkGroupBody = z.object({
 export type AdminDecideProductLinkGroupBodyInput = z.infer<
   typeof AdminDecideProductLinkGroupBody
 >
+
+export const AdminDeactivateProductLinkGroupBody = z.object({
+  decision_reason: z.string().trim().min(1).nullable().optional(),
+})
+export type AdminDeactivateProductLinkGroupBodyInput = z.infer<
+  typeof AdminDeactivateProductLinkGroupBody
+>
