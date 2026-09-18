@@ -756,20 +756,43 @@ export async function loadCatalogProductDetail(
     const publicMembers = []
     for (const member of rawLinkGroup.members) {
       let image_url: string | null = null
-      let publishedOk = false
+      let storefrontOk = false
       try {
         const published = (await productCloud.listProductVersions(
           { product_id: member.product_id, publication_status: "Gepubliceerd" },
           { order: { version_number: "DESC" }, take: 1 }
         )) as PublishedVersion[]
         if (published[0]) {
-          publishedOk = true
           image_url = await resolvePrimaryImageUrl(productCloud, published[0].id)
+          const memberPreview = await buildProductCloudPreview(
+            productCloud,
+            member.product_id
+          )
+          let hasSellableOffer = false
+          if (memberPreview.identifier_id) {
+            const memberBuyBox = await loadBuyBoxForIdentifier(
+              scope,
+              memberPreview.identifier_id,
+              region
+            )
+            if (memberBuyBox?.ranked?.length) {
+              const memberOffers = await enrichRankedOffers(
+                commerce,
+                partner,
+                memberBuyBox
+              )
+              hasSellableOffer = memberOffers.some(
+                (o) => Number(o.quantity_available) > 0
+              )
+            }
+          }
+          storefrontOk = hasSellableOffer
         }
       } catch {
         image_url = null
+        storefrontOk = false
       }
-      if (!publishedOk) continue
+      if (!storefrontOk) continue
       publicMembers.push({ ...member, image_url })
     }
     product_link_group = toPublicProductLinkGroup({

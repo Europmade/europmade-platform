@@ -545,7 +545,15 @@ async function mapApiDetail(
     sizeVariants: [],
     selectedColorId: "",
     selectedSizeId: "",
-    productLinkGroup: detail.product_link_group ?? null,
+    productLinkGroup: detail.product_link_group
+      ? {
+          ...detail.product_link_group,
+          members: detail.product_link_group.members.map((m) => ({
+            ...m,
+            image_url: resolveMediaUrl(m.image_url ?? null, backendOrigin),
+          })),
+        }
+      : null,
     offers,
     buyBoxNotice: t("buyBoxNotice", locale),
     productReviews:
@@ -694,7 +702,7 @@ export async function resolvePdpDetail(
   locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
 ): Promise<{ detail: PdpDetail; source: DataSource } | null> {
   try {
-    const api = await getCatalogProduct(slug)
+    const api = await getCatalogProduct(slug, "NL", { cache: "no-store" })
     const validOffers = []
     for (const offer of api.offers) {
       if (!offer.offer_id.startsWith("offr_")) continue

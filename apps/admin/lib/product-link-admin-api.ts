@@ -29,6 +29,7 @@ export type ProductLinkMemberRow = {
   id: string
   product_id: string
   product_title?: string | null
+  primary_image_url?: string | null
   values: Record<string, string>
   values_key: string
   sort_order: number

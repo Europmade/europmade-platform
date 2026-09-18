@@ -354,9 +354,15 @@ export function getCatalogManufacturer(slug: string, region_code = "NL") {
   )
 }
 
-export function getCatalogProduct(productId: string, region_code = "NL") {
+export function getCatalogProduct(
+  productId: string,
+  region_code = "NL",
+  opts?: { cache?: RequestCache }
+) {
   const qs = new URLSearchParams({ region_code })
   return request<CatalogProductDetail>(
-    `/store/catalog/products/${encodeURIComponent(productId)}?${qs}`
+    `/store/catalog/products/${encodeURIComponent(productId)}?${qs}`,
+    4_000,
+    opts?.cache ?? "force-cache"
   )
 }

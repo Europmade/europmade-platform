@@ -10,6 +10,7 @@ import {
   listAdminProducts,
   type ApprovalProductRow,
 } from "../../../../lib/product-approval-admin-api"
+import { displayMediaUrl } from "../../../../lib/media-url"
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—"
@@ -185,7 +186,21 @@ export default function AdminProductsPage() {
                 {rows.map((row) => (
                   <tr key={row.id} className="hover:bg-wf-100">
                     <td className="border-b border-wf-200 px-3 py-2.5 font-medium text-wf-800">
-                      {row.title || row.id.slice(-10)}
+                      <div className="flex items-center gap-2.5">
+                        {row.primary_image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={displayMediaUrl(row.primary_image_url) || ""}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-wf-100 text-[10px] text-wf-400">
+                            —
+                          </div>
+                        )}
+                        <span>{row.title || row.id.slice(-10)}</span>
+                      </div>
                     </td>
                     <td className="border-b border-wf-200 px-3 py-2.5 text-wf-700">
                       {row.seller_id ? (

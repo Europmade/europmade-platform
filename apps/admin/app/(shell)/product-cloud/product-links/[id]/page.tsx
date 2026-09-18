@@ -11,6 +11,7 @@ import {
   getProductLinkGroup,
   type ProductLinkGroupRow,
 } from "../../../../../lib/product-link-admin-api"
+import { displayMediaUrl } from "../../../../../lib/media-url"
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—"
@@ -151,21 +152,40 @@ export default function ProductLinkGroupDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {row.members.map((member) => (
-                  <tr key={member.id} className="border-b border-wf-100">
-                    <td className="px-3 py-3">
-                      <p className="font-semibold text-wf-900">
-                        {member.product_title || member.product_id}
-                      </p>
-                      <p className="font-mono text-[10px] text-wf-500">
-                        {member.product_id}
-                      </p>
-                    </td>
-                    <td className="px-3 py-3 text-wf-800">
-                      {formatValues(member.values)}
-                    </td>
-                  </tr>
-                ))}
+                {row.members.map((member) => {
+                  const imageSrc = displayMediaUrl(member.primary_image_url)
+                  return (
+                    <tr key={member.id} className="border-b border-wf-100">
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2.5">
+                          {imageSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={imageSrc}
+                              alt=""
+                              className="h-10 w-10 shrink-0 rounded object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-wf-100 text-[10px] text-wf-400">
+                              —
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-wf-900">
+                              {member.product_title || member.product_id}
+                            </p>
+                            <p className="font-mono text-[10px] text-wf-500">
+                              {member.product_id}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-wf-800">
+                        {formatValues(member.values)}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

@@ -17,6 +17,9 @@ export type PdpProductLinkGroup = {
   members: PdpProductLinkMember[]
 }
 
+/** Dimensions where a product thumbnail is the natural choice (bol-style). */
+const VISUAL_LINK_DIMENSIONS = new Set(["Kleur", "Materiaal"])
+
 export function storefrontProductHref(productId: string): string {
   return `/product/${encodeURIComponent(productId)}`
 }
@@ -25,6 +28,18 @@ export function shouldShowProductLinkSelector(
   group: PdpProductLinkGroup | null | undefined
 ): boolean {
   return Boolean(group && group.dimensions.length > 0 && group.members.length > 1)
+}
+
+/**
+ * Prefer image swatches for visual dimensions when a member image exists.
+ * Size/execution-style dimensions stay text buttons.
+ */
+export function usesImageSwatchForDimension(
+  dimension: string,
+  options: Array<{ image_url?: string | null }>
+): boolean {
+  if (!VISUAL_LINK_DIMENSIONS.has(dimension.trim())) return false
+  return options.some((o) => Boolean(o.image_url && String(o.image_url).trim()))
 }
 
 export function currentLinkMember(
