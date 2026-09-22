@@ -974,6 +974,50 @@ export function deleteMadeInEuropeEvidence(
   )
 }
 
+export type EuropeanOwnershipClaim = {
+  id: string
+  manufacturer_id: string
+  company_id: string | null
+  seller_id: string
+  ownership_band: string
+  ownership_band_label: string
+  source: string
+  source_label: string
+  status: string
+  evidence_file_id: string | null
+  evidence_note: string | null
+  review_note: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+}
+
+export function getEuropeanOwnershipClaim(productId: string) {
+  return request<{
+    manufacturer_id: string
+    claim: EuropeanOwnershipClaim | null
+    history: unknown[]
+  }>(`/store/product-cloud/products/${productId}/european-ownership`)
+}
+
+export function upsertEuropeanOwnershipClaim(
+  productId: string,
+  body: {
+    ownership_band: string
+    source: string
+    evidence_file_id?: string | null
+    evidence_note?: string | null
+    company_id?: string | null
+  }
+) {
+  return request<{ claim: EuropeanOwnershipClaim }>(
+    `/store/product-cloud/products/${productId}/european-ownership`,
+    {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
 export function publishProductVersion(productId: string, versionId: string) {
   return request<{
     version: { id: string; publication_status: string }

@@ -37,6 +37,7 @@ import { ProductGallery } from "./product-gallery"
 import { TrustStrip } from "./trust-strip"
 import { ProductCarousel } from "./product-carousel"
 import { MadeInEuropeScoreCard } from "./made-in-europe-score-card"
+import { EuropeanOwnershipBadge } from "./european-ownership-badge"
 import { partnerHref } from "../../_lib/partner-profiles"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -323,7 +324,7 @@ export function ProductDetailPage({
         title: detail.fullTitle || detail.listing.title,
         seller_id: "",
         seller_name: selected.retailer,
-        verified: detail.listing.verified || detail.euOwnershipPercent >= 50,
+        verified: detail.listing.verified,
         delivery: selected.delivery || defaultDeliveryLabel(locale),
         stock: selected.stock || t("inStock", locale),
         returns: selected.returns || t("trust30DayReturn", locale),
@@ -491,6 +492,15 @@ export function ProductDetailPage({
               >
                 {t("producerLabel", locale)} {detail.manufacturer} ›
               </Link>
+            </div>
+          ) : null}
+          {detail.europeanOwnership ? (
+            <div className="mt-2">
+              <EuropeanOwnershipBadge
+                data={detail.europeanOwnership}
+                locale={locale}
+                manufacturerHref={`/merk/${brandSlug}`}
+              />
             </div>
           ) : null}
           {showBadges ? (

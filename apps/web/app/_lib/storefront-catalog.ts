@@ -447,8 +447,7 @@ async function mapApiDetail(
   listing.countryLabel = countryDisplayLabel(listing.countryCode, locale)
 
   const mie = detail.made_in_europe ?? null
-  const euOwnershipPercent =
-    mie?.is_made_in_europe && mie.score != null ? mie.score : 0
+  const ownership = detail.european_ownership ?? null
 
   const catSlug = listing.categorySlugs[0]
   const cat = findMarketplaceCategory(catSlug)
@@ -490,7 +489,15 @@ async function mapApiDetail(
     ],
     reviewCount: detail.reviews.length,
     manufacturer: p.manufacturer_name ?? p.brand_name ?? t("producer", locale),
-    euOwnershipPercent,
+    euOwnershipPercent: null,
+    europeanOwnership: ownership
+      ? {
+          ownership_band: ownership.ownership_band,
+          ownership_band_label: ownership.ownership_band_label,
+          status: ownership.status,
+          verified_by_europmade: ownership.verified_by_europmade,
+        }
+      : null,
     madeInEurope: mie
       ? {
           is_made_in_europe: mie.is_made_in_europe,

@@ -89,6 +89,15 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         available: true,
       },
       {
+        id: "european-ownership",
+        naam: "Europese eigendom",
+        route: "/product-cloud/european-ownership",
+        icoon: "products",
+        permissie: "Beheerder",
+        navigatiepositie: 33,
+        available: true,
+      },
+      {
         id: "orders",
         naam: "Orders",
         route: "/orders",
@@ -194,6 +203,7 @@ export const ADMIN_SECONDARY_ROUTES: Array<{ route: string; parentId: string }> 
     { route: "/product-cloud/products/approvals", parentId: "products" },
     { route: "/product-cloud/fields", parentId: "products" },
     { route: "/product-cloud/compliance", parentId: "products" },
+    { route: "/product-cloud/european-ownership", parentId: "products" },
     { route: "/product-cloud/translations", parentId: "products" },
     { route: "/partners/brand-ownership", parentId: "sellers" },
     { route: "/returns", parentId: "returns" },

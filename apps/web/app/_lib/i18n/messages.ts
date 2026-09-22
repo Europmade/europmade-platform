@@ -1901,6 +1901,24 @@ const M = {
   ),
   madeInLabel: L("Gemaakt in", "Made in", "Hergestellt in", "Fabriqué en"),
   euOwnership: L("EU-eigendom", "EU ownership", "EU-Eigentum", "Propriété UE"),
+  euOwnershipTooltip: L(
+    "Dit percentage geeft het aandeel Europees eigendom van de relevante producent/onderneming weer. Het staat los van de plaats waar het product wordt geproduceerd.",
+    "This percentage shows the share of European ownership of the relevant producer/company. It is independent of where the product is manufactured.",
+    "Dieser Prozentsatz zeigt den Anteil europäischen Eigentums des relevanten Herstellers/Unternehmens. Er ist unabhängig vom Produktionsort.",
+    "Ce pourcentage indique la part de propriété européenne du producteur/entreprise concerné. Il est indépendant du lieu de fabrication."
+  ),
+  euOwnershipVerified: L(
+    "Geverifieerd door EuropMade",
+    "Verified by EuropMade",
+    "Von EuropMade verifiziert",
+    "Vérifié par EuropMade"
+  ),
+  euOwnershipDeclared: L(
+    "Opgegeven door aanbieder",
+    "Declared by seller",
+    "Vom Anbieter angegeben",
+    "Déclaré par le vendeur"
+  ),
   euVerified: L("EU Verified", "EU Verified", "EU Verified", "EU Verified"),
   color: L("Kleur", "Colour", "Farbe", "Couleur"),
   workArea: L("Werkgebied", "Coverage area", "Arbeitsbereich", "Zone de travail"),

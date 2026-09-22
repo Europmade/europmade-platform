@@ -14,6 +14,12 @@ import {
   productMatchesCategoryFilter,
 } from "../../../modules/product-cloud/category-attributes"
 import { loadMadeInEuropeForProduct } from "../product-cloud/made-in-europe-helpers"
+import {
+  findClaimByManufacturer,
+  toPublicEuropeanOwnership,
+} from "../product-cloud/european-ownership-helpers"
+import { VERIFICATION_MODULE } from "../../../modules/verification"
+import type VerificationModuleService from "../../../modules/verification/service"
 import { buildEffectivePriceView } from "../../../modules/commerce-cloud/offer-pricing"
 import { toPublicProductLinkGroup } from "../../../modules/product-cloud/product-link-groups"
 
@@ -749,6 +755,22 @@ export async function loadCatalogProductDetail(
       }
     : null
 
+  let european_ownership = null as ReturnType<typeof toPublicEuropeanOwnership>
+  const manufacturerId = String(
+    (product as { manufacturer_id?: string | null }).manufacturer_id || ""
+  ).trim()
+  if (manufacturerId) {
+    try {
+      const verification = scope.resolve(
+        VERIFICATION_MODULE
+      ) as VerificationModuleService
+      const claim = await findClaimByManufacturer(verification, manufacturerId)
+      european_ownership = toPublicEuropeanOwnership(claim)
+    } catch {
+      european_ownership = null
+    }
+  }
+
   const rawLinkGroup =
     await productCloud.getActiveProductLinkGroupForProduct(productId)
   let product_link_group = null as ReturnType<typeof toPublicProductLinkGroup>
@@ -818,6 +840,7 @@ export async function loadCatalogProductDetail(
       media: await resolveProductMediaItems(productCloud, version.id),
     },
     made_in_europe,
+    european_ownership,
     buy_box: buy_box
       ? {
           source: "recompute" as const,

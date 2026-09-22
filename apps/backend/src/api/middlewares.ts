@@ -338,6 +338,11 @@ export default defineMiddlewares({
       ],
     },
     {
+      matcher: "/store/product-cloud/products/:id/european-ownership",
+      methods: ["GET", "PUT"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/product-cloud/made-in-europe/bulk",
       methods: ["POST"],
       middlewares: [
@@ -1120,6 +1125,16 @@ export default defineMiddlewares({
     },
     {
       matcher: "/admin/brand-ownership/:id",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/european-ownership",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/european-ownership/:id",
       methods: ["GET", "POST"],
       middlewares: [adminAuth],
     },

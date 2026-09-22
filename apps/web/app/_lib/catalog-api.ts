@@ -210,6 +210,16 @@ export type CatalogMadeInEurope = {
   } | null
 }
 
+export type CatalogEuropeanOwnership = {
+  manufacturer_id: string
+  ownership_band: string
+  ownership_band_label: string
+  source: string
+  source_label: string
+  status: string
+  verified_by_europmade: boolean
+}
+
 export type CatalogProductDetail = {
   product: {
     id: string
@@ -227,6 +237,7 @@ export type CatalogProductDetail = {
     media?: CatalogMediaItem[]
   }
   made_in_europe?: CatalogMadeInEurope | null
+  european_ownership?: CatalogEuropeanOwnership | null
   buy_box: {
     source: string
     identifier_id: string

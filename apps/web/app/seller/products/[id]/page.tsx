@@ -62,6 +62,7 @@ import {
   type WizardStepKey,
 } from "./_lib/product-wizard"
 import { UnifiedComplianceEvidenceSection } from "../../_components/compliance-evidence-section"
+import { EuropeanOwnershipSection } from "../../_components/european-ownership-section"
 import {
   createSellerManufacturer,
   listSellerManufacturers,
@@ -2597,6 +2598,10 @@ export default function SellerProductDetailPage() {
                 ) : null
               }
             />
+
+            <div className="mt-4">
+              <EuropeanOwnershipSection productId={productId} />
+            </div>
 
             {extraComplianceFields.length > 0 ? (
               <div className="grid gap-2 tablet:grid-cols-2">

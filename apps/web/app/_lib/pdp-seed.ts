@@ -52,6 +52,13 @@ export type PdpMadeInEurope = {
   } | null
 }
 
+export type PdpEuropeanOwnership = {
+  ownership_band: string
+  ownership_band_label: string
+  status: string
+  verified_by_europmade: boolean
+}
+
 export type PdpDetail = {
   slug: string
   listing: ListingProduct
@@ -59,7 +66,9 @@ export type PdpDetail = {
   breadcrumb: { label: string; href?: string }[]
   reviewCount: number
   manufacturer: string
-  euOwnershipPercent: number
+  /** @deprecated Do not use for MiE — use europeanOwnership. Kept optional for seed compat. */
+  euOwnershipPercent?: number | null
+  europeanOwnership?: PdpEuropeanOwnership | null
   madeInEurope?: PdpMadeInEurope | null
   intro: string
   highlights: string[]
@@ -150,7 +159,15 @@ function buildDefaultDetail(product: ListingProduct): PdpDetail {
     ],
     reviewCount: Math.max(12, Math.round(product.rating * 80)),
     manufacturer: product.brand,
-    euOwnershipPercent: product.verified ? 100 : 80,
+    europeanOwnership: product.verified
+      ? {
+          ownership_band: "eu_100",
+          ownership_band_label: "100%",
+          status: "Geverifieerd door EuropMade",
+          verified_by_europmade: true,
+        }
+      : null,
+    euOwnershipPercent: null,
     intro: `${product.title} van ${product.brand}, geproduceerd in ${product.countryLabel}. ${product.features.join(", ")}.`,
     highlights: product.features.length
       ? product.features.map((f) => f)
@@ -258,7 +275,13 @@ function robotmaaierDetail(product: ListingProduct): PdpDetail {
     ],
     reviewCount: 328,
     manufacturer: "Merknaam BV",
-    euOwnershipPercent: 100,
+    euOwnershipPercent: null,
+    europeanOwnership: {
+      ownership_band: "eu_100",
+      ownership_band_label: "100%",
+      status: "Geverifieerd door EuropMade",
+      verified_by_europmade: true,
+    },
     intro:
       "De Robotmaaier X200 maait tot 800 m² gazon volledig automatisch, met app-bediening en een regensensor. Ontworpen en geproduceerd in Nederland, met 2 jaar producentgarantie.",
     highlights: [
