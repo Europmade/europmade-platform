@@ -16,6 +16,7 @@ export default function EuropeanOwnershipDetailPage() {
   const router = useRouter()
   const id = String(params?.id || "")
   const [claim, setClaim] = useState<EuropeanOwnershipClaimRow | null>(null)
+  const [brandName, setBrandName] = useState<string | null>(null)
   const [manufacturerName, setManufacturerName] = useState<string | null>(null)
   const [history, setHistory] = useState<
     Array<{
@@ -37,7 +38,10 @@ export default function EuropeanOwnershipDetailPage() {
     try {
       const res = await getEuropeanOwnershipClaim(id)
       setClaim(res.claim)
-      setManufacturerName(res.manufacturer?.name || res.claim.manufacturer_id)
+      setBrandName(res.brand?.name || res.claim.brand_id)
+      setManufacturerName(
+        res.manufacturer?.name || res.claim.manufacturer_id
+      )
       setHistory(res.history || [])
       setNote(res.claim.review_note || "")
     } catch (err) {
@@ -102,7 +106,10 @@ export default function EuropeanOwnershipDetailPage() {
       {claim ? (
         <div className="mt-4 space-y-3 rounded border border-wf-300 bg-white p-3 text-xs">
           <p>
-            <b>Producent:</b> {manufacturerName}
+            <b>Merk:</b> {brandName || "—"}
+          </p>
+          <p>
+            <b>Producent (legacy):</b> {manufacturerName || "—"}
           </p>
           <p>
             <b>Percentage:</b> {claim.ownership_band_label}

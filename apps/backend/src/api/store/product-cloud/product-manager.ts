@@ -35,6 +35,18 @@ import {
 import { latestActivityIso } from "../../../modules/product-cloud/seller-product-list"
 import { listSectionReviewsForProduct } from "../../../modules/product-cloud/section-review-helpers"
 import type { SellerListDataCache } from "./seller-product-list-cache"
+import { evaluateCatalogDirectEditAccess } from "../../../modules/product-cloud/catalog-edit-auth"
+import { resolveOfferSellerIdsForProduct } from "../../../modules/product-cloud/catalog-edit-auth"
+import {
+  isAlreadyProductManager,
+  isProductManagerProposalFields,
+  resolveProductManagerRequestKind,
+} from "../../../modules/product-cloud/product-manager-request"
+import {
+  resolveIsVerifiedBrandOwnerForProduct,
+  sellerCanDirectEditCatalog,
+  sellerHasOfferOnProduct,
+} from "./catalog-edit-guard"
 
 export { resolveProductActions, resolveWorkflowStatus }
 
@@ -948,6 +960,29 @@ export async function buildSellerProductManagerRow(
     opts?.brandNameCache?.set(product.brand_id, brand_name)
   }
 
+  const soleOwnerFallback = false
+  let catalogOwner = soleOwnerFallback
+  try {
+    const isBrandOwner =
+      Boolean(cache?.verifiedBrandOwnerBrandIds?.has(product.brand_id)) ||
+      (await resolveIsVerifiedBrandOwnerForProduct(
+        opts?.partner ?? null,
+        { id: sellerId, company_id: null },
+        product.brand_id
+      ))
+    catalogOwner = evaluateCatalogDirectEditAccess({
+      actorSellerId: sellerId,
+      productManagerKind: (product as { product_manager_kind?: string })
+        .product_manager_kind,
+      productManagerSellerId: (
+        product as { product_manager_seller_id?: string | null }
+      ).product_manager_seller_id,
+      isBrandOwner: Boolean(isBrandOwner),
+    }).allowed
+  } catch {
+    catalogOwner = soleOwnerFallback
+  }
+
   const rowBase = {
     id: product.id,
     brand_id: product.brand_id,
@@ -997,7 +1032,7 @@ export async function buildSellerProductManagerRow(
     sku_hint: offersAgg.sku_display,
     shipping_profile_id: shippingProfileId,
     shipping_profile: shippingProfileSummary,
-    catalog_owner: product.current_owner_seller_id === sellerId,
+    catalog_owner: catalogOwner,
     list_activity_at: latestActivityIso([
       ...(maps
         ? identifierIds.map((id) => maps.activityByIdentifier.get(id) ?? null)
@@ -1022,7 +1057,41 @@ export async function buildSellerProductManagerDetail(
   container?: MedusaContainer | null
 ) {
   const product = await productCloud.retrieveProduct(productId)
-  if (product.current_owner_seller_id !== sellerId) {
+  if (container) {
+    let sellerCompanyId: string | null = null
+    if (partner) {
+      try {
+        const sellerRow = (await partner.retrieveSeller(sellerId)) as {
+          company_id?: string | null
+        }
+        sellerCompanyId = sellerRow.company_id ?? null
+      } catch {
+        sellerCompanyId = null
+      }
+    }
+    const sellerRef = { id: sellerId, company_id: sellerCompanyId }
+    const offerSellerIds = await resolveOfferSellerIdsForProduct(
+      productCloud,
+      commerce,
+      productId
+    )
+    const access = await sellerCanDirectEditCatalog(container, product, sellerRef, {
+      offerSellerIds,
+      isBrandOwner: await resolveIsVerifiedBrandOwnerForProduct(
+        partner ?? null,
+        sellerRef,
+        product.brand_id
+      ),
+    })
+    // Read access: Productbeheerder OR seller with own Commerce Cloud offer.
+    // Direct catalog writes stay gated by assertSellerCanDirectEditCatalog.
+    const hasOwnOffer =
+      offerSellerIds.includes(sellerId) ||
+      (await sellerHasOfferOnProduct(container, productId, sellerId))
+    if (!access.allowed && !hasOwnOffer) {
+      return null
+    }
+  } else if (product.current_owner_seller_id !== sellerId) {
     return null
   }
 
@@ -1148,6 +1217,51 @@ export async function buildSellerProductManagerDetail(
     productId
   )
 
+  const ownProposals = (await productCloud.listChangeProposals({
+    product_id: productId,
+    submitter_seller_id: sellerId,
+  })) as Array<{
+    id: string
+    status: string
+    toelichting?: string
+    decision_reason?: string | null
+    decided_at?: string | Date | null
+    created_at?: string | Date
+    proposed_fields?: unknown
+  }>
+
+  const pmProposals = ownProposals.filter((p) =>
+    isProductManagerProposalFields(p.proposed_fields)
+  )
+  const pendingPm = pmProposals.find((p) => p.status === "In behandeling")
+  const latestPm = pendingPm || pmProposals[0] || null
+
+  let isBrandOwner = false
+  if (partner) {
+    isBrandOwner = await resolveIsVerifiedBrandOwnerForProduct(
+      partner,
+      { id: sellerId },
+      product.brand_id
+    )
+  }
+  const hasOffer = Boolean(row.offers?.offer_count || row.offer?.id)
+  const alreadyManager = isAlreadyProductManager({
+    actorSellerId: sellerId,
+    kind: (product as { product_manager_kind?: string }).product_manager_kind,
+    seller_id: (product as { product_manager_seller_id?: string | null })
+      .product_manager_seller_id,
+    isBrandOwner,
+  })
+  const canRequestPm =
+    !alreadyManager &&
+    Boolean(
+      resolveProductManagerRequestKind({
+        hasOffer,
+        isBrandOwner,
+      })
+    ) &&
+    !pendingPm
+
   return {
     ...row,
     working_version: working,
@@ -1158,6 +1272,17 @@ export async function buildSellerProductManagerDetail(
     variants: variantViews,
     field_changes: fieldChanges,
     section_reviews,
+    product_manager_request: {
+      can_request: canRequestPm,
+      is_product_manager: alreadyManager,
+      pending: Boolean(pendingPm),
+      status: latestPm?.status || null,
+      decision_reason: latestPm?.decision_reason || null,
+      toelichting: latestPm?.toelichting || null,
+      proposal_id: latestPm?.id || null,
+      created_at: latestPm?.created_at || null,
+      decided_at: latestPm?.decided_at || null,
+    },
   }
 }
 

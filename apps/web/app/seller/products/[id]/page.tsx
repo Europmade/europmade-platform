@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Badge, Button, Input, Notice } from "@europmade/ui"
@@ -21,6 +21,8 @@ import {
   listProductVariants,
   getMadeInEuropeEvidence,
   submitProductForApproval,
+  submitChangeProposal,
+  uploadProductMediaProposal,
   ProductCloudApiError,
   type ProductManagerDetail,
   type SellerOfferSummary,
@@ -53,6 +55,8 @@ import type { StorefrontLocale } from "../../../_lib/i18n/locales"
 import { t } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
 import { SellerVariantsPanel } from "./_components/variants-panel"
+import { ProposeInlineForm } from "./_components/propose-inline-form"
+import { ProductManagerRequestSection } from "./_components/product-manager-request-section"
 import { ProductWizardProgress } from "./_components/product-wizard-progress"
 import { PublicationReadinessCards } from "./_components/publication-readiness-cards"
 import { ProductShippingStep } from "./_components/product-shipping-step"
@@ -194,8 +198,19 @@ function AttributeFieldEditor(props: {
   openHintCode: string | null
   onToggleHint: (code: string | null) => void
   locale: StorefrontLocale
+  disabled?: boolean
+  onPropose?: () => void
 }) {
-  const { field, value, onChange, openHintCode, onToggleHint, locale } = props
+  const {
+    field,
+    value,
+    onChange,
+    openHintCode,
+    onToggleHint,
+    locale,
+    disabled,
+    onPropose,
+  } = props
   const hint = gpsrHint(field.code) || field.help_text
   const hintOpen = openHintCode === field.code
   return (
@@ -205,23 +220,34 @@ function AttributeFieldEditor(props: {
           {t("pdpEuResponsible", locale)}
         </p>
       ) : null}
-      <div className="mb-1 flex items-center gap-1">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-          {gpsrFieldLabel(field.code, field.name, locale)}
-          {field.unit ? ` (${field.unit})` : ""}
-        </span>
-        {hint || field.help_text ? (
+      <div className="mb-1 flex items-center justify-between gap-1">
+        <div className="flex items-center gap-1">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+            {gpsrFieldLabel(field.code, field.name, locale)}
+            {field.unit ? ` (${field.unit})` : ""}
+          </span>
+          {hint || field.help_text ? (
+            <button
+              type="button"
+              aria-expanded={hintOpen}
+              aria-controls={`hint-${field.id}`}
+              aria-label="GPSR"
+              onClick={() =>
+                onToggleHint(hintOpen ? null : field.code || null)
+              }
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-wf-400 text-[9px] font-bold text-wf-600"
+            >
+              i
+            </button>
+          ) : null}
+        </div>
+        {disabled && onPropose ? (
           <button
             type="button"
-            aria-expanded={hintOpen}
-            aria-controls={`hint-${field.id}`}
-            aria-label="GPSR"
-            onClick={() =>
-              onToggleHint(hintOpen ? null : field.code || null)
-            }
-            className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-wf-400 text-[9px] font-bold text-wf-600"
+            onClick={onPropose}
+            className="shrink-0 text-[10px] font-semibold text-wf-700 underline"
           >
-            i
+            Wijziging voorstellen
           </button>
         ) : null}
       </div>
@@ -256,6 +282,7 @@ function AttributeFieldEditor(props: {
                   <input
                     type="checkbox"
                     checked={selected}
+                    disabled={disabled}
                     onChange={(e) => {
                       const cur = parseMultiSelectValue(value)
                       const next = e.target.checked
@@ -272,8 +299,9 @@ function AttributeFieldEditor(props: {
         </div>
       ) : field.data_type === "Keuzelijst" && field.option_values?.length ? (
         <select
-          className="h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
+          className="h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs disabled:bg-wf-50"
           value={value}
+          disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
         >
           <option value="">—</option>
@@ -286,6 +314,7 @@ function AttributeFieldEditor(props: {
       ) : (
         <Input
           value={value}
+          disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
           placeholder={tierBadge(field.requirement_tier, locale)}
         />
@@ -631,6 +660,21 @@ export default function SellerProductDetailPage() {
     contact_email: "",
     contact_phone: "",
   })
+  const [proposeSection, setProposeSection] = useState<
+    | "title"
+    | "description"
+    | "brand"
+    | "manufacturer"
+    | "attribute"
+    | "media"
+    | null
+  >(null)
+  const [proposedValue, setProposedValue] = useState("")
+  const [proposeAttrId, setProposeAttrId] = useState<string | null>(null)
+  const [proposeToelichting, setProposeToelichting] = useState("")
+  const [proposeBusy, setProposeBusy] = useState(false)
+  const [proposeMediaRefs, setProposeMediaRefs] = useState<string[]>([])
+  const [proposeUploadBusy, setProposeUploadBusy] = useState(false)
 
   const sortedMedia = useMemo(() => {
     if (!product || product === "loading") return []
@@ -1209,6 +1253,41 @@ export default function SellerProductDetailPage() {
     setNotice(null)
     setError(null)
     try {
+      const isOwner = product.catalog_owner === true
+      if (!isOwner) {
+        // Gap-fill only: blank central fields via existing information PATCH.
+        const payload: {
+          title?: string
+          description?: string
+          brand_id?: string
+          manufacturer_id?: string
+        } = {}
+        if (!(product.title || "").trim() && title.trim()) {
+          payload.title = title.trim()
+        }
+        if (!(product.description || "").trim() && description.trim()) {
+          payload.description = description.trim()
+        }
+        if (!(product.brand_id || "").trim() && selectedBrandId.trim()) {
+          payload.brand_id = selectedBrandId.trim()
+        }
+        if (
+          !(product.manufacturer_id || "").trim() &&
+          manufacturerId.trim()
+        ) {
+          payload.manufacturer_id = manufacturerId.trim()
+        }
+        if (Object.keys(payload).length === 0) {
+          throw new Error(
+            "Geen ontbrekende centrale velden om aan te vullen. Gebruik 'Wijziging voorstellen' voor bestaande waarden."
+          )
+        }
+        const res = await patchProductInformation(productId, payload)
+        setProduct(res.product)
+        setNotice("Ontbrekende productgegevens aangevuld.")
+        return
+      }
+
       const attributes = Object.entries(attrDraft)
         .filter(([attribute_definition_id]) => {
           const field = (product.schema || []).find(
@@ -1242,10 +1321,141 @@ export default function SellerProductDetailPage() {
       if (tab === "information" && next) setTab(next)
     } catch (err: unknown) {
       setError(
-        err instanceof ProductCloudApiError ? err.message : t("pdpSaveFailed", locale)
+        err instanceof ProductCloudApiError || err instanceof Error
+          ? err.message
+          : t("pdpSaveFailed", locale)
       )
     } finally {
       setSaving(false)
+    }
+  }
+
+  function openPropose(
+    section:
+      | "title"
+      | "description"
+      | "brand"
+      | "manufacturer"
+      | "attribute"
+      | "media",
+    current: string,
+    attrId?: string
+  ) {
+    setProposeSection(section)
+    setProposedValue(section === "media" ? "" : current)
+    setProposeAttrId(attrId || null)
+    setProposeToelichting("")
+    setProposeMediaRefs([])
+    setError(null)
+    setNotice(null)
+  }
+
+  async function handleProposeMediaFile(file: File | null) {
+    if (!file) return
+    setProposeUploadBusy(true)
+    setError(null)
+    try {
+      const res = await uploadProductMediaProposal(productId, file)
+      setProposeMediaRefs((prev) => [...prev, res.storage_reference])
+      setNotice("Afbeelding geüpload als voorstel (nog niet live).")
+    } catch (err: unknown) {
+      setError(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : "Media-upload voor voorstel mislukt."
+      )
+    } finally {
+      setProposeUploadBusy(false)
+    }
+  }
+
+  async function submitPropose(e: FormEvent) {
+    e.preventDefault()
+    if (!proposeSection || !proposeToelichting.trim()) {
+      setError("Toelichting is verplicht.")
+      return
+    }
+    if (proposeSection === "media") {
+      if (!proposeMediaRefs.length && !proposedValue.trim()) {
+        setError("Upload een afbeelding of beschrijf het mediavoorstel.")
+        return
+      }
+    } else if (!proposedValue.trim()) {
+      setError("Vul een voorgestelde waarde in.")
+      return
+    }
+    setProposeBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const fieldMap = {
+        title: "title" as const,
+        description: "description" as const,
+        brand: "brand_id" as const,
+        manufacturer: "manufacturer_id" as const,
+        attribute: "attribute" as const,
+        media: "media_note" as const,
+      }
+      const labelMap = {
+        title: "Productnaam",
+        description: "Beschrijving",
+        brand: "Merk",
+        manufacturer: "Fabrikant",
+        attribute:
+          (product !== "loading" &&
+            product?.schema?.find((s) => s.id === proposeAttrId)?.name) ||
+          "Specificatie",
+        media: "Media",
+      }
+      const currentMap = {
+        title: product !== "loading" ? product?.title || null : null,
+        description: product !== "loading" ? product?.description || null : null,
+        brand: product !== "loading" ? product?.brand_id || null : null,
+        manufacturer:
+          product !== "loading" ? product?.manufacturer_id || null : null,
+        attribute:
+          (product !== "loading" &&
+            product?.schema?.find((s) => s.id === proposeAttrId)?.value) ||
+          null,
+        media: null,
+      }
+      await submitChangeProposal({
+        product_id: productId,
+        toelichting: proposeToelichting.trim(),
+        proposed_fields: {
+          changes: [
+            {
+              field: fieldMap[proposeSection],
+              label: labelMap[proposeSection],
+              current_value: currentMap[proposeSection],
+              proposed_value:
+                proposedValue.trim() ||
+                (proposeSection === "media"
+                  ? "Voorgestelde productafbeelding"
+                  : ""),
+              attribute_definition_id: proposeAttrId || undefined,
+              storage_references:
+                proposeSection === "media" && proposeMediaRefs.length
+                  ? proposeMediaRefs
+                  : undefined,
+            },
+          ],
+        },
+      })
+      setNotice("Wijzigingsvoorstel ingediend.")
+      setProposeSection(null)
+      setProposedValue("")
+      setProposeAttrId(null)
+      setProposeToelichting("")
+      setProposeMediaRefs([])
+    } catch (err: unknown) {
+      setError(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : "Voorstel indienen mislukt."
+      )
+    } finally {
+      setProposeBusy(false)
     }
   }
 
@@ -1661,6 +1871,12 @@ export default function SellerProductDetailPage() {
   }
 
   const sections = product.completeness?.sections || []
+  const canEditCatalog = product.catalog_owner === true
+  const canProposeChange = !canEditCatalog
+  const titleIsBlank = !(product.title || "").trim()
+  const descriptionIsBlank = !(product.description || "").trim()
+  const canGapFillTitle = canProposeChange && titleIsBlank
+  const canGapFillDescription = canProposeChange && descriptionIsBlank
   const quality = qualityLabel(product, locale)
   const sales = salesBadge(product, locale)
   const pub = publicationLabel(product, locale)
@@ -1990,6 +2206,23 @@ export default function SellerProductDetailPage() {
 
       {tab === "information" ? (
         <div className="space-y-4 pb-16">
+          {canProposeChange ? (
+            <Notice variant="info" className="text-[11px]">
+              Je bent geen Productbeheerder. Centrale gegevens zijn read-only;
+              gebruik &quot;Wijziging voorstellen&quot; voor bestaande waarden.
+              Ontbrekende velden mag je aanvullen. Prijs, voorraad en SKU beheer
+              je via Verkoopinformatie / Voorraad &amp; verzending.
+            </Notice>
+          ) : null}
+          {product.product_manager_request ? (
+            <ProductManagerRequestSection
+              productId={productId}
+              request={product.product_manager_request}
+              onChanged={async () => {
+                await load()
+              }}
+            />
+          ) : null}
           <section className="rounded border border-wf-300 bg-white p-3">
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-bold text-wf-900">{t("pdpBasicInfo", locale)}</h2>
@@ -1998,28 +2231,77 @@ export default function SellerProductDetailPage() {
               </span>
             </div>
             <div className="mt-2 grid gap-2 tablet:grid-cols-2">
-              <Input
-                label={t("pdpProductName", locale)}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
+              <div>
+                <Input
+                  label={t("pdpProductName", locale)}
+                  value={title}
+                  disabled={canProposeChange && !canGapFillTitle}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+                {canProposeChange && !canGapFillTitle ? (
+                  <button
+                    type="button"
+                    className="mt-1 text-[10px] font-semibold text-wf-700 underline"
+                    onClick={() => openPropose("title", title)}
+                  >
+                    Wijziging voorstellen
+                  </button>
+                ) : null}
+                {proposeSection === "title" ? (
+                  <ProposeInlineForm
+                    sectionLabel="Productnaam"
+                    proposedValue={proposedValue}
+                    toelichting={proposeToelichting}
+                    busy={proposeBusy}
+                    onProposedValueChange={setProposedValue}
+                    onToelichtingChange={setProposeToelichting}
+                    onSubmit={(e) => void submitPropose(e)}
+                    onCancel={() => setProposeSection(null)}
+                  />
+                ) : null}
+              </div>
               <Input
                 label="EAN / GTIN"
                 value={product.identifier_value || ""}
                 disabled
               />
-              <Input
-                label={t("commonBrand", locale)}
-                value={brand && brand !== "—" ? brand : t("pdpChooseBrandAtMie", locale)}
-                disabled
-              />
+              <div>
+                <Input
+                  label={t("commonBrand", locale)}
+                  value={brand && brand !== "—" ? brand : t("pdpChooseBrandAtMie", locale)}
+                  disabled
+                />
+                {canProposeChange && product.brand_id ? (
+                  <button
+                    type="button"
+                    className="mt-1 text-[10px] font-semibold text-wf-700 underline"
+                    onClick={() =>
+                      openPropose("brand", product.brand_id || "")
+                    }
+                  >
+                    Wijziging voorstellen
+                  </button>
+                ) : null}
+                {proposeSection === "brand" ? (
+                  <ProposeInlineForm
+                    sectionLabel="Merk"
+                    proposedValue={proposedValue}
+                    toelichting={proposeToelichting}
+                    busy={proposeBusy}
+                    onProposedValueChange={setProposedValue}
+                    onToelichtingChange={setProposeToelichting}
+                    onSubmit={(e) => void submitPropose(e)}
+                    onCancel={() => setProposeSection(null)}
+                  />
+                ) : null}
+              </div>
               {!(product.category_names || []).length ? (
                 <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
                   {t("commonCategory", locale)}
                   <select
-                    className="mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal normal-case tracking-normal text-wf-800"
+                    className="mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal normal-case tracking-normal text-wf-800 disabled:bg-wf-50"
                     value={categoryPick}
-                    disabled={saving}
+                    disabled={saving || canProposeChange}
                     onChange={(e) => {
                       const next = e.target.value
                       setCategoryPick(next)
@@ -2063,11 +2345,33 @@ export default function SellerProductDetailPage() {
                   {t("pdpDescription", locale)}
                 </label>
                 <textarea
-                  className="min-h-[96px] w-full rounded-[5px] border border-wf-400 bg-white px-3 py-2 text-xs text-wf-800"
+                  className="min-h-[96px] w-full rounded-[5px] border border-wf-400 bg-white px-3 py-2 text-xs text-wf-800 disabled:bg-wf-50"
                   value={description}
+                  disabled={canProposeChange && !canGapFillDescription}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                 />
+                {canProposeChange && !canGapFillDescription ? (
+                  <button
+                    type="button"
+                    className="mt-1 text-[10px] font-semibold text-wf-700 underline"
+                    onClick={() => openPropose("description", description)}
+                  >
+                    Wijziging voorstellen
+                  </button>
+                ) : null}
+                {proposeSection === "description" ? (
+                  <ProposeInlineForm
+                    sectionLabel="Beschrijving"
+                    proposedValue={proposedValue}
+                    toelichting={proposeToelichting}
+                    busy={proposeBusy}
+                    onProposedValueChange={setProposedValue}
+                    onToelichtingChange={setProposeToelichting}
+                    onSubmit={(e) => void submitPropose(e)}
+                    onCancel={() => setProposeSection(null)}
+                  />
+                ) : null}
               </div>
             </div>
           </section>
@@ -2114,20 +2418,45 @@ export default function SellerProductDetailPage() {
                 ) : null}
                 <div className="mt-2 grid gap-2 tablet:grid-cols-2">
                   {displayFields.map((field) => (
-                    <AttributeFieldEditor
-                      key={field.id}
-                      field={field}
-                      value={attrDraft[field.id] || ""}
-                      onChange={(next) =>
-                        setAttrDraft((prev) => ({
-                          ...prev,
-                          [field.id]: next,
-                        }))
-                      }
-                      openHintCode={openHintCode}
-                      onToggleHint={setOpenHintCode}
-                      locale={locale}
-                    />
+                    <div key={field.id}>
+                      <AttributeFieldEditor
+                        field={field}
+                        value={attrDraft[field.id] || ""}
+                        onChange={(next) =>
+                          setAttrDraft((prev) => ({
+                            ...prev,
+                            [field.id]: next,
+                          }))
+                        }
+                        openHintCode={openHintCode}
+                        onToggleHint={setOpenHintCode}
+                        locale={locale}
+                        disabled={canProposeChange}
+                        onPropose={
+                          canProposeChange
+                            ? () =>
+                                openPropose(
+                                  "attribute",
+                                  attrDraft[field.id] || "",
+                                  field.id
+                                )
+                            : undefined
+                        }
+                      />
+                      {proposeSection === "attribute" &&
+                      proposeAttrId === field.id ? (
+                        <ProposeInlineForm
+                          sectionLabel={field.name}
+                          proposedValue={proposedValue}
+                          toelichting={proposeToelichting}
+                          busy={proposeBusy}
+                          onProposedValueChange={setProposedValue}
+                          onToelichtingChange={setProposeToelichting}
+                          onSubmit={(e) => void submitPropose(e)}
+                          onCancel={() => setProposeSection(null)}
+                        />
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               </section>
@@ -2140,6 +2469,7 @@ export default function SellerProductDetailPage() {
             suggestedAxes={suggestedAxes}
             allowedAxes={allowedVariantTypes}
             locale={locale}
+            catalogEditable={canEditCatalog}
             onReload={load}
             onNotice={setNotice}
             onError={setError}
@@ -2151,9 +2481,15 @@ export default function SellerProductDetailPage() {
 
           <div className="sticky bottom-0 z-10 -mx-1 border-t border-wf-300 bg-white/95 px-1 py-2 backdrop-blur">
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={saveInformation} disabled={saving}>
-                {saving ? t("pdpSaving", locale) : t("commonSave", locale)}
-              </Button>
+              {canEditCatalog || canGapFillTitle || canGapFillDescription ? (
+                <Button size="sm" onClick={saveInformation} disabled={saving}>
+                  {saving
+                    ? t("pdpSaving", locale)
+                    : canEditCatalog
+                      ? t("commonSave", locale)
+                      : "Ontbrekende velden aanvullen"}
+                </Button>
+              ) : null}
               <Button
                 size="sm"
                 variant="secondary"
@@ -2179,8 +2515,9 @@ export default function SellerProductDetailPage() {
             <label className="block text-[11px] font-semibold text-wf-700">
               {t("commonBrand", locale)}
               <select
-                className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
+                className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs disabled:bg-wf-50"
                 value={selectedBrandId}
+                disabled={canProposeChange}
                 onChange={(e) => {
                   const id = e.target.value
                   setSelectedBrandId(id)
@@ -2208,11 +2545,60 @@ export default function SellerProductDetailPage() {
                 ) : null}
               </select>
             </label>
+            {canProposeChange && product.brand_id ? (
+              <>
+                <button
+                  type="button"
+                  className="text-[10px] font-semibold text-wf-700 underline"
+                  onClick={() => openPropose("brand", product.brand_id || "")}
+                >
+                  Wijziging voorstellen (merk)
+                </button>
+                {proposeSection === "brand" ? (
+                  <ProposeInlineForm
+                    sectionLabel="Merk"
+                    proposedValue={proposedValue}
+                    toelichting={proposeToelichting}
+                    busy={proposeBusy}
+                    onProposedValueChange={setProposedValue}
+                    onToelichtingChange={setProposeToelichting}
+                    onSubmit={(e) => void submitPropose(e)}
+                    onCancel={() => setProposeSection(null)}
+                  />
+                ) : null}
+              </>
+            ) : null}
+            {canProposeChange && product.manufacturer_id ? (
+              <>
+                <button
+                  type="button"
+                  className="text-[10px] font-semibold text-wf-700 underline"
+                  onClick={() =>
+                    openPropose("manufacturer", product.manufacturer_id || "")
+                  }
+                >
+                  Wijziging voorstellen (fabrikant)
+                </button>
+                {proposeSection === "manufacturer" ? (
+                  <ProposeInlineForm
+                    sectionLabel="Fabrikant"
+                    proposedValue={proposedValue}
+                    toelichting={proposeToelichting}
+                    busy={proposeBusy}
+                    onProposedValueChange={setProposedValue}
+                    onToelichtingChange={setProposeToelichting}
+                    onSubmit={(e) => void submitPropose(e)}
+                    onCancel={() => setProposeSection(null)}
+                  />
+                ) : null}
+              </>
+            ) : null}
             <div className="space-y-2">
               <Button
                 size="sm"
                 type="button"
                 variant="secondary"
+                disabled={canProposeChange}
                 onClick={() => setShowNewBrand((v) => !v)}
               >
                 {t("pdpAddBrand", locale)}
@@ -2630,14 +3016,16 @@ export default function SellerProductDetailPage() {
 
           <div className="sticky bottom-0 z-10 -mx-1 border-t border-wf-300 bg-white/95 px-1 py-2 backdrop-blur">
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={saveInformation} disabled={saving}>
-                {saving ? t("pdpSaving", locale) : t("commonSave", locale)}
-              </Button>
+              {canEditCatalog ? (
+                <Button size="sm" onClick={saveInformation} disabled={saving}>
+                  {saving ? t("pdpSaving", locale) : t("commonSave", locale)}
+                </Button>
+              ) : null}
               <Button
                 size="sm"
                 variant="secondary"
                 onClick={() => {
-                  void saveInformation()
+                  if (canEditCatalog) void saveInformation()
                   setTab("translations")
                 }}
               >
@@ -3189,6 +3577,51 @@ export default function SellerProductDetailPage() {
             </ul>
           </div>
 
+          {canProposeChange ? (
+            <div className="rounded border border-wf-300 bg-white p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-xs font-bold text-wf-900">{t("pdpTabMedia", locale)}</h2>
+                  <p className="mt-1 text-[11px] text-wf-600">
+                    Live productmedia blijven ongewijzigd. Upload een
+                    voorgestelde afbeelding; die wordt pas toegevoegd na
+                    goedkeuring.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => openPropose("media", "")}
+                >
+                  Wijziging voorstellen
+                </Button>
+              </div>
+              {proposeSection === "media" ? (
+                <ProposeInlineForm
+                  sectionLabel="Media"
+                  proposedValue={proposedValue}
+                  toelichting={proposeToelichting}
+                  busy={proposeBusy}
+                  onProposedValueChange={setProposedValue}
+                  onToelichtingChange={setProposeToelichting}
+                  onSubmit={(e) => void submitPropose(e)}
+                  onCancel={() => {
+                    setProposeSection(null)
+                    setProposeMediaRefs([])
+                  }}
+                  mediaMode
+                  onFileChange={(f) => void handleProposeMediaFile(f)}
+                  stagedRefs={proposeMediaRefs}
+                  stagedPreviewUrls={proposeMediaRefs.map((ref) =>
+                    resolveSellerMediaUrl(ref)
+                  )}
+                  uploadBusy={proposeUploadBusy}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <>
           <div className="rounded border border-wf-300 bg-white p-3">
             <h2 className="text-xs font-bold text-wf-900">{t("mediaUploadFile", locale)}</h2>
             <div className="mt-2 grid gap-2 tablet:grid-cols-[1fr_auto]">
@@ -3285,6 +3718,8 @@ export default function SellerProductDetailPage() {
             </div>
             <p className="mt-1 text-[10px] text-wf-600">{t("mediaVideoHint", locale)}</p>
           </div>
+            </>
+          )}
 
           <p className="text-[10px] text-wf-600">{t("mediaThumbsHint", locale)}</p>
           <div className="grid max-w-xl grid-cols-5 gap-1 tablet:grid-cols-7 desktop:grid-cols-8">
@@ -3307,11 +3742,14 @@ export default function SellerProductDetailPage() {
                 return (
                   <div
                     key={m.id}
-                    draggable={!video}
-                    onDragStart={() => setDragMediaId(m.id)}
+                    draggable={canEditCatalog && !video}
+                    onDragStart={() => {
+                      if (canEditCatalog) setDragMediaId(m.id)
+                    }}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={() => {
-                      if (dragMediaId) void handleMediaReorder(dragMediaId, m.id)
+                      if (canEditCatalog && dragMediaId)
+                        void handleMediaReorder(dragMediaId, m.id)
                     }}
                     className={`rounded border bg-white p-1 ${
                       isPrimary ? "border-em-green ring-1 ring-em-green/40" : "border-wf-300"
@@ -3377,7 +3815,7 @@ export default function SellerProductDetailPage() {
                       {isPrimary ? ` · ${t("mediaPrimaryBadge", locale)}` : ""}
                     </p>
                     <div className="mt-0.5 flex flex-wrap gap-1">
-                      {!isPrimary && !video ? (
+                      {canEditCatalog && !isPrimary && !video ? (
                         <button
                           type="button"
                           disabled={mediaBusy}
@@ -3387,6 +3825,7 @@ export default function SellerProductDetailPage() {
                           {t("mediaMakePrimary", locale)}
                         </button>
                       ) : null}
+                      {canEditCatalog ? (
                       <button
                         type="button"
                         disabled={mediaBusy}
@@ -3395,6 +3834,7 @@ export default function SellerProductDetailPage() {
                       >
                         {t("vpDelete", locale)}
                       </button>
+                      ) : null}
                     </div>
                   </div>
                 )

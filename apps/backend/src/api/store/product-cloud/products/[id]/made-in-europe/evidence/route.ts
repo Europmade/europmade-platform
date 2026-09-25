@@ -9,6 +9,7 @@ import type ProductCloudModuleService from "../../../../../../../modules/product
 import { VERIFICATION_MODULE } from "../../../../../../../modules/verification"
 import type VerificationModuleService from "../../../../../../../modules/verification/service"
 import { resolveApprovedSeller } from "../../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../../catalog-edit-guard"
 import {
   loadMadeInEuropeForProduct,
   loadPublishedVersionId,
@@ -54,12 +55,7 @@ export async function GET(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag Made in Europe-bewijs bekijken."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const verification = req.scope.resolve(
     VERIFICATION_MODULE
@@ -132,12 +128,7 @@ export async function POST(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag bewijs toevoegen."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const mime = body.mime_type?.toLowerCase() ?? ""
   if (body.document_type === "pdf" && mime && mime !== "application/pdf") {

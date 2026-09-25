@@ -57,6 +57,10 @@ const offerPageSrc = readFileSync(
   join(process.cwd(), "../web/app/seller/products/offer/page.tsx"),
   "utf8"
 )
+const productPageSrc = readFileSync(
+  join(process.cwd(), "../web/app/seller/products/[id]/page.tsx"),
+  "utf8"
+)
 
 const dt990 = {
   id: "prod_dt990",
@@ -74,8 +78,8 @@ const moeve = {
   offer: { identifier_id: "idn_moeve" },
 }
 
-describe("seller list actions: owner vs non-owner offer", () => {
-  it("opens Productinformatie on the existing manager for a catalog owner", () => {
+describe("seller list actions: shared manager page for catalog + offer", () => {
+  it("opens Productinformatie on the shared manager for a catalog owner", () => {
     expect(sellerCatalogInformationHref(moeve)).toBe(
       "/seller/products/prod_moeve?step=information"
     )
@@ -101,25 +105,28 @@ describe("seller list actions: owner vs non-owner offer", () => {
     expect(isManagerProductPath(sellerOfferHref(dt990))).toBe(false)
   })
 
-  it("does not send a non-owner with an own offer to a manager URL (no 403 path)", () => {
-    expect(isManagerProductPath(sellerProductHref(dt990))).toBe(false)
-    expect(isManagerProductPath(sellerOfferHref(dt990))).toBe(false)
+  it("sends non-owners to the shared manager for central product detail", () => {
+    expect(sellerProductHref(dt990)).toBe("/seller/products/prod_dt990")
+    expect(isManagerProductPath(sellerProductHref(dt990))).toBe(true)
     expect(sellerCatalogInformationHref(dt990)).toBe(
-      "/seller/products/catalog/prod_dt990"
+      "/seller/products/prod_dt990?step=information"
     )
-    expect(sellerCatalogTabHref(dt990, "information")).toBeNull()
-    expect(sellerCatalogTabHref(dt990, "offer")).toBeNull()
-    expect(sellerCatalogTabHref(dt990, "media")).toBeNull()
-    expect(sellerCatalogTabHref(dt990, "variants")).toBeNull()
-    expect(sellerCatalogTabHref(dt990, "history")).toBeNull()
+    expect(sellerCatalogTabHref(dt990, "information")).toBe(
+      "/seller/products/prod_dt990?step=information"
+    )
+    expect(sellerCatalogTabHref(dt990, "media")).toBe(
+      "/seller/products/prod_dt990?step=media"
+    )
+    expect(sellerCatalogTabHref(dt990, "offer")).toBe(
+      "/seller/products/offer?identifier_id=idn_dt990"
+    )
   })
 
-  it("does not open the central Product Manager for a non-owner", () => {
+  it("does not open catalog edit for a non-owner", () => {
     expect(isSellerCatalogOwner(dt990)).toBe(false)
     expect(canEditCatalogInformation(dt990, { edit_information: true })).toBe(
       false
     )
-    expect(sellerProductHref(dt990)).not.toContain("/seller/products/prod_dt990")
   })
 
   it("lets a non-owner manage own commercial fields via the offer form", () => {
@@ -128,18 +135,9 @@ describe("seller list actions: owner vs non-owner offer", () => {
     expect(href).toContain("idn_dt990")
   })
 
-  it("keeps central Product Cloud data protected for non-owners", () => {
-    expect(canEditCatalogInformation(dt990)).toBe(false)
-    expect(sellerCatalogInformationHref(dt990)).toBe(
-      "/seller/products/catalog/prod_dt990"
-    )
-  })
-
-  it("uses the offer flow for DT 990 PRO", () => {
+  it("uses the shared manager for DT 990 PRO central info", () => {
     expect(dt990.title).toBe("beyerdynamic DT 990 PRO")
-    expect(sellerProductHref(dt990)).toBe(
-      "/seller/products/offer?identifier_id=idn_dt990"
-    )
+    expect(sellerProductHref(dt990)).toBe("/seller/products/prod_dt990")
     expect(sellerOfferHref(dt990)).toBe(
       "/seller/products/offer?identifier_id=idn_dt990"
     )
@@ -154,18 +152,9 @@ describe("seller list actions: owner vs non-owner offer", () => {
     )
   })
 
-  it("does not create a second Product Cloud product URL for an offered catalog item", () => {
-    expect(sellerProductHref(dt990)).not.toMatch(
-      /\/seller\/products\/new/
-    )
-    expect(sellerProductHref(dt990)).not.toBe(
-      `/seller/products/${dt990.id}`
-    )
-  })
-
   it("does not invent a second offer path besides identifier_id", () => {
-    expect(sellerOfferHref(dt990)).toBe(sellerProductHref(dt990))
     expect(sellerOfferHref(dt990)).not.toContain("?tab=offer")
+    expect(sellerOfferHref(dt990)).toContain("identifier_id=")
   })
 
   it("never falls back to [id]?tab=offer when a non-owner has identifier_id", () => {
@@ -197,12 +186,23 @@ describe("seller list actions: owner vs non-owner offer", () => {
     expect(offerPageSrc).toContain("setSellerSku")
   })
 
-  it("keeps the Product Cloud owner check on the manager detail loader", () => {
-    expect(managerSrc).toContain(
-      "if (product.current_owner_seller_id !== sellerId)"
-    )
+  it("allows manager GET for Productbeheerder or offer seller", () => {
+    expect(managerSrc).toContain("sellerCanDirectEditCatalog")
+    expect(managerSrc).toContain("sellerHasOfferOnProduct")
+    expect(managerSrc).toContain("buildSellerProductManagerDetail")
     expect(managerSrc).toMatch(
-      /export async function buildSellerProductManagerDetail[\s\S]*if \(product\.current_owner_seller_id !== sellerId\)/
+      /export async function buildSellerProductManagerDetail[\s\S]*sellerHasOfferOnProduct/
+    )
+  })
+
+  it("uses propose mode on the shared product detail page for non-owners", () => {
+    expect(productPageSrc).toContain("canProposeChange")
+    expect(productPageSrc).toContain("submitChangeProposal")
+    expect(productPageSrc).toContain("Wijziging voorstellen")
+    expect(productPageSrc).toContain("catalog_owner")
+    expect(productPageSrc).toContain("ProposeInlineForm")
+    expect(productPageSrc).not.toMatch(
+      /proposeSection \?[\s\S]{0,80}mb-4 space-y-3 rounded border border-wf-900 bg-white p-3/
     )
   })
 })

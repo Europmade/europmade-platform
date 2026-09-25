@@ -5,7 +5,8 @@ import type OrderServiceModuleService from "../modules/order-service/service"
 import { executeReverseConversionForOrder } from "../workflows/affiliate/workflows"
 
 /**
- * S3-07-03 — ConversionReversed bij RefundExecuted.
+ * Affiliate conversion/commission reverse or prorate on RefundExecuted.
+ * After the 30-day hold the commission is locked (seller bears late-return risk).
  */
 export default async function affiliateReturnReversalHandler({
   event,
@@ -20,11 +21,30 @@ export default async function affiliateReturnReversalHandler({
     typeof data.order_id === "string" ? data.order_id : null
   if (!orderId) return
 
+  const refundAmount =
+    typeof data.refund_amount === "number"
+      ? data.refund_amount
+      : typeof data.refund_amount === "string"
+        ? Number(data.refund_amount)
+        : null
+
   try {
     const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
     await orders.retrieveEmOrder(orderId)
-    const result = await executeReverseConversionForOrder(container, orderId)
-    if (result.reversed) {
+    const result = await executeReverseConversionForOrder(container, orderId, {
+      refund_amount: Number.isFinite(refundAmount as number)
+        ? (refundAmount as number)
+        : null,
+    })
+    if (result.locked) {
+      logger.info(
+        `[affiliate] commission locked after hold order=${orderId}`
+      )
+    } else if ("prorated" in result && result.prorated) {
+      logger.info(
+        `[affiliate] commission prorated order=${orderId} amount=${result.amount}`
+      )
+    } else if (result.reversed) {
       logger.info(`[affiliate] conversion reversed order=${orderId}`)
     }
   } catch (err) {

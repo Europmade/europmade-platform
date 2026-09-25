@@ -119,8 +119,12 @@ export type CommissionRow = {
   attribution_type: string
   amount: number
   amount_formatted: string
+  percentage?: number
   status: string
   ui_status: string
+  payout_status?: string | null
+  eligible_at?: string | null
+  payout_id?: string | null
 }
 
 export function getAffiliate() {
@@ -217,6 +221,7 @@ export type AffiliatePayoutRow = {
   processed_at: string | null
   order_id: string | null
   stripe_transfer_id: string | null
+  settlement_available?: boolean
 }
 
 export function getAffiliatePayouts() {
@@ -224,6 +229,31 @@ export function getAffiliatePayouts() {
     affiliate_id: string
     payouts: AffiliatePayoutRow[]
   }>("/store/finance/affiliate/payouts")
+}
+
+export function getAffiliatePayoutSettlement(payoutId: string) {
+  return request<{
+    settlement: {
+      number: string
+      payout_id: string
+      issued_at: string
+      period: string
+      currency: string
+      payout_status: string
+      europmade: Record<string, string>
+      affiliate: Record<string, string | null>
+      lines: Array<{
+        order_id: string | null
+        order_number: string | null
+        commission_id: string | null
+        commission_percentage: number | null
+        amount: number
+        description: string
+      }>
+      total: number
+      note: string
+    }
+  }>(`/store/finance/affiliate/payouts/${encodeURIComponent(payoutId)}/settlement`)
 }
 
 export type CommissionSettings = {

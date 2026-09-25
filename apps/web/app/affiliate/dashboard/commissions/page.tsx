@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { Badge, Notice } from "@europmade/ui"
 import { AffiliateGate } from "../../_components/affiliate-gate"
 import {
@@ -70,7 +71,7 @@ export default function AffiliateCommissionsPage() {
       ) : null}
 
       <div className="mt-4 overflow-x-auto rounded-md border border-wf-300">
-        <table className="w-full min-w-[640px] border-collapse text-left text-xs">
+        <table className="w-full min-w-[720px] border-collapse text-left text-xs">
           <thead className="bg-wf-100 text-wf-700">
             <tr>
               <th className="px-3 py-2 font-semibold">
@@ -83,6 +84,9 @@ export default function AffiliateCommissionsPage() {
                 {t("affCommType", locale)}
               </th>
               <th className="px-3 py-2 font-semibold">
+                {t("affCommPercent", locale)}
+              </th>
+              <th className="px-3 py-2 font-semibold">
                 {t("affCommAmount", locale)}
               </th>
               <th className="px-3 py-2 font-semibold">
@@ -93,7 +97,7 @@ export default function AffiliateCommissionsPage() {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-4 text-wf-600">
+                <td colSpan={6} className="px-3 py-4 text-wf-600">
                   {t("affCommEmpty", locale)}
                 </td>
               </tr>
@@ -114,15 +118,27 @@ export default function AffiliateCommissionsPage() {
                   <td className="px-3 py-2.5">
                     {attributionTypeLabel(row.attribution_type, locale)}
                   </td>
+                  <td className="px-3 py-2.5">
+                    {row.percentage != null
+                      ? `${Math.round(row.percentage * 10000) / 100}%`
+                      : "—"}
+                  </td>
                   <td className="px-3 py-2.5">{row.amount_formatted}</td>
                   <td className="px-3 py-2.5">
                     <Badge
                       variant={
-                        row.status === "Toegekend" ? "solid" : "outline"
+                        row.ui_status === "Paid" || row.ui_status === "Eligible"
+                          ? "solid"
+                          : "outline"
                       }
                     >
                       {statusLabel(row.ui_status, locale)}
                     </Badge>
+                    {row.payout_status ? (
+                      <span className="mt-1 block text-[10px] text-wf-500">
+                        {statusLabel(row.payout_status, locale)}
+                      </span>
+                    ) : null}
                   </td>
                 </tr>
               ))

@@ -25,6 +25,7 @@ export async function POST(
       decider_seller_id: seller.id,
       decision: body.decision,
       decision_reason: body.decision_reason,
+      decider_company_id: seller.company_id ?? null,
     },
   })
 

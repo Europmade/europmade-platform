@@ -15,7 +15,7 @@ import {
 } from "../../../modules/product-cloud/category-attributes"
 import { loadMadeInEuropeForProduct } from "../product-cloud/made-in-europe-helpers"
 import {
-  findClaimByManufacturer,
+  findClaimForProductRefs,
   toPublicEuropeanOwnership,
 } from "../product-cloud/european-ownership-helpers"
 import { VERIFICATION_MODULE } from "../../../modules/verification"
@@ -180,6 +180,12 @@ export async function listPublishedCatalogProducts(
       | "rating_desc"
       | "name_asc"
       | "name_desc"
+      | "brand_asc"
+      | "brand_desc"
+      | "category_asc"
+      | "category_desc"
+      | "newest"
+      | "oldest"
   } = {}
 ): Promise<{ products: CatalogListItem[]; count: number }> {
   const productCloud = scope.resolve(
@@ -200,6 +206,7 @@ export async function listPublishedCatalogProducts(
   const offset = Math.max(0, opts.offset ?? 0)
   const q = opts.q?.trim().toLowerCase() ?? ""
   const scanTake = q || idSet ? 8000 : Math.max(opts.take ?? 400, offset + limit)
+  const sortKey = opts.sort ?? "popularity"
 
   const versions = (await productCloud.listProductVersions(
     { publication_status: "Gepubliceerd" },
@@ -227,7 +234,15 @@ export async function listPublishedCatalogProducts(
   const brandCountryById = new Map<string, string | null>()
   const versionIdByProduct = new Map<string, string>()
   const brandIdByProduct = new Map<string, string>()
-  const needsNamesDuringScan = Boolean(brandFilter || manufacturerFilter || q)
+  const needsNamesDuringScan = Boolean(
+    brandFilter ||
+      manufacturerFilter ||
+      q ||
+      sortKey === "brand_asc" ||
+      sortKey === "brand_desc" ||
+      sortKey === "category_asc" ||
+      sortKey === "category_desc"
+  )
   const needsCountryDuringScan = Boolean(opts.country_code)
 
   async function cachedBrandName(brandId: string): Promise<string | null> {
@@ -467,7 +482,7 @@ export async function listPublishedCatalogProducts(
     })
   }
 
-  const sort = opts.sort ?? "popularity"
+  const sort = sortKey
   if (idSet) {
     const order = new Map(idFilter.map((id, i) => [id, i]))
     items.sort(
@@ -502,6 +517,26 @@ export async function listPublishedCatalogProducts(
           return (a.title ?? "").localeCompare(b.title ?? "", "nl")
         case "name_desc":
           return (b.title ?? "").localeCompare(a.title ?? "", "nl")
+        case "brand_asc":
+          return (a.brand_name ?? "").localeCompare(b.brand_name ?? "", "nl") ||
+            (a.title ?? "").localeCompare(b.title ?? "", "nl")
+        case "brand_desc":
+          return (b.brand_name ?? "").localeCompare(a.brand_name ?? "", "nl") ||
+            (b.title ?? "").localeCompare(a.title ?? "", "nl")
+        case "category_asc": {
+          const ac = (a.category_names ?? []).join(", ")
+          const bc = (b.category_names ?? []).join(", ")
+          return ac.localeCompare(bc, "nl") || (a.title ?? "").localeCompare(b.title ?? "", "nl")
+        }
+        case "category_desc": {
+          const ac = (a.category_names ?? []).join(", ")
+          const bc = (b.category_names ?? []).join(", ")
+          return bc.localeCompare(ac, "nl") || (b.title ?? "").localeCompare(a.title ?? "", "nl")
+        }
+        case "newest":
+          return (b.id ?? "").localeCompare(a.id ?? "")
+        case "oldest":
+          return (a.id ?? "").localeCompare(b.id ?? "")
         case "popularity":
         default:
           return b.offer_count - a.offer_count || (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
@@ -756,15 +791,21 @@ export async function loadCatalogProductDetail(
     : null
 
   let european_ownership = null as ReturnType<typeof toPublicEuropeanOwnership>
+  const brandId = String(
+    (product as { brand_id?: string | null }).brand_id || ""
+  ).trim()
   const manufacturerId = String(
     (product as { manufacturer_id?: string | null }).manufacturer_id || ""
   ).trim()
-  if (manufacturerId) {
+  if (brandId || manufacturerId) {
     try {
       const verification = scope.resolve(
         VERIFICATION_MODULE
       ) as VerificationModuleService
-      const claim = await findClaimByManufacturer(verification, manufacturerId)
+      const claim = await findClaimForProductRefs(verification, {
+        brand_id: brandId || null,
+        manufacturer_id: manufacturerId || null,
+      })
       european_ownership = toPublicEuropeanOwnership(claim)
     } catch {
       european_ownership = null

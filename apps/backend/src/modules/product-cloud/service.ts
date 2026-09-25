@@ -116,6 +116,16 @@ export type ApproveClaimTransferInput = {
   current_lifecycle_status: string
 }
 
+export type AssignProductManagerInput = {
+  product_id: string
+  kind: "seller" | "brand_owner" | "none"
+  /** Required when kind = seller; must have an offer on the product. */
+  seller_id?: string | null
+  /** Admin actor id for audit (user id). */
+  actor_admin_id?: string | null
+  transfer_reason?: string | null
+}
+
 export type PublishVersionGraphInput = {
   product_id: string
   version_id: string
@@ -173,6 +183,8 @@ class ProductCloudModuleService extends MedusaService({
         brand_id: input.brand_id,
         manufacturer_id: input.manufacturer_id,
         current_owner_seller_id: input.seller_id,
+        product_manager_kind: "seller",
+        product_manager_seller_id: input.seller_id,
         lifecycle_status: input.lifecycle_status,
       },
       sharedContext
@@ -353,6 +365,8 @@ class ProductCloudModuleService extends MedusaService({
     const lifecyclePatch: {
       id: string
       current_owner_seller_id: string
+      product_manager_kind: "seller"
+      product_manager_seller_id: string
       lifecycle_status?:
         | "Retailer Created"
         | "Concept gecontroleerd"
@@ -364,6 +378,8 @@ class ProductCloudModuleService extends MedusaService({
     } = {
       id: input.product_id,
       current_owner_seller_id: input.claimant_seller_id,
+      product_manager_kind: "seller",
+      product_manager_seller_id: input.claimant_seller_id,
     }
     if (input.current_lifecycle_status === "Retailer Created") {
       lifecyclePatch.lifecycle_status = "Concept gecontroleerd"
@@ -419,6 +435,108 @@ class ProductCloudModuleService extends MedusaService({
     }
 
     return Array.isArray(updated) ? updated[0] : updated
+  }
+
+  @InjectManager()
+  async assignProductManager(
+    input: AssignProductManagerInput,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    return await this.assignProductManager_(input, sharedContext)
+  }
+
+  @InjectTransactionManager()
+  protected async assignProductManager_(
+    input: AssignProductManagerInput,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const product = await this.retrieveProduct(input.product_id, {}, sharedContext)
+    const prevKind = (product as { product_manager_kind?: string })
+      .product_manager_kind
+    const prevSeller = (product as { product_manager_seller_id?: string | null })
+      .product_manager_seller_id
+    const now = new Date()
+    const reason =
+      input.transfer_reason?.trim() ||
+      `Productbeheerder gewijzigd door admin (${input.kind})`
+
+    const ownershipRows = await this.listOwnershipRecords(
+      { product_id: input.product_id },
+      {},
+      sharedContext
+    )
+    const currentOwnership = ownershipRows.filter(
+      (own) => own.valid_until == null
+    )
+    for (const own of currentOwnership) {
+      await this.updateOwnershipRecords(
+        { id: own.id, valid_until: now },
+        sharedContext
+      )
+    }
+    const manager =
+      sharedContext.transactionManager ?? sharedContext.manager
+    if (
+      manager &&
+      typeof (manager as { flush?: () => Promise<void> }).flush === "function"
+    ) {
+      await (manager as { flush: () => Promise<void> }).flush()
+    }
+
+    const nextSellerId =
+      input.kind === "seller" ? (input.seller_id || "").trim() || null : null
+
+    if (input.kind === "seller" && nextSellerId) {
+      await this.createOwnershipRecords(
+        {
+          product_id: input.product_id,
+          seller_id: nextSellerId,
+          valid_from: now,
+          valid_until: null,
+          transfer_reason: reason,
+        },
+        sharedContext
+      )
+    }
+
+    const patch: {
+      id: string
+      product_manager_kind: "seller" | "brand_owner" | "none"
+      product_manager_seller_id: string | null
+      current_owner_seller_id?: string
+    } = {
+      id: input.product_id,
+      product_manager_kind: input.kind,
+      product_manager_seller_id: nextSellerId,
+    }
+    if (input.kind === "seller" && nextSellerId) {
+      patch.current_owner_seller_id = nextSellerId
+    }
+    await this.updateProducts(patch, sharedContext)
+
+    await this.createProductFieldChanges(
+      {
+        product_id: input.product_id,
+        product_version_id: null,
+        seller_id: nextSellerId || prevSeller || "admin",
+        actor_customer_id: input.actor_admin_id ?? null,
+        field_code: "product_manager",
+        field_label: "Productbeheerder",
+        old_value: JSON.stringify({
+          kind: prevKind ?? "none",
+          seller_id: prevSeller ?? null,
+        }),
+        new_value: JSON.stringify({
+          kind: input.kind,
+          seller_id: nextSellerId,
+        }),
+        status: "current",
+        reason,
+      },
+      sharedContext
+    )
+
+    return await this.retrieveProduct(input.product_id, {}, sharedContext)
   }
 
   @InjectManager()

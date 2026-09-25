@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { t, type StorefrontLocale } from "../_lib/i18n/messages"
+import type { StorefrontLocale } from "../../_lib/i18n/locales"
+import { t } from "../../_lib/i18n/messages"
 
 export type EuropeanOwnershipView = {
   ownership_band: string

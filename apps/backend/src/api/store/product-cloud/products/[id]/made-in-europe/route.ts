@@ -6,6 +6,7 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../catalog-edit-guard"
 import { assertPermission } from "../../../../../../modules/partner/permissions"
 import type { StoreAssignMadeInEuropeBodyInput } from "../../../validators"
 import {
@@ -45,12 +46,7 @@ export async function POST(
   } catch {
     throw new MedusaError(MedusaError.Types.NOT_FOUND, "Product niet gevonden.")
   }
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de eigenaar mag Made in Europe-gegevens wijzigen."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const result = await upsertProductMadeInEurope(req.scope, {
     product_id: id,
@@ -84,12 +80,7 @@ export async function GET(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Geen toegang tot dit product."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const data = await loadMadeInEuropeForProduct(req.scope, id)
   res.status(200).json({

@@ -52,13 +52,26 @@ export async function GET(
   const partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
   const claim = await loadClaim(verification, id)
 
+  let brand: { id: string; name?: string } | null = null
   let manufacturer: { id: string; name?: string } | null = null
-  try {
-    manufacturer = (await partner.retrieveManufacturer(
-      claim.manufacturer_id
-    )) as { id: string; name?: string }
-  } catch {
-    manufacturer = { id: claim.manufacturer_id }
+  if (claim.brand_id) {
+    try {
+      brand = (await partner.retrieveBrand(claim.brand_id)) as {
+        id: string
+        name?: string
+      }
+    } catch {
+      brand = { id: claim.brand_id }
+    }
+  }
+  if (claim.manufacturer_id) {
+    try {
+      manufacturer = (await partner.retrieveManufacturer(
+        claim.manufacturer_id
+      )) as { id: string; name?: string }
+    } catch {
+      manufacturer = { id: claim.manufacturer_id }
+    }
   }
 
   const history = await verification.listEuropeanOwnershipStatusEvents(
@@ -68,6 +81,7 @@ export async function GET(
 
   res.json({
     claim: serializeEuropeanOwnershipClaim(claim),
+    brand,
     manufacturer,
     history,
   })
@@ -127,6 +141,7 @@ export async function POST(
 
   await appendOwnershipStatusEvent(verification, {
     claim_id: claim.id,
+    brand_id: claim.brand_id,
     manufacturer_id: claim.manufacturer_id,
     from_status: claim.status,
     to_status: nextStatus,

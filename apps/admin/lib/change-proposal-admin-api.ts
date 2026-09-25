@@ -28,9 +28,22 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export type AdminChangeProposal = {
   id: string
   product_id: string
+  product_title?: string | null
   submitter_seller_id: string
+  submitter_seller_name?: string | null
   proposed_title: string | null
   proposed_description: string | null
+  proposed_fields?: {
+    changes: Array<{
+      field: string
+      label: string
+      current_value: string | null
+      proposed_value: string
+      attribute_definition_id?: string
+      storage_references?: string[]
+    }>
+  } | null
+  field_summary?: string[]
   toelichting: string
   status: string
   decision_reason: string | null

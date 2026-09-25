@@ -5,6 +5,10 @@ import type VerificationModuleService from "../../../modules/verification/servic
 import type { ManufacturerGpsrSource } from "../../../modules/product-cloud/gpsr-manufacturer"
 import { resolveCatalogGtinValue } from "../../../modules/product-cloud/concept-identifier"
 import type { ProductCloudPreview } from "./product-preview"
+import {
+  brandOwnerCompanyId,
+  isVerifiedBrandOwner,
+} from "../brands/ownership"
 
 export const LIST_QUERY_TAKE = 2000
 
@@ -137,6 +141,10 @@ export type SellerListDataCache = {
     } | null
   >
   brandNameById: Map<string, string | null>
+  /** Distinct offer seller ids per product (all sellers, for multi-seller catalog edit). */
+  offerSellerIdsByProduct: Map<string, string[]>
+  /** Brand ids for which the listing seller is a verified brand owner. */
+  verifiedBrandOwnerBrandIds: Set<string>
 }
 
 export async function listVersionsByProductId(
@@ -183,6 +191,8 @@ export async function loadSellerListDataCache(opts: {
     mieByProduct: new Map(),
     shippingById: new Map(),
     brandNameById: new Map(),
+    offerSellerIdsByProduct: new Map(),
+    verifiedBrandOwnerBrandIds: new Set(),
   }
   const productIds = opts.products.map((p) => p.id)
   if (productIds.length === 0) return cache
@@ -237,6 +247,80 @@ export async function loadSellerListDataCache(opts: {
     identifiers,
     (row) => row.product_variant_id
   )
+
+  if (opts.commerce && identifiers.length) {
+    try {
+      const allOffers = (await opts.commerce.listOffers(
+        { identifier_id: identifiers.map((i) => i.id) },
+        { take: LIST_QUERY_TAKE }
+      )) as Array<{ seller_id?: string; identifier_id: string }>
+      const sellersByIdentifier = new Map<string, Set<string>>()
+      for (const offer of allOffers) {
+        const sellerId = (offer.seller_id || "").trim()
+        if (!sellerId) continue
+        const set = sellersByIdentifier.get(offer.identifier_id) || new Set()
+        set.add(sellerId)
+        sellersByIdentifier.set(offer.identifier_id, set)
+      }
+      for (const product of opts.products) {
+        const productVariants = cache.variantsByProduct.get(product.id) || []
+        const sellerSet = new Set<string>()
+        for (const variant of productVariants) {
+          for (const ident of cache.identifiersByVariant.get(variant.id) || []) {
+            for (const sid of sellersByIdentifier.get(ident.id) || []) {
+              sellerSet.add(sid)
+            }
+          }
+        }
+        cache.offerSellerIdsByProduct.set(product.id, [...sellerSet])
+      }
+    } catch {
+      /* optional — write paths re-check */
+    }
+  }
+
+  if (opts.partner) {
+    try {
+      const realBrandIds = [
+        ...new Set(
+          opts.products
+            .map((p) => p.brand_id)
+            .filter((id) => typeof id === "string" && id.startsWith("brand_"))
+        ),
+      ]
+      for (const brandId of realBrandIds) {
+        try {
+          const brand = (await opts.partner.retrieveBrand(brandId)) as {
+            id: string
+            owner_company_id?: string | null
+            owner_company?: { id?: string } | null
+          }
+          const seller = { id: opts.sellerId, company_id: null as string | null }
+          if (await isVerifiedBrandOwner(opts.partner, seller, brand)) {
+            cache.verifiedBrandOwnerBrandIds.add(brandId)
+            continue
+          }
+          try {
+            const sellers = (await opts.partner.listSellers(
+              { id: opts.sellerId },
+              { take: 1 }
+            )) as Array<{ id: string; company_id?: string | null }>
+            const companyId = sellers[0]?.company_id ?? null
+            const ownerCompany = brandOwnerCompanyId(brand)
+            if (companyId && ownerCompany && companyId === ownerCompany) {
+              cache.verifiedBrandOwnerBrandIds.add(brandId)
+            }
+          } catch {
+            /* ignore */
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    } catch {
+      /* brand-owner enrichment is optional for list rendering */
+    }
+  }
 
   const categoryIds = [...new Set(links.map((l) => l.category_id))]
   const categories = categoryIds.length

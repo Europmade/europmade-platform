@@ -2,10 +2,12 @@ import { adminFetch } from "./admin-fetch"
 
 export class ProductApprovalAdminApiError extends Error {
   status?: number
-  constructor(message: string, status?: number) {
+  payload?: unknown
+  constructor(message: string, status?: number, payload?: unknown) {
     super(message)
     this.name = "ProductApprovalAdminApiError"
     this.status = status
+    this.payload = payload
   }
 }
 
@@ -20,7 +22,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       typeof (body as { message: unknown }).message === "string"
         ? (body as { message: string }).message
         : "Er is iets misgegaan."
-    throw new ProductApprovalAdminApiError(message, response.status)
+    throw new ProductApprovalAdminApiError(message, response.status, body)
   }
   return body as T
 }
@@ -146,6 +148,28 @@ export type AdminProductDetail = {
     request_info_reason: string
   }
   publishable: boolean
+  product_management?: {
+    current: {
+      kind: "seller" | "brand_owner" | "none"
+      seller_id: string | null
+      seller_name: string | null
+      brand_id: string | null
+      brand_name: string | null
+      label: string
+    }
+    candidates: Array<{
+      kind: "seller" | "brand_owner" | "none"
+      seller_id: string | null
+      label: string
+    }>
+    offer_sellers: Array<{ seller_id: string; label: string }>
+    brand_owner: {
+      seller_id: string | null
+      company_id: string | null
+      label: string
+    } | null
+    history: Array<Record<string, unknown>>
+  }
 }
 
 /** Backend-supported publication_status values (product_version). */
@@ -198,6 +222,227 @@ export function listAdminProducts(params: AdminProductListParams | string = {}) 
 
 export function getAdminProduct(id: string) {
   return request<AdminProductDetail>(`/admin/product-cloud/products/${id}`)
+}
+
+export function assignAdminProductManager(
+  productId: string,
+  body: {
+    kind: "seller" | "brand_owner" | "none"
+    seller_id?: string | null
+    transfer_reason?: string | null
+  }
+) {
+  return request<{
+    product_management: NonNullable<AdminProductDetail["product_management"]>
+  }>(`/admin/product-cloud/products/${productId}/product-manager`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  })
+}
+
+export type BulkPmCandidate = {
+  kind: "seller" | "brand_owner" | "none"
+  seller_id: string | null
+  label: string
+}
+
+export type BulkPmValidationRow = {
+  product_id: string
+  title: string | null
+  current_display: string
+  current_type: string
+  new_display: string
+  new_type: string
+  valid: boolean
+  error: string | null
+}
+
+export type BulkPmPreviewResponse = {
+  preview_only: true
+  count: number
+  shared_candidates: BulkPmCandidate[]
+  products: Array<{
+    product_id: string
+    title: string | null
+    current_display: string
+    current_type: string
+  }>
+}
+
+export type BulkPmDryRunResponse = {
+  dry_run: true
+  all_valid: boolean
+  count: number
+  invalid_count: number
+  new_manager: {
+    kind: "seller" | "brand_owner" | "none"
+    seller_id: string | null
+    label: string
+    type: string
+  }
+  shared_candidates: BulkPmCandidate[]
+  products: BulkPmValidationRow[]
+  invalid_products: BulkPmValidationRow[]
+}
+
+export type BulkPmApplyResponse = {
+  all_valid: true
+  updated_count: number
+  count: number
+  invalid_count: number
+  new_manager: {
+    kind: "seller" | "brand_owner" | "none"
+    seller_id: string | null
+    label: string
+    type: string
+  }
+  products: BulkPmValidationRow[]
+  message?: string
+}
+
+export function previewBulkProductManager(product_ids: string[]) {
+  return request<BulkPmPreviewResponse>(
+    `/admin/product-cloud/products/bulk-product-manager`,
+    {
+      method: "POST",
+      body: JSON.stringify({ product_ids, preview_only: true }),
+    }
+  )
+}
+
+export function dryRunBulkProductManager(body: {
+  product_ids: string[]
+  kind: "seller" | "brand_owner" | "none"
+  seller_id?: string | null
+}) {
+  return request<BulkPmDryRunResponse>(
+    `/admin/product-cloud/products/bulk-product-manager`,
+    {
+      method: "POST",
+      body: JSON.stringify({ ...body, dry_run: true }),
+    }
+  )
+}
+
+export function bulkAssignAdminProductManager(body: {
+  product_ids: string[]
+  kind: "seller" | "brand_owner" | "none"
+  seller_id?: string | null
+  transfer_reason?: string | null
+}) {
+  return request<BulkPmApplyResponse>(
+    `/admin/product-cloud/products/bulk-product-manager`,
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
+export type BulkGenericRow = {
+  product_id: string
+  title: string | null
+  current_display: string
+  new_display?: string
+  valid?: boolean
+  error?: string | null
+}
+
+export function previewBulkBrand(product_ids: string[]) {
+  return request<{
+    preview_only: true
+    count: number
+    products: BulkGenericRow[]
+    available_brands: Array<{ id: string; name: string }>
+  }>(`/admin/product-cloud/products/bulk-brand`, {
+    method: "POST",
+    body: JSON.stringify({ product_ids, preview_only: true }),
+  })
+}
+
+export function dryRunBulkBrand(body: {
+  product_ids: string[]
+  brand_id: string
+}) {
+  return request<{
+    dry_run: true
+    all_valid: boolean
+    count: number
+    invalid_count: number
+    products: BulkGenericRow[]
+    invalid_products: BulkGenericRow[]
+    new_value: { brand_id: string; label: string }
+  }>(`/admin/product-cloud/products/bulk-brand`, {
+    method: "POST",
+    body: JSON.stringify({ ...body, dry_run: true }),
+  })
+}
+
+export function applyBulkBrand(body: {
+  product_ids: string[]
+  brand_id: string
+  transfer_reason?: string
+}) {
+  return request<{
+    updated_count: number
+    count: number
+    message?: string
+  }>(`/admin/product-cloud/products/bulk-brand`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
+export function previewBulkInformation(product_ids: string[]) {
+  return request<{
+    preview_only: true
+    count: number
+    products: BulkGenericRow[]
+    allowed_codes: Array<{ code: string; label: string }>
+  }>(`/admin/product-cloud/products/bulk-information`, {
+    method: "POST",
+    body: JSON.stringify({ product_ids, preview_only: true }),
+  })
+}
+
+export function dryRunBulkInformation(body: {
+  product_ids: string[]
+  attributes: Array<{ code: string; value: string }>
+}) {
+  return request<{
+    dry_run: true
+    all_valid: boolean
+    count: number
+    invalid_count: number
+    products: BulkGenericRow[]
+    invalid_products: BulkGenericRow[]
+  }>(`/admin/product-cloud/products/bulk-information`, {
+    method: "POST",
+    body: JSON.stringify({ ...body, dry_run: true }),
+  })
+}
+
+export function applyBulkInformation(body: {
+  product_ids: string[]
+  attributes: Array<{ code: string; value: string }>
+  reason?: string
+}) {
+  return request<{
+    updated_count: number
+    count: number
+    message?: string
+  }>(`/admin/product-cloud/products/bulk-information`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
+export function getAdminProductManager(productId: string) {
+  return request<{
+    product_management: NonNullable<AdminProductDetail["product_management"]>
+  }>(`/admin/product-cloud/products/${productId}/product-manager`, {
+    cache: "no-store",
+  })
 }
 
 export function saveSectionReview(

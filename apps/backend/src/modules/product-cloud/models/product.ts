@@ -31,7 +31,18 @@ const Product = model
       .nullable(),
     brand_id: model.text(),
     manufacturer_id: model.text(),
+    /**
+     * Historical info-owner soft-ref (claims / list filters).
+     * Central edit rights use product_manager_* (ADR-0046), not this field alone.
+     */
     current_owner_seller_id: model.text(),
+    /**
+     * Explicit Productbeheerder (ADR-0046): seller | brand_owner | none.
+     * At most one central manager; none → proposals + gap-fill only.
+     */
+    product_manager_kind: model.enum(["seller", "brand_owner", "none"]).default("none"),
+    /** Soft-ref partner.seller when product_manager_kind = seller. */
+    product_manager_seller_id: model.text().nullable(),
     /**
      * Centrale reguliere klantprijs (excl. verzending) — gelijk voor alle markten.
      * Offer.base_price is een sync-kopie; verzendkosten/actie blijven markt-specifiek.
@@ -99,6 +110,8 @@ const Product = model
     { on: ["brand_id"] },
     { on: ["manufacturer_id"] },
     { on: ["current_owner_seller_id"] },
+    { on: ["product_manager_seller_id"] },
+    { on: ["product_manager_kind"] },
     { on: ["shipping_profile_id"] },
   ])
 

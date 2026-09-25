@@ -3,61 +3,53 @@ import type {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
-import { z } from "zod"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
+import { isRealBrandId } from "../../../../../../modules/product-cloud/catalog-edit-auth"
 import { VERIFICATION_MODULE } from "../../../../../../modules/verification"
 import type VerificationModuleService from "../../../../../../modules/verification/service"
-import {
-  EUROPEAN_OWNERSHIP_BANDS,
-  EUROPEAN_OWNERSHIP_SOURCES,
-  isEuropeanOwnershipBand,
-  isEuropeanOwnershipSource,
-} from "../../../../../../modules/verification/european-ownership"
 import { resolveApprovedSeller } from "../../../resolve-seller"
 import {
-  appendOwnershipStatusEvent,
-  findClaimByManufacturer,
+  sellerCanDirectEditCatalog,
+  sellerHasOfferOnProduct,
+} from "../../../catalog-edit-guard"
+import {
+  findClaimForProductRefs,
   serializeEuropeanOwnershipClaim,
-  statusAfterSellerSubmit,
-  type EuropeanOwnershipClaimRow,
 } from "../../../european-ownership-helpers"
 
 type RouteParams = { id: string }
 
-const UpsertBody = z.object({
-  ownership_band: z.enum(EUROPEAN_OWNERSHIP_BANDS),
-  source: z.enum(EUROPEAN_OWNERSHIP_SOURCES),
-  evidence_file_id: z.string().trim().min(1).max(500).nullable().optional(),
-  evidence_note: z.string().trim().max(2000).nullable().optional(),
-  company_id: z.string().trim().min(1).max(100).nullable().optional(),
-})
-
-async function resolveProductManufacturerId(
+async function resolveProductBrandRefs(
   productCloud: ProductCloudModuleService,
   productId: string
-): Promise<{ manufacturer_id: string; owner_seller_id: string }> {
+): Promise<{
+  brand_id: string | null
+  manufacturer_id: string | null
+  product: {
+    id: string
+    brand_id?: string | null
+    manufacturer_id?: string | null
+    current_owner_seller_id?: string | null
+  }
+}> {
   const product = (await productCloud.retrieveProduct(productId)) as {
     id: string
+    brand_id?: string | null
     manufacturer_id?: string | null
-    current_owner_seller_id?: string
+    current_owner_seller_id?: string | null
   }
-  const manufacturerId = (product.manufacturer_id || "").trim()
-  if (!manufacturerId) {
-    throw new MedusaError(
-      MedusaError.Types.INVALID_DATA,
-      "Dit product heeft geen fabrikant-referentie; Europese eigendom kan niet worden gekoppeld."
-    )
-  }
+  const brandId = (product.brand_id || "").trim()
   return {
-    manufacturer_id: manufacturerId,
-    owner_seller_id: product.current_owner_seller_id || "",
+    brand_id: isRealBrandId(brandId) ? brandId : null,
+    manufacturer_id: (product.manufacturer_id || "").trim() || null,
+    product,
   }
 }
 
 /**
  * GET /store/product-cloud/products/:id/european-ownership
- * Claim for the product's manufacturer (seller view, includes review_note).
+ * Read-only view of brand-level claim for the product's brand.
  */
 export async function GET(
   req: AuthenticatedMedusaRequest,
@@ -75,16 +67,38 @@ export async function GET(
     VERIFICATION_MODULE
   ) as VerificationModuleService
 
-  const { manufacturer_id, owner_seller_id } =
-    await resolveProductManufacturerId(productCloud, id)
-  if (owner_seller_id !== seller.id) {
+  const { brand_id, manufacturer_id, product } =
+    await resolveProductBrandRefs(productCloud, id)
+
+  const access = await sellerCanDirectEditCatalog(req.scope, product, seller)
+  const hasOffer = await sellerHasOfferOnProduct(req.scope, id, seller.id)
+  if (
+    !access.allowed &&
+    !hasOffer &&
+    product.current_owner_seller_id !== seller.id
+  ) {
     throw new MedusaError(
       MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar kan deze claim inzien."
+      "Geen toegang tot dit product."
     )
   }
 
-  const claim = await findClaimByManufacturer(verification, manufacturer_id)
+  if (!brand_id) {
+    res.json({
+      brand_id: null,
+      manufacturer_id,
+      claim: null,
+      history: [],
+      inherited_from_brand: false,
+      manage_at: null,
+    })
+    return
+  }
+
+  const claim = await findClaimForProductRefs(verification, {
+    brand_id,
+    manufacturer_id,
+  })
   const events = claim
     ? await verification.listEuropeanOwnershipStatusEvents(
         { claim_id: claim.id },
@@ -93,129 +107,24 @@ export async function GET(
     : []
 
   res.json({
+    brand_id,
     manufacturer_id,
     claim: claim ? serializeEuropeanOwnershipClaim(claim) : null,
     history: events,
+    inherited_from_brand: Boolean(claim?.brand_id || claim),
+    manage_at: `/seller/brands/${encodeURIComponent(brand_id)}`,
   })
 }
 
 /**
- * PUT /store/product-cloud/products/:id/european-ownership
- * Upsert manufacturer-level claim. Evidence optional.
+ * PUT is disabled: European ownership is managed on the brand, not per product.
  */
 export async function PUT(
-  req: AuthenticatedMedusaRequest,
-  res: MedusaResponse
+  _req: AuthenticatedMedusaRequest,
+  _res: MedusaResponse
 ) {
-  const { id } = req.params as RouteParams
-  const seller = await resolveApprovedSeller(
-    req.scope,
-    req.auth_context.actor_id
+  throw new MedusaError(
+    MedusaError.Types.NOT_ALLOWED,
+    "Europese eigendom wordt beheerd op merkniveau (Seller → Merken). Producten tonen alleen de merkgegevens."
   )
-  const parsed = UpsertBody.safeParse(req.body ?? {})
-  if (!parsed.success) {
-    throw new MedusaError(
-      MedusaError.Types.INVALID_DATA,
-      "Ongeldige Europese-eigendomgegevens (band/bron)."
-    )
-  }
-  if (
-    !isEuropeanOwnershipBand(parsed.data.ownership_band) ||
-    !isEuropeanOwnershipSource(parsed.data.source)
-  ) {
-    throw new MedusaError(
-      MedusaError.Types.INVALID_DATA,
-      "Ongeldige band of bron."
-    )
-  }
-
-  const productCloud = req.scope.resolve(
-    PRODUCT_CLOUD_MODULE
-  ) as ProductCloudModuleService
-  const verification = req.scope.resolve(
-    VERIFICATION_MODULE
-  ) as VerificationModuleService
-
-  const { manufacturer_id, owner_seller_id } =
-    await resolveProductManufacturerId(productCloud, id)
-  if (owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar kan deze claim indienen."
-    )
-  }
-
-  const evidenceId =
-    parsed.data.evidence_file_id === undefined
-      ? undefined
-      : parsed.data.evidence_file_id
-  const evidenceNote =
-    parsed.data.evidence_note === undefined
-      ? undefined
-      : parsed.data.evidence_note
-
-  const existing = await findClaimByManufacturer(verification, manufacturer_id)
-  const hasEvidence = Boolean(
-    (evidenceId !== undefined ? evidenceId : existing?.evidence_file_id) ||
-      (evidenceNote !== undefined ? evidenceNote : existing?.evidence_note)
-  )
-  const nextStatus = statusAfterSellerSubmit(hasEvidence)
-  const actor = req.auth_context.actor_id ?? seller.customer_id
-
-  let saved: EuropeanOwnershipClaimRow
-  if (existing) {
-    saved = (await verification.updateEuropeanOwnershipClaims({
-      id: existing.id,
-      seller_id: seller.id,
-      company_id:
-        parsed.data.company_id !== undefined
-          ? parsed.data.company_id
-          : existing.company_id ?? seller.company_id ?? null,
-      ownership_band: parsed.data.ownership_band,
-      source: parsed.data.source,
-      status: nextStatus,
-      evidence_file_id:
-        evidenceId !== undefined ? evidenceId : existing.evidence_file_id,
-      evidence_note:
-        evidenceNote !== undefined ? evidenceNote : existing.evidence_note,
-      // Seller resubmit clears admin decision timestamps but keeps last review_note visible until next admin action overwrites
-    })) as EuropeanOwnershipClaimRow
-
-    await appendOwnershipStatusEvent(verification, {
-      claim_id: saved.id,
-      manufacturer_id,
-      from_status: existing.status,
-      to_status: nextStatus,
-      note: "Seller heeft Europese-eigendomclaim bijgewerkt",
-      actor_id: actor,
-      actor_type: "seller",
-      decision: "seller_upsert",
-    })
-  } else {
-    saved = (await verification.createEuropeanOwnershipClaims({
-      manufacturer_id,
-      company_id: parsed.data.company_id ?? seller.company_id ?? null,
-      seller_id: seller.id,
-      ownership_band: parsed.data.ownership_band,
-      source: parsed.data.source,
-      status: nextStatus,
-      evidence_file_id: evidenceId ?? null,
-      evidence_note: evidenceNote ?? null,
-    })) as EuropeanOwnershipClaimRow
-
-    await appendOwnershipStatusEvent(verification, {
-      claim_id: saved.id,
-      manufacturer_id,
-      from_status: "Niet opgegeven",
-      to_status: nextStatus,
-      note: "Seller heeft Europese-eigendomclaim ingediend",
-      actor_id: actor,
-      actor_type: "seller",
-      decision: "seller_create",
-    })
-  }
-
-  res.status(existing ? 200 : 201).json({
-    claim: serializeEuropeanOwnershipClaim(saved),
-  })
 }

@@ -1,14 +1,17 @@
 import { model } from "@medusajs/framework/utils"
 
 /**
- * European ownership claim for a manufacturer/company (not product production).
- * Soft-refs to partner manufacturer/company (ADR-0008 / ADR-0044).
+ * European ownership claim for a Brand (ADR-0044).
+ * Soft-ref to partner.brand (brand_*). Shared by all products of that brand.
+ * manufacturer_id kept nullable for legacy rows migrated from manufacturer-scope.
  */
 const EuropeanOwnershipClaim = model
   .define("european_ownership_claim", {
     id: model.id({ prefix: "euown" }).primaryKey(),
-    /** Soft-ref partner.manufacturer (manu_*). Primary attachment. */
-    manufacturer_id: model.text(),
+    /** Soft-ref partner.brand (brand_*). Primary attachment. */
+    brand_id: model.text().nullable(),
+    /** Legacy soft-ref partner.manufacturer (manu_*). Nullable after brand migration. */
+    manufacturer_id: model.text().nullable(),
     /** Soft-ref partner.company when known. */
     company_id: model.text().nullable(),
     /** Seller who last submitted/updated the claim. */
@@ -46,10 +49,11 @@ const EuropeanOwnershipClaim = model
   })
   .indexes([
     {
-      on: ["manufacturer_id"],
+      on: ["brand_id"],
       unique: true,
-      where: "deleted_at IS NULL",
+      where: "deleted_at IS NULL AND brand_id IS NOT NULL",
     },
+    { on: ["manufacturer_id"], where: "deleted_at IS NULL" },
     { on: ["company_id"], where: "deleted_at IS NULL" },
     { on: ["seller_id"], where: "deleted_at IS NULL" },
     { on: ["status"], where: "deleted_at IS NULL" },

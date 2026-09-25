@@ -25,15 +25,18 @@ export async function GET(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
 
-  const ownedProducts = await productCloud.listProducts({
-    current_owner_seller_id: seller.id,
+  // Inbox for assigned Productbeheerder (seller kind). Brand-owner managers
+  // also see proposals via admin / product detail flows.
+  const managedProducts = await productCloud.listProducts({
+    product_manager_kind: "seller",
+    product_manager_seller_id: seller.id,
   })
-  const ownedIds = ownedProducts.map((p) => p.id)
+  const managedIds = managedProducts.map((p) => p.id)
 
   const inbox =
-    ownedIds.length > 0
+    managedIds.length > 0
       ? await productCloud.listChangeProposals({
-          product_id: ownedIds,
+          product_id: managedIds,
           status: "In behandeling",
         })
       : []
@@ -61,6 +64,7 @@ export async function POST(
       submitter_seller_id: seller.id,
       proposed_title: body.proposed_title,
       proposed_description: body.proposed_description,
+      proposed_fields: body.proposed_fields ?? null,
       toelichting: body.toelichting,
     },
   })

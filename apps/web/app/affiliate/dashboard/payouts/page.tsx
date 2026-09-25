@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Badge, Notice } from "@europmade/ui"
 import { AffiliateGate } from "../../_components/affiliate-gate"
 import {
+  getAffiliatePayoutSettlement,
   getAffiliatePayouts,
   type AffiliatePayoutRow,
 } from "../../../_lib/affiliate-api"
@@ -22,6 +23,8 @@ export default function AffiliatePayoutsPage() {
   const [rows, setRows] = useState<AffiliatePayoutRow[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [settlementText, setSettlementText] = useState<string | null>(null)
+  const [settlementError, setSettlementError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -43,6 +46,19 @@ export default function AffiliatePayoutsPage() {
       cancelled = true
     }
   }, [locale])
+
+  async function openSettlement(id: string) {
+    setSettlementError(null)
+    setSettlementText(null)
+    try {
+      const res = await getAffiliatePayoutSettlement(id)
+      setSettlementText(JSON.stringify(res.settlement, null, 2))
+    } catch (err: unknown) {
+      setSettlementError(
+        err instanceof Error ? err.message : t("affPayoutsLoadFailed", locale)
+      )
+    }
+  }
 
   return (
     <AffiliateGate
@@ -72,17 +88,21 @@ export default function AffiliatePayoutsPage() {
 
       {!error && loaded && rows.length > 0 ? (
         <div className="mt-4 overflow-x-auto rounded-md border border-wf-300">
-          <table className="w-full min-w-[480px] border-collapse text-left text-xs">
+          <table className="w-full min-w-[640px] border-collapse text-left text-xs">
             <thead className="bg-wf-100 text-wf-700">
               <tr>
                 <th className="px-3 py-2 font-semibold">
                   {t("affCommDate", locale)}
                 </th>
+                <th className="px-3 py-2 font-semibold">Periode</th>
                 <th className="px-3 py-2 font-semibold">
                   {t("affCommAmount", locale)}
                 </th>
                 <th className="px-3 py-2 font-semibold">
                   {t("affCommStatus", locale)}
+                </th>
+                <th className="px-3 py-2 font-semibold">
+                  {t("affSettlement", locale)}
                 </th>
               </tr>
             </thead>
@@ -103,13 +123,31 @@ export default function AffiliatePayoutsPage() {
                           )
                         : "—"}
                     </td>
-                    <td className="px-3 py-2.5">{formatEuro(row.amount)}</td>
+                    <td className="px-3 py-2.5 text-wf-600">{row.period}</td>
+                    <td className="px-3 py-2.5">
+                      {formatEuro(Number(row.amount))}
+                    </td>
                     <td className="px-3 py-2.5">
                       <Badge
-                        variant={row.status === "Voltooid" ? "solid" : "outline"}
+                        variant={
+                          row.status === "Voltooid" ? "solid" : "outline"
+                        }
                       >
                         {statusLabel(row.status, locale)}
                       </Badge>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {row.settlement_available ? (
+                        <button
+                          type="button"
+                          className="text-xs font-semibold text-wf-900 underline"
+                          onClick={() => void openSettlement(row.id)}
+                        >
+                          {t("affSettlement", locale)}
+                        </button>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                   </tr>
                 )
@@ -117,6 +155,17 @@ export default function AffiliatePayoutsPage() {
             </tbody>
           </table>
         </div>
+      ) : null}
+
+      {settlementError ? (
+        <Notice variant="warning" className="mt-4">
+          {settlementError}
+        </Notice>
+      ) : null}
+      {settlementText ? (
+        <pre className="mt-4 max-h-80 overflow-auto rounded-md border border-wf-300 bg-wf-50 p-3 text-[11px] text-wf-800">
+          {settlementText}
+        </pre>
       ) : null}
     </AffiliateGate>
   )

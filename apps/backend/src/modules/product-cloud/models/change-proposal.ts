@@ -14,6 +14,12 @@ const ChangeProposal = model
     submitter_seller_id: model.text(),
     proposed_title: model.text().nullable(),
     proposed_description: model.text().nullable(),
+    /**
+     * Structured central-field proposals (JSON).
+     * Shape: { changes: [{ field, label, current_value, proposed_value, attribute_definition_id? }] }
+     * Legacy title/description columns remain for backward compatibility.
+     */
+    proposed_fields: model.json().nullable(),
     toelichting: model.text(),
     status: model.enum(["In behandeling", "Goedgekeurd", "Afgewezen"]),
     decision_reason: model.text().nullable(),

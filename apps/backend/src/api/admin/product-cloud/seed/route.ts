@@ -24,6 +24,8 @@ export async function POST(
     brand_id: body.brand_id,
     manufacturer_id: body.manufacturer_id,
     current_owner_seller_id: body.current_owner_seller_id,
+    product_manager_kind: "seller",
+    product_manager_seller_id: body.current_owner_seller_id,
     lifecycle_status: "Retailer Created",
   })
 

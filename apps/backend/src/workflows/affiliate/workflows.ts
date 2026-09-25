@@ -21,6 +21,10 @@ import { FINANCE_MODULE } from "../../modules/finance"
 import type FinanceModuleService from "../../modules/finance/service"
 import { executeOpenFraudSignal } from "../moderation/workflows"
 import { executeScheduleAffiliatePayout } from "../finance/workflows"
+import {
+  AFFILIATE_RETURN_HOLD_DAYS,
+  resolveAffiliateRefundDisposition,
+} from "../../modules/affiliate/affiliate-hold-rules"
 
 export type RegisterAffiliateInput = {
   customer_id: string
@@ -497,10 +501,13 @@ export async function executeAttributeConversion(
 
 export async function executeReverseConversionForOrder(
   container: MedusaContainer,
-  orderId: string
+  orderId: string,
+  opts?: { refund_amount?: number | null }
 ) {
+  const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
   const aff = container.resolve(AFFILIATE_MODULE) as AffiliateModuleService
   const finance = container.resolve(FINANCE_MODULE) as FinanceModuleService
+  const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
   const eventBus = container.resolve(Modules.EVENT_BUS)
 
   const conversions = await aff.listConversions(
@@ -509,7 +516,79 @@ export async function executeReverseConversionForOrder(
   )
   const conversion = conversions[0]
   if (!conversion || conversion.reversed_at) {
-    return { reversed: false }
+    return { reversed: false, locked: false as const }
+  }
+
+  let orderCreatedAt: Date | string = conversion.created_at
+  try {
+    const order = await orders.retrieveEmOrder(orderId)
+    orderCreatedAt = order.created_at
+  } catch {
+    // fall back to conversion timestamp
+  }
+
+  const commissions = await finance.listCommissions({
+    conversion_id: conversion.id,
+    status: "Toegekend",
+  })
+  const primary = commissions[0]
+  const originalAmount = primary ? Number(primary.amount) : 0
+
+  const lines = await orders.listOrderLines({ order_id: orderId })
+  const originalSubtotal = lines.reduce((sum, line) => {
+    return sum + Number(line.unit_price_snapshot) * Number(line.quantity)
+  }, 0)
+
+  const disposition = resolveAffiliateRefundDisposition({
+    orderCreatedAt,
+    originalCommission: originalAmount,
+    originalSubtotal: originalSubtotal > 0 ? originalSubtotal : originalAmount,
+    refundAmount: opts?.refund_amount,
+    holdDays: AFFILIATE_RETURN_HOLD_DAYS,
+  })
+
+  if (disposition.action === "lock") {
+    logger.info(
+      `[affiliate] refund after hold — commission locked order=${orderId}`
+    )
+    return { reversed: false, locked: true as const }
+  }
+
+  if (disposition.action === "prorate") {
+    for (const c of commissions) {
+      await finance.updateCommissions({
+        id: c.id,
+        amount: disposition.new_amount,
+        status: "Toegekend",
+      })
+    }
+    const payouts = await finance.listPayouts({
+      order_id: orderId,
+      recipient_type: "Affiliate",
+      status: "Gepland",
+    })
+    for (const p of payouts) {
+      await finance.updatePayouts({
+        id: p.id,
+        amount: disposition.new_amount,
+      })
+    }
+    await eventBus.emit({
+      name: "CommissionCalculated",
+      data: {
+        conversion_id: conversion.id,
+        order_id: orderId,
+        affiliate_id: conversion.affiliate_id,
+        amount: disposition.new_amount,
+        prorated: true,
+      },
+    })
+    return {
+      reversed: false,
+      locked: false as const,
+      prorated: true as const,
+      amount: disposition.new_amount,
+    }
   }
 
   await aff.updateConversions({
@@ -517,15 +596,23 @@ export async function executeReverseConversionForOrder(
     reversed_at: new Date(),
   })
 
-  const commissions = await finance.listCommissions({
-    conversion_id: conversion.id,
-    status: "Toegekend",
-  })
   for (const c of commissions) {
     await finance.updateCommissions({
       id: c.id,
       status: "Teruggedraaid",
       amount: 0,
+    })
+  }
+
+  const payouts = await finance.listPayouts({
+    order_id: orderId,
+    recipient_type: "Affiliate",
+    status: "Gepland",
+  })
+  for (const p of payouts) {
+    await finance.updatePayouts({
+      id: p.id,
+      status: "Geannuleerd",
     })
   }
 
@@ -538,7 +625,7 @@ export async function executeReverseConversionForOrder(
     },
   })
 
-  return { reversed: true }
+  return { reversed: true, locked: false as const }
 }
 
 const registerStep = createStep(
@@ -702,6 +789,17 @@ export async function executeAffiliateCommissions(
     { take: 500, order: { created_at: "DESC" } }
   )
 
+  const payouts = await finance.listPayouts(
+    { affiliate_id: affiliate.id, recipient_type: "Affiliate" },
+    { take: 500 }
+  )
+  const payoutByOrder = new Map(
+    payouts
+      .filter((p) => p.order_id)
+      .map((p) => [p.order_id as string, p])
+  )
+
+  const now = Date.now()
   const rows = []
   for (const c of commissions) {
     if (!c.conversion_id || !conversionIds.has(c.conversion_id)) continue
@@ -719,10 +817,30 @@ export async function executeAffiliateCommissions(
       : conv.coupon_id
         ? "Coupon"
         : "Onbekend"
-    const ui_status =
-      c.status === "Teruggedraaid"
-        ? "Teruggedraaid (retour)"
-        : "Bevestigd"
+    const payout = payoutByOrder.get(conv.order_id)
+    const eligibleAt = payout?.eligible_at
+      ? new Date(payout.eligible_at).getTime()
+      : null
+
+    let ui_status: string
+    let payout_status: string | null = payout?.status ?? null
+    if (c.status === "Teruggedraaid" || conv.reversed_at) {
+      ui_status = "Reversed"
+    } else if (payout?.status === "Voltooid") {
+      ui_status = "Paid"
+    } else if (
+      c.status === "Toegekend" &&
+      eligibleAt != null &&
+      eligibleAt <= now &&
+      payout?.status === "Gepland"
+    ) {
+      ui_status = "Eligible"
+    } else if (c.status === "Toegekend") {
+      ui_status = "Pending"
+    } else {
+      ui_status = c.status
+    }
+
     rows.push({
       id: c.id,
       created_at: c.created_at,
@@ -731,8 +849,14 @@ export async function executeAffiliateCommissions(
       attribution_type,
       amount: Number(c.amount),
       amount_formatted: formatEuro(Number(c.amount)),
+      percentage: Number(c.percentage),
       status: c.status,
       ui_status,
+      payout_status,
+      eligible_at: payout?.eligible_at
+        ? new Date(payout.eligible_at).toISOString()
+        : null,
+      payout_id: payout?.id ?? null,
     })
   }
 

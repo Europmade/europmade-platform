@@ -296,7 +296,11 @@ export async function GET(
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
-      if (!hay.includes(q)) return false
+      const tokens = q
+        .split(/\s+/)
+        .map((t) => t.trim().toLowerCase())
+        .filter(Boolean)
+      if (!tokens.every((token) => hay.includes(token))) return false
     }
     return true
   })

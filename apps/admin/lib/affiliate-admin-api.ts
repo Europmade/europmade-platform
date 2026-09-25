@@ -130,3 +130,29 @@ export async function getAffiliatePerformance(
     `/admin/affiliates/performance?period_days=${periodDays}`
   )
 }
+
+export type AdminCommissionSettings = {
+  percentage: number
+  percentage_display: string
+  attribution_days: number
+  payout_hold_days: number
+}
+
+export async function getAffiliateCommissionSettings() {
+  return request<AdminCommissionSettings>(
+    "/admin/affiliates/commission-settings"
+  )
+}
+
+export async function updateAffiliateCommissionSettings(input: {
+  percentage: number
+  attribution_days?: number
+}) {
+  return request<AdminCommissionSettings>(
+    "/admin/affiliates/commission-settings",
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    }
+  )
+}

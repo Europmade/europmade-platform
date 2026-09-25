@@ -110,6 +110,7 @@ export default function CheckoutModernPage() {
   >({})
   const [paymentMethod, setPaymentMethod] = useState<PaymentId>("ideal")
   const [terms, setTerms] = useState(false)
+  const [affiliateCoupon, setAffiliateCoupon] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [authBusy, setAuthBusy] = useState(false)
@@ -239,6 +240,9 @@ export default function CheckoutModernPage() {
           quantity: l.quantity,
         })),
         affiliate_click_id: readCookie(CLICK_COOKIE),
+        affiliate_coupon_code: affiliateCoupon.trim()
+          ? affiliateCoupon.trim().toUpperCase()
+          : null,
         guest_checkout: asGuest,
       })
       if (asGuest) rememberPendingGuestOrder(result.payment_reference)
@@ -579,6 +583,15 @@ export default function CheckoutModernPage() {
 
             {/* 7 Place order */}
             <section className="rounded-xl border border-wf-200 bg-white p-3.5 tablet:p-4">
+              <div className="mb-3 [&>.mb-4]:mb-0">
+                <Input
+                  label="Affiliate kortingscode (optioneel)"
+                  value={affiliateCoupon}
+                  onChange={(e) => setAffiliateCoupon(e.target.value)}
+                  placeholder="bijv. EMABCD12"
+                  autoComplete="off"
+                />
+              </div>
               <Checkbox
                 checked={terms}
                 onChange={(e) => setTerms(e.target.checked)}

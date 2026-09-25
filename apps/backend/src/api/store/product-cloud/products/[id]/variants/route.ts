@@ -7,6 +7,7 @@ import { z } from "@medusajs/framework/zod"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../catalog-edit-guard"
 import {
   composeVariantFromAxes,
   suggestVariantAxesForCategory,
@@ -57,12 +58,7 @@ export async function GET(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag varianten bekijken."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const variants = await productCloud.listProductVariants({ product_id: id })
   const links = await productCloud.listProductCategories({ product_id: id })
@@ -116,12 +112,7 @@ export async function POST(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag varianten toevoegen."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const existingIden = await productCloud.listIdentifiers({
     identifier_value: body.identifier_value,

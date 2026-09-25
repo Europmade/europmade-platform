@@ -7,6 +7,7 @@ import { z } from "@medusajs/framework/zod"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../../catalog-edit-guard"
 
 type RouteParams = { id: string }
 
@@ -39,12 +40,7 @@ export async function POST(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag media-volgorde wijzigen."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const versions = await productCloud.listProductVersions({ product_id: id })
   const working = [...versions].sort(

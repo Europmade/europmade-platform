@@ -328,3 +328,50 @@ export function listSellerBrandFacilityProducts(brandId: string, facilityId: str
     `/store/brands/${encodeURIComponent(brandId)}/facilities/${encodeURIComponent(facilityId)}/products`
   )
 }
+
+export type BrandEuropeanOwnershipClaim = {
+  id: string
+  brand_id: string | null
+  manufacturer_id: string | null
+  company_id: string | null
+  seller_id: string
+  ownership_band: string
+  ownership_band_label: string
+  source: string
+  source_label: string
+  status: string
+  evidence_file_id: string | null
+  evidence_note: string | null
+  review_note: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+}
+
+export function getSellerBrandEuropeanOwnership(brandId: string) {
+  return request<{
+    brand_id: string
+    brand_name: string | null
+    claim: BrandEuropeanOwnershipClaim | null
+    history: unknown[]
+    can_edit: boolean
+  }>(`/store/brands/${encodeURIComponent(brandId)}/european-ownership`)
+}
+
+export function upsertSellerBrandEuropeanOwnership(
+  brandId: string,
+  body: {
+    ownership_band: string
+    source: string
+    evidence_file_id?: string | null
+    evidence_note?: string | null
+    company_id?: string | null
+  }
+) {
+  return request<{
+    claim: BrandEuropeanOwnershipClaim
+    brand_id: string
+  }>(`/store/brands/${encodeURIComponent(brandId)}/european-ownership`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  })
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useSearchParams } from "next/navigation"
 import { Notice } from "@europmade/ui"
 import {
   ProductApprovalAdminApiError,
@@ -13,9 +13,16 @@ import {
   type WizardStep,
 } from "../../../../../components/product-cloud/admin-wizard-shell"
 
+function stepForProposalField(field: string | null | undefined): WizardStep {
+  if (field === "media_note") return "media"
+  return "information"
+}
+
 export default function AdminProductDetailPage() {
   const params = useParams<{ id: string }>()
+  const search = useSearchParams()
   const id = params.id
+  const highlightProposalId = search.get("proposal")
   const [data, setData] = useState<AdminProductDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -48,6 +55,28 @@ export default function AdminProductDetailPage() {
   }, [load])
 
   useEffect(() => {
+    if (!data || !highlightProposalId) return
+    const row = (data.change_proposals || []).find(
+      (p) => String((p as { id?: string }).id) === highlightProposalId
+    ) as
+      | {
+          proposed_fields?: { changes?: Array<{ field?: string }> }
+          proposed_title?: string | null
+        }
+      | undefined
+    const field =
+      row?.proposed_fields?.changes?.[0]?.field ||
+      (row?.proposed_title ? "title" : null)
+    setStep(stepForProposalField(field))
+    const t = window.setTimeout(() => {
+      document
+        .getElementById(`proposal-${highlightProposalId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" })
+    }, 200)
+    return () => window.clearTimeout(t)
+  }, [data, highlightProposalId])
+
+  useEffect(() => {
     if (!lightbox) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setLightbox(null)
@@ -69,6 +98,7 @@ export default function AdminProductDetailPage() {
       step={step}
       setStep={setStep}
       load={load}
+      highlightProposalId={highlightProposalId}
       lightbox={lightbox}
       setLightbox={setLightbox}
       broken={broken}

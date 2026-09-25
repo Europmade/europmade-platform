@@ -3,25 +3,23 @@ import type {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
+import type { MedusaContainer } from "@medusajs/framework/types"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../../catalog-edit-guard"
 
 type RouteParams = { id: string; mediaId: string }
 
 async function assertMediaOwner(
+  scope: MedusaContainer,
   productCloud: ProductCloudModuleService,
   productId: string,
   mediaId: string,
-  sellerId: string
+  seller: { id: string; company_id?: string | null }
 ) {
   const product = await productCloud.retrieveProduct(productId)
-  if (product.current_owner_seller_id !== sellerId) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag media beheren."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(scope, product, seller)
   const media = await productCloud.retrieveProductMedia(mediaId)
   const version = await productCloud.retrieveProductVersion(
     media.product_version_id
@@ -53,10 +51,11 @@ export async function PATCH(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const { media, version } = await assertMediaOwner(
+    req.scope,
     productCloud,
     id,
     mediaId,
-    seller.id
+    seller
   )
 
   if (body.set_primary || body.media_type === "Hoofdafbeelding") {
@@ -111,7 +110,7 @@ export async function DELETE(
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
-  await assertMediaOwner(productCloud, id, mediaId, seller.id)
+  await assertMediaOwner(req.scope, productCloud, id, mediaId, seller)
   await productCloud.softDeleteProductMedias([mediaId])
   res.json({ deleted: true, media_id: mediaId })
 }

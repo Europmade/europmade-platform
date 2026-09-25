@@ -12,6 +12,7 @@ import {
   patchSellerBrand,
   upsertSellerBrandFacility,
 } from "../../_lib/brands-api"
+import { BrandEuropeanOwnershipSection } from "../../_components/brand-european-ownership-section"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { t } from "../../../_lib/i18n/messages"
 
@@ -244,6 +245,8 @@ export default function SellerBrandDetailPage() {
             </p>
           )}
         </section>
+
+        <BrandEuropeanOwnershipSection brandId={id} />
 
         <section className="rounded border border-wf-300 bg-white p-3">
           <h2 className="text-xs font-bold text-wf-900">

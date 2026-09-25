@@ -1,7 +1,7 @@
 /**
- * Seller product list navigation: catalog owner → Product Manager,
- * non-owner with own offer → Commerce Cloud offer form.
- * Does not change Product Cloud ownership checks.
+ * Seller product list navigation: shared Product Manager page for central data;
+ * Commerce Cloud offer form for own commercial fields when not Productbeheerder.
+ * Does not change Product Cloud ownership / write checks.
  */
 
 export type SellerListProductRef = {
@@ -26,13 +26,8 @@ export function sellerOfferPath(identifierId: string): string {
   return `/seller/products/offer?identifier_id=${encodeURIComponent(identifierId)}`
 }
 
-/** Row click / "Beheer product": owner → manager, non-owner → offer. */
+/** Row click / "Beheer product": always the shared Product Manager page. */
 export function sellerProductHref(product: SellerListProductRef): string {
-  if (!isSellerCatalogOwner(product)) {
-    const identifierId = sellerListIdentifierId(product)
-    if (identifierId) return sellerOfferPath(identifierId)
-    return "/seller/products"
-  }
   return `/seller/products/${product.id}`
 }
 
@@ -41,27 +36,22 @@ export function sellerOfferHref(product: SellerListProductRef): string {
   if (!isSellerCatalogOwner(product)) {
     const identifierId = sellerListIdentifierId(product)
     if (identifierId) return sellerOfferPath(identifierId)
-    return "/seller/products"
+    return `/seller/products/${product.id}?step=offer`
   }
   return `/seller/products/${product.id}?tab=offer`
 }
 
 /**
- * Central Product Cloud info: owner edits in manager; non-owner reads + can propose changes.
+ * Central Product Cloud info: shared manager page for all sellers.
+ * Edit vs propose is decided inside the page via catalog_owner.
  */
 export function sellerCatalogInformationHref(
   product: SellerListProductRef
 ): string | null {
-  if (!isSellerCatalogOwner(product)) {
-    return `/seller/products/catalog/${product.id}`
-  }
   return `/seller/products/${product.id}?step=information`
 }
 
 export function sellerCatalogViewHref(product: SellerListProductRef): string {
-  if (!isSellerCatalogOwner(product)) {
-    return `/seller/products/catalog/${product.id}`
-  }
   return `/seller/products/${product.id}?step=information`
 }
 
@@ -69,8 +59,15 @@ export function sellerCatalogTabHref(
   product: SellerListProductRef,
   tab: string
 ): string | null {
-  if (!isSellerCatalogOwner(product)) return null
-  return `/seller/products/${product.id}?tab=${encodeURIComponent(tab)}`
+  if (tab === "offer" && !isSellerCatalogOwner(product)) {
+    const identifierId = sellerListIdentifierId(product)
+    if (identifierId) return sellerOfferPath(identifierId)
+  }
+  const step = tab === "history" ? null : tab
+  if (tab === "history") {
+    return `/seller/products/${product.id}?tab=history`
+  }
+  return `/seller/products/${product.id}?step=${encodeURIComponent(step || "information")}`
 }
 
 export function canEditCatalogInformation(

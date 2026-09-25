@@ -21,6 +21,10 @@ const STATUS_KEYS: Record<string, StorefrontMessageKey> = {
   // Returns
   Aangevraagd: "statusRequested",
   Bevestigd: "statusConfirmed",
+  Pending: "affCommPending",
+  Eligible: "affCommEligible",
+  Paid: "affCommPaid",
+  Reversed: "affCommReversedReturn",
   Ontvangen: "statusReceived",
   Verwerkt: "statusProcessed",
   Afgewezen: "statusRejected",

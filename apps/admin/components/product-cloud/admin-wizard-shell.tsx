@@ -19,6 +19,9 @@ import {
   SectionReviewControls,
   sectionReviewStatusLabel,
 } from "./product-review-panel"
+import { AdminProductManagerCard } from "./admin-product-manager-card"
+import { AdminSectionProposalReviews } from "./admin-section-proposal-reviews"
+import type { AdminChangeProposal } from "../../lib/change-proposal-admin-api"
 import {
   ADMIN_EVIDENCE_STATUS_LABELS,
   ADMIN_LIFECYCLE_LABELS,
@@ -57,6 +60,7 @@ export function AdminWizardShell(props: {
   step: WizardStep
   setStep: (s: WizardStep) => void
   load: () => Promise<void>
+  highlightProposalId?: string | null
   lightbox: {
     url: string
     kind: "image" | "pdf" | "other"
@@ -79,12 +83,15 @@ export function AdminWizardShell(props: {
     step,
     setStep,
     load,
+    highlightProposalId,
     lightbox,
     setLightbox,
     broken,
     setBroken,
   } = props
   const product = data.product
+  const changeProposals = (data.change_proposals ||
+    []) as unknown as AdminChangeProposal[]
   const completeness = (product.completeness || {}) as NonNullable<
     typeof product.completeness
   >
@@ -295,11 +302,35 @@ export function AdminWizardShell(props: {
                   Basisinformatie {reviewBadge("product_info")}
                 </CardTitle>
                 <ReadField label="Productnaam" value={title} />
+                <AdminSectionProposalReviews
+                  proposals={changeProposals}
+                  fields={["title"]}
+                  highlightId={highlightProposalId}
+                  onDecided={load}
+                />
                 <ReadField
                   label="EAN / GTIN"
                   value={product.identifier_value || "—"}
                 />
                 <ReadField label="Merk" value={product.brand_name || "—"} />
+                <AdminSectionProposalReviews
+                  proposals={changeProposals}
+                  fields={["brand_id"]}
+                  highlightId={highlightProposalId}
+                  onDecided={load}
+                />
+                <ReadField
+                  label="Fabrikant"
+                  value={
+                    (product.manufacturer_id as string | undefined) || "—"
+                  }
+                />
+                <AdminSectionProposalReviews
+                  proposals={changeProposals}
+                  fields={["manufacturer_id"]}
+                  highlightId={highlightProposalId}
+                  onDecided={load}
+                />
                 <ReadField
                   label="Categorie"
                   value={(product.category_names || []).join(", ") || "—"}
@@ -316,6 +347,12 @@ export function AdminWizardShell(props: {
                 <p className="whitespace-pre-wrap text-xs text-wf-800">
                   {product.description || "—"}
                 </p>
+                <AdminSectionProposalReviews
+                  proposals={changeProposals}
+                  fields={["description"]}
+                  highlightId={highlightProposalId}
+                  onDecided={load}
+                />
                 <SectionReviewControls
                   productId={id}
                   sectionKey="content"
@@ -349,8 +386,14 @@ export function AdminWizardShell(props: {
                   </Card>
                 )
               })}
+              <AdminSectionProposalReviews
+                proposals={changeProposals}
+                fields={["attribute"]}
+                highlightId={highlightProposalId}
+                onDecided={load}
+              />
               <Card>
-                <CardTitle>Seller / eigenaar {reviewBadge("seller")}</CardTitle>
+                <CardTitle>Seller (commercieel) {reviewBadge("seller")}</CardTitle>
                 <ReadField label="Bedrijfsnaam" value={data.seller_name || "—"} />
                 <ReadField
                   label="Seller ID"
@@ -386,6 +429,17 @@ export function AdminWizardShell(props: {
                   onSaved={load}
                 />
               </Card>
+              <AdminProductManagerCard
+                productId={id}
+                data={data}
+                onSaved={load}
+              />
+              <AdminSectionProposalReviews
+                proposals={changeProposals}
+                fields={["product_manager"]}
+                highlightId={highlightProposalId}
+                onDecided={load}
+              />
               <StepNav
                 onPrev={null}
                 onNext={() => setStep("offer")}
@@ -493,6 +547,12 @@ export function AdminWizardShell(props: {
             <>
               <Card>
                 <CardTitle>Media {reviewBadge("media")}</CardTitle>
+                <AdminSectionProposalReviews
+                  proposals={changeProposals}
+                  fields={["media_note"]}
+                  highlightId={highlightProposalId}
+                  onDecided={load}
+                />
                 {sortedMedia.length === 0 ? (
                   <p className="text-xs text-wf-600">Geen media aanwezig.</p>
                 ) : (

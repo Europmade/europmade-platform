@@ -1,6 +1,7 @@
 export {
   PLATFORM_COMMISSION_RATE,
   RETURN_HOLD_DAYS,
+  AFFILIATE_RETURN_HOLD_DAYS,
   buildVatBreakdownFromIncl,
   executeFinanceOnOrderSplit,
   executeScheduleAffiliatePayout,
@@ -8,6 +9,7 @@ export {
   executeProcessPayout,
   executeSellerFinanceOverview,
   executeAffiliateFinancePayouts,
+  executeAffiliatePayoutSettlement,
   executeListAdminPayouts,
   financeOnOrderSplitWorkflow,
   processPayoutWorkflow,

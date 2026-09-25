@@ -3164,11 +3164,32 @@ const M = {
   affCommType: L("Type", "Type", "Typ", "Type"),
   affCommAmount: L("Bedrag", "Amount", "Betrag", "Montant"),
   affCommStatus: L("Status", "Status", "Status", "Statut"),
+  affCommPending: L(
+    "Pending / retourtermijn",
+    "Pending / return window",
+    "Ausstehend / Widerrufsfrist",
+    "En attente / délai de retour"
+  ),
+  affCommEligible: L(
+    "Payout eligible",
+    "Payout eligible",
+    "Auszahlungsfähig",
+    "Éligible au paiement"
+  ),
+  affCommPaid: L("Uitbetaald", "Paid out", "Ausgezahlt", "Versé"),
+  affCommPercent: L("Commissie %", "Commission %", "Provision %", "Commission %"),
   affCommPayoutNote: L(
-    "Commissie wordt pas uitbetaald na de wettelijke herroepingstermijn van de onderliggende order.",
-    "Commission is paid out only after the statutory withdrawal period of the underlying order.",
-    "Provision wird erst nach der gesetzlichen Widerrufsfrist der zugrunde liegenden Bestellung ausgezahlt.",
-    "La commission n'est versée qu'après le délai légal de rétractation de la commande sous-jacente."
+    "Commissie wordt pas uitbetaalbaar na 30 dagen retourtermijn. Refunds daarna draaien de affiliatecommissie niet meer terug.",
+    "Commission becomes payout-eligible after a 30-day return window. Later refunds do not reverse affiliate commission.",
+    "Provision wird erst nach 30 Tagen Widerrufsfrist auszahlungsfähig. Spätere Erstattungen drehen die Affiliate-Provision nicht mehr zurück.",
+    "La commission devient éligible au paiement après 30 jours. Les remboursements ultérieurs ne renversent plus la commission affilié."
+  ),
+  affSettlement: L("Afrekening", "Settlement", "Abrechnung", "Décompte"),
+  affCouponLabel: L(
+    "Affiliate kortingscode (optioneel)",
+    "Affiliate coupon code (optional)",
+    "Affiliate-Gutscheincode (optional)",
+    "Code promo affilié (facultatif)"
   ),
   affPayoutsIntro: L(
     "Overzicht van je uitbetalingen.",

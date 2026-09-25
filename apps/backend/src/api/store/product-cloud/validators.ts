@@ -80,6 +80,33 @@ export const StoreSubmitChangeProposalBody = z.object({
   product_id: z.string().trim().min(1),
   proposed_title: z.string().trim().min(1).nullable().optional(),
   proposed_description: z.string().trim().min(1).nullable().optional(),
+  proposed_fields: z
+    .object({
+      changes: z
+        .array(
+          z.object({
+            field: z.enum([
+              "title",
+              "description",
+              "brand_id",
+              "manufacturer_id",
+              "attribute",
+              "media_note",
+            ]),
+            label: z.string().trim().min(1),
+            current_value: z.string().nullable().optional(),
+            proposed_value: z.string().trim().min(1),
+            attribute_definition_id: z.string().trim().min(1).optional(),
+            storage_references: z
+              .array(z.string().trim().min(1))
+              .max(10)
+              .optional(),
+          })
+        )
+        .min(1),
+    })
+    .nullable()
+    .optional(),
   toelichting: z.string().trim().min(1),
 })
 export type StoreSubmitChangeProposalBodyInput = z.infer<

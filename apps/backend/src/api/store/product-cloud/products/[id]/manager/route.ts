@@ -55,7 +55,7 @@ export async function GET(
   if (!detail) {
     throw new MedusaError(
       MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag dit product beheren."
+      "Je mag dit product alleen openen als Productbeheerder of als je een eigen aanbod hebt."
     )
   }
 

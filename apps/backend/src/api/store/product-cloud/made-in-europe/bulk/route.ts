@@ -5,6 +5,7 @@ import type {
 import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../resolve-seller"
+import { sellerCanDirectEditCatalog } from "../../catalog-edit-guard"
 import { assertPermission } from "../../../../../modules/partner/permissions"
 import type { StoreBulkMadeInEuropeBodyInput } from "../../validators"
 import { upsertProductMadeInEurope } from "../../made-in-europe-helpers"
@@ -38,11 +39,12 @@ export async function POST(
   for (const productId of body.product_ids) {
     try {
       const product = await productCloud.retrieveProduct(productId)
-      if (product.current_owner_seller_id !== seller.id) {
+      const access = await sellerCanDirectEditCatalog(req.scope, product, seller)
+      if (!access.allowed) {
         results.push({
           product_id: productId,
           ok: false,
-          error: "Geen eigenaar.",
+          error: "Geen catalogusrechten.",
         })
         continue
       }

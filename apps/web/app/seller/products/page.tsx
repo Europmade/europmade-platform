@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Badge, Input, Notice } from "@europmade/ui"
+import { Input, Notice } from "@europmade/ui"
 import { SellerGate } from "../_components/seller-gate"
 import { EmptyState } from "../_components/empty-state"
 import { formatEuro } from "../../_components/storefront-shell"
@@ -12,10 +12,8 @@ import {
   bulkUpdateProductInformation,
   bulkAssignShippingProfile,
   listOwnProducts,
-  listOwnProductLinkGroupProposals,
   ProductCloudApiError,
   type CatalogProduct,
-  type ProductLinkGroupProposal,
 } from "../_lib/product-cloud-api"
 import { ProductLinkDialog } from "./_components/product-link-dialog"
 import {
@@ -190,9 +188,6 @@ export default function SellerProductsPage() {
   const [euForm, setEuForm] = useState<EuComplianceForm>(() => emptyEuForm())
   const [bulkBusy, setBulkBusy] = useState(false)
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
-  const [linkProposals, setLinkProposals] = useState<ProductLinkGroupProposal[]>(
-    []
-  )
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -228,16 +223,6 @@ export default function SellerProductsPage() {
   useEffect(() => {
     load()
   }, [load])
-
-  const loadLinkProposals = useCallback(() => {
-    listOwnProductLinkGroupProposals()
-      .then((res) => setLinkProposals(res.product_link_groups || []))
-      .catch(() => setLinkProposals([]))
-  }, [])
-
-  useEffect(() => {
-    loadLinkProposals()
-  }, [loadLinkProposals])
 
   useEffect(() => {
     void (async () => {
@@ -532,26 +517,6 @@ export default function SellerProductsPage() {
         <Notice variant="info" className="mb-4">
           {actionNotice}
         </Notice>
-      ) : null}
-
-      {linkProposals.length > 0 ? (
-        <div className="mb-4 rounded-lg border border-wf-200 bg-white p-3">
-          <h2 className="text-xs font-bold text-wf-900">Koppelvoorstellen</h2>
-          <p className="mt-0.5 text-[11px] text-wf-600">
-            Alleen ter inzage. Activeren of afwijzen doet beheer.
-          </p>
-          <ul className="mt-2 space-y-1 text-xs text-wf-800">
-            {linkProposals.slice(0, 8).map((group) => (
-              <li key={group.id} className="flex flex-wrap items-baseline gap-2">
-                <span className="font-semibold">{group.name}</span>
-                <Badge variant="outline">{group.status}</Badge>
-                <span className="font-mono text-[10px] text-wf-500">
-                  {group.id}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
       ) : null}
 
       <div className="mb-3 grid grid-cols-1 gap-2 tablet:grid-cols-[1fr_180px_160px]">

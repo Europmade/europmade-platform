@@ -27,7 +27,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export type EuropeanOwnershipClaimRow = {
   id: string
-  manufacturer_id: string
+  brand_id: string | null
+  manufacturer_id: string | null
   company_id: string | null
   seller_id: string
   ownership_band: string
@@ -55,6 +56,7 @@ export function listEuropeanOwnershipClaims(status = "all") {
 export function getEuropeanOwnershipClaim(id: string) {
   return request<{
     claim: EuropeanOwnershipClaimRow
+    brand: { id: string; name?: string } | null
     manufacturer: { id: string; name?: string } | null
     history: Array<{
       id: string

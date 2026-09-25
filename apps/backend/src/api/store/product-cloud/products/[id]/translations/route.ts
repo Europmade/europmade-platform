@@ -13,24 +13,20 @@ import {
   requiredTargetLanguagesForSource,
   targetLanguagesForSource,
 } from "../../../../../../modules/product-cloud/languages"
-import { sellerOwnsProduct } from "../../../../../../modules/product-cloud/translation/ownership"
 import { pickTranslationVersion } from "../../../../../../modules/product-cloud/translation/coverage"
 import { resolveApprovedSeller } from "../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../catalog-edit-guard"
 
 type RouteParams = { id: string }
 
 async function assertOwnedVersion(
+  scope: import("@medusajs/framework/types").MedusaContainer,
   productCloud: ProductCloudModuleService,
   productId: string,
-  sellerId: string
+  seller: { id: string; company_id?: string | null }
 ) {
   const product = await productCloud.retrieveProduct(productId)
-  if (!sellerOwnsProduct(product.current_owner_seller_id, sellerId)) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de Product Cloud-eigenaar mag vertalingen van dit product beheren."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(scope, product, seller)
   const versions = await productCloud.listProductVersions({
     product_id: productId,
   })
@@ -59,9 +55,10 @@ export async function GET(
   ) as ProductCloudModuleService
 
   const { version } = await assertOwnedVersion(
+    req.scope,
     productCloud,
     id,
-    seller.id
+    seller
   )
   const summary = await productCloud.getProductVersionTranslationSummary({
     version_id: version.id,
@@ -107,7 +104,7 @@ export async function PATCH(
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
-  const { version } = await assertOwnedVersion(productCloud, id, seller.id)
+  const { version } = await assertOwnedVersion(req.scope, productCloud, id, seller)
 
   await productCloud.setProductVersionSourceLanguage({
     version_id: version.id,
@@ -234,7 +231,7 @@ export async function PUT(
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
-  const { version } = await assertOwnedVersion(productCloud, id, seller.id)
+  const { version } = await assertOwnedVersion(req.scope, productCloud, id, seller)
   const manualFields = normalizeManualFields(body, version)
   if (manualFields.length === 0) {
     res.status(400).json({
@@ -313,7 +310,7 @@ export async function POST(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
 
-  const { version } = await assertOwnedVersion(productCloud, id, seller.id)
+  const { version } = await assertOwnedVersion(req.scope, productCloud, id, seller)
   const source = normalizeLanguageCode(version.source_language_code ?? "")
   if (!isActiveProductCloudLanguage(source)) {
     res.status(400).json({

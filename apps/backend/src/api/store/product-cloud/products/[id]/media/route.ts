@@ -8,6 +8,7 @@ import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
 import { addMediaWorkflow } from "../../../../../../workflows/product-cloud"
 import { resolveApprovedSeller } from "../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../catalog-edit-guard"
 import type { StoreAddMediaBodyInput } from "../../../validators"
 
 type RouteParams = { id: string }
@@ -48,12 +49,7 @@ export async function POST(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag media toevoegen."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   let versionId = body.version_id
   if (!versionId) {

@@ -52,3 +52,5 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0042](./0042-canonical-storefront-taxonomy-pc-category.md) | Storefront taxonomy uses Product Cloud categories as canonical taxonomy | Geaccepteerd | Product Cloud, Storefront, Taxonomie |
 | [0043](./0043-eu-product-data-layer-authority.md) | EU Product Data-laag: Product Cloud blijft autoriteit; MVP zonder live externe productdatabase | Geaccepteerd | Product Cloud, Verification, Integraties |
 | [0044](./0044-european-ownership-verification.md) | Europese eigendom is een aparte verification-claim (niet Made in Europe) | Geaccepteerd | Verification, Product Cloud, Storefront |
+| [0045](./0045-affiliate-30-day-hold-late-return.md) | Affiliate 30-dagen payout-hold; late return risico bij seller | Geaccepteerd | Affiliate, Finance |
+| [0046](./0046-product-manager-explicit.md) | Expliciete Productbeheerder per Product Cloud-product | Geaccepteerd | Product Cloud, Admin, Seller auth |

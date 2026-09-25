@@ -16,6 +16,11 @@ import { listManageableBrands } from "../../../../brands/brand-helpers"
 import { syncProductOriginToBrand } from "../../../made-in-europe-helpers"
 import { assertPermission } from "../../../../../../modules/partner/permissions"
 import { findManufacturerForBrandName } from "../../../../../../modules/partner/brand-manufacturer"
+import {
+  sellerCanDirectEditCatalog,
+  sellerHasOfferOnProduct,
+} from "../../../catalog-edit-guard"
+import { buildInformationGapFill } from "../../../../../../modules/product-cloud/catalog-gap-fill"
 
 type RouteParams = { id: string }
 
@@ -67,23 +72,80 @@ export async function PATCH(
       parsed.error.issues[0]?.message || "Ongeldige productinformatie."
     )
   }
-  const body = parsed.data
+  let body = parsed.data
 
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
 
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de eigenaar mag productinformatie wijzigen."
-    )
-  }
-
   const versions = (await productCloud.listProductVersions({
     product_id: id,
   })) as VersionRow[]
+  const conceptOrPublished =
+    versions
+      .filter((v) => v.publication_status === "Concept")
+      .sort((a, b) => b.version_number - a.version_number)[0] ||
+    versions
+      .filter((v) => v.publication_status === "Gepubliceerd")
+      .sort((a, b) => b.version_number - a.version_number)[0] ||
+    [...versions].sort((a, b) => b.version_number - a.version_number)[0] ||
+    null
+
+  const direct = await sellerCanDirectEditCatalog(req.scope, product, seller)
+
+  if (!direct.allowed) {
+    const hasOffer = await sellerHasOfferOnProduct(req.scope, id, seller.id)
+    if (!hasOffer) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        "Je mag centrale productgegevens niet wijzigen. Dien een wijzigingsvoorstel in of beheer je eigen aanbod."
+      )
+    }
+    const { fill, rejected_occupied } = buildInformationGapFill({
+      current: {
+        title: conceptOrPublished?.title,
+        description: conceptOrPublished?.description,
+        brand_id: product.brand_id,
+        manufacturer_id: product.manufacturer_id,
+      },
+      proposed: {
+        title: body.title,
+        description: body.description,
+        brand_id: body.brand_id,
+        manufacturer_id: body.manufacturer_id,
+      },
+    })
+    if (
+      Object.keys(fill).length === 0 &&
+      (body.title != null ||
+        body.description != null ||
+        body.brand_id != null ||
+        body.manufacturer_id != null)
+    ) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_ALLOWED,
+        rejected_occupied.length
+          ? "Deze velden zijn al ingevuld. Gebruik 'Wijziging voorstellen' om bestaande centrale gegevens te wijzigen."
+          : "Geen ontbrekende centrale velden om aan te vullen."
+      )
+    }
+    if (Object.keys(fill).length === 0) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Geen ontbrekende centrale velden om aan te vullen."
+      )
+    }
+    body = {
+      title: fill.title,
+      description: fill.description,
+      brand_id: fill.brand_id,
+      manufacturer_id: fill.manufacturer_id,
+      reason:
+        body.reason ||
+        "Aanvulling ontbrekende Product Cloud-gegevens door aanbiedende seller",
+    }
+  }
 
   let working =
     versions

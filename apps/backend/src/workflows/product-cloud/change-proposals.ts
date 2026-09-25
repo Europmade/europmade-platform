@@ -10,6 +10,32 @@ import {
 } from "@medusajs/framework/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
 import type ProductCloudModuleService from "../../modules/product-cloud/service"
+import { PARTNER_MODULE } from "../../modules/partner"
+import type PartnerModuleService from "../../modules/partner/service"
+import { isRealBrandId } from "../../modules/product-cloud/catalog-edit-auth"
+import {
+  brandOwnerCompanyId,
+  isVerifiedBrandOwner,
+  type BrandPublicRow,
+} from "../../api/store/brands/ownership"
+import {
+  hasAnyProposalContent,
+  normalizeProposedFields,
+  titleDescriptionFromProposedFields,
+} from "../../modules/product-cloud/change-proposal-fields"
+import {
+  findProductManagerProposalChange,
+  isProductManagerProposalFields,
+  parseProductManagerProposedValue,
+} from "../../modules/product-cloud/product-manager-request"
+import { assertValidProductManagerAssignment } from "../../modules/product-cloud/product-manager-assignment"
+import {
+  isRealBrandId,
+  resolveOfferSellerIdsForProduct,
+} from "../../modules/product-cloud/catalog-edit-auth"
+import { COMMERCE_CLOUD_MODULE } from "../../modules/commerce-cloud"
+import type CommerceCloudModuleService from "../../modules/commerce-cloud/service"
+import { approvedOwnerClaim } from "../../api/store/brands/ownership"
 
 type ChangeProposalRow = {
   id: string
@@ -17,6 +43,7 @@ type ChangeProposalRow = {
   submitter_seller_id: string
   proposed_title: string | null
   proposed_description: string | null
+  proposed_fields?: unknown
   toelichting: string
   status: "In behandeling" | "Goedgekeurd" | "Afgewezen"
   decision_reason: string | null
@@ -26,8 +53,50 @@ type ChangeProposalRow = {
 
 type ProductRow = {
   id: string
+  brand_id?: string | null
+  manufacturer_id?: string | null
   current_owner_seller_id: string
+  product_manager_kind?: string | null
+  product_manager_seller_id?: string | null
   lifecycle_status: string
+}
+
+function isAssignedSellerProductManager(
+  product: ProductRow,
+  sellerId: string
+): boolean {
+  return (
+    product.product_manager_kind === "seller" &&
+    Boolean(product.product_manager_seller_id) &&
+    product.product_manager_seller_id === sellerId
+  )
+}
+
+async function sellerIsBrandProductManager(
+  container: { resolve: (key: string) => unknown },
+  product: ProductRow,
+  seller: { id: string; company_id?: string | null }
+): Promise<boolean> {
+  if (product.product_manager_kind !== "brand_owner") return false
+  if (!isRealBrandId(product.brand_id)) return false
+  let partner: PartnerModuleService
+  try {
+    partner = container.resolve(PARTNER_MODULE) as PartnerModuleService
+  } catch {
+    return false
+  }
+  try {
+    const brand = (await partner.retrieveBrand(
+      product.brand_id!
+    )) as BrandPublicRow & { id: string }
+    if (await isVerifiedBrandOwner(partner, seller, brand)) return true
+    const ownerCompany = brandOwnerCompanyId(brand)
+    return Boolean(
+      seller.company_id && ownerCompany && seller.company_id === ownerCompany
+    )
+  } catch {
+    return false
+  }
 }
 
 type ProductVersionRow = {
@@ -44,6 +113,7 @@ export type SubmitChangeProposalInput = {
   submitter_seller_id: string
   proposed_title?: string | null
   proposed_description?: string | null
+  proposed_fields?: unknown
   toelichting: string
 }
 
@@ -55,24 +125,25 @@ export const submitChangeProposalStep = createStep(
     ) as ProductCloudModuleService
     const logger = container.resolve(ContainerRegistrationKeys.LOGGER)
 
-    const product = (await productCloud.retrieveProduct(
-      input.product_id
-    )) as ProductRow
+    await productCloud.retrieveProduct(input.product_id)
 
-    if (product.current_owner_seller_id === input.submitter_seller_id) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "Eigenaar bewerkt via Concept, niet via wijzigingsvoorstel (PM §9)."
-      )
-    }
+    const proposedFields = normalizeProposedFields(input.proposed_fields)
+    const fromFields = titleDescriptionFromProposedFields(proposedFields)
+    const proposedTitle =
+      input.proposed_title?.trim() || fromFields.title || null
+    const proposedDescription =
+      input.proposed_description?.trim() || fromFields.description || null
 
     if (
-      !input.proposed_title?.trim() &&
-      !input.proposed_description?.trim()
+      !hasAnyProposalContent({
+        proposed_title: proposedTitle,
+        proposed_description: proposedDescription,
+        proposed_fields: proposedFields,
+      })
     ) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
-        "Minimaal proposed_title of proposed_description is verplicht."
+        "Minimaal één centrale veldwijziging is verplicht (titel, beschrijving of proposed_fields)."
       )
     }
 
@@ -87,8 +158,9 @@ export const submitChangeProposalStep = createStep(
     const proposal = (await productCloud.createChangeProposals({
       product_id: input.product_id,
       submitter_seller_id: input.submitter_seller_id,
-      proposed_title: input.proposed_title?.trim() ?? null,
-      proposed_description: input.proposed_description?.trim() ?? null,
+      proposed_title: proposedTitle,
+      proposed_description: proposedDescription,
+      proposed_fields: proposedFields,
       toelichting,
       status: "In behandeling",
       decision_reason: null,
@@ -118,6 +190,8 @@ export type DecideChangeProposalInput = {
   decision_reason?: string
   /** Beheerder-escalatie: mag beslissen zonder eigenaar te zijn. */
   as_admin?: boolean
+  /** Optional company id for brand-owner Productbeheerder checks. */
+  decider_company_id?: string | null
 }
 
 export const decideChangeProposalStep = createStep(
@@ -143,13 +217,19 @@ export const decideChangeProposalStep = createStep(
       proposal.product_id
     )) as ProductRow
 
-    if (
-      !input.as_admin &&
-      product.current_owner_seller_id !== input.decider_seller_id
-    ) {
+    const isManagerSeller = isAssignedSellerProductManager(
+      product,
+      input.decider_seller_id
+    )
+    const isManagerBrand = await sellerIsBrandProductManager(container, product, {
+      id: input.decider_seller_id,
+      company_id: input.decider_company_id ?? null,
+    })
+
+    if (!input.as_admin && !isManagerSeller && !isManagerBrand) {
       throw new MedusaError(
         MedusaError.Types.NOT_ALLOWED,
-        "Alleen de Product Cloud-eigenaar mag dit voorstel beoordelen (PM §9)."
+        "Alleen de aangewezen Productbeheerder mag dit voorstel beoordelen."
       )
     }
 
@@ -179,10 +259,110 @@ export const decideChangeProposalStep = createStep(
       })
     }
 
+    // Productbeheerder-aanvraag: assign via existing ADR-0046 path (no version merge).
+    if (isProductManagerProposalFields(proposal.proposed_fields)) {
+      const change = findProductManagerProposalChange(proposal.proposed_fields)
+      const parsed = parseProductManagerProposedValue(
+        change?.proposed_value || ""
+      )
+      if (!parsed) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          "Ongeldige Productbeheerder-aanvraag."
+        )
+      }
+
+      let commerce: CommerceCloudModuleService | null = null
+      try {
+        commerce = container.resolve(
+          COMMERCE_CLOUD_MODULE
+        ) as CommerceCloudModuleService
+      } catch {
+        commerce = null
+      }
+      const partner = container.resolve(PARTNER_MODULE) as PartnerModuleService
+      const offerSellerIds = await resolveOfferSellerIdsForProduct(
+        productCloud,
+        commerce,
+        product.id
+      )
+      let brandOwnerAvailable = false
+      if (isRealBrandId(product.brand_id)) {
+        const claim = await approvedOwnerClaim(partner, product.brand_id!)
+        brandOwnerAvailable = Boolean(claim)
+      }
+
+      const assignSellerId =
+        parsed.kind === "seller"
+          ? parsed.seller_id || proposal.submitter_seller_id
+          : null
+
+      try {
+        assertValidProductManagerAssignment({
+          kind: parsed.kind,
+          seller_id: assignSellerId,
+          offerSellerIds,
+          brandOwnerAvailable,
+        })
+      } catch (err) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          err instanceof Error
+            ? err.message
+            : "Aanvrager is geen geldige Productbeheerder-kandidaat meer."
+        )
+      }
+
+      if (
+        parsed.kind === "seller" &&
+        assignSellerId &&
+        assignSellerId !== proposal.submitter_seller_id
+      ) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          "Productbeheerder-aanvraag mag alleen de aanvrager zelf toewijzen."
+        )
+      }
+
+      await productCloud.assignProductManager({
+        product_id: product.id,
+        kind: parsed.kind,
+        seller_id: assignSellerId,
+        actor_admin_id: input.as_admin ? input.decider_seller_id : null,
+        transfer_reason:
+          input.decision_reason?.trim() ||
+          `Productbeheerder-aanvraag ${proposal.id} goedgekeurd`,
+      })
+
+      const updated = await productCloud.updateChangeProposals({
+        id: proposal.id,
+        status: "Goedgekeurd",
+        decision_reason: input.decision_reason?.trim() || null,
+        decided_by_seller_id: input.decider_seller_id,
+        decided_at: now,
+      })
+
+      logger.info(
+        `[audit] product-manager-request accepted id=${proposal.id} product=${product.id} kind=${parsed.kind}`
+      )
+
+      return new StepResponse({
+        proposal: Array.isArray(updated) ? updated[0] : updated,
+        version: null,
+      })
+    }
+
     // Acceptatie — B-PM3: merge in bestaand Concept, anders nieuw Concept.
     const versions = (await productCloud.listProductVersions({
       product_id: product.id,
     })) as ProductVersionRow[]
+
+    const proposedFields = normalizeProposedFields(proposal.proposed_fields)
+    const fromFields = titleDescriptionFromProposedFields(proposedFields)
+    const nextTitle =
+      proposal.proposed_title ?? fromFields.title ?? undefined
+    const nextDescription =
+      proposal.proposed_description ?? fromFields.description ?? undefined
 
     const activeConcept = versions.find(
       (v) =>
@@ -195,9 +375,8 @@ export const decideChangeProposalStep = createStep(
     if (activeConcept) {
       const updatedVersion = await productCloud.updateProductVersions({
         id: activeConcept.id,
-        title: proposal.proposed_title ?? activeConcept.title,
-        description:
-          proposal.proposed_description ?? activeConcept.description,
+        title: nextTitle ?? activeConcept.title,
+        description: nextDescription ?? activeConcept.description,
         publication_status: "Concept",
       })
       version = (
@@ -214,20 +393,105 @@ export const decideChangeProposalStep = createStep(
       version = (await productCloud.createProductVersions({
         product_id: product.id,
         version_number: maxNum + 1,
-        title: proposal.proposed_title ?? published?.title ?? "Concept",
+        title: nextTitle ?? published?.title ?? "Concept",
         description:
-          proposal.proposed_description ??
-          published?.description ??
-          "Concept",
+          nextDescription ?? published?.description ?? "Concept",
         publication_status: "Concept",
         created_by_seller_id: input.decider_seller_id,
       })) as ProductVersionRow
     }
 
+    // Apply additional central fields from proposed_fields
+    if (proposedFields) {
+      const brandChange = proposedFields.changes.find(
+        (c) => c.field === "brand_id"
+      )
+      const manuChange = proposedFields.changes.find(
+        (c) => c.field === "manufacturer_id"
+      )
+      if (brandChange || manuChange) {
+        await productCloud.updateProducts({
+          id: product.id,
+          ...(brandChange ? { brand_id: brandChange.proposed_value } : {}),
+          ...(manuChange
+            ? { manufacturer_id: manuChange.proposed_value }
+            : {}),
+        })
+      }
+
+      const attrChanges = proposedFields.changes.filter(
+        (c) => c.field === "attribute" && c.attribute_definition_id
+      )
+      for (const attr of attrChanges) {
+        const existing = await productCloud.listAttributeValues({
+          product_version_id: version.id,
+          attribute_definition_id: attr.attribute_definition_id!,
+        })
+        const row = existing[0]
+        if (row) {
+          await productCloud.updateAttributeValues({
+            id: row.id,
+            value: attr.proposed_value,
+          })
+        } else {
+          await productCloud.createAttributeValues({
+            product_version_id: version.id,
+            attribute_definition_id: attr.attribute_definition_id!,
+            value: attr.proposed_value,
+          })
+        }
+      }
+
+      // Apply staged media only on approve (never attached at upload time).
+      const mediaChanges = proposedFields.changes.filter(
+        (c) => c.field === "media_note" && c.storage_references?.length
+      )
+      for (const mediaChange of mediaChanges) {
+        const existing = await productCloud.listProductMedias({
+          product_version_id: version.id,
+        })
+        let sort = existing.length
+        for (const ref of mediaChange.storage_references || []) {
+          await productCloud.createProductMedias({
+            product_version_id: version.id,
+            media_type: "Overige afbeelding",
+            storage_reference: ref,
+            sort_order: sort++,
+            metadata: {
+              purpose: "change_proposal_accepted",
+              proposal_id: proposal.id,
+              note: mediaChange.proposed_value || null,
+            },
+          })
+        }
+      }
+
+      for (const change of proposedFields.changes) {
+        await productCloud.createProductFieldChanges({
+          product_id: product.id,
+          product_version_id: version.id,
+          seller_id: proposal.submitter_seller_id,
+          actor_customer_id: null,
+          field_code:
+            change.field === "attribute"
+              ? `attribute:${change.attribute_definition_id || "unknown"}`
+              : change.field,
+          field_label: change.label,
+          old_value: change.current_value,
+          new_value:
+            change.storage_references?.length
+              ? `${change.proposed_value || "media"} [${change.storage_references.join(", ")}]`
+              : change.proposed_value,
+          status: "approved",
+          reason: `Wijzigingsvoorstel ${proposal.id} goedgekeurd`,
+        })
+      }
+    }
+
     const updated = await productCloud.updateChangeProposals({
       id: proposal.id,
       status: "Goedgekeurd",
-      decision_reason: null,
+      decision_reason: input.decision_reason?.trim() || null,
       decided_by_seller_id: input.decider_seller_id,
       decided_at: now,
     })

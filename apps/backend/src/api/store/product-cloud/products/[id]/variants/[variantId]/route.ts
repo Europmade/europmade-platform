@@ -9,6 +9,7 @@ import type ProductCloudModuleService from "../../../../../../../modules/product
 import { COMMERCE_CLOUD_MODULE } from "../../../../../../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../../../../../../modules/commerce-cloud/service"
 import { resolveApprovedSeller } from "../../../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../../../catalog-edit-guard"
 import { composeVariantFromAxes } from "../../../../variant-axes"
 
 type RouteParams = { id: string; variantId: string }
@@ -42,18 +43,14 @@ const PatchVariantBody = z.object({
 })
 
 async function assertOwnVariant(
+  scope: import("@medusajs/framework/types").MedusaContainer,
   productCloud: ProductCloudModuleService,
   productId: string,
   variantId: string,
-  sellerId: string
+  seller: { id: string; company_id?: string | null }
 ) {
   const product = await productCloud.retrieveProduct(productId)
-  if (product.current_owner_seller_id !== sellerId) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Alleen de producteigenaar mag deze variant beheren."
-    )
-  }
+  await assertSellerCanDirectEditCatalog(scope, product, seller)
   const variant = await productCloud.retrieveProductVariant(variantId)
   if (variant.product_id !== productId) {
     throw new MedusaError(
@@ -85,10 +82,11 @@ export async function PATCH(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
   const { variant } = await assertOwnVariant(
+    req.scope,
     productCloud,
     id,
     variantId,
-    seller.id
+    seller
   )
 
   let nextType = body.variant_type
@@ -196,7 +194,7 @@ export async function DELETE(
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
-  await assertOwnVariant(productCloud, id, variantId, seller.id)
+  await assertOwnVariant(req.scope, productCloud, id, variantId, seller)
 
   const allVariants = await productCloud.listProductVariants({
     product_id: id,

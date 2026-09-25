@@ -41,7 +41,10 @@ type ControlsProps = {
   onSaved: () => Promise<void>
 }
 
-/** Compact review controls — place directly under section content. */
+/**
+ * Compact section review — each status button is atomic (saves immediately).
+ * Not the same as change-proposal approve/reject; those live on proposal cards.
+ */
 export function SectionReviewControls({
   productId,
   sectionKey,
@@ -61,28 +64,29 @@ export function SectionReviewControls({
     setComment(review?.comment || "")
   }, [review?.status, review?.comment, review?.decided_at, review?.id])
 
-  async function save() {
+  async function saveWith(
+    nextStatus: Exclude<SectionReviewStatus, "unreviewed">,
+    nextComment = comment
+  ) {
     if (
-      (status === "needs_info" || status === "rejected") &&
-      !comment.trim()
+      (nextStatus === "needs_info" || nextStatus === "rejected") &&
+      !nextComment.trim()
     ) {
+      setStatus(nextStatus)
       setError(
-        `Opmerking is verplicht bij ${status === "needs_info" ? "Aanvulling" : "Afwijzen"}.`
+        `Opmerking is verplicht bij ${nextStatus === "needs_info" ? "Aanvulling" : "Afwijzen"}.`
       )
-      return
-    }
-    if (status === "unreviewed") {
-      setError("Kies Goed, Aanvulling of Afwijzen voordat je opslaat.")
       return
     }
     setBusy(true)
     setError(null)
     setSavedHint(null)
+    setStatus(nextStatus)
     try {
       await saveSectionReview(productId, {
         section_key: sectionKey,
-        status,
-        comment: comment.trim() || null,
+        status: nextStatus,
+        comment: nextComment.trim() || null,
       })
       setSavedHint("Beoordeling opgeslagen.")
       await onSaved()
@@ -101,7 +105,7 @@ export function SectionReviewControls({
     <div className="mt-4 border-t border-wf-200 pt-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-          Beoordeling
+          Beoordeling (sectie)
         </p>
         <span className="text-[11px] font-medium text-wf-700">
           {sectionReviewStatusLabel(status)}
@@ -123,6 +127,10 @@ export function SectionReviewControls({
           {savedHint}
         </Notice>
       ) : null}
+      <p className="mb-2 text-[10px] text-wf-500">
+        Eén klik slaat de sectiebeoordeling direct op (geen aparte
+        opslagknop). Dit is geen wijzigingsvoorstel-goedkeuring.
+      </p>
       <div className="mb-2 flex flex-wrap gap-2">
         {STATUS_BTN.map((btn) => (
           <Button
@@ -130,14 +138,14 @@ export function SectionReviewControls({
             size="sm"
             variant={status === btn.status ? "primary" : "secondary"}
             disabled={busy}
-            onClick={() => setStatus(btn.status)}
+            onClick={() => void saveWith(btn.status)}
           >
             {btn.label}
           </Button>
         ))}
       </div>
       <label className="mb-1 block text-[11px] font-semibold text-wf-500">
-        Opmerking
+        Opmerking (verplicht bij Aanvulling / Afwijzen)
       </label>
       <textarea
         value={comment}
@@ -145,9 +153,6 @@ export function SectionReviewControls({
         placeholder="Wat ontbreekt of wat is gecontroleerd?"
         className="mb-2 min-h-[56px] w-full rounded border border-wf-400 px-3 py-2 text-xs"
       />
-      <Button size="sm" disabled={busy} onClick={() => void save()}>
-        {busy ? "Opslaan…" : "Opslaan beoordeling"}
-      </Button>
     </div>
   )
 }

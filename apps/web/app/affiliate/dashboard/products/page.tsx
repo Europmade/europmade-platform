@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { Button, Input, Notice } from "@europmade/ui"
 import { AffiliateGate } from "../../_components/affiliate-gate"
@@ -31,10 +31,50 @@ function formatPrice(value: number | null): string {
   return formatEuro(Number(value))
 }
 
+type SortKey =
+  | "name_asc"
+  | "name_desc"
+  | "brand_asc"
+  | "brand_desc"
+  | "category_asc"
+  | "category_desc"
+  | "price_asc"
+  | "price_desc"
+  | "commission_asc"
+  | "commission_desc"
+  | "earnings_asc"
+  | "earnings_desc"
+  | "newest"
+  | "oldest"
+
+const SERVER_SORT: Partial<Record<SortKey, string>> = {
+  name_asc: "name_asc",
+  name_desc: "name_desc",
+  brand_asc: "brand_asc",
+  brand_desc: "brand_desc",
+  category_asc: "category_asc",
+  category_desc: "category_desc",
+  price_asc: "price_asc",
+  price_desc: "price_desc",
+  newest: "newest",
+  oldest: "oldest",
+  // Uniform platform rate → earnings order == price order
+  commission_asc: "price_asc",
+  commission_desc: "price_desc",
+  earnings_asc: "price_asc",
+  earnings_desc: "price_desc",
+}
+
+function SortMark({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
+  if (!active) return <span className="ml-1 text-wf-400">↕</span>
+  return <span className="ml-1 font-bold text-wf-900">{dir === "asc" ? "↑" : "↓"}</span>
+}
+
 export default function AffiliateProductsPage() {
   const locale = useStorefrontLocale()
   const [q, setQ] = useState("")
   const [category, setCategory] = useState("")
+  const [sort, setSort] = useState<SortKey>("earnings_desc")
   const [products, setProducts] = useState<CatalogListProduct[]>([])
   const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -58,7 +98,7 @@ export default function AffiliateProductsPage() {
   )
 
   const load = useCallback(
-    async (query: string, cat: string) => {
+    async (query: string, cat: string, sortKey: SortKey) => {
       inflight.current?.abort()
       const ac = new AbortController()
       inflight.current = ac
@@ -72,15 +112,33 @@ export default function AffiliateProductsPage() {
             limit: 48,
             offset: 0,
             region_code: "NL",
+            sort: SERVER_SORT[sortKey] ?? "popularity",
             signal: ac.signal,
           }),
           getAffiliateCommissionSettings(),
         ])
         if (ac.signal.aborted) return
         setSettings(commission)
-        const sellable = (list.products || []).filter(
+        let sellable = (list.products || []).filter(
           (p) => p.offer_count > 0 && p.from_price != null
         )
+        // Client refine for commission/earnings when rate available
+        if (
+          commission &&
+          (sortKey === "commission_asc" ||
+            sortKey === "commission_desc" ||
+            sortKey === "earnings_asc" ||
+            sortKey === "earnings_desc")
+        ) {
+          const rate = commission.percentage
+          const dir =
+            sortKey.endsWith("_asc") ? 1 : -1
+          sellable = [...sellable].sort((a, b) => {
+            const ea = estimateAffiliateCommission(a.from_price ?? 0, rate)
+            const eb = estimateAffiliateCommission(b.from_price ?? 0, rate)
+            return (ea - eb) * dir
+          })
+        }
         setProducts(sellable)
         setCount(sellable.length)
       } catch (err: unknown) {
@@ -97,14 +155,23 @@ export default function AffiliateProductsPage() {
   )
 
   useEffect(() => {
-    void load("", "")
+    void load(q, category, sort)
     return () => inflight.current?.abort()
-  }, [load])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial + sort/filter via handlers
+  }, [load, sort])
 
   function onSearch(e: FormEvent) {
     e.preventDefault()
-    void load(q, category)
+    void load(q, category, sort)
   }
+
+  function toggleSort(asc: SortKey, desc: SortKey) {
+    setSort((prev) => (prev === desc ? asc : desc))
+  }
+
+  const sortDir = useMemo(() => {
+    return sort.endsWith("_asc") || sort === "oldest" ? "asc" : "desc"
+  }, [sort])
 
   return (
     <AffiliateGate
@@ -141,7 +208,10 @@ export default function AffiliateProductsPage() {
           <select
             className="h-10 w-full rounded-wf border border-wf-400 bg-white px-3 text-[13px] text-wf-900"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => {
+              setCategory(e.target.value)
+              void load(q, e.target.value, sort)
+            }}
           >
             <option value="">{t("affAll", locale)}</option>
             {MARKETPLACE_CATEGORIES.map((c) => (
@@ -149,6 +219,32 @@ export default function AffiliateProductsPage() {
                 {categoryNavLabel(c.slug, c.label, locale)}
               </option>
             ))}
+          </select>
+        </div>
+        <div className="w-full tablet:w-56">
+          <label className="mb-[5px] block text-xs font-semibold text-wf-800">
+            Sorteren
+          </label>
+          <select
+            className="h-10 w-full rounded-wf border border-wf-400 bg-white px-3 text-[13px] text-wf-900"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            data-testid="affiliate-product-sort"
+          >
+            <option value="earnings_desc">Verdienste ↓</option>
+            <option value="earnings_asc">Verdienste ↑</option>
+            <option value="commission_desc">Affiliate commissie ↓</option>
+            <option value="commission_asc">Affiliate commissie ↑</option>
+            <option value="price_desc">Prijs ↓</option>
+            <option value="price_asc">Prijs ↑</option>
+            <option value="name_asc">Productnaam A–Z</option>
+            <option value="name_desc">Productnaam Z–A</option>
+            <option value="brand_asc">Merk A–Z</option>
+            <option value="brand_desc">Merk Z–A</option>
+            <option value="category_asc">Categorie A–Z</option>
+            <option value="category_desc">Categorie Z–A</option>
+            <option value="newest">Nieuwste</option>
+            <option value="oldest">Oudste</option>
           </select>
         </div>
         <Button
@@ -185,22 +281,92 @@ export default function AffiliateProductsPage() {
               <tr>
                 <th className="w-[72px] px-2 py-2 font-semibold"> </th>
                 <th className="px-2 py-2 font-semibold">
-                  {t("affProductCol", locale)}
+                  <button
+                    type="button"
+                    className="inline-flex items-center hover:underline"
+                    onClick={() => toggleSort("name_asc", "name_desc")}
+                  >
+                    {t("affProductCol", locale)}
+                    <SortMark
+                      active={sort === "name_asc" || sort === "name_desc"}
+                      dir={sort === "name_asc" ? "asc" : "desc"}
+                    />
+                  </button>
                 </th>
                 <th className="hidden px-2 py-2 font-semibold tablet:table-cell">
-                  {t("affProductBrand", locale)}
+                  <button
+                    type="button"
+                    className="inline-flex items-center hover:underline"
+                    onClick={() => toggleSort("brand_asc", "brand_desc")}
+                  >
+                    {t("affProductBrand", locale)}
+                    <SortMark
+                      active={sort === "brand_asc" || sort === "brand_desc"}
+                      dir={sort === "brand_asc" ? "asc" : "desc"}
+                    />
+                  </button>
                 </th>
                 <th className="hidden px-2 py-2 font-semibold desktop:table-cell">
-                  {t("searchFilterCategory", locale)}
+                  <button
+                    type="button"
+                    className="inline-flex items-center hover:underline"
+                    onClick={() => toggleSort("category_asc", "category_desc")}
+                  >
+                    {t("searchFilterCategory", locale)}
+                    <SortMark
+                      active={
+                        sort === "category_asc" || sort === "category_desc"
+                      }
+                      dir={sort === "category_asc" ? "asc" : "desc"}
+                    />
+                  </button>
                 </th>
                 <th className="whitespace-nowrap px-2 py-2 font-semibold">
-                  {t("affPrice", locale)}
+                  <button
+                    type="button"
+                    className="inline-flex items-center hover:underline"
+                    onClick={() => toggleSort("price_asc", "price_desc")}
+                  >
+                    {t("affPrice", locale)}
+                    <SortMark
+                      active={sort === "price_asc" || sort === "price_desc"}
+                      dir={sort === "price_asc" ? "asc" : "desc"}
+                    />
+                  </button>
                 </th>
                 <th className="whitespace-nowrap px-2 py-2 font-semibold">
-                  {t("affProductCommissionLabel", locale)}
+                  <button
+                    type="button"
+                    className="inline-flex items-center font-bold hover:underline"
+                    onClick={() =>
+                      toggleSort("commission_asc", "commission_desc")
+                    }
+                    data-testid="sort-commission"
+                  >
+                    {t("affProductCommissionLabel", locale)}
+                    <SortMark
+                      active={
+                        sort === "commission_asc" || sort === "commission_desc"
+                      }
+                      dir={sortDir}
+                    />
+                  </button>
                 </th>
                 <th className="hidden whitespace-nowrap px-2 py-2 font-semibold tablet:table-cell">
-                  {t("affEarnPerSale", locale)}
+                  <button
+                    type="button"
+                    className="inline-flex items-center font-bold hover:underline"
+                    onClick={() => toggleSort("earnings_asc", "earnings_desc")}
+                    data-testid="sort-earnings"
+                  >
+                    {t("affEarnPerSale", locale)}
+                    <SortMark
+                      active={
+                        sort === "earnings_asc" || sort === "earnings_desc"
+                      }
+                      dir={sortDir}
+                    />
+                  </button>
                 </th>
                 <th className="px-2 py-2 font-semibold">
                   {t("affActions", locale)}

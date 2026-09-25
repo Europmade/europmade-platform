@@ -20,8 +20,35 @@ import {
   listSectionReviewsForProduct,
   summarizeSectionReviews,
 } from "../../../../../modules/product-cloud/section-review-helpers"
+import {
+  formatProductManagerLabel,
+  isRealBrandId,
+  normalizeProductManagerKind,
+  resolveOfferSellerIdsForProduct,
+} from "../../../../../modules/product-cloud/catalog-edit-auth"
+import { buildProductManagerSnapshot } from "../../../../../modules/product-cloud/product-manager-assignment"
+import {
+  approvedOwnerClaim,
+  brandOwnerCompanyId,
+  type BrandPublicRow,
+} from "../../../../store/brands/ownership"
 
 type RouteParams = { id: string }
+
+async function resolveSellerDisplayName(
+  partner: PartnerModuleService,
+  sellerId: string
+): Promise<string> {
+  try {
+    const seller = await partner.retrieveSeller(sellerId, {
+      relations: ["company"],
+    })
+    const company = seller.company as { legal_name?: string } | undefined
+    return company?.legal_name?.trim() || sellerId
+  } catch {
+    return sellerId
+  }
+}
 
 /**
  * GET /admin/product-cloud/products/:id
@@ -118,6 +145,102 @@ export async function GET(
       : "Markeer minimaal één onderdeel als Aanvullen (met opmerking) om aanvulling te vragen.",
   }
 
+  const pmKind = normalizeProductManagerKind(
+    (product as { product_manager_kind?: string }).product_manager_kind
+  )
+  const pmSellerId =
+    (product as { product_manager_seller_id?: string | null })
+      .product_manager_seller_id || null
+  const offerSellerIds = await resolveOfferSellerIdsForProduct(
+    productCloud,
+    commerce,
+    id
+  )
+  const offer_sellers: Array<{ seller_id: string; label: string }> = []
+  for (const sid of offerSellerIds) {
+    offer_sellers.push({
+      seller_id: sid,
+      label: await resolveSellerDisplayName(partner, sid),
+    })
+  }
+  let brand_id: string | null = isRealBrandId(product.brand_id)
+    ? product.brand_id
+    : null
+  let brand_name: string | null = null
+  let brand_owner: {
+    seller_id: string | null
+    company_id: string | null
+    label: string
+  } | null = null
+  if (brand_id) {
+    try {
+      const brand = (await partner.retrieveBrand(brand_id)) as BrandPublicRow & {
+        id: string
+        name?: string
+      }
+      brand_name = brand.name?.trim() || brand_id
+      const claim = await approvedOwnerClaim(partner, brand_id)
+      if (claim) {
+        brand_owner = {
+          seller_id: claim.seller_id || null,
+          company_id: claim.company_id || brandOwnerCompanyId(brand),
+          label: claim.seller_id
+            ? await resolveSellerDisplayName(partner, claim.seller_id)
+            : brandOwnerCompanyId(brand) || "Merkeigenaar",
+        }
+      }
+    } catch {
+      brand_name = brand_id
+    }
+  }
+  const pmSellerName =
+    pmKind === "seller" && pmSellerId
+      ? await resolveSellerDisplayName(partner, pmSellerId)
+      : null
+  const candidates: Array<{
+    kind: "seller" | "brand_owner" | "none"
+    seller_id: string | null
+    label: string
+  }> = [
+    { kind: "none", seller_id: null, label: formatProductManagerLabel("none") },
+  ]
+  if (brand_owner && brand_id) {
+    candidates.push({
+      kind: "brand_owner",
+      seller_id: brand_owner.seller_id,
+      label: `Merkeigenaar — ${brand_name || brand_id} (${brand_owner.label})`,
+    })
+  }
+  for (const s of offer_sellers) {
+    candidates.push({
+      kind: "seller",
+      seller_id: s.seller_id,
+      label: `Seller — ${s.label}`,
+    })
+  }
+  const pmHistory = await productCloud.listProductFieldChanges(
+    { product_id: id, field_code: "product_manager" },
+    { order: { created_at: "DESC" }, take: 20 }
+  )
+  const product_management = {
+    current: buildProductManagerSnapshot({
+      kind: pmKind,
+      seller_id: pmSellerId,
+      seller_name: pmSellerName,
+      brand_id,
+      brand_name:
+        pmKind === "brand_owner" && brand_owner
+          ? `${brand_name || brand_id} (${brand_owner.label})`
+          : brand_name,
+    }),
+    offer_sellers,
+    brand_owner,
+    brand_id,
+    brand_name,
+    candidates,
+    history: pmHistory,
+  }
+
   res.json({
     product: detail,
     identity: product,
@@ -136,5 +259,6 @@ export async function GET(
     review_summary,
     approval_actions,
     publishable,
+    product_management,
   })
 }

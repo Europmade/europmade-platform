@@ -19,12 +19,20 @@ import type CmsModuleService from "../../modules/cms/service"
 import type PartnerModuleService from "../../modules/partner/service"
 import { AFFILIATE_MODULE } from "../../modules/affiliate"
 import type AffiliateModuleService from "../../modules/affiliate/service"
+import {
+  AFFILIATE_RETURN_HOLD_DAYS,
+  affiliateEligibleAt,
+  isAffiliateCommissionPastHold,
+} from "../../modules/affiliate/affiliate-hold-rules"
 
 /** H5.6 — vast platformpercentage over orderregel-snapshots (base+shipping). */
 export const PLATFORM_COMMISSION_RATE = 0.1
 
-/** EU MVP retourhold (ADR-0034). */
+/** Seller EU MVP retourhold (ADR-0034). */
 export const RETURN_HOLD_DAYS = 14
+
+/** Affiliate commissie-hold / retourrisico EuropMade (ADR-0045) — niet gelijk aan seller hold. */
+export { AFFILIATE_RETURN_HOLD_DAYS } from "../../modules/affiliate/affiliate-hold-rules"
 
 export type VatBreakdownLine = {
   rate: number
@@ -300,7 +308,10 @@ export async function executeScheduleAffiliatePayout(
   }
 
   const order = await orders.retrieveEmOrder(input.order_id)
-  const eligibleAt = addDays(new Date(order.created_at), RETURN_HOLD_DAYS)
+  const eligibleAt = affiliateEligibleAt(
+    order.created_at,
+    AFFILIATE_RETURN_HOLD_DAYS
+  )
   const payout = await finance.createPayouts({
     recipient_type: "Affiliate",
     seller_id: null,
@@ -408,7 +419,23 @@ export async function executeFinanceRefundForOrder(
     order_id: orderId,
     status: "Gepland",
   })
+  let orderCreatedAt: Date | string | null = null
+  try {
+    const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
+    const order = await orders.retrieveEmOrder(orderId)
+    orderCreatedAt = order.created_at
+  } catch {
+    orderCreatedAt = null
+  }
   for (const p of payouts) {
+    // Na 30d affiliate-hold: affiliate-payout niet meer annuleren bij latere refund.
+    if (
+      p.recipient_type === "Affiliate" &&
+      orderCreatedAt &&
+      isAffiliateCommissionPastHold(orderCreatedAt)
+    ) {
+      continue
+    }
     await finance.updatePayouts({
       id: p.id,
       status: "Geannuleerd",
@@ -703,7 +730,134 @@ export async function executeAffiliateFinancePayouts(
       processed_at: p.processed_at,
       order_id: p.order_id,
       stripe_transfer_id: p.stripe_transfer_id,
+      settlement_available:
+        Number(p.amount) > 0 &&
+        p.status !== "Geannuleerd" &&
+        new Date(p.eligible_at).getTime() <= Date.now(),
     })),
+  }
+}
+
+const EUROPMADE_SETTLEMENT_ISSUER = {
+  company_name: "EuropMade B.V.",
+  address: "Keizersgracht 100, 1015 AA Amsterdam",
+  country: "NL",
+  kvk: "90123456",
+  vat_number: "NL862345678B01",
+}
+
+/**
+ * Affiliate financial afrekening for one payout — reuses finance/payout + commission.
+ * No VAT invented: amounts are commission totals as stored.
+ */
+export async function executeAffiliatePayoutSettlement(
+  container: MedusaContainer,
+  customerId: string,
+  payoutId: string
+) {
+  const aff = container.resolve(AFFILIATE_MODULE) as AffiliateModuleService
+  const finance = container.resolve(FINANCE_MODULE) as FinanceModuleService
+  const partner = container.resolve(PARTNER_MODULE) as PartnerModuleService
+  const orders = container.resolve(ORDER_MODULE) as OrderServiceModuleService
+
+  const [affiliate] = await aff.listAffiliates({ customer_id: customerId })
+  if (!affiliate || affiliate.onboarding_status !== "Goedgekeurd") {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Geen goedgekeurde affiliate voor dit account."
+    )
+  }
+
+  const payout = await finance.retrievePayout(payoutId)
+  if (
+    payout.recipient_type !== "Affiliate" ||
+    payout.affiliate_id !== affiliate.id
+  ) {
+    throw new MedusaError(MedusaError.Types.NOT_FOUND, "Payout niet gevonden.")
+  }
+
+  if (payout.status === "Geannuleerd" || Number(payout.amount) <= 0) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Geen afrekening voor geannuleerde of lege payout."
+    )
+  }
+
+  if (new Date(payout.eligible_at).getTime() > Date.now()) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_ALLOWED,
+      "Afrekening pas beschikbaar na de 30-dagen retourtermijn."
+    )
+  }
+
+  let company: {
+    legal_name?: string | null
+    vat_number?: string | null
+    country_code?: string | null
+  } | null = null
+  if (affiliate.company_id) {
+    try {
+      company = await partner.retrieveCompany(affiliate.company_id)
+    } catch {
+      company = null
+    }
+  }
+
+  let order_number: string | null = payout.order_id
+  let commission_percentage: number | null = null
+  let commission_id: string | null = null
+  if (payout.order_id) {
+    try {
+      const order = await orders.retrieveEmOrder(payout.order_id)
+      order_number = order.order_number ?? payout.order_id
+    } catch {
+      // keep id
+    }
+    const commissions = await finance.listCommissions({
+      order_id: payout.order_id,
+      recipient_type: "Affiliate",
+    })
+    const hit =
+      commissions.find((c) => c.status === "Toegekend") ?? commissions[0]
+    if (hit) {
+      commission_percentage = Number(hit.percentage)
+      commission_id = hit.id
+    }
+  }
+
+  const issuedAt = payout.processed_at ?? payout.eligible_at
+  return {
+    settlement: {
+      number: `AFF-${payout.id}`,
+      payout_id: payout.id,
+      issued_at:
+        issuedAt instanceof Date
+          ? issuedAt.toISOString()
+          : new Date(issuedAt).toISOString(),
+      period: payout.period,
+      currency: payout.currency ?? "EUR",
+      payout_status: payout.status,
+      europmade: EUROPMADE_SETTLEMENT_ISSUER,
+      affiliate: {
+        id: affiliate.id,
+        legal_name: company?.legal_name ?? null,
+        vat_number: company?.vat_number ?? null,
+        country_code: company?.country_code ?? null,
+        channel_url: affiliate.channel_url,
+      },
+      lines: [
+        {
+          order_id: payout.order_id,
+          order_number,
+          commission_id,
+          commission_percentage,
+          amount: Number(payout.amount),
+          description: "Affiliatecommissie",
+        },
+      ],
+      total: Number(payout.amount),
+      note: "Commissie is definitief na de 30-dagen retourtermijn. Bedragen excl. nader fiscale uitwerking; geen BTW toegevoegd.",
+    },
   }
 }
 

@@ -4,6 +4,7 @@ import type {
 } from "@medusajs/framework/http"
 import { AFFILIATE_MODULE } from "../../../../modules/affiliate"
 import type AffiliateModuleService from "../../../../modules/affiliate/service"
+import { AFFILIATE_RETURN_HOLD_DAYS } from "../../../../modules/affiliate/affiliate-hold-rules"
 
 /**
  * GET /store/affiliate/commission-settings
@@ -22,5 +23,6 @@ export async function GET(
     percentage: settings.percentage,
     percentage_display: `${pctPoints % 1 === 0 ? pctPoints.toFixed(0) : pctPoints}%`,
     attribution_days: settings.attribution_days,
+    payout_hold_days: AFFILIATE_RETURN_HOLD_DAYS,
   })
 }

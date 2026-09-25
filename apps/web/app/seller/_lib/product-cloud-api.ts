@@ -251,6 +251,17 @@ export type ProductManagerDetail = CatalogProduct & {
     created_at: string
     reason: string | null
   }>
+  product_manager_request?: {
+    can_request: boolean
+    is_product_manager: boolean
+    pending: boolean
+    status: string | null
+    decision_reason: string | null
+    toelichting: string | null
+    proposal_id: string | null
+    created_at?: string | Date | null
+    decided_at?: string | Date | null
+  }
   versions?: unknown[]
 }
 
@@ -435,6 +446,15 @@ export type ChangeProposal = {
   submitter_seller_id: string
   proposed_title: string | null
   proposed_description: string | null
+  proposed_fields?: {
+    changes: Array<{
+      field: string
+      label: string
+      current_value: string | null
+      proposed_value: string
+      attribute_definition_id?: string
+    }>
+  } | null
   toelichting: string
   status: string
   decision_reason: string | null
@@ -454,6 +474,22 @@ export function submitChangeProposal(body: {
   product_id: string
   proposed_title?: string | null
   proposed_description?: string | null
+  proposed_fields?: {
+    changes: Array<{
+      field:
+        | "title"
+        | "description"
+        | "brand_id"
+        | "manufacturer_id"
+        | "attribute"
+        | "media_note"
+      label: string
+      current_value?: string | null
+      proposed_value: string
+      attribute_definition_id?: string
+      storage_references?: string[]
+    }>
+  } | null
   toelichting: string
 }) {
   return request<{ change_proposal: ChangeProposal }>(
@@ -474,6 +510,10 @@ export function getProductCloudProduct(productId: string) {
       publication_status?: string | null
       catalog_owner?: boolean
       current_owner_seller_id?: string
+      brand_id?: string | null
+      manufacturer_id?: string | null
+      product_manager_kind?: string | null
+      product_manager_seller_id?: string | null
     }
     versions: Array<{
       id: string
@@ -481,8 +521,22 @@ export function getProductCloudProduct(productId: string) {
       description: string
       publication_status: string
     }>
+    attributes?: Array<{
+      attribute_definition_id: string
+      code: string | null
+      name: string
+      value: string
+    }>
     own_change_proposals?: ChangeProposal[]
     product_link_group?: ProductLinkGroupSummary | null
+    catalog_gaps?: {
+      title: boolean
+      description: boolean
+      brand_id: boolean
+      manufacturer_id: boolean
+    }
+    can_gap_fill?: boolean
+    can_propose_change?: boolean
   }>(`/store/product-cloud/products/${productId}`, { cache: "no-store" })
 }
 
@@ -490,6 +544,22 @@ export function getProductManager(productId: string) {
   return request<{ product: ProductManagerDetail }>(
     `/store/product-cloud/products/${productId}/manager`
   )
+}
+
+export function requestProductManagerRole(
+  productId: string,
+  body?: { toelichting?: string }
+) {
+  return request<{
+    change_proposal: ChangeProposal
+    product_manager_request: {
+      status: string
+      request_kind: string
+    }
+  }>(`/store/product-cloud/products/${productId}/product-manager-request`, {
+    method: "POST",
+    body: JSON.stringify(body || {}),
+  })
 }
 
 export function patchProductInformation(
@@ -739,6 +809,45 @@ export async function uploadProductMediaFile(
   }
 }
 
+/** Staging upload for change proposals — does not attach to live product media. */
+export async function uploadProductMediaProposal(
+  productId: string,
+  file: File
+) {
+  const form = new FormData()
+  form.append("file", file)
+
+  const response = await fetch(
+    `${medusaBackendUrl()}/store/product-cloud/products/${productId}/media/proposal-upload`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        ...(PUBLISHABLE_KEY
+          ? { "x-publishable-api-key": PUBLISHABLE_KEY }
+          : {}),
+      },
+      body: form,
+    }
+  )
+  const body: unknown = await response.json().catch(() => undefined)
+  if (!response.ok) {
+    const message =
+      body &&
+      typeof body === "object" &&
+      "message" in body &&
+      typeof body.message === "string"
+        ? body.message
+        : "Upload voor mediavoorstel mislukt."
+    throw new ProductCloudApiError(message, response.status)
+  }
+  return body as {
+    storage_reference: string
+    purpose: string
+    attached_to_product: boolean
+  }
+}
+
 export function deleteProductMedia(productId: string, mediaId: string) {
   return request<{ deleted: boolean; media_id: string }>(
     `/store/product-cloud/products/${productId}/media/${mediaId}`,
@@ -976,7 +1085,8 @@ export function deleteMadeInEuropeEvidence(
 
 export type EuropeanOwnershipClaim = {
   id: string
-  manufacturer_id: string
+  brand_id: string | null
+  manufacturer_id: string | null
   company_id: string | null
   seller_id: string
   ownership_band: string
@@ -993,9 +1103,12 @@ export type EuropeanOwnershipClaim = {
 
 export function getEuropeanOwnershipClaim(productId: string) {
   return request<{
-    manufacturer_id: string
+    brand_id: string | null
+    manufacturer_id: string | null
     claim: EuropeanOwnershipClaim | null
     history: unknown[]
+    inherited_from_brand?: boolean
+    manage_at?: string | null
   }>(`/store/product-cloud/products/${productId}/european-ownership`)
 }
 

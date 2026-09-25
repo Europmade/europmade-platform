@@ -5,6 +5,9 @@ import type {
 import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { resolveApprovedSeller } from "../../resolve-seller"
+import { assertSellerCanDirectEditCatalog } from "../../catalog-edit-guard"
+import { sellerCanDirectEditCatalog } from "../../catalog-edit-guard"
+import { catalogGapsFromCurrent } from "../../../../../modules/product-cloud/catalog-gap-fill"
 import type { StorePatchProductCategoriesBodyInput } from "../../validators"
 import { resolveImportCategory, uniqueImportCategoryCatalog } from "../../../../../modules/product-cloud/import-category"
 
@@ -26,7 +29,8 @@ export async function GET(
   ) as ProductCloudModuleService
 
   const product = await productCloud.retrieveProduct(id)
-  const isOwner = product.current_owner_seller_id === seller.id
+  const access = await sellerCanDirectEditCatalog(req.scope, product, seller)
+  const isOwner = access.allowed
 
   if (!isOwner) {
     const ownProposals = await productCloud.listChangeProposals({
@@ -48,6 +52,48 @@ export async function GET(
       versions[0] ||
       null
     const linkMap = await productCloud.listProductLinkSummariesForProducts([id])
+    const catalog_gaps = catalogGapsFromCurrent({
+      title: working?.title,
+      description: working?.description,
+      brand_id: product.brand_id,
+      manufacturer_id: product.manufacturer_id,
+    })
+    const hasGaps = Object.values(catalog_gaps).some(Boolean)
+
+    let attributes: Array<{
+      attribute_definition_id: string
+      code: string | null
+      name: string
+      value: string
+    }> = []
+    if (working) {
+      const vals = (await productCloud.listAttributeValues({
+        product_version_id: working.id,
+      })) as Array<{
+        attribute_definition_id: string
+        value: string
+      }>
+      const defIds = [
+        ...new Set(vals.map((v) => v.attribute_definition_id).filter(Boolean)),
+      ]
+      const defs =
+        defIds.length > 0
+          ? ((await productCloud.listAttributeDefinitions({
+              id: defIds,
+            })) as Array<{ id: string; code?: string; name?: string }>)
+          : []
+      const defById = new Map(defs.map((d) => [d.id, d]))
+      attributes = vals.map((v) => {
+        const def = defById.get(v.attribute_definition_id)
+        return {
+          attribute_definition_id: v.attribute_definition_id,
+          code: def?.code ?? null,
+          name: def?.name || v.attribute_definition_id,
+          value: v.value ?? "",
+        }
+      })
+    }
+
     res.json({
       product: {
         id: product.id,
@@ -55,6 +101,11 @@ export async function GET(
         brand_id: product.brand_id,
         manufacturer_id: product.manufacturer_id,
         current_owner_seller_id: product.current_owner_seller_id,
+        product_manager_kind: (product as { product_manager_kind?: string })
+          .product_manager_kind,
+        product_manager_seller_id: (
+          product as { product_manager_seller_id?: string | null }
+        ).product_manager_seller_id,
         catalog_owner: false,
         title: working?.title ?? null,
         description: working?.description ?? null,
@@ -72,8 +123,12 @@ export async function GET(
           ]
         : [],
       ownership_records: [],
+      attributes,
       own_change_proposals: ownProposals,
       product_link_group: linkMap.get(id) ?? null,
+      catalog_gaps,
+      can_gap_fill: hasGaps,
+      can_propose_change: true,
     })
     return
   }
@@ -87,7 +142,10 @@ export async function GET(
   })
 
   res.json({
-    product,
+    product: {
+      ...product,
+      catalog_owner: true,
+    },
     versions,
     ownership_records: ownership,
   })
@@ -107,10 +165,7 @@ export async function PATCH(
   ) as ProductCloudModuleService
 
   const product = await productCloud.retrieveProduct(id)
-  if (product.current_owner_seller_id !== seller.id) {
-    res.status(403).json({ message: "Alleen de eigenaar mag categorieen wijzigen." })
-    return
-  }
+  await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const uniqueNames = req.validatedBody.category_names
     .map((name) => name.trim())

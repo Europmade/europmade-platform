@@ -262,6 +262,16 @@ export default defineMiddlewares({
       middlewares: [customerAuth, productMediaUpload.single("file")],
     },
     {
+      matcher: "/store/product-cloud/products/:id/media/proposal-upload",
+      methods: ["POST"],
+      middlewares: [customerAuth, productMediaUpload.single("file")],
+    },
+    {
+      matcher: "/store/product-cloud/products/:id/product-manager-request",
+      methods: ["POST"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/product-cloud/products/:id/media/:mediaId",
       methods: ["PATCH", "DELETE"],
       middlewares: [customerAuth],
@@ -974,8 +984,28 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/product-cloud/products/bulk-product-manager",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/bulk-brand",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/bulk-information",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/product-cloud/products/:id",
       methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/:id/product-manager",
+      methods: ["GET", "PUT"],
       middlewares: [adminAuth],
     },
     {
@@ -1159,6 +1189,11 @@ export default defineMiddlewares({
       middlewares: [customerAuth, validateAndTransformBody(StorePatchBrandBody)],
     },
     {
+      matcher: "/store/brands/:id/european-ownership",
+      methods: ["GET", "PUT"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/brands/:id/markets/:countryCode",
       methods: ["PATCH"],
       middlewares: [
@@ -1289,6 +1324,11 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/affiliates/commission-settings",
+      methods: ["GET", "PUT"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/affiliates/:id",
       methods: ["GET"],
       middlewares: [adminAuth],
@@ -1336,6 +1376,11 @@ export default defineMiddlewares({
     },
     {
       matcher: "/store/finance/affiliate/payouts",
+      methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/finance/affiliate/payouts/:id/settlement",
       methods: ["GET"],
       middlewares: [customerAuth],
     },

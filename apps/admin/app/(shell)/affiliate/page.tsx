@@ -8,7 +8,9 @@ import { KpiCard } from "../../../components/kpi-card"
 import {
   affiliateNeedsReview,
   displayAffiliateStatus,
+  getAffiliateCommissionSettings,
   getAffiliatePerformance,
+  updateAffiliateCommissionSettings,
   type AffiliatePerformancePeriodDays,
   type AffiliatePerformanceRow,
 } from "../../../lib/affiliate-admin-api"
@@ -59,6 +61,27 @@ export default function AdminAffiliatePage() {
   const [error, setError] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>("revenue")
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+  const [contribPct, setContribPct] = useState("5")
+  const [contribSaving, setContribSaving] = useState(false)
+  const [contribMsg, setContribMsg] = useState<string | null>(null)
+  const [holdDays, setHoldDays] = useState<number | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getAffiliateCommissionSettings()
+      .then((s) => {
+        if (cancelled) return
+        const pts = Math.round(s.percentage * 10000) / 100
+        setContribPct(String(pts))
+        setHoldDays(s.payout_hold_days)
+      })
+      .catch(() => {
+        /* keep defaults */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -128,6 +151,61 @@ export default function AdminAffiliatePage() {
         Overzicht van affiliate-omzet en -orders. Beoordeel aanvragen in dezelfde
         lijst. Geen demo-data.
       </p>
+
+      <section className="mt-5 rounded-md border border-wf-300 bg-white p-4">
+        <h2 className="text-sm font-bold text-wf-900">
+          EuropMade affiliate contribution (%)
+        </h2>
+        <p className="mt-1 text-xs text-wf-600">
+          Platformbijdrage aan de affiliatecommissie (bestaande{" "}
+          <code className="rounded bg-wf-100 px-1">affiliate_commission_setting</code>
+          ). Nieuwe conversies gebruiken dit percentage; historische commissies
+          blijven ongewijzigd. Payout-hold: {holdDays ?? "…"} dagen.
+        </p>
+        <div className="mt-3 flex flex-wrap items-end gap-2">
+          <label className="text-xs font-semibold text-wf-800">
+            Contribution %
+            <input
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              value={contribPct}
+              onChange={(e) => setContribPct(e.target.value)}
+              className="mt-1 block h-9 w-28 rounded-[5px] border border-wf-400 bg-white px-2 text-xs"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={contribSaving}
+            className="h-9 rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white disabled:opacity-50"
+            onClick={() => {
+              setContribSaving(true)
+              setContribMsg(null)
+              updateAffiliateCommissionSettings({
+                percentage: Number(contribPct),
+              })
+                .then((s) => {
+                  const pts = Math.round(s.percentage * 10000) / 100
+                  setContribPct(String(pts))
+                  setHoldDays(s.payout_hold_days)
+                  setContribMsg(`Opgeslagen: ${s.percentage_display}`)
+                })
+                .catch((err: unknown) => {
+                  setContribMsg(
+                    err instanceof Error ? err.message : "Opslaan mislukt."
+                  )
+                })
+                .finally(() => setContribSaving(false))
+            }}
+          >
+            {contribSaving ? "Opslaan…" : "Opslaan"}
+          </button>
+        </div>
+        {contribMsg ? (
+          <p className="mt-2 text-xs text-wf-700">{contribMsg}</p>
+        ) : null}
+      </section>
 
       <section className="mt-6">
         <div className="mb-3 flex flex-col gap-3 tablet:flex-row tablet:items-end tablet:justify-between">

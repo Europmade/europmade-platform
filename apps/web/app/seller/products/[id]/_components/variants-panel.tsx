@@ -166,6 +166,8 @@ type Props = {
   suggestedAxes: string[]
   allowedAxes: string[]
   locale: StorefrontLocale
+  /** When false, central variant structure is read-only; own offers stay editable. */
+  catalogEditable?: boolean
   onReload: () => void
   onNotice: (msg: string | null) => void
   onError: (msg: string | null) => void
@@ -178,6 +180,7 @@ export function SellerVariantsPanel({
   suggestedAxes,
   allowedAxes,
   locale,
+  catalogEditable = true,
   onReload,
   onNotice,
   onError,
@@ -443,6 +446,7 @@ export function SellerVariantsPanel({
         {suggestedAxes.length ? suggestedAxes.join(", ") : "—"}.
       </p>
 
+      {catalogEditable ? (
       <div className="rounded border border-wf-300 bg-white p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-xs font-bold text-wf-900">{t("vpAddVariant", locale)}</h2>
@@ -512,6 +516,12 @@ export function SellerVariantsPanel({
           {t("vpAddVariantBtn", locale)}
         </Button>
       </div>
+      ) : (
+        <p className="rounded border border-wf-200 bg-wf-50 px-3 py-2 text-[11px] text-wf-600">
+          Variantenstructuur is read-only. Eigen aanbod per variant kun je hieronder
+          bewerken.
+        </p>
+      )}
 
       <div className="overflow-x-auto rounded border border-wf-300 bg-white">
         <table className="min-w-full text-left text-[11px]">
@@ -596,7 +606,7 @@ export function SellerVariantsPanel({
                     </td>
                     <td className="px-2 py-2">
                       <div className="flex flex-col gap-1">
-                        {editing ? (
+                        {editing && catalogEditable ? (
                           <>
                             <button
                               type="button"
@@ -616,6 +626,7 @@ export function SellerVariantsPanel({
                           </>
                         ) : (
                           <>
+                            {catalogEditable ? (
                             <button
                               type="button"
                               className="text-left font-semibold underline"
@@ -627,6 +638,7 @@ export function SellerVariantsPanel({
                             >
                               {t("commonEdit", locale)}
                             </button>
+                            ) : null}
                             {row.identifierId ? (
                               <button
                                 type="button"
@@ -652,6 +664,7 @@ export function SellerVariantsPanel({
                                 {t("vpGoToOffer", locale)}
                               </button>
                             ) : null}
+                            {catalogEditable ? (
                             <button
                               type="button"
                               className="text-left font-semibold text-red-700 underline"
@@ -665,6 +678,7 @@ export function SellerVariantsPanel({
                             >
                               {t("vpDelete", locale)}
                             </button>
+                            ) : null}
                           </>
                         )}
                       </div>
