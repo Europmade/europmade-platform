@@ -19,6 +19,8 @@ const ALLOWED_TAGS = new Set([
   "h3",
   "h4",
   "blockquote",
+  "img",
+  "hr",
 ])
 
 function escapeText(value: string): string {
@@ -36,6 +38,11 @@ function sanitizeHref(href: string): string | null {
     return trimmed
   }
   return null
+}
+
+function alignment(rawAttrs: string): string {
+  const match = rawAttrs.match(/text-align\s*:\s*(left|center|right)/i)
+  return match ? ` style="text-align:${match[1].toLowerCase()}"` : ""
 }
 
 /**
@@ -67,7 +74,21 @@ export function sanitizeCmsHtml(html: string): string {
           : ""
         const safe = sanitizeHref(rawHref)
         if (!safe) return ""
-        return `<a href="${escapeText(safe)}" rel="noopener noreferrer">`
+        const cta = /\bdata-em-cta\s*=\s*("1"|'1'|1)/i.test(rawAttrs)
+        return `<a href="${escapeText(safe)}" rel="noopener noreferrer"${cta ? ' data-em-cta="1"' : ""}>`
+      }
+      if (name === "img") {
+        const srcMatch = rawAttrs.match(/\bsrc\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i)
+        const rawSrc = srcMatch ? srcMatch[2] ?? srcMatch[3] ?? srcMatch[4] ?? "" : ""
+        const safeSrc = sanitizeHref(rawSrc)
+        if (!safeSrc || safeSrc.startsWith("mailto:") || safeSrc.startsWith("#")) return ""
+        const altMatch = rawAttrs.match(/\balt\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i)
+        const alt = altMatch ? altMatch[2] ?? altMatch[3] ?? altMatch[4] ?? "" : ""
+        return `<img src="${escapeText(safeSrc)}" alt="${escapeText(alt)}" />`
+      }
+      if (name === "hr") return "<hr />"
+      if (name === "p" || name === "h2" || name === "h3" || name === "h4") {
+        return `<${name}${alignment(rawAttrs)}>`
       }
       return `<${name}>`
     }

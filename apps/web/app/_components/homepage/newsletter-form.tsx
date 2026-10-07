@@ -4,43 +4,63 @@ import { FormEvent, useState } from "react"
 import { Button, Notice } from "@europmade/ui"
 
 /**
- * Nieuwsbrief UI (CMP-006-patroon uit wireframe).
- * Geen backend-endpoint in MVP Fase 1 — alleen clientvalidatie + eerlijke feedback.
+ * Nieuwsbriefinschrijving. Schrijft naar de engagement-consument.
+ * Geen succesmelding zonder een geslaagde backend-respons.
  */
 export function NewsletterForm({
   placeholder,
   submitLabel,
   invalidEmail,
-  successMessage,
+  locale = "nl",
 }: {
   placeholder: string
   submitLabel: string
   invalidEmail: string
-  successMessage: string
+  successMessage?: string
+  locale?: string
 }) {
   const [email, setEmail] = useState("")
   const [message, setMessage] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const value = email.trim()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setMessage(invalidEmail)
       return
     }
-    setMessage(successMessage)
-    setEmail("")
+    setBusy(true)
+    setMessage(null)
+    try {
+      const res = await fetch("/api/nieuwsbrief", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: value, locale }),
+      })
+      const body = (await res.json().catch(() => null)) as { message?: string } | null
+      if (!res.ok) {
+        setMessage(body?.message || "Inschrijven is niet gelukt. Probeer het opnieuw.")
+        return
+      }
+      setMessage(body?.message || "Je bent ingeschreven voor de EuropMade-nieuwsbrief.")
+      if (res.status === 201) setEmail("")
+    } catch {
+      setMessage("Inschrijven is niet gelukt. Probeer het opnieuw.")
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <div className="w-full max-w-xl">
       <form
-        onSubmit={onSubmit}
+        onSubmit={(event) => void onSubmit(event)}
         className="flex flex-col gap-2 mobile:flex-row mobile:items-stretch mobile:gap-2"
         noValidate
       >
         <label htmlFor="homepage-newsletter-email" className="sr-only">
-          Email
+          E-mailadres
         </label>
         <input
           id="homepage-newsletter-email"
@@ -56,11 +76,7 @@ export function NewsletterForm({
           autoComplete="email"
           required
         />
-        <Button
-          type="submit"
-          variant="primary"
-          className="h-[42px] shrink-0 px-5"
-        >
+        <Button type="submit" variant="primary" className="h-[42px] shrink-0 px-5" disabled={busy}>
           {submitLabel}
         </Button>
       </form>

@@ -142,6 +142,66 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     ],
   },
   {
+    id: "engagement",
+    label: "Marketing & Communicatie",
+    items: [
+      {
+        id: "engagement-overview",
+        naam: "Vandaag",
+        route: "/engagement",
+        icoon: "marketing",
+        permissie: "Beheerder",
+        navigatiepositie: 65,
+        available: true,
+      },
+      {
+        id: "engagement-prospects",
+        naam: "Prospects",
+        route: "/engagement/prospects",
+        icoon: "marketing",
+        permissie: "Beheerder",
+        navigatiepositie: 66,
+        available: true,
+      },
+      {
+        id: "engagement-consumers",
+        naam: "Consumenten",
+        route: "/engagement/consumers",
+        icoon: "marketing",
+        permissie: "Beheerder",
+        navigatiepositie: 66.5,
+        available: true,
+      },
+      {
+        id: "engagement-templates",
+        naam: "Berichten",
+        route: "/engagement/templates",
+        icoon: "marketing",
+        permissie: "Beheerder",
+        navigatiepositie: 67,
+        available: true,
+      },
+      {
+        id: "engagement-automations",
+        naam: "Automatiseringen",
+        route: "/engagement/automations",
+        icoon: "marketing",
+        permissie: "Beheerder",
+        navigatiepositie: 68,
+        available: true,
+      },
+      {
+        id: "engagement-history",
+        naam: "Historie",
+        route: "/engagement/history",
+        icoon: "marketing",
+        permissie: "Beheerder",
+        navigatiepositie: 69,
+        available: true,
+      },
+    ],
+  },
+  {
     id: "financial",
     label: "Financieel",
     items: [
@@ -274,6 +334,24 @@ export function moreNavSorted() {
 
 export function allNavItems(): AdminNavItem[] {
   return ADMIN_NAV_GROUPS.flatMap((g) => g.items)
+}
+
+/**
+ * Een oudermenu (bijv. /engagement) is niet actief wanneer een langer
+ * menupad (bijv. /engagement/prospects) de huidige pagina dekt.
+ */
+export function isMostSpecificNavMatch(
+  pathname: string,
+  route: string,
+  routes: string[]
+): boolean {
+  const matches = pathname === route || pathname.startsWith(`${route}/`)
+  if (!matches) return false
+  return !routes.some((other) => {
+    if (other === route || other.length <= route.length) return false
+    if (!other.startsWith(`${route}/`)) return false
+    return pathname === other || pathname.startsWith(`${other}/`)
+  })
 }
 
 export function findActiveNav(pathname: string): AdminNavItem | undefined {

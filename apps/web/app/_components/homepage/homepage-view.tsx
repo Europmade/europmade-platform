@@ -327,7 +327,7 @@ export function HomepageView({
                       placeholder={cms.newsletter.placeholder}
                       submitLabel={cms.newsletter.submitLabel}
                       invalidEmail={cms.newsletter.invalidEmail}
-                      successMessage={cms.newsletter.successMessage}
+                      locale={locale}
                     />
                   </div>
                 </div>

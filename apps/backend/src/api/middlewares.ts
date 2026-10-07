@@ -1563,6 +1563,167 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
 
+    {
+      matcher: "/admin/engagement/overview",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/imports",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/consumers",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/consumers/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/consumers/:id/newsletter",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/generate",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/ready",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/organizations",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/organizations/:id",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/organizations/:id/roles",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/organizations/:id/roles/:role",
+      methods: ["DELETE"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/organizations/:id/contacts",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/organizations/:id/contacts/:contactId",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/variants",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/variants/:variantId",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/variants/:variantId/versions",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/versions/:versionId",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/versions/:versionId/review",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/versions/:versionId/approve",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/versions/:versionId/activate",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/templates/:id/versions/:versionId/deactivate",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/programs",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/programs/:id",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/programs/:id/sequences",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/programs/:id/sequences/:sequenceId",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/programs/:id/sequences/:sequenceId/order",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/programs/:id/sequences/:sequenceId/steps",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/programs/:id/sequences/:sequenceId/steps/:stepId",
+      methods: ["POST", "DELETE"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/events",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/events/:id",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+
     // ── Advertising (seller) ──
     {
       matcher: "/store/advertising/campaigns",

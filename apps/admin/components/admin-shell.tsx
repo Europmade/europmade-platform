@@ -3,7 +3,11 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { findActiveNav, navGroupsSorted } from "../lib/module-registry"
+import {
+  findActiveNav,
+  isMostSpecificNavMatch,
+  navGroupsSorted,
+} from "../lib/module-registry"
 import { endSession, getSession } from "../lib/medusa-admin-auth"
 
 interface AdminShellProps {
@@ -20,15 +24,14 @@ function isCmsVisualEditor(pathname: string) {
   return false
 }
 
-function navActive(pathname: string, route: string | null) {
-  if (!route) return false
-  return pathname === route || pathname.startsWith(`${route}/`)
-}
 
 export function AdminShell({ breadcrumb, children }: AdminShellProps) {
   const pathname = usePathname()
   const router = useRouter()
   const groups = navGroupsSorted()
+  const navRoutes = groups.flatMap((group) =>
+    group.items.flatMap((item) => (item.route ? [item.route] : []))
+  )
   const visualCms = isCmsVisualEditor(pathname)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accountLabel, setAccountLabel] = useState<string | null>(null)
@@ -144,8 +147,8 @@ export function AdminShell({ breadcrumb, children }: AdminShellProps) {
         </div>
       </header>
 
-      <div className="flex min-h-[calc(100vh-53px)] flex-col tablet:flex-row">
-        <aside className="w-full shrink-0 border-b border-wf-300 bg-wf-100 p-3.5 tablet:w-[220px] tablet:border-b-0 tablet:border-r tablet:p-5">
+      <div className="flex min-h-[calc(100vh-53px)] flex-col tablet:h-[calc(100vh-53px)] tablet:flex-row tablet:overflow-hidden">
+        <aside className="w-full shrink-0 border-b border-wf-300 bg-wf-100 p-3.5 tablet:h-full tablet:w-[220px] tablet:overflow-y-auto tablet:border-b-0 tablet:border-r tablet:p-5">
           <nav className="flex gap-1 overflow-x-auto tablet:flex-col tablet:overflow-visible">
             {groups.map((group, groupIndex) => (
               <div key={group.id} className="tablet:mb-1">
@@ -167,7 +170,11 @@ export function AdminShell({ breadcrumb, children }: AdminShellProps) {
                       </span>
                     )
                   }
-                  const isActive = navActive(pathname, mod.route)
+                  const isActive = isMostSpecificNavMatch(
+                    pathname,
+                    mod.route,
+                    navRoutes
+                  )
                   return (
                     <Link
                       key={mod.id}
@@ -194,8 +201,10 @@ export function AdminShell({ breadcrumb, children }: AdminShellProps) {
         </aside>
 
         <main
-          className={`min-w-0 flex-1 bg-white ${
-            visualCms ? "flex min-h-0 flex-col overflow-hidden" : ""
+          className={`min-w-0 flex-1 bg-white tablet:h-full tablet:min-h-0 ${
+            visualCms
+              ? "flex flex-col overflow-hidden"
+              : "tablet:overflow-y-auto"
           }`}
         >
           {breadcrumb && !visualCms ? (

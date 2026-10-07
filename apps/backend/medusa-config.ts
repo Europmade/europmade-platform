@@ -56,5 +56,8 @@ module.exports = defineConfig({
     {
       resolve: "./src/modules/mfa",
     },
+    {
+      resolve: "./src/modules/engagement",
+    },
   ],
 })
