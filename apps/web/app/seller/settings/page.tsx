@@ -10,6 +10,7 @@ import {
   patchPartnerAccount,
   PartnerAccountApiError,
   type PartnerAccountResponse,
+  type SellerCommunicationPreferences,
 } from "../_lib/partner-account-api"
 import { uploadSellerBrandMedia, BrandApiError } from "../_lib/brands-api"
 import { resolveSellerMediaUrl } from "../_lib/media-url"
@@ -56,6 +57,24 @@ const ROLE_LABEL: Record<string, StorefrontMessageKey> = {
   PRODUCER: "sellerRoleProducerOnly",
 }
 
+const EMPTY_PREFS: SellerCommunicationPreferences = {
+  platform_updates: false,
+  seller_tips: false,
+  product_opportunities: false,
+  seller_campaigns: false,
+  europmade_news: false,
+}
+
+function readPrefs(value: SellerCommunicationPreferences | null | undefined): SellerCommunicationPreferences {
+  return {
+    platform_updates: Boolean(value?.platform_updates),
+    seller_tips: Boolean(value?.seller_tips),
+    product_opportunities: Boolean(value?.product_opportunities),
+    seller_campaigns: Boolean(value?.seller_campaigns),
+    europmade_news: Boolean(value?.europmade_news),
+  }
+}
+
 /**
  * Partner-instellingen — bedrijfsgegevens, rollen, gebruikers, rechten.
  */
@@ -78,12 +97,18 @@ export default function SellerSettingsPage() {
   const [shippingAddress, setShippingAddress] = useState(
     DEMO_COMPANY.shipping_address
   )
+  const [prefs, setPrefs] = useState<SellerCommunicationPreferences>(EMPTY_PREFS)
+  const [prefsBusy, setPrefsBusy] = useState(false)
+  const [prefsError, setPrefsError] = useState<string | null>(null)
   const company = account?.partner.company
   const demo = DEMO_COMPANY
 
   useEffect(() => {
     void getPartnerAccount()
-      .then(setAccount)
+      .then((loaded) => {
+        setAccount(loaded)
+        setPrefs(readPrefs(loaded.partner.communication_preferences))
+      })
       .catch(() => setAccount(null))
   }, [])
 
@@ -113,6 +138,30 @@ export default function SellerSettingsPage() {
         label: t(labelKey, locale),
       })
     )
+  }
+
+  async function savePreferences() {
+    setPrefsBusy(true)
+    setPrefsError(null)
+    try {
+      const confirmed = await patchPartnerAccount({
+        communication_preferences: prefs,
+        locale,
+      })
+      setAccount((current) =>
+        current ? { ...current, partner: { ...current.partner, ...confirmed.partner } } : current
+      )
+      setPrefs(readPrefs(confirmed.partner.communication_preferences))
+      setActionNote(t("sellerSettingsCommSaved", locale))
+    } catch (err) {
+      setPrefsError(
+        err instanceof PartnerAccountApiError
+          ? err.message
+          : t("buyerProfileLoadError", locale)
+      )
+    } finally {
+      setPrefsBusy(false)
+    }
   }
 
   async function saveBranding(kind: "logo" | "banner") {
@@ -485,19 +534,61 @@ export default function SellerSettingsPage() {
           ) : null}
 
           {active === "notifications" ? (
-            <div className="space-y-2 text-xs text-wf-800">
-              <label className="flex items-center gap-2">
-                <input type="checkbox" defaultChecked />
-                {t("sellerSettingsNotifyOrder", locale)}
-              </label>
-              <div className="mt-3">
-                <Button
-                  type="button"
-                  onClick={() => markSaved("sellerSettingsNotifications")}
-                >
-                  {t("commonSave", locale)}
-                </Button>
-              </div>
+            <div className="max-w-xl space-y-4 text-xs text-wf-800">
+              <section>
+                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+                  {t("sellerSettingsCommTransactional", locale)}
+                </h2>
+                <p className="mt-1 text-wf-600">{t("sellerSettingsCommRequired", locale)}</p>
+                <ul className="mt-2 space-y-1">
+                  {(
+                    [
+                      "sellerSettingsNotifyOrder",
+                      "sellerSettingsNotifyReturn",
+                      "sellerSettingsNotifyPayment",
+                      "sellerSettingsNotifyAccount",
+                    ] as const
+                  ).map((key) => (
+                    <li key={key} className="flex items-center gap-2">
+                      <input type="checkbox" checked disabled />
+                      {t(key, locale)}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              <section>
+                <h2 className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+                  {t("sellerSettingsCommVoluntary", locale)}
+                </h2>
+                <ul className="mt-2 space-y-1">
+                  {(
+                    [
+                      ["platform_updates", "sellerSettingsPrefPlatform"],
+                      ["seller_tips", "sellerSettingsPrefTips"],
+                      ["product_opportunities", "sellerSettingsPrefProducts"],
+                      ["seller_campaigns", "sellerSettingsPrefCampaigns"],
+                      ["europmade_news", "sellerSettingsPrefNews"],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <li key={key}>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={prefs[key]}
+                          onChange={(event) =>
+                            setPrefs((current) => ({ ...current, [key]: event.target.checked }))
+                          }
+                        />
+                        {t(label, locale)}
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+              {prefsError ? <p className="text-wf-800">{prefsError}</p> : null}
+              <Button type="button" disabled={prefsBusy} onClick={() => void savePreferences()}>
+                {t("commonSave", locale)}
+              </Button>
             </div>
           ) : null}
 

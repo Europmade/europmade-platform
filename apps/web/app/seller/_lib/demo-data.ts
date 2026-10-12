@@ -3,6 +3,8 @@
  * Nederlandse namen, geloofwaardige bedragen, actieve verkoper (enkele maanden).
  */
 
+import { SELLER_AFFILIATE_COMMISSION_SETTINGS } from "@europmade/utils"
+
 export type ProductCloudStatus =
   | "Gekoppeld"
   | "Wacht op producent"
@@ -865,7 +867,7 @@ export const DEMO_DASHBOARD_ACTIONS = {
 }
 
 export const DEMO_AFFILIATE_SETTINGS = {
-  default_commission_percent: 8,
+  ...SELLER_AFFILIATE_COMMISSION_SETTINGS,
   category_commissions: [
     {
       category_id: "cat_voeding",
@@ -876,18 +878,6 @@ export const DEMO_AFFILIATE_SETTINGS = {
       category_id: "cat_wonen",
       category_name: "Wonen",
       commission_percent: 10,
-    },
-  ],
-  product_commissions: [
-    {
-      product_id: "prod_01",
-      product_title: "Noordzee Olijfolie Extra Vierge 500 ml",
-      commission_percent: 12,
-    },
-    {
-      product_id: "prod_06",
-      product_title: "Zeeuwse Mosselpan Gietijzer 28 cm",
-      commission_percent: 9,
     },
   ],
 }

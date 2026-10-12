@@ -14,6 +14,7 @@ import {
   type EngagementProgram,
   type EngagementTemplate,
 } from "../../../../lib/engagement-admin-api"
+import { isDemoRecordName } from "../../../../lib/engagement-demo"
 import {
   automationStatus,
   flowSequence,
@@ -81,6 +82,7 @@ export default function EngagementAutomationsPage() {
     }
     if (applied.type && row.program_type !== applied.type) return false
     if (applied.status && rowStatus !== applied.status) return false
+    if (isDemoRecordName(row.name)) return false
     return true
   })
   const filtersActive = Boolean(applied.q || applied.type || applied.status)
@@ -189,10 +191,19 @@ export default function EngagementAutomationsPage() {
                 <div className="text-sm font-semibold text-wf-900">{row.name}</div>
                 <div className="mt-0.5 text-[11px] text-wf-700">
                   {typeLabel(row.program_type)}
+                  {row.audience === "affiliates"
+                    ? " · Affiliate Partners"
+                    : row.audience === "sellers"
+                      ? " · Verkopers"
+                      : row.audience === "consumers"
+                        ? " · Consumenten"
+                        : ""}
                   {" · "}
                   <span className="font-semibold">{rowStatus}</span>
                 </div>
                 <div className="mt-0.5 text-[11px] text-wf-500">
+                  {row.start_title || "Nog geen startmoment"}
+                  {" · "}
                   {count === 1 ? "1 bericht" : `${count} berichten`}
                 </div>
               </Link>

@@ -1235,6 +1235,16 @@ export default defineMiddlewares({
       middlewares: [customerAuth],
     },
     {
+      matcher: "/store/partner/affiliate-commission",
+      methods: ["GET", "PUT"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/engagement/newsletter/preferences",
+      methods: ["GET", "POST"],
+      middlewares: [customerAuth],
+    },
+    {
       matcher: "/store/partner/manufacturers",
       methods: ["GET", "POST"],
       middlewares: [customerAuth],
@@ -1247,6 +1257,11 @@ export default defineMiddlewares({
     {
       matcher: "/store/affiliate",
       methods: ["GET"],
+      middlewares: [customerAuth],
+    },
+    {
+      matcher: "/store/affiliate",
+      methods: ["PATCH"],
       middlewares: [customerAuth],
     },
     {
@@ -1634,8 +1649,18 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/engagement/catalog-products",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/engagement/newsletter-preview",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/engagement/templates/:id",
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "DELETE"],
       middlewares: [adminAuth],
     },
     {
@@ -1655,7 +1680,7 @@ export default defineMiddlewares({
     },
     {
       matcher: "/admin/engagement/templates/:id/versions/:versionId",
-      methods: ["POST"],
+      methods: ["POST", "DELETE"],
       middlewares: [adminAuth],
     },
     {

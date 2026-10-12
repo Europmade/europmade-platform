@@ -16,19 +16,19 @@ describe("sequence admin write", () => {
     expect(() => normalizeProgramType("marketing")).toThrow(/program_type/)
   })
 
-  it("weigert een template die niet bij het program_type hoort", () => {
+  it("laat elk communicatie-item toe op een stap", () => {
     expect(() =>
       assertTemplateMatchesProgram({
         program_type: "onboarding",
-        communication_type: "acquisition",
-      })
-    ).toThrow(/program_type/)
-    expect(() =>
-      assertTemplateMatchesProgram({
-        program_type: "onboarding",
-        communication_type: "onboarding",
+        communication_type: "newsletter",
       })
     ).not.toThrow()
+    expect(() =>
+      assertTemplateMatchesProgram({
+        program_type: "onboarding",
+        communication_type: "growth",
+      })
+    ).toThrow(/communication_type/)
   })
 
   it("weigert een variant die niet bij de template hoort", () => {

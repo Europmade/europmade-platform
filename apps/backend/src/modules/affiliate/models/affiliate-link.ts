@@ -14,6 +14,14 @@ const AffiliateLink = model
     }),
     target_url: model.text(),
     tracking_param: model.text().unique(),
+    /** Gepromote Product Cloud-product. */
+    product_id: model.text().nullable(),
+    /** Specifieke Commerce Cloud-offer. De commissie hoort bij deze offer. */
+    offer_id: model.text().nullable(),
+    /** Seller van die offer. */
+    seller_id: model.text().nullable(),
+    /** Totale affiliatecommissie in procentpunten, vastgelegd bij het maken van de link. */
+    commission_percent_snapshot: model.float().nullable(),
     clicks: model.hasMany(() => Click, { mappedBy: "affiliate_link" }),
   })
   .indexes([{ on: ["affiliate_id"] }])

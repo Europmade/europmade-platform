@@ -12,6 +12,13 @@ import {
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { AFFILIATE_MODULE } from "../../modules/affiliate"
 import type AffiliateModuleService from "../../modules/affiliate/service"
+import {
+  affiliateSaleCommissions,
+  commissionForSellerProduct,
+} from "../../modules/affiliate/offer-commission"
+import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
+import { COMMERCE_CLOUD_MODULE } from "../../modules/commerce-cloud"
+import type CommerceCloudModuleService from "../../modules/commerce-cloud/service"
 import { hashVisitorKey } from "../../modules/affiliate/service"
 import { PARTNER_MODULE } from "../../modules/partner"
 import type PartnerModuleService from "../../modules/partner/service"
@@ -288,22 +295,67 @@ export async function executeTrackClick(
 
 export async function executeCreateLink(
   container: MedusaContainer,
-  input: { customer_id: string; target_url: string }
+  input: {
+    customer_id: string
+    target_url: string
+    product_id?: string | null
+    offer_id?: string | null
+    seller_id?: string | null
+  }
 ) {
   const aff = container.resolve(AFFILIATE_MODULE) as AffiliateModuleService
   const eventBus = container.resolve(Modules.EVENT_BUS)
   const affiliate = await aff.requireApprovedAffiliate(input.customer_id)
-  const target = input.target_url.trim()
+  let target = input.target_url.trim()
   if (!target.startsWith("http://") && !target.startsWith("https://") && !target.startsWith("/")) {
     throw new MedusaError(
       MedusaError.Types.INVALID_DATA,
       "target_url moet een absolute of relatieve URL zijn."
     )
   }
+
+  const product_id = input.product_id?.trim() || null
+  const offer_id = input.offer_id?.trim() || null
+  let seller_id = input.seller_id?.trim() || null
+
+  if (offer_id) {
+    if (!product_id) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "product_id is verplicht bij een offer."
+      )
+    }
+    const commerce = container.resolve(
+      COMMERCE_CLOUD_MODULE
+    ) as CommerceCloudModuleService
+    const [offer] = await commerce.listOffers({ id: offer_id })
+    if (!offer || (offer.sales_status ?? "active") !== "active") {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Deze offer is niet beschikbaar."
+      )
+    }
+    if (seller_id && seller_id !== offer.seller_id) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Deze offer hoort niet bij de opgegeven seller."
+      )
+    }
+    seller_id = offer.seller_id
+    const offerQuery = `offer=${encodeURIComponent(offer_id)}`
+    if (!target.includes(`offer=${offer_id}`) && !target.includes(offerQuery)) {
+      target += target.includes("?") ? `&${offerQuery}` : `?${offerQuery}`
+    }
+  }
+
   const created = await aff.createAffiliateLinks({
     affiliate_id: affiliate.id,
     target_url: target,
     tracking_param: await aff.generateTrackingParam(),
+    product_id,
+    offer_id,
+    seller_id,
+    commission_percent_snapshot: null,
   })
   await eventBus.emit({
     name: "AffiliateLinkCreated",
@@ -462,33 +514,115 @@ export async function executeAttributeConversion(
     },
   })
 
-  const settings = await aff.getActiveCommissionSettings()
+  const commerce = container.resolve(
+    COMMERCE_CLOUD_MODULE
+  ) as CommerceCloudModuleService
+  const partner = container.resolve(PARTNER_MODULE) as PartnerModuleService
+  const productCloud = container.resolve(PRODUCT_CLOUD_MODULE) as {
+    retrieveProductVariant?: (
+      id: string
+    ) => Promise<{ product_id?: string | null }>
+    retrievePcProductVariant?: (
+      id: string
+    ) => Promise<{ product_id?: string | null }>
+  }
   const lines = await orders.listOrderLines({ order_id: input.order_id })
-  const subtotal = lines.reduce((sum, line) => {
-    return sum + Number(line.unit_price_snapshot) * Number(line.quantity)
-  }, 0)
-  const amount = roundMoney(subtotal * settings.percentage)
 
-  const commission = await finance.createCommissions({
-    recipient_type: "Affiliate",
-    order_id: input.order_id,
-    conversion_id: conversion.id,
-    amount,
-    percentage: settings.percentage,
-    status: "Toegekend",
+  let referredProductId: string | null = null
+  if (click_id) {
+    const click = await aff.retrieveClick(click_id)
+    const link = await aff.retrieveAffiliateLink(click.affiliate_link_id)
+    referredProductId = link.product_id ?? null
+  }
+
+  const settingsCache = new Map<string, unknown>()
+  const saleLines = []
+  for (const line of lines) {
+    const subtotal = Number(line.unit_price_snapshot) * Number(line.quantity)
+    const [offer] = line.offer_id
+      ? await commerce.listOffers({ id: line.offer_id })
+      : []
+    let productId = ""
+    const retrieveVariant =
+      productCloud.retrieveProductVariant ?? productCloud.retrievePcProductVariant
+    if (line.product_variant_id && retrieveVariant) {
+      try {
+        const variant = await retrieveVariant(line.product_variant_id)
+        productId = variant.product_id?.trim() || ""
+      } catch {
+        productId = ""
+      }
+    }
+    saleLines.push({
+      offerId: line.offer_id || offer?.id || "",
+      sellerId: offer?.seller_id || "",
+      productId,
+      subtotal,
+    })
+  }
+
+  const unresolved = new Set(
+    saleLines.map((line) => line.sellerId).filter((id) => id && !settingsCache.has(id))
+  )
+  if (unresolved.size > 0) {
+    for (const sellerId of unresolved) {
+      try {
+        const seller = await partner.retrieveSeller(sellerId)
+        settingsCache.set(
+          sellerId,
+          (seller as { affiliate_commission_settings?: unknown })
+            .affiliate_commission_settings ?? null
+        )
+      } catch {
+        settingsCache.set(sellerId, null)
+      }
+    }
+  }
+
+  const commissionsToWrite = affiliateSaleCommissions({
+    lines: saleLines,
+    referredProductId,
+    rateFor: (sellerId, productId) =>
+      commissionForSellerProduct(settingsCache.get(sellerId) ?? null, productId)
+        .totalPercent,
   })
 
-  await eventBus.emit({
-    name: "CommissionCalculated",
-    data: {
-      commission_id: commission.id,
-      conversion_id: conversion.id,
+  if (commissionsToWrite.length === 0) {
+    logger.info(
+      `[affiliate] no payable sale lines order=${input.order_id} product=${referredProductId ?? ""}`
+    )
+    return { conversion_id: conversion.id, commission_id: null }
+  }
+
+  let firstId: string | null = null
+  let amount = 0
+  for (const row of commissionsToWrite) {
+    const commission = await finance.createCommissions({
+      recipient_type: "Affiliate",
       order_id: input.order_id,
-      affiliate_id,
-      amount,
-      percentage: settings.percentage,
-    },
-  })
+      conversion_id: conversion.id,
+      amount: row.amount,
+      percentage: row.percentage,
+      offer_id: row.offer_id,
+      seller_id: row.seller_id,
+      status: "Toegekend",
+    })
+    if (!firstId) firstId = commission.id
+    amount = roundMoney(amount + row.amount)
+    await eventBus.emit({
+      name: "CommissionCalculated",
+      data: {
+        commission_id: commission.id,
+        conversion_id: conversion.id,
+        order_id: input.order_id,
+        affiliate_id,
+        amount: row.amount,
+        percentage: row.percentage,
+        offer_id: row.offer_id,
+        seller_id: row.seller_id,
+      },
+    })
+  }
 
   await executeScheduleAffiliatePayout(container, {
     order_id: input.order_id,
@@ -496,7 +630,7 @@ export async function executeAttributeConversion(
     amount,
   })
 
-  return { conversion_id: conversion.id, commission_id: commission.id }
+  return { conversion_id: conversion.id, commission_id: firstId }
 }
 
 export async function executeReverseConversionForOrder(
@@ -531,8 +665,10 @@ export async function executeReverseConversionForOrder(
     conversion_id: conversion.id,
     status: "Toegekend",
   })
-  const primary = commissions[0]
-  const originalAmount = primary ? Number(primary.amount) : 0
+  const originalAmount = commissions.reduce(
+    (sum, row) => sum + Number(row.amount),
+    0
+  )
 
   const lines = await orders.listOrderLines({ order_id: orderId })
   const originalSubtotal = lines.reduce((sum, line) => {
@@ -556,9 +692,10 @@ export async function executeReverseConversionForOrder(
 
   if (disposition.action === "prorate") {
     for (const c of commissions) {
+      const share = originalAmount > 0 ? Number(c.amount) / originalAmount : 0
       await finance.updateCommissions({
         id: c.id,
-        amount: disposition.new_amount,
+        amount: roundMoney(disposition.new_amount * share),
         status: "Toegekend",
       })
     }

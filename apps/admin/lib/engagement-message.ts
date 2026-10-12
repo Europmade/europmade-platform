@@ -18,8 +18,9 @@ export const MESSAGE_TYPE_LABELS: Record<string, string> = {
 
 export const MESSAGE_STATUSES = [
   "Concept",
-  "In beoordeling",
+  "Ter beoordeling",
   "Goedgekeurd",
+  "Gepland",
   "Klaar voor verzending",
   "Actief",
   "Afgekeurd",
@@ -33,6 +34,29 @@ export const MESSAGE_TOKENS = [
   { key: "bedrijfsnaam", label: "Bedrijfsnaam", sample: "ABC GmbH" },
   { key: "email", label: "E-mail", sample: "maria@abc.eu" },
 ] as const
+
+export const MESSAGE_AUDIENCES = [
+  { value: "consumers", label: "Consumenten" },
+  { value: "sellers", label: "Verkopers" },
+  { value: "affiliates", label: "Affiliate Partners" },
+] as const
+
+export function isMessageAudience(
+  value: string | null | undefined
+): value is (typeof MESSAGE_AUDIENCES)[number]["value"] {
+  return MESSAGE_AUDIENCES.some((item) => item.value === value)
+}
+
+export function audienceLabel(type: string, audience: string | null | undefined): string {
+  const chosen = MESSAGE_AUDIENCES.find((item) => item.value === audience)
+  if (chosen && (type === "newsletter" || type === "campaign" || audience === "affiliates")) {
+    return chosen.label
+  }
+  if (type === "newsletter" || type === "campaign") return "Kies een doelgroep"
+  if (type === "acquisition") return "Prospects"
+  if (type === "onboarding" || type === "lifecycle" || type === "operational") return "Verkopers"
+  return "—"
+}
 
 export function messageTypeLabel(value: string): string {
   return MESSAGE_TYPE_LABELS[value] ?? value
@@ -56,15 +80,22 @@ export function messageStatus(version: {
     return "Actief"
   }
   if (version.approval_status === "approved") return "Goedgekeurd"
-  if (version.approval_status === "pending_review") return "In beoordeling"
+  if (version.approval_status === "pending_review") return "Ter beoordeling"
   return "Concept"
 }
 
 /** Nieuwsbrief toont klaarzetten apart. Activeren en verzenden gebeurt hier niet. */
 export function displayMessageStatus(
-  template: { communication_type?: string; ready_to_send?: boolean },
+  template: {
+    communication_type?: string
+    ready_to_send?: boolean
+    schedule_status?: string | null
+  },
   version: { approval_status: string; activation_status: string }
 ): MessageStatus {
+  if (template.schedule_status === "scheduled" && version.approval_status === "approved") {
+    return "Gepland"
+  }
   if (
     template.communication_type === "newsletter" &&
     version.approval_status === "approved" &&

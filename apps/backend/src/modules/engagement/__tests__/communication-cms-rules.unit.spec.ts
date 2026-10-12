@@ -2,6 +2,10 @@ import {
   contentFieldsInPatch,
   isSendableVersion,
   normalizeTokenWhitelist,
+  planTemplateAudience,
+  assertTemplateDeletable,
+  assertVersionDeletable,
+  TEMPLATE_IN_USE_MESSAGE,
   resolveVersionTransition,
 } from "../communication-cms-rules"
 
@@ -85,5 +89,69 @@ describe("communication CMS rules", () => {
       ["company_name"]
     )
     expect(() => normalizeTokenWhitelist(["Beste klant"])).toThrow(/token/)
+  })
+
+  it("keeps newsletter on consumers and stores a campaign audience", () => {
+    expect(planTemplateAudience("newsletter", null)).toBe("consumers")
+    expect(planTemplateAudience("newsletter", "affiliates")).toBe("affiliates")
+    expect(planTemplateAudience("campaign", "sellers")).toBe("sellers")
+    expect(planTemplateAudience("campaign", undefined, "consumers")).toBe("consumers")
+    expect(planTemplateAudience("acquisition", "consumers")).toBeNull()
+    expect(() => planTemplateAudience("campaign", null)).toThrow(/doelgroep/)
+  })
+
+  it("refuses to delete an active or used version", () => {
+    expect(() =>
+      assertVersionDeletable({
+        used_at: null,
+        approval_status: "draft",
+        activation_status: "inactive",
+      })
+    ).not.toThrow()
+    expect(() =>
+      assertVersionDeletable({
+        used_at: null,
+        approval_status: "approved",
+        activation_status: "inactive",
+      })
+    ).toThrow(/goedgekeurde/)
+    expect(() =>
+      assertVersionDeletable({
+        used_at: "2026-01-01",
+        approval_status: "draft",
+        activation_status: "inactive",
+      })
+    ).toThrow(/gebruikte/)
+  })
+
+  it("removes only an unused concept and keeps history and automations", () => {
+    expect(() =>
+      assertTemplateDeletable({
+        versions: [draft],
+        sequenceStepCount: 0,
+        historyCount: 0,
+      })
+    ).not.toThrow()
+    expect(() =>
+      assertTemplateDeletable({
+        versions: [{ ...draft, approval_status: "approved", activation_status: "active" }],
+        sequenceStepCount: 0,
+        historyCount: 0,
+      })
+    ).toThrow(TEMPLATE_IN_USE_MESSAGE)
+    expect(() =>
+      assertTemplateDeletable({
+        versions: [draft],
+        sequenceStepCount: 1,
+        historyCount: 0,
+      })
+    ).toThrow(TEMPLATE_IN_USE_MESSAGE)
+    expect(() =>
+      assertTemplateDeletable({
+        versions: [{ ...draft, used_at: "2026-01-01" }],
+        sequenceStepCount: 0,
+        historyCount: 1,
+      })
+    ).toThrow(TEMPLATE_IN_USE_MESSAGE)
   })
 })

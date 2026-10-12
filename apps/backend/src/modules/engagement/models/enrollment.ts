@@ -14,14 +14,21 @@ import EngagementCommunicationEvent from "./communication-event"
 const EngagementEnrollment = model
   .define("engagement_enrollment", {
     id: model.id({ prefix: "eenr" }).primaryKey(),
-    contact: model.belongsTo(() => EngagementContact, {
-      mappedBy: "enrollments",
-      foreignKeyName: "contact_id",
-    }),
-    organization: model.belongsTo(() => EngagementOrganization, {
-      mappedBy: "enrollments",
-      foreignKeyName: "organization_id",
-    }),
+    contact: model
+      .belongsTo(() => EngagementContact, {
+        mappedBy: "enrollments",
+        foreignKeyName: "contact_id",
+      })
+      .nullable(),
+    organization: model
+      .belongsTo(() => EngagementOrganization, {
+        mappedBy: "enrollments",
+        foreignKeyName: "organization_id",
+      })
+      .nullable(),
+    /** Consument of affiliate, als er geen zakelijk contact is. */
+    consumer_id: model.text().nullable(),
+    affiliate_id: model.text().nullable(),
     program: model.belongsTo(() => EngagementLifecycleProgram, {
       mappedBy: "enrollments",
       foreignKeyName: "program_id",
@@ -73,7 +80,27 @@ const EngagementEnrollment = model
     {
       on: ["contact_id", "trigger_key"],
       unique: true,
-      where: "deleted_at IS NULL",
+      where: "contact_id IS NOT NULL AND deleted_at IS NULL",
+    },
+    {
+      on: ["consumer_id", "trigger_key"],
+      unique: true,
+      where: "consumer_id IS NOT NULL AND deleted_at IS NULL",
+    },
+    {
+      on: ["affiliate_id", "trigger_key"],
+      unique: true,
+      where: "affiliate_id IS NOT NULL AND deleted_at IS NULL",
+    },
+    {
+      on: ["consumer_id", "program_type"],
+      unique: true,
+      where: "consumer_id IS NOT NULL AND status = 'active' AND deleted_at IS NULL",
+    },
+    {
+      on: ["affiliate_id", "program_type"],
+      unique: true,
+      where: "affiliate_id IS NOT NULL AND status = 'active' AND deleted_at IS NULL",
     },
     {
       on: ["contact_id", "program_type"],

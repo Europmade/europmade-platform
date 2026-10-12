@@ -54,3 +54,6 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0044](./0044-european-ownership-verification.md) | Europese eigendom is een aparte verification-claim (niet Made in Europe) | Geaccepteerd | Verification, Product Cloud, Storefront |
 | [0045](./0045-affiliate-30-day-hold-late-return.md) | Affiliate 30-dagen payout-hold; late return risico bij seller | Geaccepteerd | Affiliate, Finance |
 | [0046](./0046-product-manager-explicit.md) | Expliciete Productbeheerder per Product Cloud-product | Geaccepteerd | Product Cloud, Admin, Seller auth |
+| [0047](./0047-engagement-content-automation-separation.md) | Engagement: content/automation-scheiding & communicatie-architectuur | Geaccepteerd | Marketing, Communicatie, Partner Engagement, CMS, AI |
+| [0048](./0048-affiliate-commission-paid-by-selling-seller.md) | Affiliatecommissie betaalt de verkopende seller | Geaccepteerd | Affiliate, Seller, Finance |
+| [0049](./0049-marketing-delivery-provider.md) | Marketingmail via een providerinterface, niet via Crisp | Geaccepteerd | Marketing, Communicatie |

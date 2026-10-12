@@ -11,6 +11,9 @@ const Commission = model
     conversion_id: model.text().nullable(),
     amount: model.bigNumber(),
     percentage: model.float(),
+    /** Offer waarop deze commissie is berekend. Blijft staan als de seller later wijzigt. */
+    offer_id: model.text().nullable(),
+    seller_id: model.text().nullable(),
     status: model.enum(["Toegekend", "Teruggedraaid"]).default("Toegekend"),
   })
   .indexes([

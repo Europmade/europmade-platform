@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Notice } from "@europmade/ui"
 import { CmsRichTextEditor, type CmsRichTextEditorHandle } from "../../../../../components/cms/cms-rich-text-editor"
 import { uploadCmsMedia } from "../../../../../lib/cms-admin-api"
@@ -10,7 +10,7 @@ import {
   COMMUNICATION_TYPES,
   EngagementAdminApiError,
   activateEngagementVersion,
-  approveEngagementVersion,
+  deleteEngagementTemplate,
   createEngagementVariant,
   createEngagementVersion,
   formatEngagementDate,
@@ -29,17 +29,23 @@ import {
   MESSAGE_LOCALES,
   MESSAGE_TOKENS,
   displayMessageStatus,
+  isMessageAudience,
+  MESSAGE_AUDIENCES,
   editorToStored,
   headlineVersion,
   isEditableDraft,
   localeLabel,
   messageTypeLabel,
+  audienceLabel,
   tokensToEditor,
   translateMessageError,
   versionHistoryLabel,
 } from "../../../../../lib/engagement-message"
 import { AiDraftDialog } from "../_components/ai-draft-dialog"
 import { MessagePreview } from "../_components/message-preview"
+import { NewsletterComposer } from "../_components/newsletter-composer"
+import { parseMessageBlocks } from "../../../../../lib/newsletter-document"
+import { isRichMessage } from "../../../../../lib/newsletter-document"
 
 const fieldClass =
   "mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm text-wf-900"
@@ -73,6 +79,7 @@ function findVersion(
 
 export default function EngagementMessagePage() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
   const editorRef = useRef<CmsRichTextEditorHandle>(null)
   const [template, setTemplate] = useState<EngagementTemplate | null>(null)
   const [variantId, setVariantId] = useState<string | null>(null)
@@ -90,7 +97,16 @@ export default function EngagementMessagePage() {
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop")
+  const [previewProblems, setPreviewProblems] = useState<string[]>([])
+  useEffect(() => {
+    if (!body.includes("<!--em-layout:newsletter-->")) setPreviewProblems([])
+  }, [body])
   const [aiOpen, setAiOpen] = useState(false)
+  const [audience, setAudience] = useState<string>("consumers")
+  const [scheduleDate, setScheduleDate] = useState("")
+  const [scheduleTime, setScheduleTime] = useState("19:00")
+  const [scheduleTimezone, setScheduleTimezone] = useState("Europe/Amsterdam")
+  const [rich, setRich] = useState(false)
 
   function applyTemplate(
     next: EngagementTemplate,
@@ -109,6 +125,14 @@ export default function EngagementMessagePage() {
     setBody(tokensToEditor(version?.body ?? ""))
     setCtaLabel(version?.cta_label ?? "")
     setCtaUrl(version?.cta_url ?? "")
+    setAudience(
+      next.audience && isMessageAudience(next.audience) ? next.audience : ""
+    )
+    const moment = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(next.scheduled_at ?? "")
+    setScheduleDate(moment?.[1] ?? "")
+    setScheduleTime(moment?.[2] ?? "19:00")
+    setScheduleTimezone(next.schedule_timezone || "Europe/Amsterdam")
+    setRich(next.layout === "newsletter" || (next.layout !== "message" && isRichMessage(version?.body ?? "")))
   }
 
   useEffect(() => {
@@ -138,6 +162,14 @@ export default function EngagementMessagePage() {
         setBody(tokensToEditor(version?.body ?? ""))
         setCtaLabel(version?.cta_label ?? "")
         setCtaUrl(version?.cta_url ?? "")
+        setAudience(
+          row.audience && isMessageAudience(row.audience) ? row.audience : ""
+        )
+        const moment = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(row.scheduled_at ?? "")
+        setScheduleDate(moment?.[1] ?? "")
+        setScheduleTime(moment?.[2] ?? "19:00")
+        setScheduleTimezone(row.schedule_timezone || "Europe/Amsterdam")
+        setRich(row.layout === "newsletter" || (row.layout !== "message" && isRichMessage(version?.body ?? "")))
         setError(null)
       })
       .catch((err: unknown) => {
@@ -160,6 +192,35 @@ export default function EngagementMessagePage() {
   const versions = [...(variant?.versions ?? [])].sort(
     (a, b) => b.version_number - a.version_number
   )
+  const allVersions = template?.variants.flatMap((item) => item.versions) ?? []
+  const deleteBlocked = allVersions.some(
+    (item) =>
+      Boolean(item.used_at) ||
+      item.activation_status === "active" ||
+      item.approval_status === "approved"
+  )
+  const conceptDeletable =
+    !deleteBlocked &&
+    allVersions.every(
+      (item) => !item.used_at && item.approval_status === "draft" && item.activation_status !== "active"
+    )
+
+  function selectVariant(nextId: string) {
+    if (!template) return
+    const next = template.variants.find((item) => item.id === nextId)
+    if (!next) return
+    const nextVersion = headlineVersion({ ...template, variants: [next] })
+    setVariantId(next.id)
+    setLocale(next.locale.toLowerCase() || "nl")
+    setVersionId(nextVersion?.id ?? null)
+    setSubject(tokensToEditor(nextVersion?.subject ?? ""))
+    setPreheader(tokensToEditor(nextVersion?.preheader ?? ""))
+    setBody(tokensToEditor(nextVersion?.body ?? ""))
+    setCtaLabel(nextVersion?.cta_label ?? "")
+    setCtaUrl(nextVersion?.cta_url ?? "")
+    setNotice(null)
+    setError(null)
+  }
 
   function selectVersion(next: EngagementVersion) {
     setVersionId(next.id)
@@ -168,6 +229,12 @@ export default function EngagementMessagePage() {
     setBody(tokensToEditor(next.body))
     setCtaLabel(next.cta_label)
     setCtaUrl(next.cta_url ?? "")
+    setAudience(
+      template?.audience && isMessageAudience(template.audience)
+        ? template.audience
+        : ""
+    )
+    setRich(template?.layout === "newsletter" || (template?.layout !== "message" && isRichMessage(next.body)))
     setNotice(null)
     setError(null)
     const url = new URL(window.location.href)
@@ -200,7 +267,23 @@ export default function EngagementMessagePage() {
     const input = contentInput()
     if (!input.subject) return "Vul een onderwerp in."
     if (!input.preheader) return "Vul een preheader in."
-    if (!input.body || input.body === "<p></p>") return "Schrijf de berichttekst."
+    if (rich) {
+      const blocks = parseMessageBlocks(input.body)
+      const hasText = blocks.some((block) => {
+        if (block.kind === "divider") return false
+        if (block.kind === "product" || block.kind === "product_group") return true
+        if ("text" in block && block.text.trim()) return true
+        if ("headline" in block && block.headline.trim()) return true
+        if ("label" in block && block.label.trim()) return true
+        return false
+      })
+      if (!hasText) return "Voeg inhoud toe aan de uitgebreide boodschap."
+    } else if (!input.body || input.body === "<p></p>") {
+      return "Schrijf de berichttekst."
+    }
+    if ((type === "campaign" || type === "newsletter") && !isMessageAudience(audience)) {
+      return "Kies een doelgroep voor deze campagne."
+    }
     if (!input.cta_label) return "Vul de knoptekst in."
     return null
   }
@@ -212,16 +295,24 @@ export default function EngagementMessagePage() {
     const nextLocale = (next?.locale ?? locale).trim().toLowerCase()
     if (!nextName) throw new Error("Geef het bericht een naam.")
     let current = template
-    const audience = nextType === "newsletter" ? "consumers" : null
+    const nextAudience =
+      nextType === "newsletter" || nextType === "campaign"
+        ? isMessageAudience(audience)
+          ? audience
+          : null
+        : null
+    const nextLayout = rich ? "newsletter" : "message"
     if (
       nextName !== template.name ||
       nextType !== template.communication_type ||
-      (nextType === "newsletter" && template.audience !== "consumers")
+      ((nextType === "newsletter" || nextType === "campaign") && template.audience !== nextAudience) ||
+      template.layout !== nextLayout
     ) {
       current = await updateEngagementTemplate(template.id, {
         name: nextName,
         communication_type: nextType,
-        audience,
+        audience: nextAudience,
+        layout: nextLayout,
       })
     }
     const currentVariant = findVariant(current, variantId)
@@ -324,6 +415,9 @@ export default function EngagementMessagePage() {
           {status}
         </span>
       </div>
+      <p className="mt-2 text-xs text-wf-700">
+        Type: {messageTypeLabel(type)} · Doelgroep: {audienceLabel(type, type === "newsletter" || type === "campaign" ? audience : null)} · Taal: volgt de ontvanger · Status: {status}
+      </p>
       <div className="mt-3 grid grid-cols-1 gap-3 tablet:grid-cols-2">
         <label className="text-[11px] text-wf-600">
           Type
@@ -340,33 +434,139 @@ export default function EngagementMessagePage() {
             ))}
           </select>
         </label>
-        {type === "newsletter" ? (
+        {type === "newsletter" || type === "campaign" ? (
           <label className="text-[11px] text-wf-600">
             Doelgroep
-            <select className={fieldClass} value="consumers" disabled>
-              <option value="consumers">Consumenten</option>
+            <select
+              className={fieldClass}
+              value={isMessageAudience(audience) ? audience : ""}
+              disabled={busy}
+              onChange={(event) => setAudience(event.target.value)}
+            >
+              <option value="">Kies een doelgroep</option>
+              {MESSAGE_AUDIENCES.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
             </select>
           </label>
-        ) : null}
-        <label className="text-[11px] text-wf-600">
-          Taal
-          <select
-            className={fieldClass}
-            value={locale}
-            disabled={!editable || busy}
-            onChange={(event) => setLocale(event.target.value)}
-          >
-            {MESSAGE_LOCALES.some((item) => item.value === locale) ? null : (
-              <option value={locale}>{localeLabel(locale)}</option>
-            )}
-            {MESSAGE_LOCALES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        ) : (
+          <div className="rounded border border-wf-300 bg-wf-50 px-3 py-2 text-[11px] text-wf-800">
+            <div className="font-semibold text-wf-900">Doelgroep</div>
+            <p className="mt-1">{audienceLabel(type, null)}</p>
+          </div>
+        )}
+        <div className="rounded border border-wf-300 bg-wf-50 px-3 py-2 text-[11px] text-wf-800">
+          <div className="font-semibold text-wf-900">Taal</div>
+          {(template?.variants.length ?? 0) > 1 ? (
+            <label className="mt-2 block text-[11px] text-wf-600">
+              Taalvariant
+              <select
+                className={fieldClass}
+                value={variantId ?? ""}
+                onChange={(event) => selectVariant(event.target.value)}
+              >
+                {template?.variants.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {localeLabel(item.locale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <p className="mt-1">
+            Volgt de ontvanger. Consumenten gebruiken de taal van hun inschrijving, verkopers de taal van hun account en affiliate partners de taal van hun affiliate-account. Nederlands is hier de redactietaal. Een latere vertaling kiest de taal van de ontvanger. Er wordt niets verzonden.
+          </p>
+        </div>
       </div>
+      {type === "newsletter" || type === "campaign" ? (
+        <div className="mt-3 rounded border border-wf-300 bg-wf-50 px-3 py-3">
+          <div className="text-[11px] font-semibold text-wf-900">Gepland startmoment</div>
+          <p className="mt-1 text-[11px] text-wf-700">
+            Zonder lifecycle-event. Het moment wordt opgeslagen en er wordt niets verzonden.
+          </p>
+          {status === "Goedgekeurd" || status === "Actief" || status === "Klaar voor verzending" || status === "Gepland" ? (
+            <div className="mt-2 grid grid-cols-1 gap-2 tablet:grid-cols-3">
+              <label className="text-[11px] text-wf-600">
+                Startdatum
+                <input className={fieldClass} type="date" value={scheduleDate} disabled={busy} onChange={(event) => setScheduleDate(event.target.value)} />
+              </label>
+              <label className="text-[11px] text-wf-600">
+                Starttijd
+                <input className={fieldClass} type="time" value={scheduleTime} disabled={busy} onChange={(event) => setScheduleTime(event.target.value)} />
+              </label>
+              <label className="text-[11px] text-wf-600">
+                Tijdzone
+                <select className={fieldClass} value={scheduleTimezone} disabled={busy} onChange={(event) => setScheduleTimezone(event.target.value)}>
+                  <option value="Europe/Amsterdam">Amsterdam</option>
+                  <option value="Europe/Brussels">Brussel</option>
+                  <option value="Europe/Berlin">Berlijn</option>
+                  <option value="Europe/Paris">Parijs</option>
+                  <option value="Europe/London">Londen</option>
+                  <option value="UTC">UTC</option>
+                </select>
+              </label>
+              <div className="flex flex-wrap gap-2 tablet:col-span-3">
+                <button
+                  type="button"
+                  className="h-8 rounded bg-wf-900 px-3 text-[11px] font-medium text-white disabled:opacity-50"
+                  disabled={busy}
+                  onClick={() =>
+                    run(async () => {
+                      if (!template) return
+                      if (!isMessageAudience(audience)) {
+                        throw new Error("Kies een doelgroep.")
+                      }
+                      if (!scheduleDate || !scheduleTime) throw new Error("Kies een startdatum en starttijd.")
+                      const saved = await updateEngagementTemplate(template.id, {
+                        name: name.trim(),
+                        communication_type: type,
+                        audience,
+                        schedule: {
+                          scheduled_at: `${scheduleDate}T${scheduleTime}`,
+                          schedule_timezone: scheduleTimezone,
+                          audience,
+                        },
+                      })
+                      applyTemplate(saved, { variantId, versionId: version?.id })
+                      setNotice("Het startmoment is opgeslagen. Er is niets verzonden.")
+                    })
+                  }
+                >
+                  Plannen
+                </button>
+                {template?.schedule_status === "scheduled" ? (
+                  <button
+                    type="button"
+                    className="h-8 rounded border border-wf-400 bg-white px-3 text-[11px] font-medium text-wf-900 disabled:opacity-50"
+                    disabled={busy}
+                    onClick={() =>
+                      run(async () => {
+                        if (!template) return
+                        const saved = await updateEngagementTemplate(template.id, {
+                          name: name.trim(),
+                          communication_type: type,
+                          audience: audience || null,
+                          schedule: null,
+                        })
+                        applyTemplate(saved, { variantId, versionId: version?.id })
+                        setNotice("De planning is verwijderd. Er is niets verzonden.")
+                      })
+                    }
+                  >
+                    Planning verwijderen
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <p className="mt-2 text-[11px] text-wf-700">
+              Keur het bericht eerst goed. Daarna kun je het plannen. Verzonden is nog niet beschikbaar.
+            </p>
+          )}
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-2">
         {editable ? (
           <button
@@ -411,11 +611,37 @@ export default function EngagementMessagePage() {
             Ter beoordeling
           </button>
         ) : null}
-        {status === "In beoordeling" && version && !version.used_at ? (
+        {conceptDeletable ? (
+          <button
+            type="button"
+            className="h-8 rounded border border-wf-400 bg-white px-3 text-[11px] font-medium text-wf-900 disabled:opacity-50"
+            disabled={busy}
+            onClick={() => {
+              if (!window.confirm("Weet je zeker dat je dit concept wilt verwijderen?")) return
+              run(async () => {
+                await deleteEngagementTemplate(template.id)
+                router.push("/engagement/templates")
+              })
+            }}
+          >
+            Verwijderen
+          </button>
+        ) : deleteBlocked ? (
+          <button
+            type="button"
+            className="h-8 rounded border border-wf-300 bg-wf-50 px-3 text-[11px] font-medium text-wf-500"
+            disabled
+            title="Dit bericht kan niet worden verwijderd omdat het al wordt gebruikt."
+          >
+            Verwijderen
+          </button>
+        ) : null}
+        {version?.approval_status === "pending_review" && !version.used_at ? (
           <button
             type="button"
             className="h-8 rounded bg-wf-900 px-3 text-[11px] font-medium text-white disabled:opacity-50"
-            disabled={busy}
+            disabled={busy || previewProblems.length > 0}
+            title={previewProblems[0] || undefined}
             onClick={() =>
               run(async () => {
                 const approved = await approveEngagementVersion(template.id, version.id)
@@ -427,7 +653,9 @@ export default function EngagementMessagePage() {
             Goedkeuren
           </button>
         ) : null}
-        {type !== "newsletter" && status === "Goedgekeurd" && version && !version.used_at ? (
+        {version?.approval_status === "approved" &&
+        version.activation_status !== "active" &&
+        !version.used_at ? (
           <button
             type="button"
             className="h-8 rounded bg-wf-900 px-3 text-[11px] font-medium text-white disabled:opacity-50"
@@ -498,9 +726,9 @@ export default function EngagementMessagePage() {
         </div>
       ) : null}
       {notice ? <p className="mt-3 text-xs text-wf-700">{notice}</p> : null}
-      {!editable && (status === "Actief" || version?.used_at) ? (
+      {!editable && (status === "Actief" || version?.used_at || deleteBlocked) ? (
         <p className="mt-3 rounded border border-wf-300 bg-wf-50 px-3 py-2 text-xs text-wf-800">
-          Deze versie is actief of al gebruikt en kan niet worden gewijzigd.
+          Deze versie is actief of al gebruikt en kan niet worden gewijzigd. Dit bericht kan niet worden verwijderd omdat het al wordt gebruikt.
         </p>
       ) : null}
       {!editable && status !== "Actief" && !version?.used_at ? (
@@ -530,22 +758,79 @@ export default function EngagementMessagePage() {
             />
           </label>
           <div className="mt-3">
-            <div className="text-[11px] text-wf-600">Bericht</div>
-            <div className="mt-1">
-              <CmsRichTextEditor
-                ref={editorRef}
-                value={body}
-                onChange={setBody}
+            <div className="text-[11px] text-wf-600">Opmaak</div>
+            <div className="mt-1 flex gap-2">
+              <button
+                type="button"
+                className={`h-8 rounded px-3 text-[11px] font-medium ${rich ? "border border-wf-300 bg-white" : "bg-wf-900 text-white"}`}
                 disabled={!editable || busy}
-                minHeightClass="min-h-[280px]"
-                placeholder="Schrijf hier het bericht…"
-                onUploadImage={async (file) => {
-                  const uploaded = await uploadCmsMedia(file, "brand_story_photo")
-                  return uploaded.asset.url
+                onClick={() => {
+                  if (!rich) return
+                  const text = parseMessageBlocks(body)
+                    .flatMap((block) => {
+                      if (block.kind === "hero") return [block.headline, block.text]
+                      if ("text" in block) return [block.text]
+                      if (block.kind === "product") return [block.name, block.text]
+                      if (block.kind === "heading") return [block.text]
+                      return []
+                    })
+                    .filter(Boolean)
+                    .map((paragraph) => `<p>${paragraph}</p>`)
+                    .join("")
+                  setBody(text || "<p></p>")
+                  setRich(false)
                 }}
-              />
+              >
+                Bericht
+              </button>
+              <button
+                type="button"
+                className={`h-8 rounded px-3 text-[11px] font-medium ${rich ? "bg-wf-900 text-white" : "border border-wf-300 bg-white"}`}
+                disabled={!editable || busy}
+                onClick={() => {
+                  if (rich) return
+                  if (!isRichMessage(body)) {
+                    const plain = body.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
+                    setBody(
+                      plain
+                        ? `<!--em-layout:rich--><!--em-block:text--><p>${plain}</p>`
+                        : `<!--em-layout:rich--><!--em-block:hero--><h2></h2>`
+                    )
+                  }
+                  setRich(true)
+                }}
+              >
+                Nieuwsbrief
+              </button>
+            </div>
+            <div className="mt-1">
+              {rich ? (
+                <NewsletterComposer
+                  value={body}
+                  disabled={!editable || busy}
+                  onChange={setBody}
+                  onUploadImage={async (file) => {
+                    const uploaded = await uploadCmsMedia(file, "brand_story_photo")
+                    return uploaded.asset.url
+                  }}
+                />
+              ) : (
+                <CmsRichTextEditor
+                  ref={editorRef}
+                  value={body}
+                  onChange={setBody}
+                  disabled={!editable || busy}
+                  minHeightClass="min-h-[280px]"
+                  placeholder="Schrijf hier het bericht…"
+                  onUploadImage={async (file) => {
+                    const uploaded = await uploadCmsMedia(file, "brand_story_photo")
+                    return uploaded.asset.url
+                  }}
+                />
+              )}
             </div>
           </div>
+          {rich ? null : (
           <div className="mt-3">
             <div className="text-[11px] text-wf-600">Personalisatie</div>
             <div className="mt-1 flex flex-wrap gap-2">
@@ -562,6 +847,7 @@ export default function EngagementMessagePage() {
               ))}
             </div>
           </div>
+          )}
           <div className="mt-3 grid grid-cols-1 gap-3 tablet:grid-cols-2">
             <label className="text-[11px] text-wf-600">
               Knoptekst
@@ -620,7 +906,16 @@ export default function EngagementMessagePage() {
               ctaLabel={ctaLabel}
               ctaUrl={ctaUrl}
               mode={previewMode}
-              newsletter={type === "newsletter"}
+              newsletter={type === "newsletter" || body.includes("<!--em-layout:newsletter-->")}
+              locale={locale}
+              audience={
+                audience === "affiliates" || audience === "sellers" || audience === "consumers"
+                  ? audience
+                  : type === "acquisition"
+                    ? "prospects"
+                    : "consumers"
+              }
+              onReview={({ problems }) => setPreviewProblems(problems)}
             />
           </div>
         </section>

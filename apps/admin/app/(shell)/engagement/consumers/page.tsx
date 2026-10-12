@@ -69,10 +69,9 @@ export default function ConsumersPage() {
           <p className="px-3 py-6 text-sm text-wf-700">Er zijn nog geen consumenten.</p>
         ) : (
           <>
-            <div className="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_7rem_7rem_8rem_7rem_9rem] gap-2 border-b border-wf-200 bg-wf-50 px-3 py-1.5 text-[11px] font-semibold text-wf-600 desktop:grid">
+            <div className="hidden grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_7rem_8rem_7rem_9rem] gap-2 border-b border-wf-200 bg-wf-50 px-3 py-1.5 text-[11px] font-semibold text-wf-600 desktop:grid">
               <span>Naam</span>
               <span>E-mail</span>
-              <span>Land</span>
               <span>Taal</span>
               <span>Nieuwsbrief</span>
               <span>Bron</span>
@@ -82,11 +81,10 @@ export default function ConsumersPage() {
               <Link
                 key={row.id}
                 href={`/engagement/consumers/${row.id}`}
-                className="grid grid-cols-1 gap-0.5 border-b border-wf-200 px-3 py-2 last:border-b-0 hover:bg-wf-50 desktop:grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_7rem_7rem_8rem_7rem_9rem] desktop:items-center desktop:gap-2"
+                className="grid grid-cols-1 gap-0.5 border-b border-wf-200 px-3 py-2 last:border-b-0 hover:bg-wf-50 desktop:grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_7rem_8rem_7rem_9rem] desktop:items-center desktop:gap-2"
               >
                 <span className="truncate text-sm font-semibold text-wf-900">{row.name || row.email}</span>
                 <span className="truncate text-xs text-wf-700">{row.email}</span>
-                <span className="truncate text-xs text-wf-700">{row.country}</span>
                 <span className="truncate text-xs text-wf-700">{row.language}</span>
                 <span className="text-xs font-semibold text-wf-900">{row.newsletter}</span>
                 <span className="truncate text-xs text-wf-700">{row.source}</span>

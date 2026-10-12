@@ -7,10 +7,22 @@ import type PartnerModuleService from "../../../../modules/partner/service"
 import { serializePartnerAccess } from "../../../../modules/partner/permissions"
 import { resolveApprovedSeller } from "../../product-cloud/resolve-seller"
 import { listManageableBrands } from "../../brands/brand-helpers"
+import { planSellerCommunicationPreferences } from "../../../../modules/partner/communication-preferences"
+import { appendPreferenceAudits, planPreferenceAudits } from "../../../../modules/engagement/preference-audit"
 
 const StorePatchPartnerBrandingBody = z.object({
   logo_url: z.string().trim().max(800).optional().nullable(),
   banner_url: z.string().trim().max(800).optional().nullable(),
+  communication_preferences: z
+    .object({
+      platform_updates: z.boolean(),
+      seller_tips: z.boolean(),
+      product_opportunities: z.boolean(),
+      seller_campaigns: z.boolean(),
+      europmade_news: z.boolean(),
+    })
+    .optional(),
+  locale: z.string().trim().max(12).optional(),
 })
 
 type SellerRow = {
@@ -25,6 +37,8 @@ type SellerRow = {
   onboarding_status: string
   logo_url?: string | null
   banner_url?: string | null
+  communication_preferences?: Record<string, boolean> | null
+  locale?: string | null
   company?: Record<string, unknown> | null
 }
 
@@ -37,6 +51,8 @@ function brandingPayload(full: SellerRow) {
     company: full.company ?? null,
     logo_url: persistMediaReference(full.logo_url) ?? full.logo_url ?? null,
     banner_url: persistMediaReference(full.banner_url) ?? full.banner_url ?? null,
+    communication_preferences: full.communication_preferences ?? null,
+    locale: full.locale ?? null,
     ...access,
   }
 }
@@ -147,22 +163,52 @@ export async function PATCH(req: MedusaRequest, res: MedusaResponse) {
     req.auth_context.actor_id
   )
   const body = StorePatchPartnerBrandingBody.parse(req.body ?? {})
-  if (body.logo_url === undefined && body.banner_url === undefined) {
+  if (
+    body.logo_url === undefined &&
+    body.banner_url === undefined &&
+    body.communication_preferences === undefined &&
+    body.locale === undefined
+  ) {
     throw new MedusaError(
       MedusaError.Types.INVALID_DATA,
-      "logo_url of banner_url is verplicht."
+      "logo_url, banner_url, communication_preferences of locale is verplicht."
     )
   }
   const partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
-  const patch: { id: string; logo_url?: string | null; banner_url?: string | null } =
-    { id: seller.id }
+  const patch: {
+    id: string
+    logo_url?: string | null
+    banner_url?: string | null
+    communication_preferences?: Record<string, boolean>
+    locale?: string | null
+  } = { id: seller.id }
   if (body.logo_url !== undefined) {
     patch.logo_url = persistMediaReference(body.logo_url)
   }
   if (body.banner_url !== undefined) {
     patch.banner_url = persistMediaReference(body.banner_url)
   }
+  if (body.communication_preferences !== undefined) {
+    patch.communication_preferences = planSellerCommunicationPreferences(
+      body.communication_preferences
+    )
+  }
+  if (body.locale !== undefined) {
+    patch.locale = body.locale.trim().toLowerCase().slice(0, 2) || null
+  }
   await partner.updateSellers(patch)
+  if (patch.communication_preferences) {
+    await appendPreferenceAudits(
+      req.scope,
+      planPreferenceAudits({
+        audience: "sellers",
+        entityId: seller.id,
+        actorCustomerId: req.auth_context.actor_id,
+        before: (seller as { communication_preferences?: unknown }).communication_preferences,
+        after: patch.communication_preferences,
+      })
+    )
+  }
   const full = (await partner.retrieveSeller(seller.id, {
     relations: ["company"],
   })) as SellerRow

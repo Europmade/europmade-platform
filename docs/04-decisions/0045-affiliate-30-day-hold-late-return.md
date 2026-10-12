@@ -18,7 +18,7 @@ ADR-0034 stelde een algemene 14-dagen `eligible_at` hold in (seller + affiliate 
 3. **Binnen 30 dagen:** full refund/cancel → commission reverse + Gepland payout annuleren; partial refund → commission/payout prorateren.
 4. **Na 30 dagen:** `executeReverseConversionForOrder` locked — geen reverse/prorate van affiliatecommissie; Gepland affiliate-payouts worden niet geannuleerd bij latere `RefundExecuted`.
 5. **Platform affiliate %:** blijft één actieve `affiliate_commission_setting.percentage` (ADR-0030), Admin-bewerkbaar via `/admin/affiliates/commission-settings`. Historische `commission.percentage`/`amount` wijzigen niet mee.
-6. **Seller + EuropMade-split:** niet onderdeel van deze ADR — seller affiliate-tarieven bestaan alleen als demo-UI en zijn niet backend-gekoppeld; finance-spec stelt dat affiliatecommissie uit de **platformmarge** komt.
+6. **Seller + EuropMade-split:** vervangen door [ADR-0048](./0048-affiliate-commission-paid-by-selling-seller.md). De verkopende seller betaalt de affiliatecommissie.
 
 ## Consequenties
 

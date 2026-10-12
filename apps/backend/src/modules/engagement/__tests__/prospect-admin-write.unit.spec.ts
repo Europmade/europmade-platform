@@ -22,7 +22,8 @@ describe("prospect admin write", () => {
       sales_model: "unknown",
       outreach_status: "new",
       source: "excel_import",
-      outreach_purpose: null,
+      outreach_purpose:
+        "Europese bedrijven uitnodigen om hun producten via EuropMade te verkopen.",
       self_classification_payload: { route: "direct" },
     })
   })

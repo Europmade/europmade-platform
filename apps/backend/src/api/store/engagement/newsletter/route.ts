@@ -1,6 +1,9 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError, Modules } from "@medusajs/framework/utils"
 import { cmsService, recordBody } from "../../../admin/engagement/cms-request"
+import { dispatchAutomation } from "../../../../modules/engagement/automation-run"
+import { allNewsletterTopics, emptyNewsletterTopics } from "../../../../modules/engagement/consumer-rules"
+import { appendPreferenceAudits, planPreferenceAudits } from "../../../../modules/engagement/preference-audit"
 
 type CustomerRecord = {
   id?: string
@@ -30,6 +33,23 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
       locale,
       customer_id: customer?.id ?? null,
     })
+    if (result.outcome === "subscribed") {
+      await appendPreferenceAudits(
+        req.scope,
+        planPreferenceAudits({
+          audience: "consumers",
+          entityId: result.id,
+          actorCustomerId: customer?.id ?? null,
+          before: emptyNewsletterTopics(),
+          after: allNewsletterTopics(),
+        })
+      )
+      try {
+        await dispatchAutomation(req.scope, { only: ["consumer_newsletter_subscribed"] })
+      } catch {
+        // Inschrijven blijft geslaagd. De job haalt het startmoment later op.
+      }
+    }
     const status = result.outcome === "already_subscribed" ? 200 : 201
     res.status(status).json({
       outcome: result.outcome,

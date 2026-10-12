@@ -11,6 +11,7 @@ import {
   createEngagementStep,
   deleteEngagementStep,
   listEngagementPrograms,
+  listEngagementStartTriggers,
   listEngagementTemplates,
   orderEngagementSteps,
   updateEngagementProgram,
@@ -18,10 +19,9 @@ import {
   type EngagementProgram,
   type EngagementStep,
   type EngagementTemplate,
+  type StartTriggerOption,
 } from "../../../../../lib/engagement-admin-api"
 import {
-  activationProblems,
-  automationStatus,
   delayLabel,
   delayParts,
   flowSequence,
@@ -29,16 +29,24 @@ import {
   sendableVariant,
   startLines,
   stepIsSendable,
-  stepLanguage,
   stepSubject,
+  stepSummary,
   translateAutomationError,
   typeLabel,
   type DelayUnit,
 } from "../../../../../lib/engagement-automation"
-import { messageStatus } from "../../../../../lib/engagement-message"
+import { isDemoRecordName } from "../../../../../lib/engagement-demo"
+import { isMessageAudience, messageStatus } from "../../../../../lib/engagement-message"
 
 const fieldClass =
   "mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm text-wf-900"
+
+function splitIds(value: string): string[] {
+  return value
+    .split(/[\s,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
 
 function messageOf(err: unknown, fallback: string): string {
   const raw = err instanceof EngagementAdminApiError ? err.message : fallback
@@ -60,6 +68,17 @@ export default function AutomationFlowPage() {
   const [templates, setTemplates] = useState<EngagementTemplate[]>([])
   const [name, setName] = useState("")
   const [type, setType] = useState("onboarding")
+  const [startTrigger, setStartTrigger] = useState("")
+  const [startMode, setStartMode] = useState<"" | "event" | "condition" | "scheduled">("")
+  const [scheduleDate, setScheduleDate] = useState("")
+  const [scheduleTime, setScheduleTime] = useState("19:00")
+  const [scheduleTimezone, setScheduleTimezone] = useState("Europe/Amsterdam")
+  const [programAudience, setProgramAudience] = useState("")
+  const [locales, setLocales] = useState<string[]>([])
+  const [productIds, setProductIds] = useState("")
+  const [brandIds, setBrandIds] = useState("")
+  const [categoryIds, setCategoryIds] = useState("")
+  const [triggers, setTriggers] = useState<StartTriggerOption[]>([])
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,21 +86,72 @@ export default function AutomationFlowPage() {
   const [problems, setProblems] = useState<string[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
 
-  function applyPrograms(programs: EngagementProgram[], preferId?: string) {
+  function applyPrograms(
+    programs: EngagementProgram[],
+    preferId?: string,
+    triggerRows: StartTriggerOption[] = triggers
+  ) {
     const next = programs.find((item) => item.id === (preferId ?? id)) ?? null
     setProgram(next)
     if (next) {
       setName(next.name)
       setType(next.program_type)
+      setStartTrigger(next.start_trigger ?? "")
+      const chosen = triggerRows.find((item) => item.key === next.start_trigger)
+      setStartMode(
+        next.start_mode === "scheduled"
+          ? "scheduled"
+          : chosen?.kind === "condition" || next.start_mode === "condition"
+            ? "condition"
+            : next.start_trigger || next.start_mode === "event"
+              ? "event"
+              : ""
+      )
+      const moment = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(next.scheduled_at ?? "")
+      setScheduleDate(moment?.[1] ?? "")
+      setScheduleTime(moment?.[2] ?? "19:00")
+      setScheduleTimezone(next.schedule_timezone || "Europe/Amsterdam")
+      setProgramAudience(isMessageAudience(next.audience) ? next.audience : "")
+      const criteria = next.selection_criteria
+      setLocales(criteria?.locales ?? [])
+      setProductIds((criteria?.product_ids ?? []).join(", "))
+      setBrandIds((criteria?.brand_ids ?? []).join(", "))
+      setCategoryIds((criteria?.category_ids ?? []).join(", "))
     }
     return next
   }
 
+  function startPayload() {
+    const scheduled = startMode === "scheduled"
+    const audienceNeeded = type === "newsletter" || type === "campaign"
+    return {
+      name: name.trim(),
+      program_type: type,
+      start_mode: startMode || null,
+      start_trigger: startMode === "event" || startMode === "condition" ? startTrigger || null : null,
+      scheduled_at: scheduled && scheduleDate ? `${scheduleDate}T${scheduleTime || "00:00"}` : null,
+      schedule_timezone: scheduled ? scheduleTimezone : null,
+      audience: scheduled && audienceNeeded ? programAudience || null : null,
+      selection_criteria: audienceNeeded
+        ? {
+            locales,
+            product_ids: splitIds(productIds),
+            brand_ids: splitIds(brandIds),
+            category_ids: splitIds(categoryIds),
+          }
+        : null,
+    }
+  }
+
   function load() {
-    return Promise.all([listEngagementPrograms(), listEngagementTemplates()]).then(
-      ([programs, templateRows]) => {
+    return Promise.all([
+      listEngagementPrograms(),
+      listEngagementTemplates(),
+      listEngagementStartTriggers(),
+    ]).then(([programs, templateRows, triggerRows]) => {
         setTemplates(templateRows)
-        applyPrograms(programs)
+        setTriggers(triggerRows)
+        applyPrograms(programs, undefined, triggerRows)
         setError(null)
       }
     )
@@ -112,7 +182,14 @@ export default function AutomationFlowPage() {
     try {
       await action()
     } catch (err: unknown) {
-      setError(messageOf(err, "Opslaan mislukt."))
+      const message = messageOf(err, "Opslaan mislukt.")
+      const lines = message.split("\n").map((line) => line.trim()).filter(Boolean)
+      if (lines.length > 1) {
+        setError("Deze automatisering kan nog niet worden geactiveerd.")
+        setProblems(lines)
+      } else {
+        setError(message)
+      }
     } finally {
       setBusy(false)
     }
@@ -129,7 +206,7 @@ export default function AutomationFlowPage() {
 
   const sequence = flowSequence(program)
   const steps = sequence?.steps ?? []
-  const status = automationStatus(steps, templates)
+  const status = program.activation_status === "active" ? "Actief" : "Concept"
   const start = startLines(program)
 
   async function ensureSequence() {
@@ -169,10 +246,7 @@ export default function AutomationFlowPage() {
             className="h-8 rounded border border-wf-400 bg-white px-3 text-[11px] font-medium text-wf-900 disabled:opacity-50"
             onClick={() =>
               run(async () => {
-                const programs = await updateEngagementProgram(program.id, {
-                  name: name.trim(),
-                  program_type: type,
-                })
+                const programs = await updateEngagementProgram(program.id, startPayload())
                 applyPrograms(programs, program.id)
                 setNotice("Opgeslagen.")
               })
@@ -187,18 +261,15 @@ export default function AutomationFlowPage() {
             onClick={() =>
               run(async () => {
                 const programs = await updateEngagementProgram(program.id, {
-                  name: name.trim(),
-                  program_type: type,
+                  ...startPayload(),
+                  activate: true,
                 })
                 const next = applyPrograms(programs, program.id)
-                const nextSteps = next ? flowSequence(next)?.steps ?? [] : steps
-                const found = activationProblems(name, nextSteps, templates)
-                if (found.length > 0) {
-                  setProblems(found)
+                if (next?.activation_status !== "active") {
                   setError("Deze automatisering kan nog niet worden geactiveerd.")
                   return
                 }
-                setNotice("Deze automatisering is actief.")
+                setNotice("Deze automatisering is actief. Er wordt niets verzonden.")
               })
             }
           >
@@ -234,14 +305,112 @@ export default function AutomationFlowPage() {
             ))}
           </select>
         </label>
+        <label className="text-[11px] text-wf-600">
+          Start
+          <select
+            className={fieldClass}
+            value={startMode}
+            onChange={(event) =>
+              setStartMode(event.target.value as "" | "event" | "condition" | "scheduled")
+            }
+          >
+            <option value="">Nog geen start</option>
+            <option value="event">Automatisch, op een gebeurtenis</option>
+            <option value="condition">Automatisch, op basis van gegevens</option>
+            <option value="scheduled" disabled={type !== "newsletter" && type !== "campaign"}>
+              Handmatig plannen
+            </option>
+          </select>
+        </label>
+        {startMode === "event" || startMode === "condition" ? (
+          <label className="text-[11px] text-wf-600 tablet:col-span-2">
+            Start wanneer
+            <select className={fieldClass} value={startTrigger} onChange={(event) => setStartTrigger(event.target.value)}>
+              <option value="">Nog geen startmoment</option>
+              {(
+                [
+                  ["sellers", "Verkopers"],
+                  ["consumers", "Consumenten"],
+                  ["affiliates", "Affiliatepartners"],
+                ] as const
+              ).map(([audience, label]) => (
+                <optgroup key={audience} label={label}>
+                  {triggers
+                    .filter((item) => item.audience === audience && (item.kind ?? "event") === startMode)
+                    .map((item) => (
+                      <option key={item.key} value={item.key} disabled={!item.available}>
+                        {item.available
+                          ? `${item.label} · ${label}`
+                          : `${item.label} · ${label} — Nog niet beschikbaar`}
+                      </option>
+                    ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {startMode === "scheduled" ? (
+          <>
+            <label className="text-[11px] text-wf-600">
+              Startdatum
+              <input className={fieldClass} type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
+            </label>
+            <label className="text-[11px] text-wf-600">
+              Starttijd
+              <input className={fieldClass} type="time" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} />
+            </label>
+            <label className="text-[11px] text-wf-600">
+              Tijdzone
+              <select className={fieldClass} value={scheduleTimezone} onChange={(event) => setScheduleTimezone(event.target.value)}>
+                <option value="Europe/Amsterdam">Amsterdam</option>
+                <option value="Europe/Brussels">Brussel</option>
+                <option value="Europe/Berlin">Berlijn</option>
+                <option value="Europe/Paris">Parijs</option>
+                <option value="Europe/London">Londen</option>
+                <option value="UTC">UTC</option>
+              </select>
+            </label>
+            <label className="text-[11px] text-wf-600">
+              Doelgroep
+              <select className={fieldClass} value={programAudience} onChange={(event) => setProgramAudience(event.target.value)}>
+                <option value="">Kies een doelgroep</option>
+                <option value="consumers">Consumenten</option>
+                <option value="sellers">Verkopers</option>
+                <option value="affiliates">Affiliate Partners</option>
+              </select>
+            </label>
+            <p className="text-[11px] text-wf-600 tablet:col-span-2">
+              Het geplande moment wordt opgeslagen. Er wordt niets verzonden.
+            </p>
+          </>
+        ) : null}
       </div>
+      {type === "newsletter" || type === "campaign" ? (
+        <CampaignCriteriaFields
+          locales={locales}
+          productIds={productIds}
+          brandIds={brandIds}
+          categoryIds={categoryIds}
+          catalog={
+            (startMode === "scheduled"
+              ? programAudience
+              : triggers.find((item) => item.key === startTrigger)?.audience) !== "consumers"
+          }
+          note={program.selection_note}
+          onLocales={setLocales}
+          onProducts={setProductIds}
+          onBrands={setBrandIds}
+          onCategories={setCategoryIds}
+        />
+      ) : null}
 
       <div className="mx-auto mt-8 w-full max-w-[440px]">
         <FlowCard title={program.name} meta={typeLabel(program.program_type)} />
         <Arrow />
         <div className="rounded-lg border border-wf-300 bg-wf-50 px-4 py-3 text-center">
-          <div className="text-[11px] font-semibold text-wf-500">Automatische start</div>
+          <div className="text-[11px] font-semibold text-wf-500">Start wanneer</div>
           <div className="mt-1 text-sm text-wf-900">{start.title}</div>
+          {start.note ? <p className="mt-1 text-[11px] text-wf-600">{start.note}</p> : null}
         </div>
         {steps.map((step, index) => (
           <div key={step.id}>
@@ -249,6 +418,7 @@ export default function AutomationFlowPage() {
             <WaitEditor
               step={step}
               first={index === 0}
+              scheduled={program.start_mode === "scheduled"}
               disabled={busy}
               onSave={(minutes) =>
                 run(async () => {
@@ -305,8 +475,8 @@ export default function AutomationFlowPage() {
           </div>
         ))}
         <Arrow />
-        <div className="rounded-lg border border-dashed border-wf-400 py-3 text-center text-xs font-semibold tracking-wide text-wf-600">
-          KLAAR
+        <div className="rounded-lg border border-dashed border-wf-400 py-3 text-center text-xs font-semibold text-wf-600">
+          Einde van deze reeks
         </div>
         <div className="mt-4 text-center">
           <button
@@ -321,7 +491,7 @@ export default function AutomationFlowPage() {
       </div>
       {pickerOpen ? (
         <MessagePicker
-          templates={templates.filter((template) => template.communication_type === program.program_type)}
+          templates={templates.filter((template) => !isDemoRecordName(template.name))}
           onClose={() => setPickerOpen(false)}
           onPick={(template) => {
             const variant = sendableVariant(template)
@@ -362,11 +532,13 @@ function FlowCard({ title, meta }: { title: string; meta: string }) {
 function WaitEditor({
   step,
   first,
+  scheduled,
   disabled,
   onSave,
 }: {
   step: EngagementStep
   first: boolean
+  scheduled: boolean
   disabled: boolean
   onSave: (minutes: number) => void
 }) {
@@ -388,10 +560,24 @@ function WaitEditor({
         className="rounded-full border border-wf-300 bg-white px-3 py-1 text-xs text-wf-800"
         onClick={() => setOpen((value) => !value)}
       >
-        ⏱ {delayLabel(step.delay_minutes, first)}
+        ⏱ {delayLabel(step.delay_minutes, first, scheduled)}
       </button>
       {open ? (
-        <div className="mx-auto mt-2 flex max-w-[260px] items-end justify-center gap-2">
+        <div className="mx-auto mt-2 max-w-[280px]">
+          {first ? (
+            <button
+              type="button"
+              disabled={disabled}
+              className="mb-2 text-[11px] text-wf-800 underline disabled:opacity-50"
+              onClick={() => {
+                onSave(0)
+                setOpen(false)
+              }}
+            >
+              {scheduled ? "Op het geplande moment" : "Direct na start"}
+            </button>
+          ) : null}
+          <div className="flex items-end justify-center gap-2">
           <label className="text-[11px] text-wf-600">
             Wacht
             <input
@@ -423,6 +609,7 @@ function WaitEditor({
           >
             Opslaan
           </button>
+          </div>
         </div>
       ) : null}
     </div>
@@ -453,14 +640,15 @@ function MessageCard({
   const version = variant?.versions.find((item) => messageStatus(item) === "Actief")
   const status = version ? messageStatus(version) : active ? "Actief" : "Concept"
   const subject = stepSubject(step, templates)
+  const summary = stepSummary(step, templates)
   return (
     <article className="rounded-lg border border-wf-300 bg-white px-4 py-3 shadow-sm">
       <div className="text-[11px] text-wf-500">Stap {index + 1}</div>
-      <div className="mt-1 text-sm font-semibold text-wf-900">✉ {step.template_name || template?.name || "Bericht"}</div>
-      {subject ? <div className="mt-0.5 text-xs text-wf-700">{subject}</div> : null}
-      <div className="mt-1 text-[11px] text-wf-600">
-        {typeLabel(template?.communication_type || "")} · {stepLanguage(step, templates)} · {status}
-      </div>
+      <div className="mt-1 text-sm font-semibold text-wf-900">{step.template_name || template?.name || "Bericht"}</div>
+      {summary || subject ? (
+        <p className="mt-1 text-xs leading-relaxed text-wf-700">{summary || subject}</p>
+      ) : null}
+      <div className="mt-1 text-[11px] text-wf-600">{status}</div>
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href={`/engagement/templates/${step.template_id}`}
@@ -577,6 +765,78 @@ function MessagePicker({
           </button>
         </div>
       </div>
+    </div>
+  )
+}
+
+function CampaignCriteriaFields({
+  locales,
+  productIds,
+  brandIds,
+  categoryIds,
+  catalog,
+  note,
+  onLocales,
+  onProducts,
+  onBrands,
+  onCategories,
+}: {
+  locales: string[]
+  productIds: string
+  brandIds: string
+  categoryIds: string
+  catalog: boolean
+  note?: string | null
+  onLocales: (locales: string[]) => void
+  onProducts: (value: string) => void
+  onBrands: (value: string) => void
+  onCategories: (value: string) => void
+}) {
+  return (
+    <div className="mt-4 rounded border border-wf-300 bg-wf-50 px-3 py-3">
+      <div className="text-[11px] font-semibold text-wf-900">Doelgroep en selectie</div>
+      <p className="mt-1 text-[11px] text-wf-700">
+        Taal filtert op de taal van het account. Product, merk en categorie filteren alleen verkopers met een gepubliceerd product en affiliatepartners met een productlink. Consumenten hebben die koppeling niet. Uitschrijvingen, voorkeuren en suppressies blijven gelden. Er wordt niets verzonden.
+      </p>
+      <div className="mt-2 flex flex-wrap gap-3 text-[11px] text-wf-800">
+        {(["nl", "en", "de", "fr"] as const).map((locale) => (
+          <label key={locale} className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={locales.includes(locale)}
+              onChange={(event) =>
+                onLocales(
+                  event.target.checked
+                    ? [...locales, locale]
+                    : locales.filter((item) => item !== locale)
+                )
+              }
+            />
+            {locale}
+          </label>
+        ))}
+      </div>
+      {catalog ? (
+        <div className="mt-3 grid grid-cols-1 gap-3 tablet:grid-cols-3">
+          <label className="text-[11px] text-wf-600">
+            Product-id&apos;s
+            <input className={fieldClass} value={productIds} onChange={(event) => onProducts(event.target.value)} />
+          </label>
+          <label className="text-[11px] text-wf-600">
+            Merk-id&apos;s
+            <input className={fieldClass} value={brandIds} onChange={(event) => onBrands(event.target.value)} />
+          </label>
+          <label className="text-[11px] text-wf-600">
+            Categorie-id&apos;s
+            <input className={fieldClass} value={categoryIds} onChange={(event) => onCategories(event.target.value)} />
+          </label>
+        </div>
+      ) : (
+        <p className="mt-2 text-[11px] text-wf-600">
+          Voor consumenten geldt alleen de nieuwsbriefinschrijving en de gekozen taal.
+        </p>
+      )}
+      {note ? <p className="mt-2 text-[11px] text-wf-800">{note}</p> : null}
     </div>
   )
 }

@@ -4,6 +4,9 @@
  */
 import { adminFetch } from "./admin-fetch"
 
+export const DEFAULT_OUTREACH_PURPOSE =
+  "Europese bedrijven uitnodigen om hun producten via EuropMade te verkopen."
+
 export class EngagementAdminApiError extends Error {
   status?: number
   constructor(message: string, status?: number) {
@@ -89,6 +92,11 @@ export const ORGANIZATION_ROLES = [
   "unknown",
 ] as const
 
+/** Retailer blijft in opgeslagen gegevens, maar is geen nieuwe keuze. */
+export const SELECTABLE_ORGANIZATION_ROLES = ORGANIZATION_ROLES.filter(
+  (role) => role !== "retailer"
+)
+
 export const OUTREACH_STATUSES = [
   "nieuw",
   "te_benaderen",
@@ -127,7 +135,7 @@ export const ROLE_LABELS: Record<string, string> = {
   seller: "Verkoper",
   manufacturer: "Producent",
   distributor: "Distributeur",
-  retailer: "Retailer",
+  retailer: "Verkoper",
   other: "Overig",
   unknown: "Onbekend",
 }
@@ -142,7 +150,7 @@ export const ONBOARDING_STATUSES = [
 ] as const
 
 export const EVENT_STATUS_LABELS: Record<string, string> = {
-  queued: "In wachtrij",
+  queued: "Klaar, nog niet verzonden",
   sent: "Verzonden",
   failed: "Mislukt",
   bounced: "Teruggekomen",
@@ -233,6 +241,10 @@ export type EngagementTemplate = {
   communication_type: string
   audience: string | null
   ready_to_send: boolean
+  layout?: "message" | "newsletter" | null
+  scheduled_at?: string | null
+  schedule_timezone?: string | null
+  schedule_status?: "scheduled" | null
   created_at: string | null
   variants: EngagementVariant[]
 }
@@ -253,12 +265,35 @@ export type EngagementSequence = {
   steps: EngagementStep[]
 }
 
+export type StartTriggerOption = {
+  key: string
+  label: string
+  audience: "sellers" | "consumers" | "affiliates"
+  kind?: "event" | "condition"
+  available: boolean
+}
+
 export type EngagementProgram = {
   id: string
   name: string
   program_type: string
-  automatic_start?: "linked" | "unlinked"
+  start_trigger?: string | null
+  start_mode?: "event" | "condition" | "scheduled" | null
+  activation_status?: "concept" | "active" | null
+  scheduled_at?: string | null
+  schedule_timezone?: string | null
+  audience?: string | null
+  selection_criteria?: {
+    locales: string[]
+    product_ids: string[]
+    brand_ids: string[]
+    category_ids: string[]
+  } | null
+  selection_note?: string | null
+  automatic_start?: "linked" | "unlinked" | "scheduled"
   linked_sequence_id?: string | null
+  start_title?: string
+  start_note?: string
   sequences: EngagementSequence[]
 }
 
@@ -300,6 +335,8 @@ export type EngagementEvent = {
   sequence_name: string | null
   sequence_step_id: string | null
   provider_message_id: string | null
+  locale: string | null
+  delivery_error: string | null
   replied: boolean
   bounced: boolean
   unsubscribed: boolean
@@ -564,13 +601,13 @@ export function versionBadges(version: {
   used_at: string | null
 }): string[] {
   const labels: string[] = []
-  if (version.approval_status === "draft") labels.push("Draft")
-  else if (version.approval_status === "approved") labels.push("Approved")
-  else if (version.approval_status) labels.push(version.approval_status)
-  if (version.activation_status === "active") labels.push("Active")
-  else if (version.activation_status === "inactive") labels.push("Inactive")
-  else if (version.activation_status) labels.push(version.activation_status)
-  if (version.used_at) labels.push("Used")
+  if (version.approval_status === "draft") labels.push("Concept")
+  else if (version.approval_status === "pending_review") labels.push("Ter beoordeling")
+  else if (version.approval_status === "approved") labels.push("Goedgekeurd")
+  else if (version.approval_status === "rejected") labels.push("Afgekeurd")
+  if (version.activation_status === "active") labels.push("Actief")
+  else if (version.activation_status === "archived") labels.push("Gearchiveerd")
+  if (version.used_at) labels.push("Gebruikt")
   return labels
 }
 
@@ -583,13 +620,14 @@ export function templateStatusSummary(template: EngagementTemplate): string {
       }
     }
   }
-  if (counts.size === 0) return "Geen versions"
+  if (counts.size === 0) return "Geen versies"
   return [...counts.entries()].map(([label, count]) => `${count} ${label}`).join(" · ")
 }
 
 export function createEngagementTemplate(input: {
   name: string
   communication_type: string
+  audience?: string | null
 }): Promise<EngagementTemplate> {
   return writeTemplate(
     "/admin/engagement/templates",
@@ -600,7 +638,17 @@ export function createEngagementTemplate(input: {
 
 export function updateEngagementTemplate(
   id: string,
-  input: { name: string; communication_type: string; audience?: string | null }
+  input: {
+    name: string
+    communication_type: string
+    audience?: string | null
+    layout?: "message" | "newsletter" | null
+    schedule?: {
+      scheduled_at?: string | null
+      schedule_timezone?: string | null
+      audience?: string | null
+    } | null
+  }
 ): Promise<EngagementTemplate> {
   return writeTemplate(
     `/admin/engagement/templates/${encodeURIComponent(id)}`,
@@ -641,14 +689,40 @@ export type EngagementConsumer = {
   id: string
   name: string
   email: string
-  country: string
+  country: string | null
   language: string
   newsletter: string
   newsletter_enabled: boolean
+  newsletters?: Array<{ key: string; label: string; enabled: boolean }>
   source: string
+  account: string | null
   subscribed_at: string | null
   unsubscribed_at: string | null
   updated_at: string | null
+}
+
+export type CatalogProductHit = {
+  id: string
+  title: string
+  description: string
+  image_url: string
+  href: string
+  commission_label?: string | null
+  brand_name?: string | null
+  category_names?: string[]
+}
+
+export async function searchCatalogProducts(q: string): Promise<CatalogProductHit[]> {
+  const query = q.trim()
+  if (query.length < 2) return []
+  const res = await adminFetch(
+    `/admin/engagement/catalog-products?q=${encodeURIComponent(query)}`
+  )
+  const body = await readJson<{ products: CatalogProductHit[] }>(
+    res,
+    "Producten zoeken mislukt."
+  )
+  return body.products
 }
 
 export async function listEngagementConsumers(q = ""): Promise<EngagementConsumer[]> {
@@ -664,6 +738,58 @@ export async function getEngagementConsumer(id: string): Promise<{
 }> {
   const res = await adminFetch(`/admin/engagement/consumers/${encodeURIComponent(id)}`)
   return readJson(res, "Consument laden mislukt.")
+}
+
+export type AffiliatePartner = {
+  id: string
+  organization: string
+  contact_name: string | null
+  email: string | null
+  website: string | null
+  partner_type: string | null
+  partner_type_label: string
+  status: string
+  country: string | null
+  locale: string | null
+  contacted_at: string | null
+  commission: string | null
+  attribution_days: number | null
+  social_channels: Array<{ channel: string; label: string; url: string }>
+  preferences: Array<{ key: string; label: string; enabled: boolean }>
+  links: Array<{ target: string; url: string }>
+  products: Array<{ url: string }>
+  history_note: string
+}
+
+export async function listAffiliatePartners(): Promise<AffiliatePartner[]> {
+  const res = await adminFetch("/admin/engagement/affiliates")
+  const body = await readJson<{ partners: AffiliatePartner[] }>(res, "Affiliate partners laden mislukt.")
+  return body.partners
+}
+
+export async function getAffiliatePartner(id: string): Promise<AffiliatePartner> {
+  const res = await adminFetch(`/admin/engagement/affiliates/${encodeURIComponent(id)}`)
+  const body = await readJson<{ partner: AffiliatePartner }>(res, "Affiliate partner laden mislukt.")
+  return body.partner
+}
+
+export async function saveAffiliatePartner(
+  id: string,
+  input: {
+    partner_type: string | null
+    contact_name: string | null
+    locale: string | null
+    contacted_at: string | null
+    communication_preferences: Record<string, boolean>
+    social_channels: Array<{ channel: string; url: string }>
+  }
+): Promise<AffiliatePartner> {
+  const res = await adminFetch(`/admin/engagement/affiliates/${encodeURIComponent(id)}`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  })
+  const body = await readJson<{ partner: AffiliatePartner }>(res, "Dossier opslaan mislukt.")
+  return body.partner
 }
 
 export async function setConsumerNewsletter(
@@ -764,6 +890,14 @@ export function approveEngagementVersion(
   )
 }
 
+export async function deleteEngagementTemplate(templateId: string): Promise<void> {
+  const res = await adminFetch(
+    `/admin/engagement/templates/${encodeURIComponent(templateId)}`,
+    { method: "DELETE" }
+  )
+  await readJson<{ deleted: boolean }>(res, "Verwijderen mislukt.")
+}
+
 export function activateEngagementVersion(
   templateId: string,
   versionId: string
@@ -787,12 +921,28 @@ export function deactivateEngagementVersion(
 }
 
 export async function listEngagementPrograms(): Promise<EngagementProgram[]> {
+  const body = await readEngagementPrograms()
+  return body.programs
+}
+
+export async function listEngagementStartTriggers(): Promise<StartTriggerOption[]> {
+  const body = await readEngagementPrograms()
+  return body.start_triggers ?? []
+}
+
+async function readEngagementPrograms(): Promise<{
+  programs: EngagementProgram[]
+  start_triggers?: StartTriggerOption[]
+}> {
   const res = await adminFetch("/admin/engagement/programs")
-  const body = await readJson<{ programs: EngagementProgram[] }>(
+  const body = await readJson<{
+    programs: EngagementProgram[]
+    start_triggers?: StartTriggerOption[]
+  }>(
     res,
     "Automatiseringen laden mislukt."
   )
-  return body.programs
+  return body
 }
 
 async function writePrograms(
@@ -822,7 +972,22 @@ export function createEngagementProgram(input: {
 
 export function updateEngagementProgram(
   id: string,
-  input: { name: string; program_type: string }
+  input: {
+    name: string
+    program_type: string
+    start_trigger?: string | null
+    start_mode?: "event" | "condition" | "scheduled" | null
+    activate?: boolean
+    scheduled_at?: string | null
+    schedule_timezone?: string | null
+    audience?: string | null
+    selection_criteria?: {
+      locales: string[]
+      product_ids: string[]
+      brand_ids: string[]
+      category_ids: string[]
+    } | null
+  }
 ): Promise<EngagementProgram[]> {
   return writePrograms(
     `/admin/engagement/programs/${encodeURIComponent(id)}`,

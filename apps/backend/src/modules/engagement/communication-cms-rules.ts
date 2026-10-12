@@ -15,6 +15,49 @@ export const COMMUNICATION_TYPES = [
 
 export type CommunicationType = (typeof COMMUNICATION_TYPES)[number]
 
+export const TEMPLATE_AUDIENCES = ["consumers", "sellers", "affiliates"] as const
+
+export type TemplateAudience = (typeof TEMPLATE_AUDIENCES)[number]
+
+/**
+ * Nieuwsbrief blijft voor consumenten.
+ * Een campagne bewaart de gekozen doelgroep en valt niet stilzwijgend op consumenten terug.
+ * Andere types hebben geen opgeslagen doelgroep.
+ */
+export function planTemplateAudience(
+  communicationType: string,
+  requested: string | null | undefined,
+  current: string | null = null
+): string | null {
+  if (communicationType === "newsletter" || communicationType === "campaign") {
+    const value = requested === undefined ? current : requested
+    if (value === "consumers" || value === "sellers" || value === "affiliates") return value
+    if (communicationType === "newsletter" && (value == null || value === "")) {
+      return current === "sellers" ? "sellers" : "consumers"
+    }
+    throw new Error(
+      communicationType === "campaign"
+        ? "Kies een doelgroep voor deze campagne."
+        : "Kies een doelgroep."
+    )
+  }
+  return null
+}
+
+export const TEMPLATE_LAYOUTS = ["message", "newsletter"] as const
+
+export type TemplateLayout = (typeof TEMPLATE_LAYOUTS)[number]
+
+/** Bericht of nieuwsbriefopmaak. Los van het communicatietype. */
+export function planTemplateLayout(
+  requested: string | null | undefined,
+  current: string | null = null
+): TemplateLayout {
+  if (requested === "message" || requested === "newsletter") return requested
+  if (current === "message" || current === "newsletter") return current
+  return "message"
+}
+
 export const APPROVAL_STATUSES = [
   "draft",
   "pending_review",
@@ -193,6 +236,50 @@ export function assertCreatedVersionStatus(input: {
     throw new Error("Een nieuwe TemplateVersion is altijd draft en inactive.")
   }
   return { approval_status: "draft", activation_status: "inactive" }
+}
+
+export const TEMPLATE_IN_USE_MESSAGE =
+  "Dit bericht kan niet worden verwijderd omdat het al wordt gebruikt."
+
+/**
+ * Een heel bericht mag alleen weg als het nooit actief of gebruikt is,
+ * niet in een automatisering staat en geen communicatiehistorie heeft.
+ */
+export function assertTemplateDeletable(input: {
+  versions: Array<{
+    used_at?: Date | string | null
+    approval_status: string
+    activation_status: string
+  }>
+  sequenceStepCount: number
+  historyCount: number
+}): void {
+  const blocked = input.versions.some(
+    (version) =>
+      Boolean(version.used_at) ||
+      version.activation_status === "active" ||
+      version.approval_status === "approved"
+  )
+  if (blocked || input.sequenceStepCount > 0 || input.historyCount > 0) {
+    throw new Error(TEMPLATE_IN_USE_MESSAGE)
+  }
+}
+
+/** Alleen een ongebruikt concept of een versie ter beoordeling mag weg. */
+export function assertVersionDeletable(version: {
+  used_at?: Date | string | null
+  approval_status: string
+  activation_status: string
+}): void {
+  if (version.used_at) {
+    throw new Error("Een gebruikte versie kan niet worden verwijderd.")
+  }
+  if (version.activation_status === "active") {
+    throw new Error("Een actieve versie kan niet worden verwijderd.")
+  }
+  if (version.approval_status === "approved") {
+    throw new Error("Een goedgekeurde versie kan niet worden verwijderd.")
+  }
 }
 
 export function planVersionApproval(current: VersionState): VersionTransition {

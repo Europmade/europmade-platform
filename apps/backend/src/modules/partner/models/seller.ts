@@ -58,6 +58,18 @@ const Seller = model
     // Seller storefront branding (Instellingen → Logo/Banner). Host-agnostic refs.
     logo_url: model.text().nullable(),
     banner_url: model.text().nullable(),
+    /**
+     * Vrijwillige EuropMade-communicatie. Transactionele meldingen staan hier niet in
+     * en kunnen niet worden uitgezet.
+     */
+    communication_preferences: model.json().nullable(),
+    /** Taal van het seller-account. Leeg = bronversie bij verzending. */
+    locale: model.text().nullable(),
+    /**
+     * Affiliatecommissie van deze seller: standaard en optionele productregels.
+     * Leeg = bestaande standaard (8%). Wijzigt geen bestaande percentages.
+     */
+    affiliate_commission_settings: model.json().nullable(),
   })
   .indexes([{ on: ["company_id"] }, { on: ["onboarding_status"] }])
 

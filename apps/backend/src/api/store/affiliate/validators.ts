@@ -30,6 +30,9 @@ export type StoreAffiliateClickBodyInput = z.infer<
 
 export const StoreAffiliateLinkBody = z.object({
   target_url: z.string().trim().min(1).max(2000),
+  product_id: z.string().trim().min(1).max(128).optional(),
+  offer_id: z.string().trim().min(1).max(128).optional(),
+  seller_id: z.string().trim().min(1).max(128).optional(),
 })
 export type StoreAffiliateLinkBodyInput = z.infer<typeof StoreAffiliateLinkBody>
 

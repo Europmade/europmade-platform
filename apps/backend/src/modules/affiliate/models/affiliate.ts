@@ -19,6 +19,13 @@ const Affiliate = model
     approved_at: model.dateTime().nullable(),
     channel_url: model.text().nullable(),
     rejection_reason: model.text().nullable(),
+    /** Communicatieprofiel. Geen aparte affiliate-database. */
+    partner_type: model.text().nullable(),
+    contact_name: model.text().nullable(),
+    locale: model.text().nullable(),
+    contacted_at: model.text().nullable(),
+    communication_preferences: model.json().nullable(),
+    social_channels: model.json().nullable(),
     links: model.hasMany(() => AffiliateLink, { mappedBy: "affiliate" }),
     coupons: model.hasMany(() => Coupon, { mappedBy: "affiliate" }),
   })

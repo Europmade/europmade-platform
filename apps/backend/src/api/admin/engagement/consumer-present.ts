@@ -1,7 +1,10 @@
 import {
+  CONSUMER_NEWSLETTER_TOPIC_LABELS,
+  CONSUMER_NEWSLETTER_TOPICS,
   countryLabel,
   localeLabel,
   newsletterLabel,
+  resolveNewsletterTopics,
   sourceLabel,
 } from "../../../modules/engagement/consumer-rules"
 
@@ -11,8 +14,10 @@ export type ConsumerRow = {
   name?: string | null
   country_code?: string | null
   locale?: string | null
+  customer_id?: string | null
   source?: string | null
   newsletter_enabled?: boolean
+  newsletter_topics?: unknown
   subscribed_at?: unknown
   unsubscribed_at?: unknown
   updated_at?: unknown
@@ -32,11 +37,17 @@ export function presentConsumer(row: ConsumerRow) {
     id: row.id ?? "",
     name: row.name?.trim() || "",
     email: row.email?.trim() || "",
-    country: countryLabel(row.country_code),
+    country: row.country_code ? countryLabel(row.country_code) : null,
     language: localeLabel(row.locale),
     newsletter: newsletterLabel(Boolean(row.newsletter_enabled)),
     newsletter_enabled: Boolean(row.newsletter_enabled),
+    newsletters: CONSUMER_NEWSLETTER_TOPICS.map((key) => ({
+      key,
+      label: CONSUMER_NEWSLETTER_TOPIC_LABELS[key],
+      enabled: resolveNewsletterTopics(row.newsletter_topics, Boolean(row.newsletter_enabled))[key],
+    })),
     source: sourceLabel(row.source),
+    account: row.customer_id?.trim() ? "Gekoppeld account" : null,
     subscribed_at: iso(row.subscribed_at),
     unsubscribed_at: iso(row.unsubscribed_at),
     updated_at: iso(row.updated_at ?? row.created_at),

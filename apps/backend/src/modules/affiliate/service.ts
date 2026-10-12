@@ -1,5 +1,12 @@
 import { createHash, randomBytes } from "node:crypto"
 import { MedusaError, MedusaService } from "@medusajs/framework/utils"
+import {
+  planAffiliateLocale,
+  planAffiliatePreferences,
+  planContactedAt,
+  planPartnerType,
+  planSocialChannels,
+} from "./affiliate-profile"
 import Affiliate from "./models/affiliate"
 import AffiliateLink from "./models/affiliate-link"
 import Coupon from "./models/coupon"
@@ -85,6 +92,42 @@ class AffiliateModuleService extends MedusaService({
 
   async generateCouponCode(): Promise<string> {
     return `EM${randomBytes(4).toString("hex").toUpperCase()}`
+  }
+
+  async updateAffiliateProfile(
+    id: string,
+    input: {
+      partner_type?: unknown
+      contact_name?: unknown
+      locale?: unknown
+      contacted_at?: unknown
+      communication_preferences?: unknown
+      social_channels?: unknown
+    }
+  ) {
+    await this.retrieveAffiliate(id)
+    const patch: Record<string, unknown> = { id }
+    try {
+      if ("partner_type" in input) patch.partner_type = planPartnerType(input.partner_type)
+      if ("contact_name" in input) {
+        const name =
+          typeof input.contact_name === "string" ? input.contact_name.trim().slice(0, 120) : ""
+        patch.contact_name = name || null
+      }
+      if ("locale" in input) patch.locale = planAffiliateLocale(input.locale)
+      if ("contacted_at" in input) patch.contacted_at = planContactedAt(input.contacted_at)
+      if ("communication_preferences" in input) {
+        patch.communication_preferences = planAffiliatePreferences(input.communication_preferences)
+      }
+      if ("social_channels" in input) patch.social_channels = planSocialChannels(input.social_channels)
+    } catch (err) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        err instanceof Error ? err.message : "Het dossier kon niet worden opgeslagen."
+      )
+    }
+    if (Object.keys(patch).length === 1) return this.retrieveAffiliate(id)
+    return this.updateAffiliates(patch)
   }
 }
 

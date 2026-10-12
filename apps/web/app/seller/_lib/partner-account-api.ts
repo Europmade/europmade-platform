@@ -63,6 +63,8 @@ export type PartnerAccountResponse = {
     } | null
     logo_url?: string | null
     banner_url?: string | null
+    communication_preferences?: SellerCommunicationPreferences | null
+    locale?: string | null
   }
   users: Array<{
     id: string
@@ -79,6 +81,14 @@ export type PartnerAccountResponse = {
   }>
 }
 
+export type SellerCommunicationPreferences = {
+  platform_updates: boolean
+  seller_tips: boolean
+  product_opportunities: boolean
+  seller_campaigns: boolean
+  europmade_news: boolean
+}
+
 export function getPartnerAccount() {
   return request<PartnerAccountResponse>("/store/partner/account")
 }
@@ -86,6 +96,8 @@ export function getPartnerAccount() {
 export function patchPartnerAccount(body: {
   logo_url?: string | null
   banner_url?: string | null
+  communication_preferences?: SellerCommunicationPreferences
+  locale?: string | null
 }) {
   return request<{ partner: PartnerAccountResponse["partner"] }>(
     "/store/partner/account",

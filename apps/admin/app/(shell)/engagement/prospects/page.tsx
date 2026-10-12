@@ -7,7 +7,7 @@ import { Notice } from "@europmade/ui"
 import {
   EngagementAdminApiError,
   ONBOARDING_STATUSES,
-  ORGANIZATION_ROLES,
+  SELECTABLE_ORGANIZATION_ROLES,
   OUTREACH_STATUSES,
   SALES_MODELS,
   createEngagementOrganization,
@@ -18,8 +18,12 @@ import {
   outreachStatusLabel,
   roleLabel,
   salesModelLabel,
+  sourceChoices,
+  sourceLabel,
+  DEFAULT_OUTREACH_PURPOSE,
   type EngagementOrganization,
 } from "../../../../lib/engagement-admin-api"
+import { listTaxonomyCategories, type AdminTaxonomyCategory } from "../../../../lib/category-admin-api"
 import { ProspectImportWizard } from "./_components/import-wizard"
 
 const fieldClass =
@@ -172,7 +176,7 @@ export default function EngagementProspectsPage() {
           Rol
           <select className={fieldClass} value={role} onChange={(event) => setRole(event.target.value)}>
             <option value="">Alle</option>
-            {ORGANIZATION_ROLES.map((item) => (
+            {SELECTABLE_ORGANIZATION_ROLES.map((item) => (
               <option key={item} value={item}>
                 {roleLabel(item)}
               </option>
@@ -326,6 +330,15 @@ function NewProspectDialog({
   const [category, setCategory] = useState("")
   const [role, setRole] = useState("")
   const [salesModel, setSalesModel] = useState("")
+  const [purpose, setPurpose] = useState(DEFAULT_OUTREACH_PURPOSE)
+  const [source, setSource] = useState("handmatig")
+  const [categories, setCategories] = useState<AdminTaxonomyCategory[]>([])
+
+  useEffect(() => {
+    listTaxonomyCategories()
+      .then((result) => setCategories(result.categories))
+      .catch(() => setCategories([]))
+  }, [])
   const [contactName, setContactName] = useState("")
   const [contactEmail, setContactEmail] = useState("")
   const [saving, setSaving] = useState(false)
@@ -345,8 +358,8 @@ function NewProspectDialog({
             category,
             sales_model: salesModel || "unknown",
             outreach_status: "nieuw",
-            source: "handmatig",
-            outreach_purpose: "",
+            source: source || "handmatig",
+            outreach_purpose: purpose.trim() || DEFAULT_OUTREACH_PURPOSE,
             self_classification_payload: null,
             roles: role ? [role] : undefined,
             contact_name: contactName,
@@ -375,10 +388,10 @@ function NewProspectDialog({
         <div className="mt-3 grid items-start gap-3 sm:grid-cols-2">
           <fieldset className="rounded-lg border border-wf-300 p-3">
             <legend className="px-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-              Bedrijf
+              Bedrijfsgegevens
             </legend>
             <label className="block text-[11px] text-wf-600">
-              Bedrijfsnaam
+              Bedrijfsnaam *
               <input className={fieldClass} required value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
             </label>
             <label className="mt-2 block text-[11px] text-wf-600">
@@ -387,19 +400,24 @@ function NewProspectDialog({
             </label>
             <label className="mt-2 block text-[11px] text-wf-600">
               Categorie
-              <input className={fieldClass} value={category} onChange={(event) => setCategory(event.target.value)} />
-            </label>
-          </fieldset>
-          <fieldset className="rounded-lg border border-wf-300 p-3">
-            <legend className="px-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-              Contactpersoon
-            </legend>
-            <label className="block text-[11px] text-wf-600">
-              Naam
-              <input className={fieldClass} required value={contactName} onChange={(event) => setContactName(event.target.value)} />
+              <select className={fieldClass} value={category} onChange={(event) => setCategory(event.target.value)}>
+                <option value="">Geen categorie</option>
+                {category && !categories.some((item) => item.name === category) ? (
+                  <option value={category}>{category}</option>
+                ) : null}
+                {categories.map((item) => (
+                  <option key={item.id} value={item.name}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
             </label>
             <label className="mt-2 block text-[11px] text-wf-600">
-              E-mail
+              Contactpersoon
+              <input className={fieldClass} value={contactName} onChange={(event) => setContactName(event.target.value)} />
+            </label>
+            <label className="mt-2 block text-[11px] text-wf-600">
+              E-mail *
               <input
                 className={fieldClass}
                 required
@@ -409,30 +427,51 @@ function NewProspectDialog({
               />
             </label>
           </fieldset>
-        </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-[11px] text-wf-600">
-            Rol
-            <select className={fieldClass} value={role} onChange={(event) => setRole(event.target.value)}>
-              <option value="">Kies een rol</option>
-              {ORGANIZATION_ROLES.map((item) => (
-                <option key={item} value={item}>
-                  {roleLabel(item)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="text-[11px] text-wf-600">
-            Verkoopmodel
-            <select className={fieldClass} value={salesModel} onChange={(event) => setSalesModel(event.target.value)}>
-              <option value="">Kies een verkoopmodel</option>
-              {SALES_MODELS.map((item) => (
-                <option key={item} value={item}>
-                  {salesModelLabel(item)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <fieldset className="rounded-lg border border-wf-300 p-3">
+            <legend className="px-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+              Benadering
+            </legend>
+            <label className="block text-[11px] text-wf-600">
+              Rol
+              <select className={fieldClass} value={role} onChange={(event) => setRole(event.target.value)}>
+                <option value="">Geen rol</option>
+                {SELECTABLE_ORGANIZATION_ROLES.map((item) => (
+                  <option key={item} value={item}>
+                    {roleLabel(item)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-2 block text-[11px] text-wf-600">
+              Verkoopmodel
+              <select className={fieldClass} value={salesModel} onChange={(event) => setSalesModel(event.target.value)}>
+                <option value="">Geen verkoopmodel</option>
+                {SALES_MODELS.map((item) => (
+                  <option key={item} value={item}>
+                    {salesModelLabel(item)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="mt-2 block text-[11px] text-wf-600">
+              Doel van benadering
+              <textarea
+                className="mt-1 min-h-[72px] w-full rounded border border-wf-400 bg-white px-2 py-1.5 text-xs text-wf-900"
+                value={purpose}
+                onChange={(event) => setPurpose(event.target.value)}
+              />
+            </label>
+            <label className="mt-2 block text-[11px] text-wf-600">
+              Bron
+              <select className={fieldClass} value={source} onChange={(event) => setSource(event.target.value)}>
+                {sourceChoices(source).map((item) => (
+                  <option key={item} value={item}>
+                    {sourceLabel(item)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </fieldset>
         </div>
         <div className="mt-4 flex justify-end">
           <button

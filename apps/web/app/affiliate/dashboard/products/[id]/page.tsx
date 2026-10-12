@@ -4,13 +4,13 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useParams, useSearchParams } from "next/navigation"
 import { Badge, Button, Notice } from "@europmade/ui"
+import { formatAffiliateCommissionPercent } from "@europmade/utils"
 import { AffiliateGate } from "../../../_components/affiliate-gate"
 import { AffiliateProductImage } from "../../../_components/affiliate-product-image"
 import {
   AffiliateApiError,
   buildAffiliateShareUrl,
   createAffiliateLink,
-  estimateAffiliateCommission,
   getAffiliateCommissionSettings,
   productAffiliateTargetPath,
   type CommissionSettings,
@@ -18,6 +18,7 @@ import {
 import {
   CatalogApiError,
   getCatalogProduct,
+  type CatalogOffer,
   type CatalogProductDetail,
 } from "../../../../_lib/catalog-api"
 import { formatEuro } from "../../../../_components/storefront-shell"
@@ -36,7 +37,7 @@ function AffiliateProductDetailInner() {
   const [settings, setSettings] = useState<CommissionSettings | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
-  const [promoting, setPromoting] = useState(false)
+  const [promotingOfferId, setPromotingOfferId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [info, setInfo] = useState<string | null>(null)
 
@@ -65,47 +66,70 @@ function AffiliateProductDetailInner() {
   }, [load])
 
   const p = detail?.product
-  const winner = detail?.offers?.find((o) => o.is_winner) || detail?.offers?.[0]
-  const sellable =
-    (detail?.offers || []).some((o) => Number(o.quantity_available) > 0) &&
-    winner != null
-  const unitPrice =
-    winner?.base_price != null ? Number(winner.base_price) : null
-  const earnings =
-    unitPrice != null && settings
-      ? estimateAffiliateCommission(unitPrice, settings.percentage)
+  const offers = useMemo(
+    () =>
+      (detail?.offers || []).filter(
+        (offer) => Number(offer.quantity_available) > 0
+      ),
+    [detail]
+  )
+  const best = useMemo(() => {
+    if (offers.length === 0) return null
+    return [...offers].sort(
+      (a, b) =>
+        (b.affiliate_commission_percent ?? 0) -
+          (a.affiliate_commission_percent ?? 0) ||
+        (b.affiliate_earnings ?? 0) - (a.affiliate_earnings ?? 0)
+    )[0]
+  }, [offers])
+  const sellable = best != null
+  const unitPrice = best?.base_price != null ? Number(best.base_price) : null
+  const commissionLabel =
+    best?.affiliate_commission_percent != null
+      ? offers.length > 1
+        ? `Tot ${formatAffiliateCommissionPercent(best.affiliate_commission_percent)}`
+        : formatAffiliateCommissionPercent(best.affiliate_commission_percent)
       : null
+  const earnings = best?.affiliate_earnings ?? null
 
-  const promote = useCallback(async () => {
-    if (!productId) return
-    setPromoting(true)
-    setError(null)
-    setInfo(null)
-    try {
-      const target = productAffiliateTargetPath(productId)
-      const res = await createAffiliateLink(target)
-      const url = buildAffiliateShareUrl(
-        res.link.target_url,
-        res.link.tracking_param
-      )
-      setShareUrl(url)
-      setInfo(t("affProductLinkCreated", locale))
-    } catch (err: unknown) {
-      setError(
-        err instanceof AffiliateApiError
-          ? err.message
-          : t("affProductLinkFailed", locale)
-      )
-    } finally {
-      setPromoting(false)
-    }
-  }, [productId, locale])
+  const promote = useCallback(
+    async (offer: CatalogOffer) => {
+      if (!productId || !offer.offer_id || !offer.seller_id) return
+      setPromotingOfferId(offer.offer_id)
+      setError(null)
+      setInfo(null)
+      try {
+        const target = productAffiliateTargetPath(productId, offer.offer_id)
+        const res = await createAffiliateLink({
+          target_url: target,
+          product_id: productId,
+          offer_id: offer.offer_id,
+          seller_id: offer.seller_id,
+        })
+        const url = buildAffiliateShareUrl(
+          res.link.target_url,
+          res.link.tracking_param
+        )
+        setShareUrl(url)
+        setInfo(t("affProductLinkCreated", locale))
+      } catch (err: unknown) {
+        setError(
+          err instanceof AffiliateApiError
+            ? err.message
+            : t("affProductLinkFailed", locale)
+        )
+      } finally {
+        setPromotingOfferId(null)
+      }
+    },
+    [productId, locale]
+  )
 
   useEffect(() => {
-    if (autoPromote && detail && sellable && !shareUrl && !promoting) {
-      void promote()
+    if (autoPromote && best && !shareUrl && !promotingOfferId) {
+      void promote(best)
     }
-  }, [autoPromote, detail, sellable, shareUrl, promoting, promote])
+  }, [autoPromote, best, shareUrl, promotingOfferId, promote])
 
   async function copyLink() {
     if (!shareUrl) return
@@ -182,9 +206,9 @@ function AffiliateProductDetailInner() {
                 {t("affProductBrand", locale)}: {p.brand_name}
               </p>
             ) : null}
-            {winner?.seller_name ? (
+            {best?.seller_name ? (
               <p className="mt-0.5 text-xs text-wf-600">
-                {t("affProductSeller", locale)}: {winner.seller_name}
+                {t("affProductSeller", locale)}: {best.seller_name}
               </p>
             ) : null}
             {p.category_names?.length ? (
@@ -223,7 +247,7 @@ function AffiliateProductDetailInner() {
                   className="font-semibold text-wf-900"
                   data-testid="affiliate-commission-rate"
                 >
-                  {settings?.percentage_display ?? "…"}
+                  {commissionLabel ?? "…"}
                 </span>
               </div>
               <div className="flex justify-between gap-3 py-2 text-sm">
@@ -245,17 +269,79 @@ function AffiliateProductDetailInner() {
               </p>
             </div>
 
+            {offers.length > 0 ? (
+              <div className="mt-5 overflow-x-auto">
+                <p className="mb-2 text-xs text-wf-600">
+                  {t("affOfferChoice", locale)}
+                </p>
+                <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-wf-300 text-[11px] uppercase tracking-wide text-wf-500">
+                      <th className="py-2 pr-3 font-semibold">
+                        {t("affProductSeller", locale)}
+                      </th>
+                      <th className="py-2 pr-3 font-semibold">
+                        {t("affProductPriceLabel", locale)}
+                      </th>
+                      <th className="py-2 pr-3 font-semibold">
+                        {t("affProductCommissionLabel", locale)}
+                      </th>
+                      <th className="py-2 pr-3 font-semibold">
+                        {t("affProductYouEarn", locale)}
+                      </th>
+                      <th className="py-2 font-semibold">
+                        {t("affActions", locale)}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {offers.map((offer) => (
+                      <tr
+                        key={offer.offer_id}
+                        className="border-b border-wf-200"
+                        data-testid="affiliate-offer-row"
+                        data-offer-id={offer.offer_id}
+                        data-seller-id={offer.seller_id}
+                        data-commission={offer.affiliate_commission_percent ?? ""}
+                      >
+                        <td className="py-2 pr-3 text-wf-900">
+                          {offer.seller_name}
+                        </td>
+                        <td className="py-2 pr-3 font-medium text-wf-900">
+                          {formatEuro(Number(offer.base_price))}
+                        </td>
+                        <td className="py-2 pr-3 text-wf-800">
+                          {offer.affiliate_commission_percent != null
+                            ? formatAffiliateCommissionPercent(
+                                offer.affiliate_commission_percent
+                              )
+                            : "—"}
+                        </td>
+                        <td className="py-2 pr-3 text-wf-800">
+                          {offer.affiliate_earnings != null
+                            ? formatEuro(offer.affiliate_earnings)
+                            : "—"}
+                        </td>
+                        <td className="py-2">
+                          <Button
+                            type="button"
+                            disabled={promotingOfferId != null}
+                            onClick={() => void promote(offer)}
+                            data-testid="affiliate-promote-offer"
+                          >
+                            {promotingOfferId === offer.offer_id
+                              ? t("affProductPromoting", locale)
+                              : t("affPromoteOffer", locale)}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+
             <div className="mt-5 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                disabled={promoting || !sellable}
-                onClick={() => void promote()}
-                data-testid="affiliate-promote"
-              >
-                {promoting
-                  ? t("affProductPromoting", locale)
-                  : t("affProductPromote", locale)}
-              </Button>
               <Link
                 href="/affiliate/dashboard/links"
                 className="inline-flex h-10 items-center rounded-md border border-wf-400 px-3 text-sm font-semibold text-wf-800"

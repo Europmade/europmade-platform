@@ -41,6 +41,40 @@ export async function POST(
     ...("audience" in body
       ? { audience: typeof body.audience === "string" ? body.audience : null }
       : {}),
+    ...("layout" in body
+      ? { layout: typeof body.layout === "string" ? body.layout : null }
+      : {}),
+    ...("schedule" in body
+      ? {
+          schedule:
+            body.schedule && typeof body.schedule === "object"
+              ? {
+                  scheduled_at:
+                    typeof (body.schedule as { scheduled_at?: unknown }).scheduled_at === "string"
+                      ? (body.schedule as { scheduled_at: string }).scheduled_at
+                      : null,
+                  schedule_timezone:
+                    typeof (body.schedule as { schedule_timezone?: unknown }).schedule_timezone ===
+                    "string"
+                      ? (body.schedule as { schedule_timezone: string }).schedule_timezone
+                      : null,
+                  audience:
+                    typeof (body.schedule as { audience?: unknown }).audience === "string"
+                      ? (body.schedule as { audience: string }).audience
+                      : null,
+                }
+              : null,
+        }
+      : {}),
   })
   res.status(200).json({ template: await writeTemplate(req.scope, id) })
+}
+
+/** DELETE — ongebruikt concept volledig uit Berichten. Geen historie wissen, niets verzenden. */
+export async function DELETE(
+  req: AuthenticatedMedusaRequest,
+  res: MedusaResponse
+) {
+  await cmsService(req.scope).deleteUnusedTemplate(templateId(req))
+  res.status(200).json({ deleted: true })
 }

@@ -3,18 +3,21 @@
  *
  * Eén servicegrens. De admin roept alleen `generateEngagementContent` aan.
  * Standaardprovider `local` blijft in-proces en gebruikt alleen het verzoek
- * plus meegegeven catalogusfeiten. Geen cloud-LLM: dat blijft een latere
- * provider achter dezelfde grens, na een aparte providerbeslissing.
+ * plus meegegeven catalogusfeiten. Geen cloud-LLM.
  * De provider keurt, activeert en verzendt niets.
+ *
+ * Een nieuwsbrief gebruikt dezelfde blokmarkeringen als de admin-opbouw.
  */
 
 export type ContentKind = "newsletter" | "email" | "follow_up"
 export type ContentLength = "kort" | "normaal" | "uitgebreid"
 
 export type CatalogFact = {
+  id?: string
   title: string
   description: string
   image_url: string | null
+  commission_note?: string | null
 }
 
 export type ContentRequest = {
@@ -59,8 +62,99 @@ function clean(value: string, max: number): string {
   return value.replace(/\s+/g, " ").trim().slice(0, max)
 }
 
+export function isTechnicalCatalogText(value: string): boolean {
+  const text = value.replace(/\s+/g, " ").trim()
+  if (!text) return false
+  if (/\be2e\b/i.test(text)) return true
+  if (/^beschrijving(?:\s*\.{2,}|\s*$)/i.test(text)) return true
+  if (/^description(?:\s*\.{2,}|\s*$)/i.test(text)) return true
+  if (/\bp1ux|\bp1final\b/i.test(text)) return true
+  return false
+}
+
+export function draftProductSummary(description: string): string {
+  const source = description.replace(/\s+/g, " ").trim()
+  if (!source || isTechnicalCatalogText(source)) return ""
+  const sentences = source.split(/(?<=[.!?])\s+/).filter((part) => part.trim())
+  const short = (sentences.slice(0, 2).join(" ") || source).trim()
+  return short.length > 180 ? `${short.slice(0, 177).trim()}…` : short
+}
+
+export function presentableCatalogFacts(products: CatalogFact[]): CatalogFact[] {
+  return products.flatMap((product) => {
+    const title = clean(product.title, 160)
+    if (!title || isTechnicalCatalogText(title)) return []
+    const description = clean(product.description, 280)
+    return [
+      {
+        title,
+        description: description && !isTechnicalCatalogText(description) ? description : "",
+        image_url: product.image_url,
+        commission_note: product.commission_note?.trim() || null,
+      },
+    ]
+  })
+}
+
 function wantsProducts(input: ContentRequest): boolean {
   return /product|merk|aanbod|nieuw/i.test(`${input.idea} ${input.goal}`)
+}
+
+function ctaLabel(kind: ContentKind): string {
+  if (kind === "newsletter") return "Bekijk het aanbod"
+  if (kind === "follow_up") return "Bekijk EuropMade"
+  return "Lees verder"
+}
+
+function paragraph(value: string): string {
+  return `<p>${escapeHtml(value)}</p>`
+}
+
+function cta(label: string): string {
+  return `<p style="text-align: center"><a data-em-cta="1" href="https://europmade.eu">${escapeHtml(label)}</a></p>`
+}
+
+function newsletterBody(
+  input: ContentRequest,
+  idea: string,
+  goal: string,
+  products: CatalogFact[]
+): string {
+  const blocks: string[] = ["<!--em-hero-->", `<h2>${escapeHtml(idea)}</h2>`, paragraph(goal)]
+  if (input.length !== "kort") {
+    blocks.push(
+      "<!--em-story-->",
+      "<h3>Wat u in deze nieuwsbrief vindt</h3>",
+      paragraph(goal)
+    )
+  }
+  const take = input.length === "kort" ? 1 : products.length
+  for (const product of products.slice(0, take)) {
+    blocks.push("<!--em-product-->")
+    if (product.image_url) {
+      blocks.push(
+        `<img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(product.title)}" />`
+      )
+    }
+    blocks.push(`<h3>${escapeHtml(product.title)}</h3>`)
+    if (product.description) blocks.push(paragraph(product.description))
+    if (product.commission_note) blocks.push(paragraph(product.commission_note))
+    blocks.push(cta("Bekijk product"))
+  }
+  return blocks.join("")
+}
+
+function letterBody(idea: string, goal: string, products: CatalogFact[], label: string): string {
+  const blocks = [paragraph(idea), paragraph(goal)]
+  for (const product of products.slice(0, 3)) {
+    const line = [product.title, product.description, product.commission_note]
+      .filter(Boolean)
+      .join(". ")
+      .replace(/\.\./g, ".")
+    blocks.push(paragraph(line))
+  }
+  blocks.push(cta(label))
+  return blocks.join("")
 }
 
 export class LocalContentProvider implements EngagementContentProvider {
@@ -72,48 +166,17 @@ export class LocalContentProvider implements EngagementContentProvider {
     if (!idea || !goal) {
       throw new ContentProviderError("Vul een onderwerp en een doel in.")
     }
-    const subject = idea
-    const preheader = goal
-    const blocks: string[] = [
-      `<h2>${escapeHtml(idea)}</h2>`,
-      `<p>${escapeHtml(goal)}</p>`,
-    ]
-    if (wantsProducts(input)) {
-      if (input.products.length === 0) {
-        blocks.push("<p>Er is geen productinformatie beschikbaar voor dit onderwerp.</p>")
-      } else {
-        const take = input.length === "kort" ? 1 : input.products.length
-        for (const product of input.products.slice(0, take)) {
-          const title = clean(product.title, 160)
-          if (!title) continue
-          blocks.push(`<h3>${escapeHtml(title)}</h3>`)
-          const description = clean(product.description, 400)
-          if (description) blocks.push(`<p>${escapeHtml(description)}</p>`)
-          if (product.image_url) {
-            blocks.push(
-              `<p><img src="${escapeHtml(product.image_url)}" alt="${escapeHtml(title)}"></p>`
-            )
-          } else {
-            blocks.push("<p>Er is geen productafbeelding beschikbaar.</p>")
-          }
-        }
-      }
-    }
-    if (input.length !== "kort") {
-      blocks.push(
-        "<p>Dit is een concept. Een medewerker van EuropMade beoordeelt de tekst voordat die ergens wordt gebruikt.</p>"
-      )
-    }
-    blocks.push(
-      `<p style="text-align: center"><a data-em-cta="1" href="https://europmade.eu">${escapeHtml(
-        input.kind === "follow_up" ? "Bekijk EuropMade" : "Bekijk aanbod"
-      )}</a></p>`
-    )
+    const products = wantsProducts(input) ? presentableCatalogFacts(input.products) : []
+    const label = ctaLabel(input.kind)
+    const body =
+      input.kind === "newsletter"
+        ? newsletterBody(input, idea, goal, products)
+        : letterBody(idea, goal, products, label)
     return {
-      subject,
-      preheader,
-      body: blocks.join(""),
-      cta_label: input.kind === "follow_up" ? "Bekijk EuropMade" : "Bekijk aanbod",
+      subject: idea,
+      preheader: goal,
+      body,
+      cta_label: label,
       cta_url: "https://europmade.eu",
     }
   }

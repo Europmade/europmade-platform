@@ -9,8 +9,8 @@ import { model } from "@medusajs/framework/utils"
  *
  * EngagementPreference/Suppression horen bij een zakelijk Contact op een
  * Organization. Die tabellen kunnen een consument niet dragen zonder een
- * prospect aan te maken. De nieuwsbriefvoorkeur (marketing, e-mail) staat
- * daarom op deze rij: newsletter_enabled, subscribed_at, unsubscribed_at.
+ * prospect aan te maken. De nieuwsbriefvoorkeuren staan daarom op deze rij:
+ * newsletter_enabled is de algemene status, newsletter_topics de drie soorten.
  * Uitschrijven verwijdert de persoon niet.
  */
 const EngagementConsumer = model
@@ -23,6 +23,7 @@ const EngagementConsumer = model
     customer_id: model.text().nullable(),
     source: model.text(),
     newsletter_enabled: model.boolean().default(false),
+    newsletter_topics: model.json().nullable(),
     subscribed_at: model.dateTime().nullable(),
     unsubscribed_at: model.dateTime().nullable(),
     unsubscribe_token: model.text(),

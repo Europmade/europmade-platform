@@ -13,7 +13,9 @@ import {
   listEngagementTemplates,
   type EngagementTemplate,
 } from "../../../../lib/engagement-admin-api"
+import { isDemoRecordName } from "../../../../lib/engagement-demo"
 import {
+  MESSAGE_AUDIENCES,
   MESSAGE_LOCALES,
   MESSAGE_STATUSES,
   changedLabel,
@@ -21,6 +23,7 @@ import {
   displayMessageStatus,
   localeLabel,
   messageTypeLabel,
+  audienceLabel,
   primaryVariant,
   translateMessageError,
 } from "../../../../lib/engagement-message"
@@ -108,6 +111,7 @@ export default function EngagementTemplatesPage() {
       if (applied.type && row.communication_type !== applied.type) return false
       if (applied.status && rowStatus !== applied.status) return false
       if (applied.locale && rowLocale !== applied.locale) return false
+      if (isDemoRecordName(row.name)) return false
       return true
     })
     .sort((a, b) => {
@@ -228,10 +232,11 @@ export default function EngagementTemplatesPage() {
           </div>
         ) : (
           <>
-            <div className="hidden grid-cols-[minmax(0,1.6fr)_8rem_8rem_8rem_9rem] gap-2 border-b border-wf-200 bg-wf-50 px-3 py-1.5 text-[11px] font-semibold text-wf-600 desktop:grid">
+            <div className="hidden grid-cols-[minmax(0,1.6fr)_7rem_8rem_7rem_7rem_9rem] gap-2 border-b border-wf-200 bg-wf-50 px-3 py-1.5 text-[11px] font-semibold text-wf-600 desktop:grid">
               <span>Bericht</span>
               <span>Type</span>
-              <span>Taal</span>
+              <span>Doelgroep</span>
+              <span>Opmaak</span>
               <span>Status</span>
               <span>Laatst gewijzigd</span>
             </div>
@@ -244,14 +249,17 @@ export default function EngagementTemplatesPage() {
                 <Link
                   key={row.id}
                   href={`/engagement/templates/${row.id}`}
-                  className="grid grid-cols-1 gap-0.5 border-b border-wf-200 px-3 py-2 last:border-b-0 hover:bg-wf-50 desktop:grid-cols-[minmax(0,1.6fr)_8rem_8rem_8rem_9rem] desktop:items-center desktop:gap-2"
+                  className="grid grid-cols-1 gap-0.5 border-b border-wf-200 px-3 py-2 last:border-b-0 hover:bg-wf-50 desktop:grid-cols-[minmax(0,1.6fr)_7rem_8rem_7rem_7rem_9rem] desktop:items-center desktop:gap-2"
                 >
                   <span className="truncate text-sm font-semibold text-wf-900">{row.name}</span>
                   <span className="truncate text-xs text-wf-700">
                     {messageTypeLabel(row.communication_type)}
                   </span>
                   <span className="truncate text-xs text-wf-700">
-                    {variant ? localeLabel(variant.locale) : "—"}
+                    {audienceLabel(row.communication_type, row.audience)}
+                  </span>
+                  <span className="truncate text-xs text-wf-700">
+                    {row.layout === "newsletter" ? "Nieuwsbrief" : "Bericht"}
                   </span>
                   <span className={`text-xs font-semibold ${statusClass(rowStatus)}`}>{rowStatus}</span>
                   <span className="text-[11px] text-wf-500">{changedLabel(when)}</span>
@@ -284,6 +292,7 @@ function NewMessageDialog({
   const [name, setName] = useState("")
   const [type, setType] = useState<string>(COMMUNICATION_TYPES[0])
   const [locale, setLocale] = useState("nl")
+  const [audienceChoice, setAudienceChoice] = useState("consumers")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -300,7 +309,12 @@ function NewMessageDialog({
           }
           setSaving(true)
           setError(null)
-          createEngagementTemplate({ name: trimmed, communication_type: type })
+          createEngagementTemplate({
+            name: trimmed,
+            communication_type: type,
+            audience:
+              type === "campaign" || type === "newsletter" ? audienceChoice : null,
+          })
             .then((template) =>
               createEngagementVariant(template.id, { name: locale, locale }).then(
                 (withVariant) => ({ templateId: template.id, withVariant })
@@ -347,20 +361,25 @@ function NewMessageDialog({
             ))}
           </select>
         </label>
-        <label className="mt-3 block text-[11px] text-wf-600">
-          Taal
-          <select
-            className={fieldClass}
-            value={locale}
-            onChange={(event) => setLocale(event.target.value)}
-          >
-            {MESSAGE_LOCALES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {type === "campaign" || type === "newsletter" ? (
+          <label className="mt-3 block text-[11px] text-wf-600">
+            Doelgroep
+            <select
+              className={fieldClass}
+              value={audienceChoice}
+              onChange={(event) => setAudienceChoice(event.target.value)}
+            >
+              {MESSAGE_AUDIENCES.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <p className="mt-3 text-[11px] text-wf-600">
+          Taal volgt de ontvanger. U schrijft hier de bronversie.
+        </p>
         {error ? (
           <div className="mt-3">
             <Notice variant="warning">{error}</Notice>

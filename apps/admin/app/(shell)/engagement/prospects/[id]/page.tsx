@@ -6,7 +6,7 @@ import { useParams } from "next/navigation"
 import { Notice } from "@europmade/ui"
 import {
   EngagementAdminApiError,
-  ORGANIZATION_ROLES,
+  SELECTABLE_ORGANIZATION_ROLES,
   OUTREACH_STATUSES,
   SALES_MODELS,
   addEngagementOrganizationRole,
@@ -23,18 +23,20 @@ import {
   sourceLabel,
   updateEngagementContact,
   updateEngagementOrganization,
+  DEFAULT_OUTREACH_PURPOSE,
   type EngagementEvent,
   type EngagementOrganization,
 } from "../../../../../lib/engagement-admin-api"
+import { listTaxonomyCategories, type AdminTaxonomyCategory } from "../../../../../lib/category-admin-api"
 
 const fieldClass =
   "mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs text-wf-900"
 
 const CONVERSION_LABELS = {
-  customer: "Customer",
-  seller: "Seller",
-  both: "Beide",
-  none: "Geen",
+  customer: "Heeft een account",
+  seller: "Partner",
+  both: "Partner met account",
+  none: "Nog geen partner",
 } as const
 
 function prospectWhen(value: string | null): string {
@@ -95,6 +97,7 @@ export default function EngagementProspectDetailPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
   const [editEmail, setEditEmail] = useState("")
+  const [categories, setCategories] = useState<AdminTaxonomyCategory[]>([])
 
   function apply(organization: EngagementOrganization) {
     setRow(organization)
@@ -103,8 +106,8 @@ export default function EngagementProspectDetailPage() {
     setCategory(organization.category ?? "")
     setSalesModel(organization.sales_model || "unknown")
     setSource(organization.source)
-    setPurpose(organization.outreach_purpose ?? "")
-    const nextRole = ORGANIZATION_ROLES.find((item) => !organization.roles.includes(item))
+    setPurpose(organization.outreach_purpose?.trim() || DEFAULT_OUTREACH_PURPOSE)
+    const nextRole = SELECTABLE_ORGANIZATION_ROLES.find((item) => !organization.roles.includes(item))
     if (nextRole) setRole(nextRole)
     setConfirmRole(null)
   }
@@ -122,6 +125,12 @@ export default function EngagementProspectDetailPage() {
       setError(null)
     })
   }
+
+  useEffect(() => {
+    listTaxonomyCategories()
+      .then((result) => setCategories(result.categories))
+      .catch(() => setCategories([]))
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -216,9 +225,9 @@ export default function EngagementProspectDetailPage() {
 
           <div className="mt-3 grid gap-3 lg:grid-cols-2">
             <section className="rounded-lg border border-wf-300 bg-white p-3">
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">Bedrijf</h2>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">Bedrijfsgegevens</h2>
               <label className="mt-2 block text-[11px] text-wf-600">
-                Bedrijfsnaam
+                Bedrijfsnaam *
                 <input className={fieldClass} value={companyName} onChange={(event) => setCompanyName(event.target.value)} />
               </label>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -228,25 +237,22 @@ export default function EngagementProspectDetailPage() {
                 </label>
                 <label className="text-[11px] text-wf-600">
                   Categorie
-                  <input className={fieldClass} value={category} onChange={(event) => setCategory(event.target.value)} />
+                  <select className={fieldClass} value={category} onChange={(event) => setCategory(event.target.value)}>
+                    <option value="">Geen categorie</option>
+                    {category && !categories.some((item) => item.name === category) ? (
+                      <option value={category}>{category}</option>
+                    ) : null}
+                    {categories.map((item) => (
+                      <option key={item.id} value={item.name}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
               {row.country_code ? (
                 <p className="mt-2 text-[11px] text-wf-600">Land: {row.country_code}</p>
               ) : null}
-              <button
-                type="button"
-                className="mt-2 h-8 rounded bg-wf-900 px-3 text-[11px] font-medium text-white disabled:opacity-50"
-                disabled={saving}
-                onClick={() => {
-                  setSaving(true)
-                  persist({ company_name: companyName, website, category })
-                    .catch((err: unknown) => setError(messageOf(err, "Bedrijf opslaan mislukt.")))
-                    .finally(() => setSaving(false))
-                }}
-              >
-                Bedrijf opslaan
-              </button>
 
               <h2 className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
                 Contactpersonen
@@ -320,8 +326,7 @@ export default function EngagementProspectDetailPage() {
               >
                 <input
                   className={fieldClass}
-                  required
-                  placeholder="Naam"
+                  placeholder="Contactpersoon"
                   value={contactName}
                   onChange={(event) => setContactName(event.target.value)}
                 />
@@ -329,7 +334,7 @@ export default function EngagementProspectDetailPage() {
                   className={fieldClass}
                   required
                   type="email"
-                  placeholder="E-mail"
+                  placeholder="E-mail *"
                   value={contactEmail}
                   onChange={(event) => setContactEmail(event.target.value)}
                 />
@@ -337,57 +342,34 @@ export default function EngagementProspectDetailPage() {
                   Toevoegen
                 </button>
               </form>
+              <button
+                type="button"
+                className="mt-3 h-8 rounded bg-wf-900 px-3 text-[11px] font-medium text-white disabled:opacity-50"
+                disabled={saving}
+                onClick={() => {
+                  setSaving(true)
+                  persist({ company_name: companyName, website, category })
+                    .catch((err: unknown) => setError(messageOf(err, "Bedrijfsgegevens opslaan mislukt.")))
+                    .finally(() => setSaving(false))
+                }}
+              >
+                Bedrijfsgegevens opslaan
+              </button>
             </section>
 
             <section className="rounded-lg border border-wf-300 bg-white p-3">
-              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">Prospect</h2>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                <label className="text-[11px] text-wf-600">
-                  Verkoopmodel
-                  <span className="mt-0.5 block font-normal text-wf-500">
-                    Hoe verkoopt deze organisatie haar producten?
-                  </span>
-                  <select className={fieldClass} value={salesModel} onChange={(event) => setSalesModel(event.target.value)}>
-                    {SALES_MODELS.map((item) => (
-                      <option key={item} value={item}>
-                        {salesModelLabel(item)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="text-[11px] text-wf-600">
-                  Bron
-                  <span className="mt-0.5 block font-normal text-wf-500">
-                    Hoe is deze prospect bij EuropMade terechtgekomen?
-                  </span>
-                  <select className={fieldClass} value={source} onChange={(event) => setSource(event.target.value)}>
-                    {sourceChoices(source).map((item) => (
-                      <option key={item} value={item}>
-                        {sourceLabel(item)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <label className="mt-2 block text-[11px] text-wf-600">
-                Doel van benadering
-                <span className="mt-0.5 block font-normal text-wf-500">
-                  Waarom benaderen wij deze organisatie?
-                </span>
-                <input
-                  className={fieldClass}
-                  value={purpose}
-                  placeholder="Bijvoorbeeld: EU-merk uitnodigen om producten via EuropMade te verkopen"
-                  onChange={(event) => setPurpose(event.target.value)}
-                />
-              </label>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-[11px] text-wf-600">
-                  Rol
-                  <span className="mt-0.5 block font-normal text-wf-500">
-                    Welke rol heeft deze organisatie in de product- en verkoopketen?
-                  </span>
-                </span>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+                Benadering
+              </h2>
+              <p className="mt-1 text-[11px] leading-relaxed text-wf-600">
+                Rol, verkoopmodel en doel zijn drie verschillende dingen. De rol zegt welke plek de
+                organisatie in de keten heeft. Het verkoopmodel zegt hoe zij zelf verkoopt. Het doel
+                zegt waarom EuropMade contact zoekt.
+              </p>
+              <div className="mt-3">
+                <div className="text-[11px] font-semibold text-wf-900">Rol</div>
+                <p className="text-[11px] text-wf-500">Plek in de product- en verkoopketen.</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
                 {row.roles.map((item) =>
                   confirmRole === item ? (
                     <span
@@ -427,10 +409,10 @@ export default function EngagementProspectDetailPage() {
                     </button>
                   )
                 )}
-                {ORGANIZATION_ROLES.some((item) => !row.roles.includes(item)) ? (
+                {SELECTABLE_ORGANIZATION_ROLES.some((item) => !row.roles.includes(item)) ? (
                   <>
                     <select className="h-7 rounded border border-wf-400 px-2 text-[11px]" value={role} onChange={(event) => setRole(event.target.value)}>
-                      {ORGANIZATION_ROLES.filter((item) => !row.roles.includes(item)).map((item) => (
+                      {SELECTABLE_ORGANIZATION_ROLES.filter((item) => !row.roles.includes(item)).map((item) => (
                         <option key={item} value={item}>
                           {roleLabel(item)}
                         </option>
@@ -441,7 +423,7 @@ export default function EngagementProspectDetailPage() {
                       className="text-[11px] text-wf-800 underline"
                       onClick={() => {
                         const next = row.roles.includes(role)
-                          ? ORGANIZATION_ROLES.find((item) => !row.roles.includes(item))
+                          ? SELECTABLE_ORGANIZATION_ROLES.find((item) => !row.roles.includes(item))
                           : role
                         if (!next) return
                         addEngagementOrganizationRole(row.id, next)
@@ -453,10 +435,48 @@ export default function EngagementProspectDetailPage() {
                     </button>
                   </>
                 ) : null}
+                </div>
               </div>
+              <label className="mt-3 block text-[11px] text-wf-600">
+                <span className="font-semibold text-wf-900">Verkoopmodel</span>
+                <span className="mt-0.5 block font-normal text-wf-500">
+                  Hoe verkoopt deze organisatie haar producten?
+                </span>
+                <select className={fieldClass} value={salesModel} onChange={(event) => setSalesModel(event.target.value)}>
+                  {SALES_MODELS.map((item) => (
+                    <option key={item} value={item}>
+                      {salesModelLabel(item)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="mt-3 block text-[11px] text-wf-600">
+                <span className="font-semibold text-wf-900">Doel van benadering</span>
+                <span className="mt-0.5 block font-normal text-wf-500">
+                  Waarom benaderen wij deze organisatie?
+                </span>
+                <textarea
+                  className="mt-1 min-h-[72px] w-full rounded border border-wf-400 bg-white px-2 py-1.5 text-xs text-wf-900"
+                  value={purpose}
+                  onChange={(event) => setPurpose(event.target.value)}
+                />
+              </label>
+              <label className="mt-3 block text-[11px] text-wf-600">
+                Bron
+                <span className="mt-0.5 block font-normal text-wf-500">
+                  Hoe is deze prospect bij EuropMade terechtgekomen?
+                </span>
+                <select className={fieldClass} value={source} onChange={(event) => setSource(event.target.value)}>
+                  {sourceChoices(source).map((item) => (
+                    <option key={item} value={item}>
+                      {sourceLabel(item)}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <button
                 type="button"
-                className="mt-2 h-8 rounded bg-wf-900 px-3 text-[11px] font-medium text-white disabled:opacity-50"
+                className="mt-3 h-8 rounded bg-wf-900 px-3 text-[11px] font-medium text-white disabled:opacity-50"
                 disabled={saving}
                 onClick={() => {
                   setSaving(true)
@@ -465,7 +485,7 @@ export default function EngagementProspectDetailPage() {
                     .finally(() => setSaving(false))
                 }}
               >
-                Prospect opslaan
+                Benadering opslaan
               </button>
 
               <h2 className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
@@ -474,7 +494,7 @@ export default function EngagementProspectDetailPage() {
               <p className="mt-1 text-xs text-wf-900">{onboardingLabel(row)}</p>
 
               <h2 className="mt-4 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-                Conversie
+                Partnerstatus
               </h2>
               <p className="mt-1 text-xs text-wf-900">{CONVERSION_LABELS[row.conversion]}</p>
               {lines.length > 0 ? (

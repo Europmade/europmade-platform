@@ -29,6 +29,8 @@ Diepgaande functionele specificaties per kernonderdeel van EuropMade. Elk onderd
 - [`messaging-reviews-qa/`](./messaging-reviews-qa/README.md) — **v1.0, concept.** Berichten koper↔verkoper en Reviews (beide MVP, Must Have); Q&A als aanbevolen Should Have, geen besluit.
 - [`gdpr-compliance/`](./gdpr-compliance/README.md) — **v1.0, concept. MVP.** Functionele input voor het Kritieke Sprint 2 ADR-02 (Privacy & AVG) en ADR-03 (Encryptie); introduceert de cookie-toestemmingsvereiste die volgt uit de Affiliate-scopewijziging.
 
+- [`marketing-communication-partner-engagement/`](./marketing-communication-partner-engagement/README.md) — **Architectuur vastgelegd. P0-01 t/m P0-06 gebouwd.** Verwijst naar `docs/01-architecture/marketing-communication-partner-engagement.md` + ADR-0047. Functionele schermspecs en marketingcopy volgen later. Admin UI, verzending, Crisp en AI/LLM horen niet bij die backendgrens.
+
 ## Nog te ontwikkelen (op basis van de UX-architectuur, sectie 5.5)
 
 Volgende kandidaten voor een eigen submap, in prioriteitsvolgorde overeenkomstig de UX-architectuur:

@@ -11,10 +11,12 @@ import EngagementEnrollment from "./enrollment"
 const EngagementCommunicationEvent = model
   .define("engagement_communication_event", {
     id: model.id({ prefix: "ecev" }).primaryKey(),
-    contact: model.belongsTo(() => EngagementContact, {
-      mappedBy: "communication_events",
-      foreignKeyName: "contact_id",
-    }),
+    contact: model
+      .belongsTo(() => EngagementContact, {
+        mappedBy: "communication_events",
+        foreignKeyName: "contact_id",
+      })
+      .nullable(),
     organization_id: model.text().nullable(),
     /** Soft ref. Geen FK naar Medusa Customer. */
     customer_id: model.text().nullable(),
@@ -23,6 +25,7 @@ const EngagementCommunicationEvent = model
      * P1 schrijft hier nog geen verzending naartoe.
      */
     consumer_id: model.text().nullable(),
+    affiliate_id: model.text().nullable(),
     enrollment: model
       .belongsTo(() => EngagementEnrollment, {
         mappedBy: "communication_events",
@@ -39,6 +42,13 @@ const EngagementCommunicationEvent = model
     ai_draft_id: model.text().nullable(),
     status: model.enum(["queued", "sent", "failed", "bounced", "stopped"]),
     provider_message_id: model.text().nullable(),
+    /** Taal van de gebruikte variant. Leeg tot de rij die taal kent. */
+    locale: model.text().nullable(),
+    /** Fout van een latere provider. Dry-run vult dit niet. */
+    delivery_error: model.text().nullable(),
+    attempt_count: model.number().default(0),
+    /** Open claim. Een geclaimde rij wordt niet nog eens aangeboden. */
+    delivery_claim: model.text().nullable(),
     replied: model.boolean().default(false),
     bounced: model.boolean().default(false),
     unsubscribed: model.boolean().default(false),

@@ -5,12 +5,7 @@ import Link from "next/link"
 import { Button, Input, Notice } from "@europmade/ui"
 import { AffiliateGate } from "../../_components/affiliate-gate"
 import { AffiliateProductImage } from "../../_components/affiliate-product-image"
-import {
-  AffiliateApiError,
-  estimateAffiliateCommission,
-  getAffiliateCommissionSettings,
-  type CommissionSettings,
-} from "../../../_lib/affiliate-api"
+import { AffiliateApiError } from "../../../_lib/affiliate-api"
 import {
   CatalogApiError,
   listCatalogProducts,
@@ -79,7 +74,6 @@ export default function AffiliateProductsPage() {
   const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [settings, setSettings] = useState<CommissionSettings | null>(null)
 
   const inflight = useRef<AbortController | null>(null)
 
@@ -105,8 +99,7 @@ export default function AffiliateProductsPage() {
       setLoading(true)
       setError(null)
       try {
-        const [list, commission] = await Promise.all([
-          listCatalogProducts({
+        const list = await listCatalogProducts({
             q: query.trim() || undefined,
             category: cat || undefined,
             limit: 48,
@@ -114,28 +107,27 @@ export default function AffiliateProductsPage() {
             region_code: "NL",
             sort: SERVER_SORT[sortKey] ?? "popularity",
             signal: ac.signal,
-          }),
-          getAffiliateCommissionSettings(),
-        ])
+          })
         if (ac.signal.aborted) return
-        setSettings(commission)
         let sellable = (list.products || []).filter(
           (p) => p.offer_count > 0 && p.from_price != null
         )
         // Client refine for commission/earnings when rate available
         if (
-          commission &&
-          (sortKey === "commission_asc" ||
-            sortKey === "commission_desc" ||
-            sortKey === "earnings_asc" ||
-            sortKey === "earnings_desc")
+          sortKey === "commission_asc" ||
+          sortKey === "commission_desc" ||
+          sortKey === "earnings_asc" ||
+          sortKey === "earnings_desc"
         ) {
-          const rate = commission.percentage
-          const dir =
-            sortKey.endsWith("_asc") ? 1 : -1
+          const dir = sortKey.endsWith("_asc") ? 1 : -1
+          const byRate = sortKey.startsWith("commission_")
           sellable = [...sellable].sort((a, b) => {
-            const ea = estimateAffiliateCommission(a.from_price ?? 0, rate)
-            const eb = estimateAffiliateCommission(b.from_price ?? 0, rate)
+            const ea = byRate
+              ? (a.affiliate_commission_percent ?? -1)
+              : (a.affiliate_earnings ?? -1)
+            const eb = byRate
+              ? (b.affiliate_commission_percent ?? -1)
+              : (b.affiliate_earnings ?? -1)
             return (ea - eb) * dir
           })
         }
@@ -184,9 +176,7 @@ export default function AffiliateProductsPage() {
         {t("affiliateNavProducts", locale)}
       </h1>
       <p className="mt-1.5 text-xs text-wf-600">
-        {tFormat("affProductsIntro", locale, {
-          rate: settings?.percentage_display ?? "…",
-        })}
+        {t("affProductsIntro", locale)}
       </p>
 
       <form
@@ -383,13 +373,13 @@ export default function AffiliateProductsPage() {
               ) : (
                 products.map((p) => {
                   const href = `/affiliate/dashboard/products/${encodeURIComponent(p.id)}`
-                  const earnings =
-                    p.from_price != null && settings
-                      ? estimateAffiliateCommission(
-                          p.from_price,
-                          settings.percentage
-                        )
-                      : null
+                  const price = p.affiliate_offer_price ?? p.from_price
+                  const earnings = p.affiliate_earnings ?? null
+                  const commissionLabel =
+                    p.affiliate_commission_label ||
+                    (p.affiliate_commission_percent != null
+                      ? `${p.affiliate_commission_percent}%`
+                      : "—")
                   return (
                     <tr key={p.id} className="border-t border-wf-200 align-middle">
                       <td className="px-2 py-1.5">
@@ -419,10 +409,13 @@ export default function AffiliateProductsPage() {
                           : "—"}
                       </td>
                       <td className="whitespace-nowrap px-2 py-1.5 font-medium text-wf-900">
-                        {formatPrice(p.from_price)}
+                        {formatPrice(price)}
                       </td>
-                      <td className="whitespace-nowrap px-2 py-1.5 text-wf-800">
-                        {settings?.percentage_display ?? "…"}
+                      <td
+                        className="whitespace-nowrap px-2 py-1.5 text-wf-800"
+                        data-testid="affiliate-commission-rate"
+                      >
+                        {commissionLabel}
                       </td>
                       <td className="hidden whitespace-nowrap px-2 py-1.5 text-wf-800 tablet:table-cell">
                         {earnings != null ? formatEuro(earnings) : "—"}

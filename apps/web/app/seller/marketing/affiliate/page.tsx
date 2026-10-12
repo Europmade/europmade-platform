@@ -6,18 +6,17 @@ import { SellerGate } from "../../_components/seller-gate"
 import { EmptyState } from "../../_components/empty-state"
 import { KpiCard } from "../../_components/kpi-card"
 import { formatEuro } from "../../../_components/storefront-shell"
-import {
-  DEMO_AFFILIATES,
-  DEMO_AFFILIATE_SETTINGS,
-} from "../../_lib/demo-data"
+import { DEMO_AFFILIATES } from "../../_lib/demo-data"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { t, tFormat } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
 import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
+import {
+  EUROPMADE_AFFILIATE_CONTRIBUTION_PERCENT,
+  sellerAffiliateCommission,
+} from "@europmade/utils"
 
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
-
-const EUROPMADE_CONTRIBUTION_PCT = 3
 
 type SellerProduct = {
   id: string
@@ -37,12 +36,15 @@ async function apiFetch(path: string) {
 export default function SellerAffiliateProgramPage() {
   const locale = useStorefrontLocale()
   const [settings, setSettings] = useState({
-    default_commission_percent: DEMO_AFFILIATE_SETTINGS.default_commission_percent,
-    product_commissions: [...DEMO_AFFILIATE_SETTINGS.product_commissions],
+    default_commission_percent: 8,
+    product_commissions: [] as Array<{
+      product_id: string
+      product_title: string
+      commission_percent: number
+    }>,
   })
-  const [defaultInput, setDefaultInput] = useState(
-    String(DEMO_AFFILIATE_SETTINGS.default_commission_percent)
-  )
+  const [defaultInput, setDefaultInput] = useState("8")
+  const [saving, setSaving] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState("")
   const [productPercent, setProductPercent] = useState("")
   const [saveNote, setSaveNote] = useState<string | null>(null)
@@ -74,10 +76,66 @@ export default function SellerAffiliateProgramPage() {
 
   useEffect(() => { loadProducts() }, [loadProducts])
 
-  function resolveSellerCommission(productId: string): number {
-    const prodHit = settings.product_commissions.find((c) => c.product_id === productId)
-    if (prodHit) return prodHit.commission_percent
-    return settings.default_commission_percent
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const res = await apiFetch("/store/partner/affiliate-commission")
+        if (!res.ok) return
+        const data = await res.json()
+        const stored = data.settings
+        if (cancelled || !stored) return
+        setSettings({
+          default_commission_percent: Number(stored.default_commission_percent),
+          product_commissions: Array.isArray(stored.product_commissions)
+            ? stored.product_commissions
+            : [],
+        })
+        setDefaultInput(String(stored.default_commission_percent))
+      } catch {
+        /* bestaande pagina blijft bruikbaar */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function saveSettings() {
+    setSaving(true)
+    setSaveNote(null)
+    try {
+      const res = await fetch(`${medusaBackendUrl()}/store/partner/affiliate-commission`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "content-type": "application/json",
+          ...(PUBLISHABLE_KEY ? { "x-publishable-api-key": PUBLISHABLE_KEY } : {}),
+        },
+        body: JSON.stringify({
+          default_commission_percent: Number(defaultInput),
+          product_commissions: settings.product_commissions,
+        }),
+      })
+      if (!res.ok) {
+        setSaveNote(t("sellerAffiliateSaveFailed", locale))
+        return
+      }
+      const data = await res.json()
+      const stored = data.settings
+      if (stored) {
+        setSettings({
+          default_commission_percent: Number(stored.default_commission_percent),
+          product_commissions: stored.product_commissions ?? [],
+        })
+        setDefaultInput(String(stored.default_commission_percent))
+      }
+      setSaveNote(t("sellerAffiliateSaved", locale))
+    } catch {
+      setSaveNote(t("sellerAffiliateSaveFailed", locale))
+    } finally {
+      setSaving(false)
+    }
   }
 
   function addProduct() {
@@ -105,7 +163,7 @@ export default function SellerAffiliateProgramPage() {
   }
 
   const selectClass = "h-9 w-full rounded-[5px] border border-wf-400 bg-white px-3 text-xs text-wf-800"
-  const emContrib = EUROPMADE_CONTRIBUTION_PCT
+  const emContrib = EUROPMADE_AFFILIATE_CONTRIBUTION_PERCENT
 
   return (
     <SellerGate
@@ -198,6 +256,7 @@ export default function SellerAffiliateProgramPage() {
             label={t("sellerAffiliateDefaultPct", locale)}
             type="number" min={0} max={100} step="0.1"
             value={defaultInput}
+            data-testid="seller-default-commission"
             onChange={(e) => {
               setDefaultInput(e.target.value)
               const n = Number(e.target.value)
@@ -228,7 +287,7 @@ export default function SellerAffiliateProgramPage() {
               </select>
             )}
           </div>
-          <Input label={t("sellerAffiliateCommissionPct", locale)} type="number" min={0} max={100} step="0.1" value={productPercent} onChange={(e) => setProductPercent(e.target.value)} />
+          <Input label={t("sellerAffiliateCommissionPct", locale)} type="number" min={0} max={100} step="0.1" value={productPercent} onChange={(e) => setProductPercent(e.target.value)} data-testid="seller-product-commission" />
           <div className="flex items-end">
             <Button type="button" onClick={addProduct} disabled={!selectedProductId}>{t("commonAdd", locale)}</Button>
           </div>
@@ -260,8 +319,13 @@ export default function SellerAffiliateProgramPage() {
               </thead>
               <tbody>
                 {settings.product_commissions.map((row) => {
-                  const sellerPct = row.commission_percent
-                  const total = sellerPct + emContrib
+                  const rated = sellerAffiliateCommission({
+                    settings,
+                    productId: row.product_id,
+                    productTitle: row.product_title,
+                  })
+                  const sellerPct = rated.sellerPercent
+                  const total = rated.totalPercent
                   return (
                     <tr key={row.product_id} className="border-b border-wf-200 last:border-b-0">
                       <td className="px-4 py-2.5 text-wf-800">{row.product_title}</td>
@@ -283,7 +347,9 @@ export default function SellerAffiliateProgramPage() {
       {saveNote && <p className="mt-4 text-xs text-wf-600">{saveNote}</p>}
 
       <div className="mt-6">
-        <Button type="button" onClick={() => setSaveNote(t("sellerAffiliateSaved", locale))}>{t("commonSave", locale)}</Button>
+        <Button type="button" onClick={() => void saveSettings()} disabled={saving} data-testid="seller-affiliate-save">
+          {saving ? t("affProductPromoting", locale) : t("commonSave", locale)}
+        </Button>
       </div>
     </SellerGate>
   )

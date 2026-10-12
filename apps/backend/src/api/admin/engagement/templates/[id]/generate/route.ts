@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto"
 import type { AuthenticatedMedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
+import { listPublishedCatalogProducts } from "../../../../../store/catalog/catalog-helpers"
 import {
   ContentProviderError,
   generateEngagementContent,
@@ -40,6 +41,26 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
   const idea = requiredString(body, "idea", "Onderwerp")
   const goal = requiredString(body, "goal", "Doel")
   const products = await catalogFacts(req, `${idea} ${goal}`)
+  if (
+    (template as { audience?: string | null }).audience === "affiliates" &&
+    products.length > 0
+  ) {
+    const catalog = await listPublishedCatalogProducts(req.scope, {
+      ids: products.map((product) => product.id).filter(Boolean),
+      limit: products.length,
+      region_code: "NL",
+    })
+    const commissionById = new Map(
+      catalog.products.map((product) => [
+        product.id,
+        product.affiliate_commission_label,
+      ])
+    )
+    for (const product of products) {
+      const label = product.id ? commissionById.get(product.id) : null
+      if (label) product.commission_note = `Commissie: ${label}.`
+    }
+  }
   let draft
   try {
     draft = await generateEngagementContent({
@@ -97,6 +118,7 @@ async function catalogFacts(req: AuthenticatedMedusaRequest, text: string): Prom
         config: { take: number; relations?: string[] }
       ) => Promise<
         Array<{
+          product_id?: string
           title?: string
           description?: string
           media_items?: Array<{ storage_reference?: string; media_type?: string }>
@@ -114,6 +136,7 @@ async function catalogFacts(req: AuthenticatedMedusaRequest, text: string): Prom
         )
         const url = image?.storage_reference?.trim() || null
         return {
+          id: row.product_id?.trim() || "",
           title: row.title?.trim() || "",
           description: row.description?.trim() || "",
           image_url: url && (/^https?:\/\//i.test(url) || url.startsWith("/")) ? url : null,
@@ -124,3 +147,4 @@ async function catalogFacts(req: AuthenticatedMedusaRequest, text: string): Prom
     return []
   }
 }
+

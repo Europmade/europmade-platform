@@ -2920,6 +2920,13 @@ const M = {
     "Dieses Produkt bewerben",
     "Promouvoir ce produit"
   ),
+  affPromoteOffer: L("Promoot", "Promote", "Bewerben", "Promouvoir"),
+  affOfferChoice: L(
+    "Kies de aanbieding die je promoot. De commissie hoort bij die verkoper.",
+    "Choose the offer you promote. The commission belongs to that seller.",
+    "Wählen Sie das Angebot, das Sie bewerben. Die Provision gehört zu diesem Verkäufer.",
+    "Choisissez l'offre à promouvoir. La commission appartient à ce vendeur."
+  ),
   affProductPromoting: L("Bezig…", "Working…", "Bitte warten…", "En cours…"),
   affProductShareHeading: L(
     "Jouw affiliate-link",
@@ -3035,10 +3042,10 @@ const M = {
   affDashSearchCta: L("Zoeken →", "Search →", "Suchen →", "Rechercher →"),
   affDashViewCta: L("Bekijken →", "View →", "Ansehen →", "Voir →"),
   affProductsIntro: L(
-    "Zoek verkoopbare EuropMade-producten om te promoten. Platformcommissie: {rate} (ADR-0030).",
-    "Search sellable EuropMade products to promote. Platform commission: {rate} (ADR-0030).",
-    "Suchen Sie verkaufbare EuropMade-Produkte zum Bewerben. Plattformprovision: {rate} (ADR-0030).",
-    "Cherchez des produits EuropMade vendables à promouvoir. Commission plateforme : {rate} (ADR-0030)."
+    "Zoek verkoopbare EuropMade-producten om te promoten. De commissie is de productcommissie van de verkoper plus de EuropMade-bijdrage.",
+    "Search sellable EuropMade products to promote. Commission is the seller product rate plus the EuropMade contribution.",
+    "Suchen Sie verkaufbare EuropMade-Produkte zum Bewerben. Die Provision ist die Produktprovision des Verkäufers plus den EuropMade-Beitrag.",
+    "Cherchez des produits EuropMade vendables à promouvoir. La commission est le taux produit du vendeur plus la contribution EuropMade."
   ),
   affProductsSearchPlaceholder: L(
     "Productnaam, SKU of EAN…",
@@ -3208,6 +3215,44 @@ const M = {
     "Failed to load payouts.",
     "Auszahlungen konnten nicht geladen werden.",
     "Échec du chargement des versements."
+  ),
+  affPreferencesTitle: L(
+    "Communicatievoorkeuren",
+    "Communication preferences",
+    "Kommunikationseinstellungen",
+    "Préférences de communication"
+  ),
+  affPreferencesHelp: L(
+    "Deze keuze is vrijwillig. Een account maakt geen marketingtoestemming aan. Er wordt niets verzonden.",
+    "This choice is voluntary. An account does not create marketing consent. Nothing is sent.",
+    "Diese Wahl ist freiwillig. Ein Konto erzeugt keine Marketingeinwilligung. Es wird nichts gesendet.",
+    "Ce choix est volontaire. Un compte ne crée pas de consentement marketing. Rien n'est envoyé."
+  ),
+  affPrefNews: L("Affiliate nieuws", "Affiliate news", "Affiliate-Neuigkeiten", "Actualités affilié"),
+  affPrefBrands: L(
+    "Nieuwe merken en producten",
+    "New brands and products",
+    "Neue Marken und Produkte",
+    "Nouvelles marques et produits"
+  ),
+  affPrefCampaigns: L("Affiliate campagnes", "Affiliate campaigns", "Affiliate-Kampagnen", "Campagnes affilié"),
+  affPrefCommission: L(
+    "Commissie- en actie-updates",
+    "Commission and promotion updates",
+    "Updates zu Provisionen und Aktionen",
+    "Mises à jour des commissions et actions"
+  ),
+  affPrefContent: L(
+    "Contentmogelijkheden",
+    "Content opportunities",
+    "Content-Möglichkeiten",
+    "Opportunités de contenu"
+  ),
+  affPreferencesSaved: L(
+    "Communicatievoorkeuren opgeslagen.",
+    "Communication preferences saved.",
+    "Kommunikationseinstellungen gespeichert.",
+    "Préférences de communication enregistrées."
   ),
   affAccountIntro: L(
     "Je accountgegevens voor het affiliateprogramma.",
@@ -5621,10 +5666,10 @@ const M = {
     "Adresse de livraison"
   ),
   sellerSettingsNotifications: L(
-    "Notificaties",
-    "Notifications",
-    "Benachrichtigungen",
-    "Notifications"
+    "Communicatievoorkeuren",
+    "Communication preferences",
+    "Kommunikationseinstellungen",
+    "Préférences de communication"
   ),
   sellerSettingsSecurity: L(
     "Beveiliging",
@@ -5738,6 +5783,72 @@ const M = {
     "Email on return request",
     "E-Mail bei Retourenanfrage",
     "E-mail pour demande de retour"
+  ),
+  sellerSettingsCommRequired: L(
+    "Deze meldingen horen bij bestellingen en je account. Je kunt ze niet uitzetten.",
+    "These messages belong to orders and your account. They cannot be turned off.",
+    "Diese Meldungen gehören zu Bestellungen und Ihrem Konto. Sie können nicht ausgeschaltet werden.",
+    "Ces messages concernent les commandes et votre compte. Ils ne peuvent pas être désactivés."
+  ),
+  sellerSettingsCommVoluntary: L(
+    "EuropMade-communicatie",
+    "EuropMade communication",
+    "EuropMade-Kommunikation",
+    "Communication EuropMade"
+  ),
+  sellerSettingsCommTransactional: L(
+    "Transactionele meldingen",
+    "Transactional messages",
+    "Transaktionale Meldungen",
+    "Messages transactionnels"
+  ),
+  sellerSettingsNotifyPayment: L(
+    "Betaling of financiële melding",
+    "Payment or financial notice",
+    "Zahlung oder finanzielle Mitteilung",
+    "Paiement ou avis financier"
+  ),
+  sellerSettingsNotifyAccount: L(
+    "Belangrijke account- of beveiligingsmelding",
+    "Important account or security notice",
+    "Wichtige Konto- oder Sicherheitsmeldung",
+    "Avis important sur le compte ou la sécurité"
+  ),
+  sellerSettingsPrefPlatform: L(
+    "Belangrijke platformupdates",
+    "Important platform updates",
+    "Wichtige Plattform-Updates",
+    "Mises à jour importantes de la plateforme"
+  ),
+  sellerSettingsPrefTips: L(
+    "Tips en hulp voor verkopers",
+    "Tips and help for sellers",
+    "Tipps und Hilfe für Verkäufer",
+    "Conseils et aide pour les vendeurs"
+  ),
+  sellerSettingsPrefProducts: L(
+    "Product- en verkoopmogelijkheden",
+    "Product and sales opportunities",
+    "Produkt- und Verkaufschancen",
+    "Opportunités produits et ventes"
+  ),
+  sellerSettingsPrefCampaigns: L(
+    "Campagnes en acties voor verkopers",
+    "Campaigns and promotions for sellers",
+    "Kampagnen und Aktionen für Verkäufer",
+    "Campagnes et actions pour les vendeurs"
+  ),
+  sellerSettingsPrefNews: L(
+    "Nieuws en ontwikkelingen van EuropMade",
+    "News and developments from EuropMade",
+    "Neuigkeiten und Entwicklungen von EuropMade",
+    "Actualités et évolutions d’EuropMade"
+  ),
+  sellerSettingsCommSaved: L(
+    "Communicatievoorkeuren opgeslagen.",
+    "Communication preferences saved.",
+    "Kommunikationseinstellungen gespeichert.",
+    "Préférences de communication enregistrées."
   ),
   sellerSettingsPasswordChanged: L(
     "Wachtwoord laatst gewijzigd: 12 juni 2026",
@@ -7216,7 +7327,7 @@ const M = {
     "Commission générale"
   ),
   sellerAffiliateDefaultPct: L(
-    "Standaard commissie (%)",
+    "Standaardcommissie (%)",
     "Default commission (%)",
     "Standardprovision (%)",
     "Commission standard (%)"
@@ -7258,10 +7369,16 @@ const M = {
     "Titre du produit"
   ),
   sellerAffiliateSaved: L(
-    "Instellingen lokaal bijgewerkt (demo).",
-    "Settings updated locally (demo).",
-    "Einstellungen lokal aktualisiert (Demo).",
-    "Paramètres mis à jour localement (démo)."
+    "Opgeslagen.",
+    "Saved.",
+    "Gespeichert.",
+    "Enregistré."
+  ),
+  sellerAffiliateSaveFailed: L(
+    "Opslaan is mislukt. Probeer het opnieuw.",
+    "Saving failed. Try again.",
+    "Speichern fehlgeschlagen. Bitte erneut versuchen.",
+    "L'enregistrement a échoué. Réessayez."
   ),
   affPriorityDefault: L("Algemene commissie", "Default commission", "Allgemeine Provision", "Commission par défaut"),
   affPriorityExplain: L(
@@ -7395,10 +7512,95 @@ const M = {
     "Aucun avis en attente."
   ),
   buyerSettingsIntro: L(
-    "Beheer je accountgegevens en sessie.",
-    "Manage your account details and session.",
-    "Verwalten Sie Ihre Kontodaten und Sitzung.",
-    "Gérez les détails de votre compte et votre session."
+    "Beheer je gegevens, beveiliging, bestellingen en communicatie.",
+    "Manage your details, security, orders and communication.",
+    "Verwalten Sie Ihre Daten, Sicherheit, Bestellungen und Kommunikation.",
+    "Gérez vos informations, votre sécurité, vos commandes et votre communication."
+  ),
+  buyerSettingsPersonal: L(
+    "Persoonlijke gegevens",
+    "Personal details",
+    "Persönliche Daten",
+    "Informations personnelles"
+  ),
+  buyerSettingsSecurity: L(
+    "Accountbeveiliging",
+    "Account security",
+    "Kontosicherheit",
+    "Sécurité du compte"
+  ),
+  buyerSettingsTwoFactor: L(
+    "Tweestapsverificatie",
+    "Two-step verification",
+    "Zwei-Faktor-Authentifizierung",
+    "Validation en deux étapes"
+  ),
+  buyerSettingsAddresses: L(
+    "Verzendadressen",
+    "Shipping addresses",
+    "Lieferadressen",
+    "Adresses de livraison"
+  ),
+  buyerSettingsNoAddresses: L(
+    "Er is nog geen verzendadres op dit account. Adressen bij een bestelling zie je bij je bestellingen.",
+    "There is no shipping address on this account yet. Addresses used on an order are shown with your orders.",
+    "Auf diesem Konto ist noch keine Lieferadresse hinterlegt. Adressen einer Bestellung sehen Sie bei Ihren Bestellungen.",
+    "Aucune adresse de livraison n’est encore enregistrée. Les adresses d’une commande se trouvent avec vos commandes."
+  ),
+  buyerSettingsDefaultAddress: L(
+    "Standaard verzendadres",
+    "Default shipping address",
+    "Standard-Lieferadresse",
+    "Adresse de livraison par défaut"
+  ),
+  buyerSettingsNewsletter: L(
+    "Nieuwsbrief",
+    "Newsletter",
+    "Newsletter",
+    "Newsletter"
+  ),
+  buyerSettingsNewsletterName: L(
+    "EuropMade-nieuwsbrief",
+    "EuropMade newsletter",
+    "EuropMade-Newsletter",
+    "Newsletter EuropMade"
+  ),
+  newsletterTopicNews: L(
+    "EuropMade nieuws & inspiratie",
+    "EuropMade news and inspiration",
+    "EuropMade Neuigkeiten und Inspiration",
+    "Actualités et inspiration EuropMade"
+  ),
+  newsletterTopicBrands: L(
+    "Nieuwe Europese merken en producten",
+    "New European brands and products",
+    "Neue europäische Marken und Produkte",
+    "Nouvelles marques et produits européens"
+  ),
+  newsletterTopicOffers: L(
+    "Aanbiedingen en acties",
+    "Offers and promotions",
+    "Angebote und Aktionen",
+    "Offres et actions"
+  ),
+  newsletterUnsubscribeTitle: L(
+    "Nieuwsbriefvoorkeuren",
+    "Newsletter preferences",
+    "Newsletter-Einstellungen",
+    "Préférences de newsletter"
+  ),
+  newsletterUnsubscribeSave: L("Voorkeuren opslaan", "Save preferences", "Einstellungen speichern", "Enregistrer les préférences"),
+  newsletterUnsubscribeAll: L(
+    "Alles uitschrijven",
+    "Unsubscribe from all",
+    "Alles abmelden",
+    "Tout désinscrire"
+  ),
+  buyerSettingsNewsletterHelp: L(
+    "Schrijf je per soort in of uit. Alleen deze nieuwsbrieven bestaan.",
+    "Subscribe or unsubscribe per type. Only these newsletters exist.",
+    "Melden Sie sich je Art an oder ab. Nur diese Newsletter gibt es.",
+    "Inscrivez-vous ou désinscrivez-vous par type. Seules ces newsletters existent."
   ),
   buyerLogout: L("Uitloggen", "Sign out", "Abmelden", "Se déconnecter"),
   buyerShippingAddress: L(

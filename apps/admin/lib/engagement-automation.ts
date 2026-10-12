@@ -60,15 +60,18 @@ export function automationStatus(
 }
 
 export function startLines(program: EngagementProgram): { title: string; note: string } {
-  if (program.automatic_start === "linked") {
+  if (program.start_title) {
+    return { title: program.start_title, note: program.start_note ?? "" }
+  }
+  if (program.start_trigger) {
     return {
-      title: "De start wordt automatisch door EuropMade bepaald.",
-      note: "",
+      title: "Startmoment gekozen",
+      note: "Start wanneer: het gekozen moment.",
     }
   }
   return {
-    title: "Deze automatisering start niet vanzelf.",
-    note: "De start wordt automatisch door EuropMade bepaald.",
+    title: "Deze automatisering start niet vanzelf",
+    note: "Er is nog geen beschikbaar startmoment gekozen.",
   }
 }
 
@@ -86,8 +89,11 @@ export function minutesFromDelay(amount: number, unit: DelayUnit): number {
   return safe
 }
 
-export function delayLabel(minutes: number, first: boolean): string {
-  if (!minutes) return first ? "Direct na start" : "Direct"
+export function delayLabel(minutes: number, first: boolean, scheduled = false): string {
+  if (!minutes) {
+    if (!first) return "Direct"
+    return scheduled ? "Op het geplande moment" : "Direct na start"
+  }
   const { amount, unit } = delayParts(minutes)
   if (unit === "dagen") return amount === 1 ? "Wacht 1 dag" : `Wacht ${amount} dagen`
   if (unit === "uren") return amount === 1 ? "Wacht 1 uur" : `Wacht ${amount} uur`
@@ -101,6 +107,17 @@ export function stepLanguage(
   const template = stepTemplate(step, templates)
   const variant = template?.variants.find((item) => item.id === step.variant_id)
   return variant ? localeLabel(variant.locale) : "—"
+}
+
+export function stepSummary(
+  step: EngagementStep,
+  templates: EngagementTemplate[]
+): string {
+  const template = stepTemplate(step, templates)
+  const variant = template?.variants.find((item) => item.id === step.variant_id)
+  const active = variant?.versions.find((version) => messageStatus(version) === "Actief")
+  const version = active ?? variant?.versions[0]
+  return version?.preheader?.trim() || ""
 }
 
 export function stepSubject(

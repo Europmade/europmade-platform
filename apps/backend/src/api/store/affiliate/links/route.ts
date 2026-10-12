@@ -29,6 +29,9 @@ export async function POST(
   const result = await executeCreateLink(req.scope, {
     customer_id: req.auth_context.actor_id,
     target_url: req.validatedBody.target_url,
+    product_id: req.validatedBody.product_id,
+    offer_id: req.validatedBody.offer_id,
+    seller_id: req.validatedBody.seller_id,
   })
   res.status(201).json({ link: result.link })
 }

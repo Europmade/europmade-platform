@@ -93,3 +93,68 @@ export function sourceLabel(source: string | null | undefined): string {
 export function newsletterLabel(enabled: boolean): string {
   return enabled ? "Ingeschreven" : "Uitgeschreven"
 }
+
+/**
+ * Drie echte consumentennieuwsbrieven op de bestaande consument.
+ * EngagementPreference blijft voor een zakelijk Contact en krijgt hier geen tweede tabel.
+ */
+export const CONSUMER_NEWSLETTER_TOPICS = ["news", "brands", "offers"] as const
+
+export type ConsumerNewsletterTopic = (typeof CONSUMER_NEWSLETTER_TOPICS)[number]
+
+export type ConsumerNewsletterTopics = Record<ConsumerNewsletterTopic, boolean>
+
+export const CONSUMER_NEWSLETTER_TOPIC_LABELS: Record<ConsumerNewsletterTopic, string> = {
+  news: "EuropMade nieuws & inspiratie",
+  brands: "Nieuwe Europese merken en producten",
+  offers: "Aanbiedingen en acties",
+}
+
+export function emptyNewsletterTopics(): ConsumerNewsletterTopics {
+  return { news: false, brands: false, offers: false }
+}
+
+export function allNewsletterTopics(): ConsumerNewsletterTopics {
+  return { news: true, brands: true, offers: true }
+}
+
+export function topicsEnableNewsletter(topics: ConsumerNewsletterTopics): boolean {
+  return topics.news || topics.brands || topics.offers
+}
+
+/**
+ * Geen opgeslagen onderwerpen en wel ingeschreven: de bestaande algemene inschrijving.
+ * Een opgeslagen keuze blijft zoals die is, ook als alles uit staat.
+ */
+export function resolveNewsletterTopics(
+  stored: unknown,
+  newsletterEnabled: boolean
+): ConsumerNewsletterTopics {
+  if (!newsletterEnabled) return emptyNewsletterTopics()
+  if (!stored || typeof stored !== "object" || Array.isArray(stored)) {
+    return allNewsletterTopics()
+  }
+  const row = stored as Record<string, unknown>
+  return {
+    news: row.news === true,
+    brands: row.brands === true,
+    offers: row.offers === true,
+  }
+}
+
+export function planNewsletterTopics(input: unknown): ConsumerNewsletterTopics {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("Kies per nieuwsbrief of die aan of uit staat.")
+  }
+  const row = input as Record<string, unknown>
+  for (const key of CONSUMER_NEWSLETTER_TOPICS) {
+    if (typeof row[key] !== "boolean") {
+      throw new Error("Kies per nieuwsbrief of die aan of uit staat.")
+    }
+  }
+  return {
+    news: row.news === true,
+    brands: row.brands === true,
+    offers: row.offers === true,
+  }
+}

@@ -153,3 +153,19 @@ export {
   resolveDestinationVatRate,
   vatFromInclusive,
 } from "./tax/eu-vat.ts"
+export {
+  composeNewsletterEmail,
+  type NewsletterBrandBlock,
+  type NewsletterCard,
+  type NewsletterEmailModel,
+  type NewsletterEmailResult,
+  type NewsletterOfferBanner,
+  type NewsletterStory,
+} from "./newsletter-email.ts"
+export {
+  EUROPMADE_AFFILIATE_CONTRIBUTION_PERCENT,
+  SELLER_AFFILIATE_COMMISSION_SETTINGS,
+  sellerAffiliateCommission,
+  formatAffiliateCommissionPercent,
+  type SellerAffiliateCommissionSettings,
+} from "./affiliate-commission.ts"

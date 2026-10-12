@@ -470,4 +470,66 @@ describe("engagement orchestrator", () => {
     expect(events.some((event) => event.status === "sent")).toBe(false)
     expect(updates[0].status).toBe("active")
   })
+
+  it("queues the locale variant and stores that language", async () => {
+    const events: { variant_id?: string; template_version_id?: string | null; locale?: string | null; status: string }[] = []
+    const api = {
+      async retrieveEngagementEnrollment() {
+        return enrollment()
+      },
+      async listEngagementSequenceSteps() {
+        return steps
+      },
+      async listCommunicationTemplateVariants() {
+        return [
+          { id: "ctvar_1", locale: "nl", template_id: "ctpl_1" },
+          { id: "ctvar_en", locale: "en", template_id: "ctpl_1" },
+        ]
+      },
+      async retrieveCommunicationTemplateVariant(id: string) {
+        return { id, template_id: "ctpl_1" }
+      },
+      async listCommunicationTemplateVersions(filters: { variant_id: string }) {
+        if (filters.variant_id === "ctvar_en") {
+          return [
+            {
+              id: "ctver_en",
+              variant_id: "ctvar_en",
+              version_number: 1,
+              approval_status: "approved",
+              activation_status: "active",
+            },
+          ]
+        }
+        return versions
+      },
+      async listEngagementSuppressions() {
+        return []
+      },
+      async listEngagementCommunicationEvents() {
+        return []
+      },
+      async recordCommunicationEvent(input: {
+        variant_id?: string
+        template_version_id?: string | null
+        locale?: string | null
+        status: string
+      }) {
+        events.push(input)
+      },
+      async updateEnrollment() {
+        return undefined
+      },
+    } as unknown as OrchestratorApi
+    const result = await processOneDueEnrollment(api, "eenr_1", now, "en")
+    expect(result.action).toBe("queued")
+    expect(events[0]).toEqual(
+      expect.objectContaining({
+        status: "queued",
+        variant_id: "ctvar_en",
+        template_version_id: "ctver_en",
+        locale: "en",
+      })
+    )
+  })
 })

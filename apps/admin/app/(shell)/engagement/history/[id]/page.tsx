@@ -103,6 +103,9 @@ export default function EngagementHistoryDetailPage() {
           <h1 className="text-[19px] font-bold text-wf-900">
             {row.template_name || "Bericht"}
           </h1>
+          {row.template_version_subject ? (
+            <p className="mt-1 text-sm text-wf-800">{fill(row.template_version_subject)}</p>
+          ) : null}
           <p className="mt-1 text-sm text-wf-900">
             {row.contact_name || row.contact_email || "Onbekend contact"}
           </p>
@@ -116,6 +119,16 @@ export default function EngagementHistoryDetailPage() {
           </div>
         </div>
       </div>
+      {row.status === "queued" ? (
+        <p className="mt-3 rounded border border-wf-300 bg-wf-50 px-3 py-2 text-xs text-wf-800">
+          Dit bericht staat klaar. Er is niets verzonden.
+        </p>
+      ) : null}
+      {row.delivery_error ? (
+        <p className="mt-3 rounded border border-wf-300 bg-wf-50 px-3 py-2 text-xs text-wf-800">
+          {row.delivery_error}
+        </p>
+      ) : null}
       {hasVersion ? (
         <div className="mt-4">
           <div className="mb-2 flex justify-end gap-1">
@@ -159,20 +172,13 @@ export default function EngagementHistoryDetailPage() {
       )}
       <details className="mt-6 rounded-lg border border-wf-300 bg-white px-3 py-2">
         <summary className="cursor-pointer text-xs font-medium text-wf-700">
-          Technische informatie
+          Meer over deze stap
         </summary>
         <dl className="mt-2 space-y-1 text-[11px] text-wf-700">
-          <div>Communicatie-ID: {row.id}</div>
-          <div>
-            Versie-ID: {row.template_version_id || "—"}
-            {row.template_version_number ? ` · versie ${row.template_version_number}` : ""}
-          </div>
-          <div>
-            Enrollment: {row.enrollment_id || "—"}
-            {row.enrollment_status ? ` · ${enrollmentLabel(row.enrollment_status)}` : ""}
-          </div>
-          <div>Automatisering: {row.program_name || row.program_id || "—"}</div>
-          <div>Stap: {row.sequence_step_id || "—"}</div>
+          <div>Versie {row.template_version_number || "—"}</div>
+          <div>Taal: {row.locale || "—"}</div>
+          <div>Automatisering: {row.program_name || "—"}</div>
+          <div>Stand: {enrollmentLabel(row.enrollment_status)}</div>
         </dl>
       </details>
       {error ? (

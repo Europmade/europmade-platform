@@ -4,7 +4,7 @@ import { cmsService } from "../../cms-request"
 import { presentConsumer, type ConsumerRow } from "../../consumer-present"
 
 const STATUS_LABELS: Record<string, string> = {
-  queued: "In wachtrij",
+  queued: "Klaar, nog niet verzonden",
   sent: "Verzonden",
   failed: "Mislukt",
   bounced: "Teruggekomen",

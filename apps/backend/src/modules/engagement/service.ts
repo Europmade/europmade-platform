@@ -1,4 +1,5 @@
-import { MedusaError, MedusaService } from "@medusajs/framework/utils"
+import type { Context } from "@medusajs/framework/types"
+import { InjectManager, MedusaContext, MedusaError, MedusaService } from "@medusajs/framework/utils"
 import {
   CommunicationTemplate,
   CommunicationTemplateVariant,
@@ -19,21 +20,29 @@ import {
 import {
   approvalAudit,
   assertCreatedVersionStatus,
+  assertTemplateDeletable,
+  assertVersionDeletable,
   assertVariantNameAvailable,
   contentFieldsInPatch,
   isSendableVersion,
   normalizeTemplateIdentity,
   normalizeVariantIdentity,
   normalizeTokenWhitelist,
+  planTemplateAudience,
+  planTemplateLayout,
   refuseVersionContentChange,
   resolveVersionTransition,
   type ActivationStatus,
   type ApprovalStatus,
 } from "./communication-cms-rules"
 import {
+  allNewsletterTopics,
   assertConsumerSource,
+  emptyNewsletterTopics,
+  isPreviewUnsubscribeToken,
   newUnsubscribeToken,
   normalizeConsumerEmail,
+  planNewsletterTopics,
 } from "./consumer-rules"
 import {
   DEFAULT_ORGANIZATION_ROLE,
@@ -57,6 +66,22 @@ import {
   normalizeProgramType,
   normalizeStepOrder,
 } from "./sequence-rules"
+import {
+  assertStartTrigger,
+  findStartTrigger,
+  planMessageSchedule,
+  planProgramStart,
+  programActivationErrors,
+} from "./automation-start"
+import { storedCampaignCriteria } from "./campaign-selection"
+import {
+  applyDeliveryResult,
+  DELIVERY_CLAIM_SQL,
+  planProviderWebhook,
+  type HistoryDeliveryRow,
+  type ProviderDeliveryResult,
+  type ProviderWebhook,
+} from "./delivery"
 import { readOrchestratorConfig } from "./orchestrator-config"
 import {
   applyHumanFollowUp,
@@ -94,6 +119,24 @@ function invalid(message: string): never {
   throw new MedusaError(MedusaError.Types.INVALID_DATA, message)
 }
 
+async function executeDeliverySql(
+  manager: unknown,
+  sql: string,
+  params: unknown[]
+): Promise<Record<string, unknown>[]> {
+  const candidate = manager as {
+    execute?: (query: string, values?: unknown[]) => Promise<unknown>
+    getConnection?: () => { execute: (query: string, values?: unknown[]) => Promise<unknown> }
+  } | null
+  const connection = candidate?.getConnection?.()
+  const run = candidate?.execute?.bind(candidate) ?? connection?.execute?.bind(connection)
+  if (!run) invalid("De verzendclaim kan niet atomair worden gezet.")
+  const result = await run(sql, params)
+  if (Array.isArray(result)) return result as Record<string, unknown>[]
+  const rows = (result as { rows?: unknown[] } | null)?.rows
+  return Array.isArray(rows) ? (rows as Record<string, unknown>[]) : []
+}
+
 function notAllowed(message: string): never {
   throw new MedusaError(MedusaError.Types.NOT_ALLOWED, message)
 }
@@ -123,6 +166,8 @@ class EngagementModuleService extends MedusaService({
     name: string
     communication_type: string
     sequence_step_binding?: string | null
+    audience?: string | null
+    layout?: string | null
   }) {
     const identity = this.templateIdentity(input)
     const binding = input.sequence_step_binding?.trim() || null
@@ -130,7 +175,8 @@ class EngagementModuleService extends MedusaService({
       name: identity.name,
       communication_type: identity.communication_type,
       sequence_step_binding: binding,
-      audience: identity.communication_type === "newsletter" ? "consumers" : null,
+      audience: this.templateAudience(identity.communication_type, input.audience ?? null, null),
+      layout: planTemplateLayout(input.layout, null),
       ready_to_send: false,
     })
   }
@@ -144,6 +190,12 @@ class EngagementModuleService extends MedusaService({
     name?: string
     communication_type?: string
     audience?: string | null
+    layout?: string | null
+    schedule?: {
+      scheduled_at?: string | null
+      schedule_timezone?: string | null
+      audience?: string | null
+    } | null
   }) {
     const id = input.id.trim()
     if (!id) invalid("communication_template vereist een id.")
@@ -151,6 +203,11 @@ class EngagementModuleService extends MedusaService({
       id: string
       name: string
       communication_type: string
+      audience?: string | null
+      layout?: string | null
+      scheduled_at?: string | null
+      schedule_timezone?: string | null
+      schedule_status?: string | null
     }
     const identity = this.templateIdentity({
       name: input.name === undefined ? current.name : input.name,
@@ -170,17 +227,48 @@ class EngagementModuleService extends MedusaService({
         )
       }
     }
-    const audience =
-      identity.communication_type === "newsletter"
-        ? input.audience === undefined
-          ? "consumers"
-          : this.newsletterAudience(input.audience)
-        : null
+    let audience = this.templateAudience(
+      identity.communication_type,
+      input.audience,
+      current.audience ?? null
+    )
+    let scheduled_at = current.scheduled_at ?? null
+    let schedule_timezone = current.schedule_timezone ?? null
+    let schedule_status = current.schedule_status ?? null
+    if (input.schedule === null) {
+      scheduled_at = null
+      schedule_timezone = null
+      schedule_status = null
+    } else if (input.schedule) {
+      await this.assertApprovedForSchedule(id)
+      try {
+        const planned = planMessageSchedule({
+          communicationType: identity.communication_type,
+          scheduled_at: input.schedule.scheduled_at,
+          schedule_timezone: input.schedule.schedule_timezone,
+          audience: input.schedule.audience ?? audience,
+        })
+        scheduled_at = planned.scheduled_at
+        schedule_timezone = planned.schedule_timezone
+        schedule_status = planned.schedule_status
+        audience = this.templateAudience(
+          identity.communication_type,
+          planned.audience,
+          audience
+        )
+      } catch (err) {
+        invalid(err instanceof Error ? err.message : String(err))
+      }
+    }
     return this.updateCommunicationTemplates({
       id,
       name: identity.name,
       communication_type: identity.communication_type,
       audience,
+      layout: planTemplateLayout(input.layout, current.layout ?? null),
+      scheduled_at,
+      schedule_timezone,
+      schedule_status,
       ...(identity.communication_type === "newsletter" ? {} : { ready_to_send: false }),
     })
   }
@@ -360,6 +448,66 @@ class EngagementModuleService extends MedusaService({
   }
 
   /**
+   * Verwijdert een ongebruikt bericht volledig: template, varianten en conceptversies.
+   * Actief, goedgekeurd, gebruikt, gekoppeld aan een automatisering of aanwezig in
+   * de communicatiehistorie blijft staan. Historie wordt nooit gewist.
+   * Er wordt niets verzonden.
+   */
+  async deleteUnusedTemplate(id: string): Promise<void> {
+    const templateId = id.trim()
+    if (!templateId) invalid("communication_template vereist een id.")
+    await this.retrieveCommunicationTemplate(templateId)
+    const variants = (await this.listCommunicationTemplateVariants(
+      { template_id: templateId },
+      { take: 50, relations: ["versions"] }
+    )) as Array<{ id: string; versions?: TemplateVersionRow[] }>
+    const versions = variants.flatMap((variant) => variant.versions ?? [])
+    const steps = (await this.listEngagementSequenceSteps(
+      { template_id: templateId },
+      { take: 1 }
+    )) as Array<{ id: string }>
+    const events = (await this.listEngagementCommunicationEvents(
+      { template_id: templateId },
+      { take: 1 }
+    )) as Array<{ id: string }>
+    try {
+      assertTemplateDeletable({
+        versions,
+        sequenceStepCount: steps.length,
+        historyCount: events.length,
+      })
+    } catch (err) {
+      notAllowed(err instanceof Error ? err.message : String(err))
+    }
+    const versionIds = versions.map((version) => version.id).filter(Boolean)
+    if (versionIds.length > 0) {
+      await this.softDeleteCommunicationTemplateVersions(versionIds)
+    }
+    const variantIds = variants.map((variant) => variant.id).filter(Boolean)
+    if (variantIds.length > 0) {
+      await this.softDeleteCommunicationTemplateVariants(variantIds)
+    }
+    await this.softDeleteCommunicationTemplates([templateId])
+  }
+
+  /**
+   * Verwijdert een ongebruikt concept. Actief, goedgekeurd of gebruikt blijft staan.
+   * Er wordt niets verzonden.
+   */
+  async deleteVersion(id: string) {
+    const versionId = id.trim()
+    if (!versionId) invalid("Version vereist een id.")
+    const current = (await this.retrieveCommunicationTemplateVersion(versionId)) as TemplateVersionRow
+    try {
+      assertVersionDeletable(current)
+    } catch (err) {
+      notAllowed(err instanceof Error ? err.message : String(err))
+    }
+    await this.softDeleteCommunicationTemplateVersions([versionId])
+    return current
+  }
+
+  /**
    * Inhoud van een ongebruikt concept mag worden bijgewerkt.
    * Een goedgekeurde, actieve of gebruikte version blijft onwijzigbaar.
    * Dit verzendt niets.
@@ -536,6 +684,18 @@ class EngagementModuleService extends MedusaService({
           .map((row) => row.email.trim().toLowerCase()),
         email
       )
+    } catch (err) {
+      invalid(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  private templateAudience(
+    communicationType: string,
+    requested: string | null | undefined,
+    current: string | null
+  ): string | null {
+    try {
+      return planTemplateAudience(communicationType, requested, current)
     } catch (err) {
       invalid(err instanceof Error ? err.message : String(err))
     }
@@ -807,18 +967,35 @@ class EngagementModuleService extends MedusaService({
    * Programmadefinitie. Meerdere programma's per program_type zijn toegestaan.
    * Start geen enrollment en verzendt niets.
    */
-  async createLifecycleProgram(input: { name: string; program_type: string }) {
+  async createLifecycleProgram(input: {
+    name: string
+    program_type: string
+    start_trigger?: string | null
+  }) {
     const name = input.name.trim()
     if (!name) invalid("LifecycleProgram vereist een naam.")
     const program_type = this.programType(input.program_type)
+    const start_trigger = this.startTrigger(input.start_trigger)
     await this.assertProgramNameAvailable(program_type, name)
-    return this.createEngagementLifecyclePrograms({ name, program_type })
+    return this.createEngagementLifecyclePrograms({
+      name,
+      program_type,
+      start_trigger,
+      activation_status: "concept",
+    })
   }
 
   async updateLifecycleProgram(input: {
     id: string
     name?: string
     program_type?: string
+    start_trigger?: string | null
+    start_mode?: string | null
+    scheduled_at?: string | null
+    schedule_timezone?: string | null
+    audience?: string | null
+    selection_criteria?: unknown
+    activate?: boolean
   }) {
     const id = input.id.trim()
     if (!id) invalid("LifecycleProgram vereist een id.")
@@ -831,6 +1008,43 @@ class EngagementModuleService extends MedusaService({
       input.program_type === undefined
         ? this.programType(current.program_type)
         : this.programType(input.program_type)
+    const start = this.programStart(program_type, current, input)
+    const currentMode =
+      current.start_mode ??
+      (current.start_trigger ? findStartTrigger(current.start_trigger)?.kind ?? null : null)
+    const startChanged =
+      start.start_mode !== currentMode ||
+      start.start_trigger !== (current.start_trigger ?? null) ||
+      start.scheduled_at !== (current.scheduled_at ?? null) ||
+      start.schedule_timezone !== (current.schedule_timezone ?? null) ||
+      (start.start_mode === "scheduled" && start.audience !== (current.audience ?? null))
+    const selection_criteria =
+      program_type === "newsletter" || program_type === "campaign"
+        ? storedCampaignCriteria(
+            input.selection_criteria === undefined
+              ? current.selection_criteria
+              : input.selection_criteria
+          )
+        : null
+    const criteriaChanged =
+      JSON.stringify(selection_criteria) !==
+      JSON.stringify(storedCampaignCriteria(current.selection_criteria))
+    const activation_status = input.activate
+      ? "active"
+      : startChanged || criteriaChanged
+        ? "concept"
+        : current.activation_status === "active"
+          ? "active"
+          : "concept"
+    if (input.activate) {
+      const problems = await this.activationProblems({
+        ...current,
+        name,
+        program_type,
+        ...start,
+      })
+      if (problems.length > 0) invalid(problems.join("\n"))
+    }
     if (name !== current.name || program_type !== current.program_type) {
       await this.assertProgramNameAvailable(program_type, name, id)
     }
@@ -846,7 +1060,58 @@ class EngagementModuleService extends MedusaService({
       }
       await this.assertStepsMatchProgram(id, program_type)
     }
-    return this.updateEngagementLifecyclePrograms({ id, name, program_type })
+    return this.updateEngagementLifecyclePrograms({
+      id,
+      name,
+      program_type,
+      start_trigger: start.start_trigger,
+      start_mode: start.start_mode,
+      scheduled_at: start.scheduled_at,
+      schedule_timezone: start.schedule_timezone,
+      audience: start.audience,
+      selection_criteria,
+      activation_status,
+    })
+  }
+
+  private async activationProblems(program: ProgramRow): Promise<string[]> {
+    const sequences = (await this.listEngagementSequences(
+      { program_id: program.id },
+      { take: 20 }
+    )) as Array<{ id: string }>
+    const steps: StepRow[] = []
+    for (const sequence of sequences) {
+      const rows = (await this.listEngagementSequenceSteps(
+        { sequence_id: sequence.id },
+        { take: 50 }
+      )) as StepRow[]
+      steps.push(...rows)
+    }
+    const described = []
+    for (const step of steps) {
+      const template = (await this.retrieveCommunicationTemplate(step.template_id)) as TemplateRefRow & {
+        name?: string
+      }
+      const versions = (await this.listCommunicationTemplateVersions(
+        { variant_id: step.variant_id },
+        { take: 50 }
+      )) as TemplateVersionRow[]
+      described.push({
+        template_name: template.name?.trim() || "dit bericht",
+        sendable: versions.some((version) => isSendableVersion(version)),
+        type_matches: template.communication_type === program.program_type,
+      })
+    }
+    return programActivationErrors({
+      name: program.name,
+      programType: program.program_type,
+      start_mode: program.start_mode,
+      start_trigger: program.start_trigger,
+      scheduled_at: program.scheduled_at,
+      schedule_timezone: program.schedule_timezone,
+      audience: program.audience,
+      steps: described,
+    })
   }
 
   async createSequence(input: { program_id: string; name: string }) {
@@ -1059,6 +1324,74 @@ class EngagementModuleService extends MedusaService({
     }
   }
 
+  private startTrigger(value: string | null | undefined) {
+    try {
+      return assertStartTrigger(value)
+    } catch (err) {
+      invalid(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  private programStart(
+    programType: string,
+    current: ProgramRow,
+    input: {
+      start_mode?: string | null
+      start_trigger?: string | null
+      scheduled_at?: string | null
+      schedule_timezone?: string | null
+      audience?: string | null
+    }
+  ) {
+    const planning =
+      input.start_mode !== undefined ||
+      input.scheduled_at !== undefined ||
+      input.schedule_timezone !== undefined ||
+      input.audience !== undefined
+    if (!planning && input.start_trigger === undefined) {
+      return {
+        start_mode: current.start_mode ?? null,
+        start_trigger: current.start_trigger ?? null,
+        scheduled_at: current.scheduled_at ?? null,
+        schedule_timezone: current.schedule_timezone ?? null,
+        audience: current.audience ?? null,
+      }
+    }
+    try {
+      return planProgramStart({
+        programType,
+        start_mode:
+          input.start_mode === undefined
+            ? input.start_trigger
+              ? "event"
+              : current.start_mode
+            : input.start_mode,
+        start_trigger:
+          input.start_trigger === undefined ? current.start_trigger : input.start_trigger,
+        scheduled_at:
+          input.scheduled_at === undefined ? current.scheduled_at : input.scheduled_at,
+        schedule_timezone:
+          input.schedule_timezone === undefined
+            ? current.schedule_timezone
+            : input.schedule_timezone,
+        audience: input.audience === undefined ? current.audience : input.audience,
+      })
+    } catch (err) {
+      invalid(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  private async assertApprovedForSchedule(templateId: string) {
+    const variants = (await this.listCommunicationTemplateVariants(
+      { template_id: templateId },
+      { take: 50, relations: ["versions"] }
+    )) as Array<{ versions?: Array<{ approval_status?: string }> }>
+    const approved = variants.some((variant) =>
+      (variant.versions ?? []).some((version) => version.approval_status === "approved")
+    )
+    if (!approved) invalid("Dit bericht kan pas worden gepland nadat het is goedgekeurd.")
+  }
+
   private stepOrder(value: number) {
     try {
       return normalizeStepOrder(value)
@@ -1242,6 +1575,80 @@ class EngagementModuleService extends MedusaService({
     })
   }
 
+  /**
+   * Deelname van een consument of affiliate. Zelfde trigger_key enrollt niet opnieuw.
+   * Geen verzending.
+   */
+  async enrollRecipient(input: {
+    consumer_id?: string | null
+    affiliate_id?: string | null
+    program_id: string
+    sequence_id: string
+    sequence_step_id: string
+    trigger_key: string
+    entry_source: string
+    next_step_at?: Date | string | null
+  }) {
+    const consumer_id = input.consumer_id?.trim() || ""
+    const affiliate_id = input.affiliate_id?.trim() || ""
+    if ((consumer_id && affiliate_id) || (!consumer_id && !affiliate_id)) {
+      invalid("Enrollment vereist precies één ontvanger.")
+    }
+    const trigger_key = input.trigger_key.trim()
+    const entry_source = input.entry_source.trim()
+    if (!trigger_key || !entry_source) invalid("Enrollment vereist een startmoment.")
+    const filters = consumer_id
+      ? { consumer_id, trigger_key }
+      : { affiliate_id, trigger_key }
+    const existing = (await this.listEngagementEnrollments(filters, { take: 1 })) as EnrollmentRow[]
+    if (existing[0]) return existing[0]
+    if (consumer_id) await this.retrieveEngagementConsumer(consumer_id)
+    const program_id = input.program_id.trim()
+    const sequence_id = input.sequence_id.trim()
+    const sequence_step_id = input.sequence_step_id.trim()
+    const program = (await this.retrieveEngagementLifecycleProgram(program_id)) as ProgramRow
+    const sequence = (await this.retrieveEngagementSequence(sequence_id)) as SequenceRow
+    const step = (await this.retrieveEngagementSequenceStep(sequence_step_id)) as StepRow
+    if (sequence.program_id !== program_id || step.sequence_id !== sequence_id) {
+      invalid("De stap hoort niet bij deze automatisering.")
+    }
+    const program_type = this.programType(program.program_type)
+    const active = (await this.listEngagementEnrollments(
+      consumer_id
+        ? { consumer_id, status: "active" }
+        : { affiliate_id, status: "active" },
+      { take: 20 }
+    )) as EnrollmentRow[]
+    try {
+      assertCanActivateEnrollment({
+        programType: program_type,
+        existingActiveProgramTypes: active.map((row) => row.program_type),
+      })
+    } catch (err) {
+      invalid(err instanceof Error ? err.message : String(err))
+    }
+    try {
+      return await this.createEngagementEnrollments({
+        contact_id: null,
+        organization_id: null,
+        consumer_id: consumer_id || null,
+        affiliate_id: affiliate_id || null,
+        program_id,
+        sequence_id,
+        sequence_step_id,
+        program_type,
+        status: "active",
+        next_step_at: this.optionalDate(input.next_step_at),
+        entry_source,
+        trigger_key,
+      })
+    } catch (err) {
+      const again = (await this.listEngagementEnrollments(filters, { take: 1 })) as EnrollmentRow[]
+      if (again[0]) return again[0]
+      throw err
+    }
+  }
+
   async updateEnrollment(input: {
     id: string
     status?: string
@@ -1423,7 +1830,9 @@ class EngagementModuleService extends MedusaService({
    * template_version_id is toegestaan; SequenceStep heeft die niet.
    */
   async recordCommunicationEvent(input: {
-    contact_id: string
+    contact_id?: string | null
+    consumer_id?: string | null
+    affiliate_id?: string | null
     enrollment_id?: string | null
     program_id?: string | null
     sequence_id?: string | null
@@ -1435,23 +1844,32 @@ class EngagementModuleService extends MedusaService({
     provider_message_id?: string | null
     ai_draft_id?: string | null
     status: string
+    locale?: string | null
+    delivery_error?: string | null
     replied?: boolean
     bounced?: boolean
     unsubscribed?: boolean
   }) {
-    const contact_id = input.contact_id.trim()
-    if (!contact_id) invalid("CommunicationEvent vereist contact_id.")
-    const contact = (await this.retrieveEngagementContact(
-      contact_id
-    )) as ContactRow
+    const contact_id = input.contact_id?.trim() || ""
+    const consumer_id = input.consumer_id?.trim() || ""
+    const affiliate_id = input.affiliate_id?.trim() || ""
+    if (!contact_id && !consumer_id && !affiliate_id) {
+      invalid("CommunicationEvent vereist een ontvanger.")
+    }
+    const contact = contact_id
+      ? ((await this.retrieveEngagementContact(contact_id)) as ContactRow)
+      : null
     const history = this.historyVersion(input.status, input.template_version_id)
     const enrollment_id = input.enrollment_id?.trim() || null
     if (enrollment_id) {
       const enrollment = (await this.retrieveEngagementEnrollment(
         enrollment_id
       )) as EnrollmentRow
-      if (enrollment.contact_id !== contact_id) {
-        invalid("CommunicationEvent-enrollment hoort niet bij dit contact.")
+      const sameContact = Boolean(contact_id) && enrollment.contact_id === contact_id
+      const sameConsumer = Boolean(consumer_id) && enrollment.consumer_id === consumer_id
+      const sameAffiliate = Boolean(affiliate_id) && enrollment.affiliate_id === affiliate_id
+      if (!sameContact && !sameConsumer && !sameAffiliate) {
+        invalid("CommunicationEvent-enrollment hoort niet bij deze ontvanger.")
       }
     }
     const template_id = input.template_id?.trim() || null
@@ -1478,8 +1896,10 @@ class EngagementModuleService extends MedusaService({
       }
     }
     return this.createEngagementCommunicationEvents({
-      contact_id,
-      organization_id: contact.organization_id,
+      contact_id: contact_id || null,
+      organization_id: contact?.organization_id ?? null,
+      consumer_id: consumer_id || null,
+      affiliate_id: affiliate_id || null,
       customer_id: input.customer_id?.trim() || null,
       enrollment_id,
       program_id: input.program_id?.trim() || null,
@@ -1491,10 +1911,164 @@ class EngagementModuleService extends MedusaService({
       ai_draft_id: input.ai_draft_id?.trim() || null,
       status: history.status,
       provider_message_id: input.provider_message_id?.trim() || null,
+      locale: input.locale?.trim().toLowerCase().slice(0, 2) || null,
+      delivery_error:
+        history.status === "stopped"
+          ? input.delivery_error?.trim().slice(0, 500) || null
+          : null,
+      attempt_count: 0,
+      delivery_claim: null,
       replied: input.replied === true,
       bounced: input.bounced === true,
       unsubscribed: input.unsubscribed === true,
     })
+  }
+
+  /**
+   * Eén UPDATE op de bestaande history-rij. Geen provider.
+   * Een tweede worker krijgt geen rij terug en claimt niets.
+   */
+  @InjectManager()
+  async claimCommunicationDelivery(
+    id: string,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const eventId = id.trim()
+    if (!eventId) invalid("Dit bericht kan niet worden geclaimd voor verzending.")
+    const rows = await executeDeliverySql(
+      sharedContext.transactionManager ?? sharedContext.manager,
+      DELIVERY_CLAIM_SQL,
+      [eventId]
+    )
+    const row = rows[0]
+    const claim_token = typeof row?.delivery_claim === "string" ? row.delivery_claim : ""
+    const attempt = Number(String(claim_token).split(":").pop())
+    if (!claim_token || !Number.isFinite(attempt)) {
+      invalid("Dit bericht kan niet worden geclaimd voor verzending.")
+    }
+    return { claim_token, attempt }
+  }
+
+  /**
+   * Registreert sent, failed of bounced alleen als de claim nog open is.
+   * Roept geen provider aan.
+   */
+  @InjectManager()
+  async recordDeliveryOutcome(
+    input: {
+      id: string
+      claim_token: string
+      locale: string
+      result: ProviderDeliveryResult
+    },
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const current = (await this.retrieveEngagementCommunicationEvent(
+      input.id.trim(),
+      {},
+      sharedContext
+    )) as HistoryDeliveryRow
+    const applied = applyDeliveryResult({
+      row: current,
+      claim_token: input.claim_token,
+      locale: input.locale,
+      result: input.result,
+    })
+    if (!applied.ok) invalid("Dit afleverresultaat hoort niet bij de open claim.")
+    const patch = applied.patch
+    const rows = await executeDeliverySql(
+      sharedContext.transactionManager ?? sharedContext.manager,
+      `
+UPDATE "engagement_communication_event"
+SET "status" = ?,
+    "provider_message_id" = ?,
+    "bounced" = ?,
+    "locale" = ?,
+    "delivery_error" = ?,
+    "attempt_count" = ?,
+    "delivery_claim" = NULL,
+    "updated_at" = now()
+WHERE "id" = ?
+  AND "deleted_at" IS NULL
+  AND "delivery_claim" = ?
+  AND ("provider_message_id" IS NULL OR btrim("provider_message_id") = '')
+  AND "status" NOT IN ('sent', 'bounced', 'stopped')
+RETURNING "id"
+`.trim(),
+      [
+        patch.status,
+        patch.provider_message_id,
+        patch.bounced,
+        patch.locale,
+        patch.delivery_error,
+        patch.attempt_count,
+        patch.id,
+        input.claim_token.trim(),
+      ]
+    )
+    if (!rows[0]) invalid("Dit afleverresultaat hoort niet bij de open claim.")
+    return patch
+  }
+
+  /**
+   * Koppelt een provider-webhook aan één history-rij. Geen externe aanroep.
+   * Een herhaalde bounce of aflevering wijzigt de rij niet nog eens.
+   */
+  @InjectManager()
+  async recordProviderWebhook(
+    input: ProviderWebhook,
+    @MedusaContext() sharedContext: Context = {}
+  ) {
+    const current = await this.findDeliveryEvent(input, sharedContext)
+    if (!current) invalid("Geen communicatiegeschiedenis voor dit providerbericht.")
+    const planned = planProviderWebhook(current, input)
+    if (planned.action === "ignore") return { duplicate: true, id: current.id }
+    if (planned.action === "reject") {
+      invalid("Dit providerbericht hoort niet bij de open geschiedenis.")
+    }
+    const patch = planned.patch
+    if (patch.status !== "bounced" || current.status !== "sent") {
+      invalid("Een webhook mag een bericht niet op verzonden zetten.")
+    }
+    const manager = sharedContext.transactionManager ?? sharedContext.manager
+    const rows = await executeDeliverySql(
+      manager,
+      `
+UPDATE "engagement_communication_event"
+SET "status" = 'bounced',
+    "bounced" = true,
+    "delivery_error" = ?,
+    "delivery_claim" = NULL,
+    "updated_at" = now()
+WHERE "id" = ?
+  AND "deleted_at" IS NULL
+  AND "status" = 'sent'
+  AND "provider_message_id" = ?
+RETURNING "id"
+`.trim(),
+      [patch.delivery_error, patch.id, patch.provider_message_id]
+    )
+    if (!rows[0]) return { duplicate: true, id: current.id }
+    return { duplicate: false, id: current.id, status: patch.status }
+  }
+
+  private async findDeliveryEvent(input: ProviderWebhook, sharedContext: Context) {
+    const eventId = input.event_id?.trim()
+    if (eventId) {
+      return (await this.retrieveEngagementCommunicationEvent(
+        eventId,
+        {},
+        sharedContext
+      )) as HistoryDeliveryRow
+    }
+    const providerId = input.provider_message_id?.trim()
+    if (!providerId) return null
+    const rows = (await this.listEngagementCommunicationEvents(
+      { provider_message_id: providerId },
+      { take: 1 },
+      sharedContext
+    )) as HistoryDeliveryRow[]
+    return rows[0] ?? null
   }
 
   private async loadEnrollmentGraph(input: {
@@ -1624,6 +2198,7 @@ class EngagementModuleService extends MedusaService({
     country_code?: string | null
     locale?: string | null
     customer_id?: string | null
+    topics?: unknown
   }): Promise<{ outcome: "subscribed" | "already_subscribed"; id: string }> {
     const email = normalizeConsumerEmail(input.email)
     const source = assertConsumerSource(input.source)
@@ -1635,6 +2210,17 @@ class EngagementModuleService extends MedusaService({
       }
       return { outcome: "already_subscribed", id: existing.id }
     }
+    let topics = allNewsletterTopics()
+    if (input.topics !== undefined) {
+      try {
+        topics = planNewsletterTopics(input.topics)
+      } catch (err) {
+        invalid(err instanceof Error ? err.message : String(err))
+      }
+      if (!topics.news && !topics.brands && !topics.offers) {
+        invalid("Kies minstens één nieuwsbrief.")
+      }
+    }
     const now = new Date()
     if (existing) {
       await this.updateEngagementConsumers({
@@ -1645,6 +2231,7 @@ class EngagementModuleService extends MedusaService({
         customer_id: customerId ?? existing.customer_id,
         source: existing.source || source,
         newsletter_enabled: true,
+        newsletter_topics: topics,
         subscribed_at: now,
         unsubscribed_at: null,
       })
@@ -1658,6 +2245,7 @@ class EngagementModuleService extends MedusaService({
       customer_id: customerId,
       source,
       newsletter_enabled: true,
+      newsletter_topics: topics,
       subscribed_at: now,
       unsubscribed_at: null,
       unsubscribe_token: newUnsubscribeToken(),
@@ -1672,6 +2260,7 @@ class EngagementModuleService extends MedusaService({
     await this.updateEngagementConsumers({
       id: current.id,
       newsletter_enabled: false,
+      newsletter_topics: emptyNewsletterTopics(),
       unsubscribed_at: new Date(),
     })
     return current.id
@@ -1692,6 +2281,7 @@ class EngagementModuleService extends MedusaService({
     await this.updateEngagementConsumers({
       id: current.id,
       newsletter_enabled: false,
+      newsletter_topics: emptyNewsletterTopics(),
       unsubscribed_at: new Date(),
     })
     return current.id
@@ -1702,10 +2292,45 @@ class EngagementModuleService extends MedusaService({
     await this.updateEngagementConsumers({
       id: current.id,
       newsletter_enabled: true,
+      newsletter_topics: allNewsletterTopics(),
       subscribed_at: new Date(),
       unsubscribed_at: null,
     })
     return current.id
+  }
+
+  /** Per soort in- of uitschrijven. Schrijft dezelfde consument, geen tweede rij. */
+  async setConsumerNewsletterTopics(id: string, topics: unknown) {
+    const current = (await this.retrieveEngagementConsumer(id)) as ConsumerRecord
+    let next
+    try {
+      next = planNewsletterTopics(topics)
+    } catch (err) {
+      invalid(err instanceof Error ? err.message : String(err))
+    }
+    const enabled = next.news || next.brands || next.offers
+    await this.updateEngagementConsumers({
+      id: current.id,
+      newsletter_topics: next,
+      newsletter_enabled: enabled,
+      subscribed_at: enabled ? current.subscribed_at ?? new Date() : current.subscribed_at,
+      unsubscribed_at: enabled ? null : new Date(),
+    })
+    return current.id
+  }
+
+  async setConsumerNewsletterTopicsByToken(token: string, topics: unknown) {
+    const value = token.trim()
+    if (!value || isPreviewUnsubscribeToken(value)) invalid("De uitschrijflink is ongeldig.")
+    const rows = (await this.listEngagementConsumers(
+      { unsubscribe_token: value },
+      { take: 1 }
+    )) as ConsumerRecord[]
+    const current = rows[0]
+    if (!current) {
+      throw new MedusaError(MedusaError.Types.NOT_FOUND, "Deze uitschrijflink is niet geldig.")
+    }
+    return this.setConsumerNewsletterTopics(current.id, topics)
   }
 
   private async findConsumerByEmail(email: string): Promise<ConsumerRecord | null> {
@@ -1726,11 +2351,6 @@ class EngagementModuleService extends MedusaService({
     const owner = rows[0]
     if (owner && owner.id !== consumerId) return null
     return id
-  }
-
-  private newsletterAudience(value: string | null): string {
-    if (value === null || value.trim() === "" || value === "consumers") return "consumers"
-    invalid("Deze doelgroep is nog niet beschikbaar.")
   }
 
   private suppressionReason(value: string) {
@@ -1761,7 +2381,18 @@ class EngagementModuleService extends MedusaService({
   }
 }
 
-type ProgramRow = { id: string; name: string; program_type: string }
+type ProgramRow = {
+  id: string
+  name: string
+  program_type: string
+  start_trigger?: string | null
+  start_mode?: string | null
+  scheduled_at?: string | null
+  schedule_timezone?: string | null
+  audience?: string | null
+  activation_status?: string | null
+  selection_criteria?: unknown
+}
 type SequenceRow = { id: string; name: string; program_id: string }
 type StepRow = {
   id: string
@@ -1776,8 +2407,10 @@ type VariantRefRow = { id: string; template_id: string }
 type ContactRow = { id: string; organization_id: string }
 type EnrollmentRow = {
   id: string
-  contact_id: string
-  organization_id: string
+  contact_id: string | null
+  organization_id: string | null
+  consumer_id?: string | null
+  affiliate_id?: string | null
   program_id: string
   sequence_id: string
   sequence_step_id: string
@@ -1796,6 +2429,8 @@ type ConsumerRecord = {
   customer_id: string | null
   source: string
   newsletter_enabled: boolean
+  newsletter_topics?: unknown
+  subscribed_at?: Date | string | null
 }
 type SuppressionRow = { id: string; category: string; reason: string }
 

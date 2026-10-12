@@ -74,14 +74,19 @@ export function assertVariantBelongsToTemplate(input: {
   }
 }
 
+/**
+ * Een stap mag elk actief communicatie-item gebruiken.
+ * De opmaak bepaalt de weergave. Goedkeuring blijft op de versie.
+ */
 export function assertTemplateMatchesProgram(input: {
   program_type: string
   communication_type: string
 }): void {
-  if (input.program_type !== input.communication_type) {
-    throw new Error(
-      `CommunicationTemplate (${input.communication_type}) hoort niet bij program_type ${input.program_type}.`
-    )
+  if (!isCommunicationType(input.program_type)) {
+    throw new Error(`Onbekend program_type "${input.program_type}".`)
+  }
+  if (!isCommunicationType(input.communication_type)) {
+    throw new Error(`Onbekend communication_type "${input.communication_type}".`)
   }
 }
 

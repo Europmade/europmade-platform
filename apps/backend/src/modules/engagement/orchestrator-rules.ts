@@ -28,7 +28,9 @@ export type OrchestratorVersion = {
 export type DueEnrollmentState = {
   id: string
   status: string
-  contact_id: string
+  contact_id: string | null
+  consumer_id?: string | null
+  affiliate_id?: string | null
   program_id: string
   program_type: string
   sequence_id: string
@@ -40,7 +42,7 @@ export type DueStepPlan =
   | { action: "skip"; reason: "not-active" | "not-due" | "already-stopped" }
   | {
       action: "stopped"
-      reason: "suppressed" | "no_sendable_version"
+      reason: "suppressed" | "no_sendable_version" | "preference" | "audience" | "ordered"
       event: HistoryWrite
       enrollment_update: EnrollmentWrite | null
     }
@@ -49,9 +51,12 @@ export type DueStepPlan =
       event: HistoryWrite
       enrollment_update: EnrollmentWrite
     }
+  | { action: "resume"; enrollment_update: EnrollmentWrite }
 
 export type HistoryWrite = {
-  contact_id: string
+  contact_id: string | null
+  consumer_id?: string | null
+  affiliate_id?: string | null
   enrollment_id: string
   program_id: string
   sequence_id: string
@@ -64,7 +69,7 @@ export type HistoryWrite = {
 
 export type EnrollmentWrite = {
   id: string
-  status: "active" | "completed" | "suppressed"
+  status: "active" | "completed" | "suppressed" | "stopped"
   sequence_step_id: string
   next_step_at: Date | null
 }
@@ -155,6 +160,12 @@ export function planDueStep(input: {
   variantMatchesTemplate: boolean
   suppressedCategories: string[]
   priorStoppedForStep: boolean
+  priorQueuedForStep?: boolean
+  preferenceAllows?: boolean
+  /** false: de inactiviteitsreeks stopt omdat er een latere bestelling is. */
+  conditionAllows?: boolean
+  audienceMatches?: boolean
+  contentVariantId?: string | null
   now: Date
 }): DueStepPlan {
   const enrollment = input.enrollment
@@ -175,12 +186,63 @@ export function planDueStep(input: {
   const category = programTypeToPreferenceCategory(enrollment.program_type)
   const base = {
     contact_id: enrollment.contact_id,
+    consumer_id: enrollment.consumer_id ?? null,
+    affiliate_id: enrollment.affiliate_id ?? null,
     enrollment_id: enrollment.id,
     program_id: enrollment.program_id,
     sequence_id: enrollment.sequence_id,
     sequence_step_id: enrollment.sequence_step_id,
     template_id: step?.template_id ?? "",
-    variant_id: step?.variant_id ?? "",
+    variant_id: input.contentVariantId?.trim() || step?.variant_id || "",
+  }
+  if (input.conditionAllows === false) {
+    return {
+      action: "stopped",
+      reason: "ordered",
+      event: { ...base, template_version_id: null, status: "stopped" },
+      enrollment_update: {
+        id: enrollment.id,
+        status: "stopped",
+        sequence_step_id: enrollment.sequence_step_id,
+        next_step_at: null,
+      },
+    }
+  }
+  if (input.priorQueuedForStep && step) {
+    const next = pickNextStep(input.steps, step.id)
+    if (!next) {
+      return {
+        action: "resume",
+        enrollment_update: {
+          id: enrollment.id,
+          status: "completed",
+          sequence_step_id: step.id,
+          next_step_at: null,
+        },
+      }
+    }
+    return {
+      action: "resume",
+      enrollment_update: {
+        id: enrollment.id,
+        status: "active",
+        sequence_step_id: next.id,
+        next_step_at: addDelayMinutes(input.now, Number(next.delay_minutes)),
+      },
+    }
+  }
+  if (input.preferenceAllows === false || input.audienceMatches === false) {
+    return {
+      action: "stopped",
+      reason: input.preferenceAllows === false ? "preference" : "audience",
+      event: { ...base, template_version_id: null, status: "stopped" },
+      enrollment_update: {
+        id: enrollment.id,
+        status: "stopped",
+        sequence_step_id: enrollment.sequence_step_id,
+        next_step_at: null,
+      },
+    }
   }
 
   if (input.suppressedCategories.includes(category)) {
@@ -199,7 +261,7 @@ export function planDueStep(input: {
 
   const version =
     step && input.variantMatchesTemplate
-      ? pickSendableVersion(input.versions, step.variant_id)
+      ? pickSendableVersion(input.versions, base.variant_id)
       : null
   if (!version) {
     if (input.priorStoppedForStep) {
@@ -216,7 +278,7 @@ export function planDueStep(input: {
   const event: HistoryWrite = {
     ...base,
     template_id: step!.template_id,
-    variant_id: step!.variant_id,
+    variant_id: base.variant_id,
     template_version_id: version.id,
     status: "queued",
   }

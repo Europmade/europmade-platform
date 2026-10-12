@@ -23,6 +23,8 @@ export async function POST(
   const created = await cmsService(req.scope).createTemplate({
     name: requiredString(body, "name", "Naam"),
     communication_type: requiredString(body, "communication_type", "Type"),
+    audience: typeof body.audience === "string" ? body.audience : null,
+    layout: typeof body.layout === "string" ? body.layout : "message",
   })
   const template = await writeTemplate(req.scope, created.id)
   res.status(201).json({ template })

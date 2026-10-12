@@ -30,6 +30,9 @@ export const DEFAULT_SALES_MODEL: SalesModel = "unknown"
 export const DEFAULT_OUTREACH_STATUS = "new"
 export const DEFAULT_ORGANIZATION_SOURCE = "excel_import"
 export const DEFAULT_ORGANIZATION_ROLE: OrganizationRoleValue = "unknown"
+/** Standaarddoel voor een nieuw prospect. Uitzonderingen mogen dit overschrijven. */
+export const DEFAULT_OUTREACH_PURPOSE =
+  "Europese bedrijven uitnodigen om hun producten via EuropMade te verkopen."
 
 /**
  * Vaste prospectstatussen voor de Admin.
@@ -167,7 +170,8 @@ export function planOrganizationIdentity(input: {
     sales_model,
     outreach_status,
     source,
-    outreach_purpose: optionalText(input.outreach_purpose),
+    outreach_purpose:
+      optionalText(input.outreach_purpose) ?? DEFAULT_OUTREACH_PURPOSE,
     self_classification_payload:
       input.self_classification_payload === undefined
         ? null

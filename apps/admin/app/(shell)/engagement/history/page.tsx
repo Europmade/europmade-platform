@@ -289,9 +289,21 @@ export default function EngagementHistoryPage() {
                 {row.contact_name || row.contact_email || "Onbekend contact"}
               </div>
               <div className="truncate text-xs text-wf-700">{row.organization_name || "Geen bedrijf"}</div>
-              <div className="truncate text-xs text-wf-800">{row.template_name || "Bericht"}</div>
+              <div className="min-w-0">
+                <div className="truncate text-xs font-medium text-wf-900">
+                  {row.template_name || "Bericht"}
+                </div>
+                {row.template_version_subject ? (
+                  <div className="truncate text-[11px] text-wf-600">
+                    {row.template_version_subject}
+                  </div>
+                ) : null}
+              </div>
               <div>
                 <HistoryStatus status={row.status} />
+                {row.delivery_error ? (
+                  <p className="mt-1 line-clamp-2 text-[11px] text-wf-600">{row.delivery_error}</p>
+                ) : null}
               </div>
               <Link
                 href={`/engagement/history/${row.id}`}

@@ -32,6 +32,18 @@ const CommunicationTemplate = model
      * De orchestrator leest dit veld niet en er wordt niets verzonden.
      */
     ready_to_send: model.boolean().default(false),
+    /**
+     * Bericht = compacte mail. Nieuwsbrief = blokopmaak.
+     * Los van het communicatietype. Leeg betekent: afleiden uit de bronversie.
+     */
+    layout: model.text().nullable(),
+    /**
+     * Gepland startmoment van een nieuwsbrief of campagne.
+     * Alleen opslag. Er wordt niets verzonden.
+     */
+    scheduled_at: model.text().nullable(),
+    schedule_timezone: model.text().nullable(),
+    schedule_status: model.text().nullable(),
     variants: model.hasMany(() => CommunicationTemplateVariant, {
       mappedBy: "template",
     }),

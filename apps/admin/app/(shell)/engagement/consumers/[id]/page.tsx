@@ -91,10 +91,12 @@ export default function ConsumerDetailPage() {
             <dt className="text-[11px] text-wf-500">E-mail</dt>
             <dd>{consumer.email}</dd>
           </div>
-          <div>
-            <dt className="text-[11px] text-wf-500">Land</dt>
-            <dd>{consumer.country}</dd>
-          </div>
+          {consumer.country ? (
+            <div>
+              <dt className="text-[11px] text-wf-500">Land</dt>
+              <dd>{consumer.country}</dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-[11px] text-wf-500">Taal</dt>
             <dd>{consumer.language}</dd>
@@ -102,6 +104,13 @@ export default function ConsumerDetailPage() {
         </dl>
         <div className="mt-4 border-t border-wf-200 pt-3">
           <h2 className="text-sm font-bold text-wf-900">Nieuwsbrief</h2>
+          <ul className="mt-2 space-y-1 text-sm text-wf-900">
+            {(consumer.newsletters ?? []).map((item) => (
+              <li key={item.key}>
+                {item.label}: {item.enabled ? "Ingeschreven" : "Uitgeschreven"}
+              </li>
+            ))}
+          </ul>
           <p className="mt-2 text-sm text-wf-900">● {consumer.newsletter}</p>
           {consumer.newsletter_enabled ? (
             <p className="mt-1 text-xs text-wf-700">Ingeschreven op: {longDate(consumer.subscribed_at)}</p>
@@ -109,6 +118,7 @@ export default function ConsumerDetailPage() {
             <p className="mt-1 text-xs text-wf-700">Uitgeschreven op: {longDate(consumer.unsubscribed_at)}</p>
           )}
           <p className="mt-1 text-xs text-wf-700">Bron: {consumer.source}</p>
+          {consumer.account ? <p className="mt-1 text-xs text-wf-700">{consumer.account}</p> : null}
           <div className="mt-3">
             {consumer.newsletter_enabled ? (
               <button

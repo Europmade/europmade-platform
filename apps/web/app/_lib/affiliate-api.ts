@@ -74,6 +74,10 @@ export type AffiliateLink = {
   affiliate_id: string
   target_url: string
   tracking_param: string
+  product_id?: string | null
+  offer_id?: string | null
+  seller_id?: string | null
+  commission_percent_snapshot?: number | null
   created_at: string
 }
 
@@ -127,8 +131,23 @@ export type CommissionRow = {
   payout_id?: string | null
 }
 
+export type AffiliatePreference = {
+  key: string
+  label: string
+  enabled: boolean
+}
+
 export function getAffiliate() {
-  return request<{ affiliate: AffiliateRecord | null }>("/store/affiliate")
+  return request<{ affiliate: AffiliateRecord | null; preferences?: AffiliatePreference[] }>(
+    "/store/affiliate"
+  )
+}
+
+export function saveAffiliatePreferences(preferences: Record<string, boolean>) {
+  return request<{ preferences: AffiliatePreference[] }>("/store/affiliate", {
+    method: "PATCH",
+    body: JSON.stringify({ communication_preferences: preferences }),
+  })
 }
 
 export function registerAffiliate(input: {
@@ -164,10 +183,20 @@ export function listAffiliateLinks() {
   return request<{ links: AffiliateLink[] }>("/store/affiliate/links")
 }
 
-export function createAffiliateLink(target_url: string) {
+export function createAffiliateLink(
+  input:
+    | string
+    | {
+        target_url: string
+        product_id?: string
+        offer_id?: string
+        seller_id?: string
+      }
+) {
+  const body = typeof input === "string" ? { target_url: input } : input
   return request<{ link: AffiliateLink }>("/store/affiliate/links", {
     method: "POST",
-    body: JSON.stringify({ target_url }),
+    body: JSON.stringify(body),
   })
 }
 
@@ -291,8 +320,13 @@ export function buildAffiliateShareUrl(
   return `${base}${path}${joiner}ref=${encodeURIComponent(trackingParam)}`
 }
 
-export function productAffiliateTargetPath(productId: string): string {
-  return `/product/${encodeURIComponent(productId)}`
+export function productAffiliateTargetPath(
+  productId: string,
+  offerId?: string
+): string {
+  const path = `/product/${encodeURIComponent(productId)}`
+  if (!offerId) return path
+  return `${path}?offer=${encodeURIComponent(offerId)}`
 }
 
 /** ADR-0030: 5% of unit price (excl. shipping). Uses live commission-setting percentage. */

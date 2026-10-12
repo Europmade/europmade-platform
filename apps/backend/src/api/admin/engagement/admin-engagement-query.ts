@@ -7,6 +7,14 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { ENGAGEMENT_MODULE } from "../../../modules/engagement"
 import { isCommunicationType } from "../../../modules/engagement/communication-cms-rules"
 import { readOrchestratorConfig } from "../../../modules/engagement/orchestrator-config"
+import {
+  AUTOMATION_START_TRIGGERS,
+  describeProgramStart,
+} from "../../../modules/engagement/automation-start"
+import {
+  describeCampaignCriteria,
+  storedCampaignCriteria,
+} from "../../../modules/engagement/campaign-selection"
 import { PARTNER_MODULE } from "../../../modules/partner"
 import {
   parseEventHistoryQuery,
@@ -73,6 +81,17 @@ function text(value: unknown): string | null {
   return trimmed || null
 }
 
+function isHiddenDemoOrganization(row: OrgRow): boolean {
+  const parts = [
+    text(row.company_name),
+    ...asRows<ContactRow>(row.contacts).flatMap((contact) => [
+      text(contact.name),
+      text(contact.email),
+    ]),
+  ]
+  return parts.some((part) => /p1ux07/i.test(part ?? ""))
+}
+
 type RoleRow = { id?: string; role?: string }
 type ContactRow = { id?: string; name?: string | null; email?: string }
 type VersionRow = {
@@ -104,6 +123,10 @@ type TemplateRow = {
   communication_type?: string
   audience?: string | null
   ready_to_send?: boolean
+    layout?: string | null
+  scheduled_at?: string | null
+  schedule_timezone?: string | null
+  schedule_status?: string | null
   variants?: VariantRow[]
   created_at?: unknown
 }
@@ -119,6 +142,13 @@ type ProgramRow = {
   id?: string
   name?: string
   program_type?: string
+    start_trigger?: string | null
+  start_mode?: string | null
+  scheduled_at?: string | null
+  schedule_timezone?: string | null
+  audience?: string | null
+  activation_status?: string | null
+  selection_criteria?: unknown
   sequences?: SequenceRow[]
 }
 type OrgRow = {
@@ -162,6 +192,8 @@ type EventRow = {
   variant_id?: string | null
   template_version_id?: string | null
   provider_message_id?: string | null
+  locale?: string | null
+  delivery_error?: string | null
   replied?: boolean
   bounced?: boolean
   unsubscribed?: boolean
@@ -267,7 +299,11 @@ function serializeTemplate(row: TemplateRow) {
     name: text(row.name) ?? "",
     communication_type: text(row.communication_type) ?? "",
     audience: text(row.audience),
+    layout: text(row.layout) === "newsletter" ? "newsletter" : text(row.layout) === "message" ? "message" : null,
     ready_to_send: row.ready_to_send === true,
+    scheduled_at: text(row.scheduled_at),
+    schedule_timezone: text(row.schedule_timezone),
+    schedule_status: text(row.schedule_status) === "scheduled" ? "scheduled" : null,
     created_at: iso(row.created_at),
     variants: asRows<VariantRow>(row.variants).map(serializeVariant),
   }
@@ -380,7 +416,9 @@ export async function loadEngagementOverview(scope: MedusaContainer) {
       }
     ),
   ])
-  const organizations = asRows<OrgRow>(organizationRows[0])
+  const organizations = asRows<OrgRow>(organizationRows[0]).filter(
+    (row) => !isHiddenDemoOrganization(row)
+  )
   const orgById = new Map<string, OrgRow>()
   for (const row of organizations) {
     const id = text(row.id)
@@ -655,6 +693,7 @@ export async function loadEngagementOrganizations(
       }
       if (role && !organization.roles.includes(role)) return false
       if (salesModel && organization.sales_model !== salesModel) return false
+      if (isHiddenDemoOrganization(organization)) return false
       if (onboarding === "not_started" && organization.onboarding_state !== "not_started") {
         return false
       }
@@ -765,12 +804,40 @@ export async function loadEngagementPrograms(scope: MedusaContainer) {
         ? orchestrator[programType]
         : undefined
       const linked = Boolean(selection && selection.program_id === programId)
+      const startTrigger = text(program.start_trigger)
+      const startMode = text(program.start_mode)
+      const scheduledAt = text(program.scheduled_at)
+      const scheduleTimezone = text(program.schedule_timezone)
+      const start = describeProgramStart({
+        start_mode: startMode,
+        start_trigger: startTrigger,
+        scheduled_at: scheduledAt,
+        schedule_timezone: scheduleTimezone,
+      })
       return {
       id: programId,
       name: text(program.name) ?? "",
       program_type: programType,
-      automatic_start: linked ? "linked" : "unlinked",
+      automatic_start: startMode === "scheduled" ? "scheduled" : startTrigger ? "linked" : "unlinked",
+      start_trigger: startTrigger,
+      start_mode:
+        startMode === "scheduled" || startMode === "event" || startMode === "condition"
+          ? startMode
+          : null,
+      activation_status: text(program.activation_status) === "active" ? "active" : "concept",
+      scheduled_at: scheduledAt,
+      schedule_timezone: scheduleTimezone,
+      audience:
+        text(program.audience) === "sellers" ||
+        text(program.audience) === "consumers" ||
+        text(program.audience) === "affiliates"
+          ? text(program.audience)
+          : null,
+      selection_criteria: storedCampaignCriteria(program.selection_criteria),
+      selection_note: describeCampaignCriteria(text(program.audience), program.selection_criteria),
       linked_sequence_id: linked ? selection?.sequence_id ?? null : null,
+      start_title: start.title,
+      start_note: start.note,
       sequences: asRows<SequenceRow>(program.sequences)
         .map((sequence) => ({
           id: text(sequence.id) ?? "",
@@ -794,6 +861,13 @@ export async function loadEngagementPrograms(scope: MedusaContainer) {
         .sort((a, b) => a.name.localeCompare(b.name)),
     }
     }),
+    start_triggers: AUTOMATION_START_TRIGGERS.map((item) => ({
+      key: item.key,
+      label: item.label,
+      audience: item.audience,
+      kind: item.kind,
+      available: item.available,
+    })),
   }
 }
 
@@ -935,6 +1009,8 @@ function serializeEvent(
     sequence_step_id:
       text(row.sequence_step_id) ?? text(enrollment?.sequence_step_id),
     provider_message_id: text(row.provider_message_id),
+    locale: text(row.locale) ?? text(variant?.locale),
+    delivery_error: text(row.delivery_error),
     replied: flag(row.replied),
     bounced: flag(row.bounced),
     unsubscribed: flag(row.unsubscribed),

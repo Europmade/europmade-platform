@@ -5,12 +5,14 @@ import { Badge, Button, Notice } from "@europmade/ui"
 import { AffiliateGate } from "../../_components/affiliate-gate"
 import {
   getAffiliate,
+  saveAffiliatePreferences,
+  type AffiliatePreference,
   type AffiliateRecord,
 } from "../../../_lib/affiliate-api"
 import { endSession } from "../../../(auth)/_lib/medusa-auth"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
-import { t } from "../../../_lib/i18n/messages"
+import { t, type StorefrontMessageKey } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
 import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
 
@@ -20,6 +22,19 @@ type CustomerMe = {
   email: string
   first_name?: string | null
   last_name?: string | null
+}
+
+const AFFILIATE_PREF_LABEL: Record<string, StorefrontMessageKey> = {
+  affiliate_news: "affPrefNews",
+  new_brands_products: "affPrefBrands",
+  affiliate_campaigns: "affPrefCampaigns",
+  commission_updates: "affPrefCommission",
+  content_opportunities: "affPrefContent",
+}
+
+function affiliatePreferenceLabel(key: string, locale: ReturnType<typeof useStorefrontLocale>) {
+  const message = AFFILIATE_PREF_LABEL[key]
+  return message ? t(message, locale) : key
 }
 
 function Field({
@@ -57,6 +72,9 @@ export default function AffiliateAccountPage() {
   const [customer, setCustomer] = useState<CustomerMe | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [preferences, setPreferences] = useState<AffiliatePreference[]>([])
+  const [prefBusy, setPrefBusy] = useState(false)
+  const [prefNotice, setPrefNotice] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -66,6 +84,7 @@ export default function AffiliateAccountPage() {
       .then(([affRes, me]) => {
         if (cancelled) return
         setAffiliate(affRes.affiliate)
+        setPreferences(affRes.preferences ?? [])
         setCustomer(me)
         setLoaded(true)
       })
@@ -149,6 +168,54 @@ export default function AffiliateAccountPage() {
             label={t("affAccountIban", locale)}
             value={affiliate.iban_masked || "—"}
           />
+          <section className="border-t border-wf-300 pt-3">
+            <p className="text-[11px] font-semibold uppercase text-wf-500">
+              {t("affPreferencesTitle", locale)}
+            </p>
+            <p className="mt-1 text-xs text-wf-600">{t("affPreferencesHelp", locale)}</p>
+            <ul className="mt-2 space-y-1">
+              {preferences.map((item) => (
+                <li key={item.key}>
+                  <label className="flex items-center gap-2 text-wf-800">
+                    <input
+                      type="checkbox"
+                      checked={item.enabled}
+                      disabled={prefBusy}
+                      onChange={(event) =>
+                        setPreferences((current) =>
+                          current.map((row) =>
+                            row.key === item.key ? { ...row, enabled: event.target.checked } : row
+                          )
+                        )
+                      }
+                    />
+                    {affiliatePreferenceLabel(item.key, locale)}
+                  </label>
+                </li>
+              ))}
+            </ul>
+            {prefNotice ? <p className="mt-2 text-xs text-wf-700">{prefNotice}</p> : null}
+            <div className="pt-2">
+              <Button
+                type="button"
+                disabled={prefBusy || preferences.length === 0}
+                onClick={() => {
+                  setPrefBusy(true)
+                  setPrefNotice(null)
+                  const payload = Object.fromEntries(preferences.map((item) => [item.key, item.enabled]))
+                  saveAffiliatePreferences(payload)
+                    .then((saved) => {
+                      setPreferences(saved.preferences)
+                      setPrefNotice(t("affPreferencesSaved", locale))
+                    })
+                    .catch(() => setPrefNotice(t("affAccountLoadFailed", locale)))
+                    .finally(() => setPrefBusy(false))
+                }}
+              >
+                {t("commonSave", locale)}
+              </Button>
+            </div>
+          </section>
           <Notice className="mt-2">{t("affAccountChangeNote", locale)}</Notice>
           <div className="pt-2">
             <Button type="button" variant="secondary" onClick={() => void logout()}>

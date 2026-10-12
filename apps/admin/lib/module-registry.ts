@@ -173,6 +173,15 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         available: true,
       },
       {
+        id: "engagement-affiliates",
+        naam: "Affiliate Partners",
+        route: "/engagement/affiliates",
+        icoon: "marketing",
+        permissie: "Beheerder",
+        navigatiepositie: 66.7,
+        available: true,
+      },
+      {
         id: "engagement-templates",
         naam: "Berichten",
         route: "/engagement/templates",

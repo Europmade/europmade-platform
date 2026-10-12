@@ -50,18 +50,18 @@ describe("sequence definition rules", () => {
     ).toThrow(/TemplateVariant/)
   })
 
-  it("requires the template program type to match the lifecycle program", () => {
+  it("allows any communication item on a program step", () => {
     expect(() =>
       assertTemplateMatchesProgram({
-        program_type: "acquisition",
-        communication_type: "acquisition",
+        program_type: "onboarding",
+        communication_type: "newsletter",
       })
     ).not.toThrow()
     expect(() =>
       assertTemplateMatchesProgram({
         program_type: "onboarding",
-        communication_type: "acquisition",
+        communication_type: "growth",
       })
-    ).toThrow(/program_type/)
+    ).toThrow(/communication_type/)
   })
 })
