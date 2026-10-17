@@ -1,7 +1,7 @@
 import { model } from "@medusajs/framework/utils"
 
 /**
- * Homepage CMS document — singleton via document_key = "default".
+ * Homepage CMS document. Live row: document_key "default". Concept: "default-draft".
  * Payload mirrors storefront HomepageCmsDocument (+ SEO).
  */
 const CmsHomepage = model

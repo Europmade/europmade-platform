@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { AdCampaignLandingPreview, Badge, Button, Notice } from "@europmade/ui"
+import { resolveMediaUrl } from "@europmade/utils"
 import {
   AdvertisingAdminApiError,
   getAdCampaign,
@@ -11,6 +12,7 @@ import {
   type AdCampaignDto,
 } from "../../../../../lib/advertising-admin-api"
 import { adminMarketLabel } from "../../../../../lib/market-labels"
+import { medusaBackendUrl } from "../../../../../lib/medusa-backend-url"
 import {
   AD_STATUS_COLORS,
   AD_STATUS_LABELS,
@@ -57,6 +59,10 @@ function Section({
       {children}
     </section>
   )
+}
+
+function browserMedia(raw: string | null | undefined): string | null {
+  return resolveMediaUrl(raw, medusaBackendUrl())
 }
 
 function destinationHref(path: string | null | undefined): string | null {
@@ -177,7 +183,11 @@ export default function AdminAdvertisingCampaignDetailPage() {
     campaign.status
   )
   const openUrl = destinationHref(campaign.destination_url)
-  const products = campaign.products || []
+  const products = (campaign.products || []).map((product) => ({
+    ...product,
+    image_url: browserMedia(product.image_url),
+    href: destinationHref(product.href),
+  }))
 
   return (
     <div className="space-y-6">
@@ -249,7 +259,10 @@ export default function AdminAdvertisingCampaignDetailPage() {
               headline: campaign.headline,
               subline: campaign.subline,
               ctaLabel: ctaLabel(campaign.cta_key),
-              imageUrl: campaign.image_url,
+              imageUrl: browserMedia(campaign.image_url),
+              logoUrl: browserMedia(campaign.logo_url),
+              presentation: campaign.banner_presentation,
+              previewLabel: "Preview — niet publiek",
               minHeight: 140,
             }}
             sellerName={campaign.seller_name || campaign.seller_id}
@@ -259,9 +272,53 @@ export default function AdminAdvertisingCampaignDetailPage() {
                 ? destinationHref(`/seller/${campaign.seller_public_slug}`)
                 : null
             }
-            linkProducts={false}
+            linkProducts
           />
         </div>
+      </Section>
+
+      <Section title="Zichtbaarheid">
+        <p className="mb-3 text-xs text-amber-800">
+          Preview hierboven wijzigt de boeking, de periode en de betaling niet.
+          Publieke zichtbaarheid volgt alleen een goedgekeurde campagne binnen de geboekte weken.
+        </p>
+        {campaign.visibility ? (
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <Field label="Goedgekeurd">
+              {campaign.visibility.approved ? "Ja" : "Nee"}
+            </Field>
+            <Field label="Publiek nu">
+              {campaign.visibility.publicNow ? "Ja" : "Nee"}
+            </Field>
+            <Field label="Plaatsing">{campaign.visibility.placement}</Field>
+            <Field label="Landen">
+              {campaign.visibility.markets.join(", ") || "—"}
+            </Field>
+            <Field label="Actief vanaf">
+              {formatAdDateTime(campaign.visibility.activeFrom)}
+            </Field>
+            <Field label="Actief tot">
+              {formatAdDateTime(campaign.visibility.activeUntil)}
+            </Field>
+            <Field label="Reden">
+              {campaign.visibility.publicNow
+                ? "Voldoet aan goedkeuring, plaatsing, land en periode."
+                : campaign.visibility.reasons.join(", ") || "—"}
+            </Field>
+          </dl>
+        ) : (
+          <p className="text-sm text-gray-500">Geen zichtbaarheidsgegevens.</p>
+        )}
+        {campaign.visibility?.approved ? (
+          <a
+            className="mt-4 inline-block text-sm font-semibold text-blue-700 underline"
+            href={`${STOREFRONT}/?adPreview=${encodeURIComponent(campaign.id)}&market=NL`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Storefront-preview (wijzigt niets)
+          </a>
+        ) : null}
       </Section>
 
       <Section title="Bestemming">
@@ -304,28 +361,32 @@ export default function AdminAdvertisingCampaignDetailPage() {
           ) : (
             <ul className="space-y-2">
               {products.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex items-center gap-3 rounded border px-3 py-2 text-sm"
-                >
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-gray-50">
-                    {p.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={p.image_url}
-                        alt=""
-                        className="h-full w-full object-contain"
-                      />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium text-gray-900">
-                      {p.title || p.id}
+                <li key={p.id}>
+                  <a
+                    href={p.href || "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-3 rounded border px-3 py-2 text-sm hover:border-gray-400"
+                  >
+                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-gray-50">
+                      {p.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.image_url}
+                          alt=""
+                          className="h-full w-full object-contain"
+                        />
+                      ) : null}
                     </div>
-                    <div className="truncate font-mono text-[10px] text-gray-400">
-                      {p.id}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-gray-900">
+                        {p.title || p.id}
+                      </div>
+                      <div className="truncate font-mono text-[10px] text-gray-400">
+                        {p.id}
+                      </div>
                     </div>
-                  </div>
+                  </a>
                 </li>
               ))}
             </ul>

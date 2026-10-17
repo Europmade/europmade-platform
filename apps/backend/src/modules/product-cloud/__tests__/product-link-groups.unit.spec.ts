@@ -167,7 +167,8 @@ describe("product link group proposals", () => {
         normalizeProductLinkProposal(
           petrolShirts({
             members: [
-              { product_id: "prod_missing", values: { Kleur: "Zwart", Maat: "M" } },
+              { product_id: "prod_A", values: { Kleur: "Zwart", Maat: "M" } },
+              { product_id: "prod_missing", values: { Kleur: "Wit", Maat: "M" } },
             ],
           }),
           "sel_c",

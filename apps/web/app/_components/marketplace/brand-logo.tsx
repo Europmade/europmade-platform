@@ -7,6 +7,8 @@ type BrandLogoProps = {
   size?: "sm" | "md"
   /** Optional CMS image URL; falls back to text wordmark. */
   imageSrc?: string | null
+  /** Header chrome inherits text color and logo height from the theme. */
+  variant?: "default" | "header"
 }
 
 /**
@@ -18,6 +20,7 @@ export function BrandLogo({
   className = "",
   size = "sm",
   imageSrc = null,
+  variant = "default",
 }: BrandLogoProps) {
   const textClass =
     size === "md"
@@ -25,9 +28,11 @@ export function BrandLogo({
       : "text-[15px] tracking-tight tablet:text-[17px]"
 
   const imgClass =
-    size === "md"
-      ? "h-8 w-auto max-w-[180px] object-contain tablet:h-9"
-      : "h-7 w-auto max-w-[150px] object-contain tablet:h-8"
+    variant === "header"
+      ? "h-[var(--em-header-logo-h,32px)] w-auto max-w-[180px] object-contain"
+      : size === "md"
+        ? "h-8 w-auto max-w-[180px] object-contain tablet:h-9"
+        : "h-7 w-auto max-w-[150px] object-contain tablet:h-8"
 
   const mark = imageSrc ? (
     // eslint-disable-next-line @next/next/no-img-element
@@ -39,17 +44,25 @@ export function BrandLogo({
     />
   ) : (
     <span
-      className={`inline-flex items-baseline font-bold text-wf-900 ${textClass} ${className}`}
+      className={`inline-flex items-baseline font-bold ${
+        variant === "header" ? "text-current" : "text-wf-900"
+      } ${textClass} ${className}`}
       aria-label="EuropMade"
     >
       Europ
-      <span className="text-wf-700">Made</span>
+      <span className={variant === "header" ? "opacity-80" : "text-wf-700"}>
+        Made
+      </span>
     </span>
   )
 
   if (!href) return mark
   return (
-    <Link href={href} className="shrink-0" aria-label="EuropMade home">
+    <Link
+      href={href}
+      className={`shrink-0 ${variant === "header" ? "em-header-logo" : ""}`}
+      aria-label="EuropMade home"
+    >
       {mark}
     </Link>
   )

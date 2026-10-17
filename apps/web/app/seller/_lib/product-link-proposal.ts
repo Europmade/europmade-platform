@@ -50,7 +50,7 @@ export function isVisibleListFullySelected(
 }
 
 export function canOpenProductLinkDialog(selectedCount: number): boolean {
-  return selectedCount >= 2
+  return selectedCount >= 2 && selectedCount <= 4
 }
 
 export function showProductLinkBulkAction(selectedCount: number): boolean {
@@ -92,6 +92,9 @@ export function buildProductLinkProposalBody(input: {
   const name = input.name.trim()
   if (!name) {
     throw new Error("Geef de koppeling een naam.")
+  }
+  if (input.members.length > 4) {
+    throw new Error("Koppel 2, 3 of 4 producten.")
   }
   if (!canOpenProductLinkDialog(input.members.length)) {
     throw new Error("Selecteer minimaal 2 producten.")

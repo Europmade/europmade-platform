@@ -2,12 +2,16 @@
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react"
 import { Button } from "@europmade/ui"
+import { suggestCategoryCopy, type CategoryCopySuggestion } from "@europmade/utils"
 import {
   emptyLocalized,
+  fetchPublicCatalogProducts,
+  fetchPublicCategoryAttributes,
   getCmsEditorialCategory,
   listCmsBanners,
   putCmsEditorialCategory,
   type CmsBannerDto,
+  type LocalizedCms,
 } from "../../lib/cms-admin-api"
 import {
   emptyCategoryEditorial,
@@ -119,6 +123,8 @@ function Inner({ slug }: { slug: string }) {
   const [meta, setMeta] = useState<CmsI18nMeta>({})
   const [selectedId, setSelectedId] = useState("hero")
   const [banners, setBanners] = useState<CmsBannerDto[]>([])
+  const [proposal, setProposal] = useState<CategoryCopySuggestion | null>(null)
+  const [proposalError, setProposalError] = useState<string | null>(null)
 
   useEffect(() => {
     getCmsEditorialCategory(slug)
@@ -133,6 +139,40 @@ function Inner({ slug }: { slug: string }) {
       .catch(() => setBanners([]))
   }, [slug])
 
+  async function generateProposal() {
+    setProposalError(null)
+    try {
+      const [catalog, attributes] = await Promise.all([
+        fetchPublicCatalogProducts({ category: slug, limit: 40 }),
+        fetchPublicCategoryAttributes(slug),
+      ])
+      const brands = catalog.products
+        .map((product) =>
+          typeof product.brand_name === "string" ? product.brand_name : ""
+        )
+        .filter(Boolean)
+      const suggestion = suggestCategoryCopy({
+        title: doc.title.nl || doc.title.en || slug,
+        productCount: catalog.products.length,
+        brands,
+        attributes: attributes.map((attribute) => attribute.name),
+      })
+      if (suggestion.usps.length === 0 && suggestion.faq.length === 0) {
+        setProposal(null)
+        setProposalError("Er zijn geen betrouwbare categoriegegevens om een voorstel van te maken.")
+        return
+      }
+      setProposal(suggestion)
+    } catch (err) {
+      setProposal(null)
+      setProposalError(err instanceof Error ? err.message : "Voorstel genereren mislukt.")
+    }
+  }
+
+  function applyText(current: LocalizedCms, value: string): LocalizedCms {
+    return { ...current, [locale]: value }
+  }
+
   const structure = useMemo(
     () => [
       { id: "chrome_header", label: "Header", hint: "Centraal beheerd", locked: true },
@@ -140,6 +180,7 @@ function Inner({ slug }: { slug: string }) {
       { id: "intro", label: "Intro", locked: true },
       { id: "banner", label: "Banner", locked: true },
       { id: "products", label: "Producten (Product Cloud)", locked: true },
+      { id: "filters", label: "Filters", hint: "Tonen, naam en volgorde", locked: true },
       { id: "usps", label: "USP's", locked: true },
       { id: "faq", label: "FAQ", locked: true },
       { id: "chrome_footer", label: "Footer", hint: "Centraal beheerd", locked: true },
@@ -291,8 +332,12 @@ function Inner({ slug }: { slug: string }) {
                     ? {
                         id: banner.id,
                         title: banner.title,
+                        subtitle: banner.subtitle,
+                        cta_label: banner.cta_label,
                         image_url: banner.image_url,
                         destination_url: banner.destination_url,
+                        background: banner.background,
+                        presentation: banner.presentation ?? null,
                         published: banner.published,
                       }
                     : null,
@@ -308,6 +353,20 @@ function Inner({ slug }: { slug: string }) {
               ))}
             </select>
           </label>
+          {doc.banner?.image_url ? (
+            <div className="relative aspect-[4/1] w-full overflow-hidden rounded-2xl border border-wf-200 bg-wf-100">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={doc.banner.image_url}
+                alt=""
+                className="absolute inset-0 h-full w-full"
+                style={{
+                  objectFit: doc.banner.presentation?.fit === "contain" ? "contain" : "cover",
+                  objectPosition: `${doc.banner.presentation?.positionX ?? 50}% ${doc.banner.presentation?.positionY ?? 50}%`,
+                }}
+              />
+            </div>
+          ) : null}
           {doc.banner ? (
             <div className="rounded-lg border border-wf-200 bg-wf-50 p-3 text-[12px] text-wf-700">
               <p className="font-semibold">{doc.banner.title.nl || doc.banner.id}</p>
@@ -394,9 +453,160 @@ function Inner({ slug }: { slug: string }) {
         </div>
       )
     }
+    if (selectedId === "filters") {
+      return (
+        <div className="space-y-3">
+          <p className="text-[12px] text-wf-600">
+            Alleen filters die bij echte productattributen horen worden getoond.
+            Verborgen filters en filters zonder producten verdwijnen.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              void fetchPublicCategoryAttributes(slug).then((attributes) => {
+                setDoc((current) => {
+                  const known = new Set(current.filterControls.map((row) => row.attributeKey))
+                  const extra = [
+                    { code: "brand", name: "Merk" },
+                    ...attributes,
+                  ].filter((attribute) => attribute.code && !known.has(attribute.code))
+                  return {
+                    ...current,
+                    filterControls: [
+                      ...current.filterControls,
+                      ...extra.map((attribute, index) => ({
+                        attributeKey: attribute.code,
+                        visible: true,
+                        label: {
+                          ...emptyLocalized(),
+                          nl: attribute.name,
+                        },
+                        sortOrder: current.filterControls.length + index,
+                      })),
+                    ],
+                  }
+                })
+              })
+            }}
+          >
+            Filters uit productgegevens laden
+          </Button>
+          {doc.filterControls.map((control, index) => (
+            <div key={control.attributeKey} className="rounded-lg border border-wf-100 p-2">
+              <p className="text-[11px] text-wf-500">{control.attributeKey}</p>
+              <label className="mt-1 flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={control.visible}
+                  onChange={(e) =>
+                    setDoc((d) => ({
+                      ...d,
+                      filterControls: d.filterControls.map((row) =>
+                        row.attributeKey === control.attributeKey
+                          ? { ...row, visible: e.target.checked }
+                          : row
+                      ),
+                    }))
+                  }
+                />
+                Tonen
+              </label>
+              <CmsLocalizedField
+                label="Naam"
+                field={`filter.${control.attributeKey}`}
+                value={control.label}
+                onChange={(label) =>
+                  setDoc((d) => ({
+                    ...d,
+                    filterControls: d.filterControls.map((row) =>
+                      row.attributeKey === control.attributeKey ? { ...row, label } : row
+                    ),
+                  }))
+                }
+                meta={meta}
+                onMetaChange={setMeta}
+              />
+              <div className="mt-1 flex gap-2 text-[11px]">
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() =>
+                    setDoc((d) => {
+                      const rows = [...d.filterControls]
+                      if (index === 0) return d
+                      const previous = rows[index - 1]
+                      const current = rows[index]
+                      if (!previous || !current) return d
+                      rows[index - 1] = { ...current, sortOrder: index - 1 }
+                      rows[index] = { ...previous, sortOrder: index }
+                      return { ...d, filterControls: rows }
+                    })
+                  }
+                >
+                  Omhoog
+                </button>
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() =>
+                    setDoc((d) => {
+                      const rows = [...d.filterControls]
+                      if (index >= rows.length - 1) return d
+                      const next = rows[index + 1]
+                      const current = rows[index]
+                      if (!next || !current) return d
+                      rows[index + 1] = { ...current, sortOrder: index + 1 }
+                      rows[index] = { ...next, sortOrder: index }
+                      return { ...d, filterControls: rows }
+                    })
+                  }
+                >
+                  Omlaag
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    }
     if (selectedId === "usps") {
       return (
         <div className="space-y-3">
+          <p className="text-[12px] text-wf-600">
+            Een voorstel gebruikt alleen productaantallen, merknamen en filterbare
+            eigenschappen van deze categorie. Overnemen voegt een nieuw item toe
+            en overschrijft bestaande tekst niet.
+          </p>
+          <Button type="button" variant="secondary" onClick={() => void generateProposal()}>
+            Genereer nieuw voorstel
+          </Button>
+          {proposalError ? <p className="text-[12px] text-amber-800">{proposalError}</p> : null}
+          {proposal?.usps.map((item, index) => (
+            <div key={`usp-proposal-${index}`} className="rounded-lg border border-dashed border-wf-300 p-2">
+              <p className="text-sm font-semibold">{item.title}</p>
+              <p className="text-[12px] text-wf-700">{item.body}</p>
+              <button
+                type="button"
+                className="mt-1 text-[12px] font-semibold underline"
+                onClick={() =>
+                  setDoc((d) => ({
+                    ...d,
+                    usps: [
+                      ...d.usps,
+                      {
+                        id: `usp_${Date.now()}_${index}`,
+                        title: applyText(emptyLocalized(), item.title),
+                        body: applyText(emptyLocalized(), item.body),
+                      },
+                    ],
+                  }))
+                }
+              >
+                Overnemen
+              </button>
+            </div>
+          ))}
           <Button
             type="button"
             variant="secondary"
@@ -468,7 +678,43 @@ function Inner({ slug }: { slug: string }) {
     }
     if (selectedId === "faq") {
       return (
-        <FaqEditor doc={doc} setDoc={setDoc} meta={meta} setMeta={setMeta} />
+        <div className="space-y-3">
+          <p className="text-[12px] text-wf-600">
+            Een voorstel gebruikt alleen productaantallen, merknamen en filterbare
+            eigenschappen van deze categorie. Overnemen voegt een nieuwe vraag toe
+            en overschrijft bestaande tekst niet.
+          </p>
+          <Button type="button" variant="secondary" onClick={() => void generateProposal()}>
+            Genereer nieuw voorstel
+          </Button>
+          {proposalError ? <p className="text-[12px] text-amber-800">{proposalError}</p> : null}
+          {proposal?.faq.map((item, index) => (
+            <div key={`faq-proposal-${index}`} className="rounded-lg border border-dashed border-wf-300 p-2">
+              <p className="text-sm font-semibold">{item.question}</p>
+              <p className="text-[12px] text-wf-700">{item.answer}</p>
+              <button
+                type="button"
+                className="mt-1 text-[12px] font-semibold underline"
+                onClick={() =>
+                  setDoc((d) => ({
+                    ...d,
+                    faq: [
+                      ...d.faq,
+                      {
+                        id: `faq_${Date.now()}_${index}`,
+                        question: applyText(emptyLocalized(), item.question),
+                        answer: applyText(emptyLocalized(), item.answer),
+                      },
+                    ],
+                  }))
+                }
+              >
+                Overnemen
+              </button>
+            </div>
+          ))}
+          <FaqEditor doc={doc} setDoc={setDoc} meta={meta} setMeta={setMeta} />
+        </div>
       )
     }
     return <p className="text-sm text-wf-500">Selecteer een sectie.</p>

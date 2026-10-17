@@ -1,5 +1,13 @@
 import Link from "next/link"
 import {
+  heroCtaInlineStyle,
+  heroTrustColor,
+  HOMEPAGE_CONTENT_GUTTER,
+  isHeroWhiteColor,
+  legacyHeroCtaStyle,
+  parseHeroTextStyle,
+} from "@europmade/utils"
+import {
   DEFAULT_HOMEPAGE_HERO,
   type HomepageHeroContent,
 } from "../../_lib/homepage-hero-content"
@@ -26,124 +34,187 @@ export function HomepageHero({
     image,
     trustItems,
     backgroundGradient,
+    backgroundImage,
+    textColor = "black",
+    buttonColor = "black",
+    titleColor,
+    subtitleColor,
+    imageFit = "cover",
+    imagePosition = "50% 50%",
+    productBanner,
   } = content as HomepageHeroContent & { backgroundGradient?: string }
 
   const bg =
     backgroundGradient ??
     "linear-gradient(165deg, #ffffff 0%, #f7f8fa 42%, #f2f3f5 100%)"
+  const resolvedTitle = titleColor ?? parseHeroTextStyle(undefined, textColor, "title")
+  const resolvedSubtitle =
+    subtitleColor ?? parseHeroTextStyle(undefined, textColor, "subtitle")
+  const lightText = isHeroWhiteColor(resolvedTitle.color)
+  const primaryStyle =
+    primaryCta.style ?? legacyHeroCtaStyle("primary", buttonColor)
+  const secondaryStyle =
+    secondaryCta.style ?? legacyHeroCtaStyle("secondary", buttonColor)
+  const trustColor = heroTrustColor(resolvedTitle)
+  const showProduct = productBanner ? productBanner.visible : true
+  const productImage = productBanner?.image || image.src
+  const backgroundFit = imageFit === "contain" ? "contain" : "cover"
+  const productFit = productBanner?.imageFit === "cover" ? "cover" : "contain"
 
-  if (!headline) return null
+  if (!headline && !showProduct) return null
 
   return (
-    <section className="relative overflow-hidden border-b border-wf-100">
-      <div
-        className="pointer-events-none absolute inset-0"
-        aria-hidden
-        style={{ background: bg }}
-      />
-      <div
-        className="pointer-events-none absolute -right-12 top-[-18%] h-[110%] w-[48%] opacity-[0.18]"
-        aria-hidden
-        style={{
-          background:
-            "radial-gradient(ellipse at 42% 48%, rgba(70,110,180,0.32) 0%, transparent 68%)",
-        }}
-      />
-
-      <div className="relative px-4 pb-3.5 pt-3.5 tablet:px-8 tablet:pb-4 tablet:pt-4">
-        <div className="grid items-center gap-4 desktop:grid-cols-[1.05fr_0.95fr] desktop:gap-5">
-          <div className="min-w-0">
-            <h1 className="max-w-[36rem] text-[22px] font-bold leading-[1.12] tracking-tight text-wf-900 tablet:text-[27px] desktop:text-[30px]">
-              {headline}
-            </h1>
-            <p className="mt-2 max-w-[34rem] text-[12.5px] leading-snug text-wf-600 line-clamp-3 tablet:text-[13px]">
-              {subtitle}
-            </p>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href={primaryCta.href}
-                className="inline-flex h-9 items-center justify-center rounded-xl bg-wf-900 px-3.5 text-[12.5px] font-semibold text-white transition hover:bg-black"
+    <section className={`border-b border-wf-100 pb-1 pt-3 tablet:pb-1.5 tablet:pt-3.5 ${HOMEPAGE_CONTENT_GUTTER}`}>
+      <div className="grid items-stretch gap-2.5 tablet:grid-cols-2 tablet:gap-3">
+        {headline ? (
+          <article className="relative grid w-full overflow-hidden rounded-2xl border border-wf-200">
+            <div className="col-start-1 row-start-1 aspect-[2.85/1]" aria-hidden />
+            <div className="absolute inset-0" style={{ background: bg }} aria-hidden />
+            {backgroundImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={backgroundImage}
+                alt=""
+                className="absolute inset-0 h-full w-full"
+                style={{ objectFit: backgroundFit, objectPosition: imagePosition }}
+              />
+            ) : null}
+            {backgroundImage && lightText ? (
+              <div
+                className="absolute inset-0"
+                aria-hidden
+                style={{
+                  background:
+                    "linear-gradient(90deg, rgba(15,23,42,0.62) 0%, rgba(15,23,42,0.28) 70%, rgba(15,23,42,0.12) 100%)",
+                }}
+              />
+            ) : null}
+            <div className="relative z-[1] col-start-1 row-start-1 flex h-full flex-col justify-center p-3.5 tablet:p-4">
+              <h1
+                data-hero-title=""
+                className="max-w-[22rem] text-[22px] font-bold leading-[1.12] tracking-tight tablet:text-[24px] desktop:text-[26px]"
+                style={{ color: resolvedTitle.color }}
               >
-                {primaryCta.label}
-              </Link>
-              <Link
-                href={secondaryCta.href}
-                className="inline-flex h-9 items-center justify-center rounded-xl border border-wf-300 bg-white/90 px-3.5 text-[12.5px] font-semibold text-wf-800 backdrop-blur-sm transition hover:border-wf-500 hover:bg-white"
-              >
-                {secondaryCta.label}
-              </Link>
-            </div>
-
-            <ul
-              className="mt-3 grid grid-cols-1 gap-1 mobile:grid-cols-2"
-              aria-label="Trust"
-            >
-              {trustItems.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-start gap-1.5 text-[11.5px] text-wf-700"
+                {headline}
+              </h1>
+              {subtitle ? (
+                <p
+                  data-hero-subtitle=""
+                  className="mt-1.5 line-clamp-2 max-w-[24rem] text-[12.5px] leading-snug"
+                  style={{ color: resolvedSubtitle.color }}
                 >
-                  <span
-                    className="mt-0.5 inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-wf-900 text-[9px] font-bold text-white"
-                    aria-hidden
+                  {subtitle}
+                </p>
+              ) : null}
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                {primaryCta.label ? (
+                  <Link
+                    href={primaryCta.href}
+                    data-hero-cta="1"
+                    className="inline-flex h-8 items-center justify-center px-3.5 text-[12.5px] font-semibold"
+                    style={heroCtaInlineStyle(primaryStyle)}
                   >
-                    ✓
-                  </span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+                    {primaryCta.label}
+                  </Link>
+                ) : null}
+                {secondaryCta.label ? (
+                  <Link
+                    href={secondaryCta.href}
+                    data-hero-cta="2"
+                    className="inline-flex h-8 items-center justify-center px-3.5 text-[12.5px] font-semibold"
+                    style={heroCtaInlineStyle(secondaryStyle)}
+                  >
+                    {secondaryCta.label}
+                  </Link>
+                ) : null}
+              </div>
+              {trustItems.length > 0 ? (
+                <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1" aria-label="Trust">
+                  {trustItems.map((item) => (
+                    <li key={item} className="text-[12px]" style={{ color: trustColor }}>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </article>
+        ) : null}
 
-          <HomepageHeroMedia image={image} honestEmpty={honestEmpty} />
-        </div>
+        {showProduct ? (
+          <article
+            className="relative grid w-full overflow-hidden rounded-2xl border border-wf-200"
+            style={{
+              background: productBanner?.background || "#f3f5f8",
+            }}
+          >
+            <div className="col-start-1 row-start-1 aspect-[2.85/1]" aria-hidden />
+            {productImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={productImage}
+                alt={image.alt}
+                className="absolute inset-0 h-full w-full"
+                style={{
+                  objectFit: productFit,
+                  objectPosition: productBanner?.imagePosition || "center",
+                }}
+              />
+            ) : honestEmpty ? (
+              <div className="relative z-[1] col-start-1 row-start-1 flex items-center justify-center text-[13px] text-wf-500">
+                Geen content ingesteld
+              </div>
+            ) : (
+              <div className="relative col-start-1 row-start-1">
+                <HeroProductComposition />
+              </div>
+            )}
+            {productBanner?.title ? (
+              <div className="relative z-[1] col-start-1 row-start-1 flex h-full flex-col justify-end p-4">
+                <p
+                  className={`text-[22px] font-bold leading-tight ${
+                    productBanner.textColor === "white" ? "text-white" : "text-wf-900"
+                  }`}
+                >
+                  {productBanner.title}
+                </p>
+                {productBanner.subtitle ? (
+                  <p
+                    className={`mt-1 text-[13px] ${
+                      productBanner.textColor === "white" ? "text-white/90" : "text-wf-600"
+                    }`}
+                  >
+                    {productBanner.subtitle}
+                  </p>
+                ) : null}
+                {productBanner.ctaLabel && productBanner.href ? (
+                  <Link
+                    href={productBanner.href}
+                    className={`mt-3 inline-flex h-9 w-fit items-center rounded-lg px-3.5 text-[12.5px] font-semibold ${
+                      productBanner.buttonColor === "white"
+                        ? "bg-white text-wf-900"
+                        : "bg-wf-900 text-white"
+                    }`}
+                  >
+                    {productBanner.ctaLabel}
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+            {!productBanner?.title && (image.captionTitle || image.captionBody) ? (
+              <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/80 bg-white/90 px-3 py-2">
+                {image.captionTitle ? (
+                  <p className="text-[12px] font-semibold text-wf-800">{image.captionTitle}</p>
+                ) : null}
+                {image.captionBody ? (
+                  <p className="mt-0.5 text-[11px] text-wf-600">{image.captionBody}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </article>
+        ) : null}
       </div>
     </section>
-  )
-}
-
-function HomepageHeroMedia({
-  image,
-  honestEmpty = false,
-}: {
-  image: HomepageHeroContent["image"]
-  honestEmpty?: boolean
-}) {
-  return (
-    <div
-      className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-wf-200/70 shadow-[0_10px_32px_rgba(15,23,42,0.06)] desktop:aspect-auto desktop:min-h-[176px] desktop:max-h-[216px]"
-      role="img"
-      aria-label={image.alt}
-    >
-      {image.src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={image.src}
-          alt={image.alt}
-          className="h-full w-full object-cover"
-          decoding="async"
-        />
-      ) : honestEmpty ? (
-        <div className="flex h-full min-h-[160px] items-center justify-center bg-wf-50 text-[13px] text-wf-500">
-          Geen content ingesteld
-        </div>
-      ) : (
-        <HeroProductComposition />
-      )}
-      {image.captionTitle || image.captionBody ? (
-        <div className="absolute bottom-2.5 left-2.5 right-2.5 rounded-xl border border-white/80 bg-white/88 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
-          {image.captionTitle ? (
-            <p className="text-[10.5px] font-semibold text-wf-800">
-              {image.captionTitle}
-            </p>
-          ) : null}
-          {image.captionBody ? (
-            <p className="mt-0.5 text-[10px] text-wf-600">{image.captionBody}</p>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
   )
 }
 

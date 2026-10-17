@@ -17,8 +17,9 @@ export function ActionPageView(props: {
   products: ListingProduct[]
   filterGroups: ResolvedCategoryFilterGroup[]
   countries: ResolvedCategoryCountry[]
+  alternatives?: ListingProduct[]
 }) {
-  const { locale, title, intro, bannerUrl, products, filterGroups, countries } = props
+  const { locale, title, intro, bannerUrl, products, filterGroups, countries, alternatives = [] } = props
 
   return (
     <PublicStorefrontChrome locale={locale}>
@@ -63,6 +64,7 @@ export function ActionPageView(props: {
         filterGroups={filterGroups}
         countries={countries}
         categoryLabel={title}
+        alternatives={alternatives}
       />
     </PublicStorefrontChrome>
   )

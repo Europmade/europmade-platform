@@ -100,6 +100,10 @@ export function serializeBanner(
     ),
     image_alt: asLocalized(row.image_alt),
     background: (row.background as string | null) ?? null,
+    presentation:
+      row.presentation && typeof row.presentation === "object"
+        ? row.presentation
+        : null,
     logo_url: resolveMediaUrl(
       (row.logo_url as string | null) ?? null,
       backendOrigin

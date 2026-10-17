@@ -11,9 +11,14 @@ export async function POST(
   req: AuthenticatedMedusaRequest<StoreCheckoutRevalidateBodyInput>,
   res: MedusaResponse
 ) {
-  const lines = await revalidateCheckoutLines(req.scope, req.validatedBody.lines)
+  const delivery_country = req.validatedBody.delivery_country
+  const lines = await revalidateCheckoutLines(
+    req.scope,
+    req.validatedBody.lines,
+    delivery_country
+  )
   const sellers = new Set(lines.map((l) => l.seller_id))
-  const delivery_country = "NL"
+  const pricedCountry = (delivery_country || "NL").toUpperCase()
   res.json({
     lines,
     seller_count: sellers.size,
@@ -21,6 +26,6 @@ export async function POST(
       sellers.size >= 2
         ? `Je bestelling wordt opgesplitst in ${sellers.size} deelbestellingen — één per verkoper.`
         : null,
-    totals: computeCheckoutTotals(lines, delivery_country),
+    totals: computeCheckoutTotals(lines, pricedCountry),
   })
 }

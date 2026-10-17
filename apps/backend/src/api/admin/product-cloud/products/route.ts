@@ -8,6 +8,12 @@ import { PARTNER_MODULE } from "../../../../modules/partner"
 import type PartnerModuleService from "../../../../modules/partner/service"
 import { VERIFICATION_MODULE } from "../../../../modules/verification"
 import type VerificationModuleService from "../../../../modules/verification/service"
+import { COMMERCE_CLOUD_MODULE } from "../../../../modules/commerce-cloud"
+import type CommerceCloudModuleService from "../../../../modules/commerce-cloud/service"
+import {
+  catalogOfferStats,
+  offerPresence,
+} from "../../../../modules/product-cloud/catalog-offer-summary"
 
 type ListRow = {
   id: string
@@ -30,6 +36,8 @@ type ListRow = {
   }
   created_at: string | Date
   updated_at: string | Date
+  offer_count: number
+  seller_offer_count: number
 }
 
 async function mapPool<T, R>(
@@ -274,6 +282,8 @@ export async function GET(
       completeness: { compliance_review_status },
       created_at: product.created_at,
       updated_at: product.updated_at,
+      offer_count: 0,
+      seller_offer_count: 0,
     }
     return row
   })
@@ -305,7 +315,63 @@ export async function GET(
     return true
   })
 
-  const count = filtered.length
-  const page = filtered.slice(offset, offset + limit)
+  const offerPresenceFilter =
+    typeof req.query.offer_presence === "string" ? req.query.offer_presence.trim() : ""
+  let withOffers = filtered
+  try {
+    const commerce = req.scope.resolve(COMMERCE_CLOUD_MODULE) as CommerceCloudModuleService
+    const ids = filtered.map((row) => row.id)
+    const variants = ids.length
+      ? await productCloud.listProductVariants({ product_id: ids }, { take: 2000 })
+      : []
+    const variantToProduct = new Map<string, string>()
+    for (const variant of variants as Array<{ id: string; product_id: string }>) {
+      variantToProduct.set(variant.id, variant.product_id)
+    }
+    const variantIds = [...variantToProduct.keys()]
+    const identifiers = variantIds.length
+      ? await productCloud.listIdentifiers({ product_variant_id: variantIds }, { take: 4000 })
+      : []
+    const identifierToProduct = new Map<string, string>()
+    for (const identifier of identifiers as Array<{ id: string; product_variant_id: string }>) {
+      const productId = variantToProduct.get(identifier.product_variant_id)
+      if (productId) identifierToProduct.set(identifier.id, productId)
+    }
+    const identifierIds = [...identifierToProduct.keys()]
+    const offers = identifierIds.length
+      ? await commerce.listOffers({ identifier_id: identifierIds }, { take: 4000 })
+      : []
+    const links = (offers as Array<{ id: string; identifier_id: string; seller_id: string; region_code: string }>)
+      .map((offer) => ({
+        product_id: identifierToProduct.get(offer.identifier_id) || "",
+        offer_id: offer.id,
+        seller_id: offer.seller_id,
+        region_code: offer.region_code,
+      }))
+      .filter((link) => link.product_id)
+    const stats = catalogOfferStats(ids, links)
+    withOffers = filtered.map((row) => {
+      const stat = stats.get(row.id)
+      return {
+        ...row,
+        offer_count: stat?.offer_count || 0,
+        seller_offer_count: stat?.seller_count || 0,
+      }
+    })
+  } catch {
+    withOffers = filtered
+  }
+  const presenceFiltered = offerPresenceFilter
+    ? withOffers.filter(
+        (row) =>
+          offerPresence({
+            offer_count: row.offer_count,
+            seller_count: row.seller_offer_count,
+          }) === offerPresenceFilter
+      )
+    : withOffers
+
+  const count = presenceFiltered.length
+  const page = presenceFiltered.slice(offset, offset + limit)
   res.json({ products: page, count, limit, offset })
 }

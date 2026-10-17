@@ -3,10 +3,18 @@
 import Link from "next/link"
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
+  CAMPAIGN_CARD_FRAME_CLASS,
+  CAMPAIGN_CARD_MEDIA_CLASS,
+  defaultCampaignCardStyle,
+  singleCardHref,
+} from "@europmade/utils"
+import { PromoCardOverlay } from "./promo-card-overlay"
+import {
   DEFAULT_HOMEPAGE_CAMPAIGNS,
   type HomepageCampaign,
 } from "../../_lib/homepage-campaigns"
 import { productMockupSrc, CAMPAIGN_PRODUCT_KIND } from "../../_lib/product-mockup"
+import { HomepageSectionTitle } from "./homepage-section-title"
 
 function CampaignVisual({ campaign }: { campaign: HomepageCampaign }) {
   if (campaign.imageSrc) {
@@ -49,11 +57,15 @@ export function HomepageCampaignSlider({
   title = "Acties & thema’s",
   prevLabel = "Previous campaigns",
   nextLabel = "Next campaigns",
+  titleColor,
+  titleSize,
 }: {
   campaigns?: HomepageCampaign[]
   title?: string
   prevLabel?: string
   nextLabel?: string
+  titleColor?: string
+  titleSize?: number | null
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [canLeft, setCanLeft] = useState(false)
@@ -90,9 +102,13 @@ export function HomepageCampaignSlider({
 
   return (
     <section>
-      <h2 className="mb-2 text-base font-bold text-wf-900 tablet:text-lg">
+      <HomepageSectionTitle
+        color={titleColor}
+        fontSize={titleSize}
+        className="mb-2"
+      >
         {title}
-      </h2>
+      </HomepageSectionTitle>
       <div className="group/campaigns relative">
         <button
           type="button"
@@ -119,31 +135,31 @@ export function HomepageCampaignSlider({
           aria-label={title}
           className="flex gap-3 overflow-x-auto scroll-smooth pb-1 touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {campaigns.map((c) => (
-            <article
-              key={c.id}
-              className="group/card flex w-[72%] max-w-[280px] shrink-0 flex-col overflow-hidden rounded-2xl border border-wf-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-wf-300 hover:shadow-md tablet:w-[42%] tablet:max-w-none desktop:w-[calc((100%-2.25rem)/3.2)]"
-            >
-              {/* ~12% shorter than prior 16/7.5 → 16/6.6 */}
-              <div className="relative aspect-[16/6.6] w-full overflow-hidden bg-wf-50">
+          {campaigns.map((c) => {
+            const href = singleCardHref(c.href)
+            const media = (
+              <div className={CAMPAIGN_CARD_MEDIA_CLASS}>
                 <CampaignVisual campaign={c} />
+                <PromoCardOverlay
+                  card={c.card ?? defaultCampaignCardStyle()}
+                  title={c.title}
+                  description={c.description}
+                  ctaLabel={c.ctaLabel}
+                />
               </div>
-              <div className="flex flex-1 flex-col px-2.5 pb-2.5 pt-1.5">
-                <h3 className="text-[13.5px] font-bold leading-tight tracking-tight text-wf-900">
-                  {c.title}
-                </h3>
-                <p className="mt-0.5 line-clamp-2 min-h-[2.1em] text-[10.5px] leading-snug text-wf-600">
-                  {c.description}
-                </p>
-                <Link
-                  href={c.href}
-                  className="mt-2 inline-flex h-8 w-full items-center justify-center rounded-xl bg-wf-900 px-2.5 text-[12px] font-semibold text-white transition group-hover/card:bg-black"
-                >
-                  {c.ctaLabel}
-                </Link>
-              </div>
-            </article>
-          ))}
+            )
+            return (
+              <article key={c.id} className={CAMPAIGN_CARD_FRAME_CLASS}>
+                {href ? (
+                  <Link href={href} className="block">
+                    {media}
+                  </Link>
+                ) : (
+                  media
+                )}
+              </article>
+            )
+          })}
         </div>
       </div>
     </section>

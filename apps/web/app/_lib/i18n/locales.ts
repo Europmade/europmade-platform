@@ -24,7 +24,11 @@ export function pickLocalized(
 ): string {
   if (value == null) return ""
   if (typeof value === "string") return value
-  return value[locale] ?? value.nl ?? value.en ?? ""
+  const ordered = [value[locale], value.nl, value.en]
+  for (const part of ordered) {
+    if (typeof part === "string" && part.trim()) return part
+  }
+  return ""
 }
 
 /** Helper for mock CMS authoring. */

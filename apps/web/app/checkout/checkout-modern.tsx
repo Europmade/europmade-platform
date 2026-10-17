@@ -9,7 +9,12 @@ import {
   mergeGuestCart,
   OrderServiceApiError,
   placeOrder,
+  revalidateCheckout,
 } from "../_lib/order-service-api"
+import {
+  STOREFRONT_COUNTRIES,
+  storefrontCountryLabel,
+} from "../_lib/storefront-countries"
 import { serializeOrderAddress, normalizeCountryCode } from "@europmade/utils"
 import { CLICK_COOKIE, readCookie } from "../_lib/cookie-consent"
 import { rememberPendingGuestOrder } from "../_lib/guest-checkout-token"
@@ -47,19 +52,6 @@ type AddressFields = {
 }
 
 type PaymentId = (typeof PAYMENT_METHODS)[number]["id"]
-
-const CHECKOUT_COUNTRIES: Array<{ code: string; label: string }> = [
-  { code: "NL", label: "Nederland" },
-  { code: "BE", label: "België" },
-  { code: "DE", label: "Deutschland" },
-  { code: "FR", label: "France" },
-  { code: "AT", label: "Österreich" },
-  { code: "ES", label: "España" },
-  { code: "IT", label: "Italia" },
-  { code: "IE", label: "Ireland" },
-  { code: "PT", label: "Portugal" },
-  { code: "PL", label: "Polska" },
-]
 
 function composeAddress(a: AddressFields, name?: string) {
   return serializeOrderAddress({
@@ -112,6 +104,7 @@ export default function CheckoutModernPage() {
   const [terms, setTerms] = useState(false)
   const [affiliateCoupon, setAffiliateCoupon] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [deliveryBlock, setDeliveryBlock] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [authBusy, setAuthBusy] = useState(false)
   const [metaMap, setMetaMap] = useState<Record<string, CartLineMeta>>({})
@@ -119,6 +112,50 @@ export default function CheckoutModernPage() {
   useEffect(() => {
     if (!loading && !cart) void refresh()
   }, [cart, loading, refresh])
+
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|; )em_storefront_market=([^;]*)/)
+    const code = decodeURIComponent(match?.[1] ?? "").trim().toUpperCase()
+    if (!STOREFRONT_COUNTRIES.some((country) => country.code === code)) return
+    setShippingAddress((current) =>
+      current.street || current.postalCode
+        ? current
+        : {
+            ...current,
+            countryCode: code,
+            country: storefrontCountryLabel(code),
+          }
+    )
+  }, [])
+
+  useEffect(() => {
+    if (!cart?.lines.length) {
+      setDeliveryBlock(null)
+      return
+    }
+    let cancelled = false
+    revalidateCheckout(
+      cart.lines.map((line) => ({
+        offer_id: line.offer_id,
+        quantity: line.quantity,
+      })),
+      shippingAddress.countryCode
+    )
+      .then(() => {
+        if (!cancelled) setDeliveryBlock(null)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setDeliveryBlock(
+          err instanceof Error
+            ? err.message
+            : "Dit aanbod levert niet naar het gekozen land."
+        )
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [cart, shippingAddress.countryCode])
 
   const isAuthenticated = !!cart && !cart.guest_token
 
@@ -223,6 +260,7 @@ export default function CheckoutModernPage() {
         return setError("Wachtwoorden komen niet overeen.")
       }
     }
+    if (deliveryBlock) return setError(deliveryBlock)
     if (!terms) return setError("Accepteer de voorwaarden om te bestellen.")
 
     setBusy(true)
@@ -438,7 +476,7 @@ export default function CheckoutModernPage() {
                     onChange={(e) => {
                       const code = e.target.value
                       const label =
-                        CHECKOUT_COUNTRIES.find((c) => c.code === code)?.label ??
+                        STOREFRONT_COUNTRIES.find((c) => c.code === code)?.label ??
                         code
                       setShippingAddress((s) => ({
                         ...s,
@@ -447,7 +485,7 @@ export default function CheckoutModernPage() {
                       }))
                     }}
                   >
-                    {CHECKOUT_COUNTRIES.map((c) => (
+                    {STOREFRONT_COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
                         {c.label}
                       </option>
@@ -455,6 +493,11 @@ export default function CheckoutModernPage() {
                   </select>
                 </div>
               </div>
+              {deliveryBlock ? (
+                <p className="mt-2 text-[13px] text-red-700" role="alert">
+                  {deliveryBlock}
+                </p>
+              ) : null}
               <div className="mt-1">
                 <Checkbox
                   checked={billingSameAsShipping}
@@ -485,7 +528,7 @@ export default function CheckoutModernPage() {
                       onChange={(e) => {
                         const code = e.target.value
                         const label =
-                          CHECKOUT_COUNTRIES.find((c) => c.code === code)
+                          STOREFRONT_COUNTRIES.find((c) => c.code === code)
                             ?.label ?? code
                         setBillingAddress((s) => ({
                           ...s,
@@ -494,7 +537,7 @@ export default function CheckoutModernPage() {
                         }))
                       }}
                     >
-                      {CHECKOUT_COUNTRIES.map((c) => (
+                      {STOREFRONT_COUNTRIES.map((c) => (
                         <option key={c.code} value={c.code}>
                           {c.label}
                         </option>

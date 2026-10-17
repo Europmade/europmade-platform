@@ -7,16 +7,15 @@ import { z } from "zod"
 import { adminDecideVersionWorkflow } from "../../../../../../workflows/product-cloud"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../modules/product-cloud/service"
-import { COMMERCE_CLOUD_MODULE } from "../../../../../../modules/commerce-cloud"
-import type CommerceCloudModuleService from "../../../../../../modules/commerce-cloud/service"
-import { PARTNER_MODULE } from "../../../../../../modules/partner"
-import type PartnerModuleService from "../../../../../../modules/partner/service"
-import { buildSellerProductManagerDetail } from "../../../../../store/product-cloud/product-manager"
-import { assertValidGtinForSubmission } from "../../../../../store/product-cloud/submit-gates"
 import {
   listSectionReviewsForProduct,
   summarizeSectionReviews,
 } from "../../../../../../modules/product-cloud/section-review-helpers"
+import {
+  ApprovalRejected,
+  approveProductWithDeps,
+} from "../../../../../../modules/product-cloud/product-approval-decision"
+import { buildAdminApprovalDeps } from "../../approval-deps"
 import { PRODUCT_REVIEW_SECTION_LABELS_NL } from "../../../../../../modules/product-cloud/product-review-sections"
 
 type RouteParams = { id: string }
@@ -50,7 +49,7 @@ export async function POST(
   const productCloud = req.scope.resolve(
     PRODUCT_CLOUD_MODULE
   ) as ProductCloudModuleService
-  const product = await productCloud.retrieveProduct(id)
+  await productCloud.retrieveProduct(id)
 
   const section_reviews = await listSectionReviewsForProduct(productCloud, id)
   const summary = summarizeSectionReviews(section_reviews)
@@ -83,40 +82,30 @@ export async function POST(
   }
 
   if (parsed.data.decision === "approved") {
-    if (summary.needs_info_count > 0 || summary.rejected_count > 0) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        "Niet alle beoordelingsonderdelen zijn akkoord (Aanvullen/Afwijzen aanwezig)."
-      )
-    }
-    let commerce: CommerceCloudModuleService | null = null
     try {
-      commerce = req.scope.resolve(COMMERCE_CLOUD_MODULE) as CommerceCloudModuleService
-    } catch {
-      commerce = null
+      const approved = await approveProductWithDeps(buildAdminApprovalDeps(req.scope), {
+        productId: id,
+        actorId: actor,
+        reason: parsed.data.reason,
+      })
+      res.json({
+        decision: parsed.data.decision,
+        version: approved.version,
+        lifecycle_status: approved.lifecycle_status,
+        section_reviews,
+      })
+    } catch (err) {
+      if (err instanceof ApprovalRejected) {
+        throw new MedusaError(
+          err.http === "not_found"
+            ? MedusaError.Types.NOT_FOUND
+            : MedusaError.Types.NOT_ALLOWED,
+          err.message
+        )
+      }
+      throw err
     }
-    let partner: PartnerModuleService | null = null
-    try {
-      partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
-    } catch {
-      partner = null
-    }
-    const detail = await buildSellerProductManagerDetail(
-      productCloud,
-      commerce,
-      id,
-      product.current_owner_seller_id,
-      partner,
-      req.scope
-    )
-    if (!detail?.completeness.publishable) {
-      throw new MedusaError(
-        MedusaError.Types.NOT_ALLOWED,
-        detail?.completeness.publication_blocked_reasons?.[0] ||
-          "Product is niet publiceerbaar — keur eerst verplichte documenten goed en controleer completeness."
-      )
-    }
-    await assertValidGtinForSubmission(productCloud, id)
+    return
   }
 
   const versions = (await productCloud.listProductVersions({

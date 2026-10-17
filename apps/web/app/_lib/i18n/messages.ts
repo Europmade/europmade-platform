@@ -343,6 +343,55 @@ const M = {
     "Noch keine Produkte in dieser Kategorie",
     "Pas encore de produits dans cette catégorie"
   ),
+  emptyMarketCategoryTitle: L(
+    "Geen leverbaar aanbod in dit land",
+    "No deliverable products in this country",
+    "Kein lieferbares Angebot in diesem Land",
+    "Aucune offre livrable dans ce pays"
+  ),
+  emptyMarketCategoryBody: L(
+    "In het gekozen land is hier nu niets te bestellen.",
+    "Nothing here can be ordered in the selected country.",
+    "In dem gewählten Land ist hier nichts bestellbar.",
+    "Rien n’est commandable ici pour le pays choisi."
+  ),
+  unavailableNotDeliverable: L(
+    "Dit product wordt niet geleverd naar het gekozen land.",
+    "This product is not delivered to the selected country.",
+    "Dieses Produkt wird nicht in das gewählte Land geliefert.",
+    "Ce produit n’est pas livré dans le pays choisi."
+  ),
+  unavailableOutOfStock: L(
+    "Dit product is tijdelijk uitverkocht.",
+    "This product is temporarily out of stock.",
+    "Dieses Produkt ist vorübergehend ausverkauft.",
+    "Ce produit est temporairement en rupture de stock."
+  ),
+  unavailableNotPublished: L(
+    "Dit product is niet gepubliceerd.",
+    "This product is not published.",
+    "Dieses Produkt ist nicht veröffentlicht.",
+    "Ce produit n’est pas publié."
+  ),
+  unavailablePaused: L(
+    "Dit aanbod is tijdelijk niet te bestellen.",
+    "This offer cannot be ordered right now.",
+    "Dieses Angebot kann derzeit nicht bestellt werden.",
+    "Cette offre ne peut pas être commandée pour le moment."
+  ),
+  unavailableAlternatives: L(
+    "Wel leverbaar",
+    "Available instead",
+    "Stattdessen lieferbar",
+    "Disponible à la place"
+  ),
+  deliveryCountry: L("Land", "Country", "Land", "Pays"),
+  suggestedCountry: L(
+    "Voorgesteld",
+    "Suggested",
+    "Vorgeschlagen",
+    "Suggéré"
+  ),
   emptyCategoryBody: L(
     "Deze categorie is klaar voor Europese makers. Zodra partners aanbod publiceren, verschijnt het hier.",
     "This category is ready for European makers. Products will appear here once partners publish offers.",
@@ -7081,7 +7130,36 @@ const M = {
   adCampaignCreated: L("Campagne succesvol aangevraagd.", "Campaign successfully submitted.", "Kampagne erfolgreich eingereicht.", "Campagne soumise avec succès."),
   adCampaignFailed: L("Campagne aanvragen mislukt.", "Campaign submission failed.", "Kampagne einreichen fehlgeschlagen.", "Échec de la soumission de la campagne."),
   adBannerContent: L("Bannerinhoud", "Banner content", "Banner-Inhalt", "Contenu de la bannière"),
-  adImageHint: L("Gebruik bij voorkeur een productafbeelding met transparante achtergrond.", "Preferably use a product image with transparent background.", "Verwende vorzugsweise ein Produktbild mit transparentem Hintergrund.", "Utilisez de préférence une image produit avec fond transparent."),
+  adImageHint: L(
+    "Brede banner, aanbevolen 2400×600 px. De afbeelding vult de hele banner.",
+    "Wide banner, recommended 2400×600 px. The image fills the whole banner.",
+    "Breites Banner, empfohlen 2400×600 px. Das Bild füllt das ganze Banner.",
+    "Bannière large, recommandé 2400×600 px. L'image remplit toute la bannière."
+  ),
+  adLogoUpload: L("Sellerlogo", "Seller logo", "Verkäuferlogo", "Logo vendeur"),
+  adLogoHint: L(
+    "Transparante PNG of WebP. Dit logo komt boven op de banner en vervangt niet het merklogo.",
+    "Transparent PNG or WebP. This logo sits on the banner and is not the brand-page logo.",
+    "Transparentes PNG oder WebP. Dieses Logo liegt auf dem Banner und ist nicht das Markenlogo.",
+    "PNG ou WebP transparent. Ce logo se pose sur la bannière et ne remplace pas le logo de marque."
+  ),
+  adImagePosition: L("Beeldpositie", "Image position", "Bildposition", "Position de l'image"),
+  adOverlayPosition: L("Tekstpositie", "Text position", "Textposition", "Position du texte"),
+  adTextColor: L("Tekstkleur", "Text colour", "Textfarbe", "Couleur du texte"),
+  adLogoScale: L("Logoschaal", "Logo scale", "Logogröße", "Échelle du logo"),
+  adVisibility: L("Zichtbaarheid testen", "Test visibility", "Sichtbarkeit prüfen", "Tester la visibilité"),
+  adPreviewNotPublic: L(
+    "Preview — dit is niet de publieke storefront en wijzigt de boeking niet.",
+    "Preview — this is not the public storefront and does not change the booking.",
+    "Vorschau — das ist nicht die öffentliche Storefront und ändert die Buchung nicht.",
+    "Aperçu — ce n'est pas la boutique publique et ne modifie pas la réservation."
+  ),
+  adStorefrontPreview: L(
+    "Storefront-preview openen",
+    "Open storefront preview",
+    "Storefront-Vorschau öffnen",
+    "Ouvrir l'aperçu storefront"
+  ),
   adUploadImage: L("Afbeelding uploaden", "Upload image", "Bild hochladen", "Télécharger l'image"),
   adUploading: L("Uploaden…", "Uploading…", "Wird hochgeladen…", "Téléchargement…"),
   adUploadFailed: L("Upload mislukt.", "Upload failed.", "Upload fehlgeschlagen.", "Échec du téléchargement."),

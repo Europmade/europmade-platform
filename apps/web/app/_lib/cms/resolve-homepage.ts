@@ -3,7 +3,11 @@
  */
 
 import { isEuMarketCode, isVisibleInMarket, type EuMarketCode } from "@europmade/types"
-import { rewriteCollectionHrefToAction } from "@europmade/utils"
+import {
+  parseBrandCardPresentation,
+  parseSectionTitleStyle,
+  rewriteCollectionHrefToAction,
+} from "@europmade/utils"
 import { resolveStorefrontLocale } from "../i18n/detect-locale"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -14,12 +18,19 @@ import {
 } from "../i18n/locales"
 import type { HomepageCampaign } from "../homepage-campaigns"
 import type { HomepageCategory } from "../homepage-content"
+import {
+  parseCampaignCardStyle,
+  parseHeroCtaStyle,
+  parseHeroTextStyle,
+  type CampaignCardStyle,
+} from "@europmade/utils"
 import type { HomepageHeroContent } from "../homepage-hero-content"
 import type { StorefrontAdCreative } from "../storefront-ads"
 import {
   HOMEPAGE_CMS_UNPUBLISHED,
   type HomepageBannerCms,
   type HomepageCmsDocument,
+  type HomepageHeroCms,
   type HomepageNewsletterCms,
   type HomepagePartnerSpotlightCms,
   type HomepageSectionCms,
@@ -45,6 +56,8 @@ export type ResolvedHomepageSection = {
   key: HomepageSectionCms["key"]
   title: string
   subtitle: string
+  titleColor: string
+  titleSize: number | null
   image?: string | null
   body?: string
   href?: string
@@ -94,7 +107,14 @@ export type ResolvedPartnerSpotlight = {
   description: string
   image?: string | null
   logo?: string | null
+  logoSize: number
+  logoPosition: "left" | "center" | "right"
+  textColor: string
+  overlayStrength: number
   backgroundKey: PartnerCardBackgroundKey
+  card?: CampaignCardStyle
+  ctaLabel?: string
+  href?: string
 }
 
 export type ResolvedHomepage = {
@@ -164,11 +184,14 @@ function resolveSectionMap(
     const sortMode = isHomepageProductSort(section.sortMode)
       ? section.sortMode
       : undefined
+    const titleStyle = parseSectionTitleStyle(section)
     map[section.key] = {
       id: section.id,
       key: section.key,
       title: pickLocalized(section.title, locale),
       subtitle: pickLocalized(section.subtitle, locale),
+      titleColor: titleStyle.color,
+      titleSize: titleStyle.fontSize,
       image: section.image,
       body: section.body ? pickLocalized(section.body, locale) : "",
       href: section.href,
@@ -204,9 +227,41 @@ function resolveBanner(
     imageAlt: pickLocalized(banner.imageAlt, locale),
     status: "Actief",
     background: banner.background,
+    imageFit: banner.presentation?.fit === "contain" ? "contain" : "cover",
+    imagePosition: `${Number.isFinite(Number(banner.presentation?.positionX)) ? banner.presentation?.positionX : 50}% ${Number.isFinite(Number(banner.presentation?.positionY)) ? banner.presentation?.positionY : 50}%`,
+    imageScale: Number.isFinite(Number(banner.presentation?.scale))
+      ? Number(banner.presentation?.scale)
+      : 1,
+    textColor:
+      banner.presentation?.textColor === "black" ? "black" : undefined,
+    buttonColor:
+      banner.presentation?.buttonColor === "black" ? "black" : undefined,
     logoSrc: banner.logo ?? null,
     activeFrom: banner.activeFrom ?? banner.publishAt ?? null,
     activeTo: banner.activeTo ?? banner.expiresAt ?? null,
+  }
+}
+
+function resolveProductBanner(
+  raw: HomepageHeroCms["productBanner"],
+  locale: StorefrontLocale
+): HomepageHeroContent["productBanner"] {
+  if (!raw) return null
+  const title = raw.title ? pickLocalized(raw.title, locale) : ""
+  const subtitle = raw.subtitle ? pickLocalized(raw.subtitle, locale) : ""
+  const ctaLabel = raw.ctaLabel ? pickLocalized(raw.ctaLabel, locale) : ""
+  return {
+    visible: raw.visible !== false,
+    title,
+    subtitle,
+    ctaLabel,
+    href: raw.href || "",
+    image: typeof raw.image === "string" ? raw.image : undefined,
+    background: raw.background || "",
+    textColor: raw.textColor === "white" ? "white" : "black",
+    buttonColor: raw.buttonColor === "white" ? "white" : "black",
+    imageFit: raw.imageFit === "contain" ? "contain" : "cover",
+    imagePosition: raw.imagePosition || "50% 50%",
   }
 }
 
@@ -246,7 +301,13 @@ function resolvePartners(
   now: Date
 ): ResolvedPartnerSpotlight[] {
   return liveSorted(items, now)
-    .filter((p) => Boolean(p.slug?.trim()))
+    .filter((p) => {
+      const slug = p.slug?.trim()
+      const name = pickLocalized(p.title, locale).trim()
+      const image = typeof p.image === "string" ? p.image.trim() : ""
+      const logo = typeof p.logo === "string" ? p.logo.trim() : ""
+      return Boolean(slug || name || image || logo)
+    })
     .map((p) => ({
     slug: p.slug,
     name: pickLocalized(p.title, locale),
@@ -256,7 +317,11 @@ function resolvePartners(
     description: pickLocalized(p.subtitle, locale),
     image: typeof p.image === "string" ? p.image : null,
     logo: typeof p.logo === "string" ? p.logo : null,
+    ...parseBrandCardPresentation(p),
     backgroundKey: partnerBackgroundKey(p.backgroundKey),
+    card: p.card ? parseCampaignCardStyle(p.card) : undefined,
+    ctaLabel: p.ctaLabel ? pickLocalized(p.ctaLabel, locale) : "",
+    href: typeof p.href === "string" ? p.href : "",
   }))
 }
 
@@ -336,10 +401,20 @@ export function resolveHomepageCms(
           primaryCta: {
             label: pickLocalized(heroRaw.cta1.label, locale),
             href: heroRaw.cta1.href,
+            style: parseHeroCtaStyle(
+              heroRaw.cta1.style,
+              "primary",
+              heroRaw.buttonColor
+            ),
           },
           secondaryCta: {
             label: pickLocalized(heroRaw.cta2.label, locale),
             href: heroRaw.cta2.href,
+            style: parseHeroCtaStyle(
+              heroRaw.cta2.style,
+              "secondary",
+              heroRaw.buttonColor
+            ),
           },
           image: {
             src: heroRaw.heroImage ?? undefined,
@@ -353,6 +428,28 @@ export function resolveHomepageCms(
           },
           trustItems: heroRaw.trustBullets.map((b) => pickLocalized(b, locale)),
           backgroundGradient: heroRaw.backgroundGradient,
+          backgroundImage:
+            typeof heroRaw.backgroundImage === "string"
+              ? heroRaw.backgroundImage
+              : undefined,
+          textColor: heroRaw.textColor === "white" ? "white" : "black",
+          buttonColor: heroRaw.buttonColor === "white" ? "white" : "black",
+          titleColor: parseHeroTextStyle(
+            heroRaw.titleColor,
+            heroRaw.textColor,
+            "title"
+          ),
+          subtitleColor: parseHeroTextStyle(
+            heroRaw.subtitleColor,
+            heroRaw.textColor,
+            "subtitle"
+          ),
+          imageFit: heroRaw.imageFit === "contain" ? "contain" : "cover",
+          imagePosition:
+            typeof heroRaw.imagePosition === "string" && heroRaw.imagePosition
+              ? heroRaw.imagePosition
+              : "50% 50%",
+          productBanner: resolveProductBanner(heroRaw.productBanner, locale),
         }
       : {
           headline: "",
@@ -373,6 +470,7 @@ export function resolveHomepageCms(
       imageSrc: c.image ?? undefined,
       imageAlt: pickLocalized(c.imageAlt, locale),
       accentHue: c.accentHue,
+      card: parseCampaignCardStyle(c.card),
     })),
     banners: filteredBanners,
     sections,
@@ -383,11 +481,14 @@ export function resolveHomepageCms(
       const sortMode = isHomepageProductSort(section.sortMode)
         ? section.sortMode
         : undefined
+      const titleStyle = parseSectionTitleStyle(section)
       return {
         id: section.id,
         key: section.key,
         title: pickLocalized(section.title, locale),
         subtitle: pickLocalized(section.subtitle, locale),
+        titleColor: titleStyle.color,
+        titleSize: titleStyle.fontSize,
         image: section.image,
         body: section.body ? pickLocalized(section.body, locale) : "",
         href: section.href,

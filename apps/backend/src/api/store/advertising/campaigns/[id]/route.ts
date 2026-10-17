@@ -22,6 +22,9 @@ import {
   computeCampaignPrice,
   serializeCampaign,
 } from "../../helpers"
+import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
+import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
+import { loadResolvedAdvertisingProductCards } from "../../public-product-cards"
 
 type Req = AuthenticatedMedusaRequest & { params: { id: string } }
 
@@ -42,12 +45,24 @@ export async function GET(req: Req, res: MedusaResponse) {
     { campaign_id: row.id },
     { order: { week_start: "ASC" } }
   )
+  const origin = requestBackendOrigin(req)
+  const campaign = serializeCampaign(
+    row as Record<string, unknown>,
+    weeks,
+    origin
+  )
+  const productCloud = req.scope.resolve(
+    PRODUCT_CLOUD_MODULE
+  ) as ProductCloudModuleService
+  const products = await loadResolvedAdvertisingProductCards(
+    productCloud,
+    Array.isArray(campaign.product_ids)
+      ? (campaign.product_ids as string[])
+      : [],
+    origin
+  )
   res.json({
-    campaign: serializeCampaign(
-      row as Record<string, unknown>,
-      weeks,
-      requestBackendOrigin(req)
-    ),
+    campaign: { ...campaign, products },
   })
 }
 
@@ -114,6 +129,8 @@ export async function PATCH(req: Req, res: MedusaResponse) {
     target_value: input.target_value,
     markets: input.markets,
     image_url: input.image_url,
+    logo_url: input.logo_url,
+    banner_presentation: input.banner_presentation,
     destination_url,
     headline: input.headline,
     subline: input.subline,

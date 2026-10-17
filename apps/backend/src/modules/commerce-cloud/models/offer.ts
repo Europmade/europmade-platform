@@ -40,9 +40,8 @@ const Offer = model
     },
     {
       on: ["seller_id", "seller_sku"],
-      unique: true,
       where: "deleted_at IS NULL AND seller_sku IS NOT NULL",
-      name: "IDX_offer_seller_sku_unique",
+      name: "IDX_offer_seller_sku",
     },
     { on: ["seller_id"] },
     { on: ["identifier_id"] },

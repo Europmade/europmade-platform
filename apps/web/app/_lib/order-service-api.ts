@@ -162,7 +162,8 @@ export async function mergeGuestCart() {
 }
 
 export function revalidateCheckout(
-  lines: Array<{ offer_id: string; quantity: number }>
+  lines: Array<{ offer_id: string; quantity: number }>,
+  deliveryCountry?: string
 ) {
   return request<{
     lines: CartLineView[]
@@ -171,7 +172,12 @@ export function revalidateCheckout(
     totals: CartTotals
   }>("/store/order-service/checkout/revalidate", {
     method: "POST",
-    body: JSON.stringify({ lines }),
+    body: JSON.stringify({
+      lines,
+      ...(deliveryCountry
+        ? { delivery_country: deliveryCountry.slice(0, 2).toUpperCase() }
+        : {}),
+    }),
   })
 }
 

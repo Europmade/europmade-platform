@@ -7,6 +7,7 @@ import { endSession } from "../../(auth)/_lib/medusa-auth"
 import type { StorefrontLocale } from "../../_lib/i18n/locales"
 import { t } from "../../_lib/i18n/messages"
 import { medusaBackendUrl } from "../../_lib/medusa-backend-url"
+import { HEADER_ICON_CLASS, headerIconStyle } from "./header-chrome"
 
 type CustomerMe = {
   id: string
@@ -104,7 +105,8 @@ export function AccountMenu({
     return (
       <Link
         href="/login"
-        className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-wf-400 text-wf-700 hover:border-wf-700"
+        className={HEADER_ICON_CLASS}
+        style={headerIconStyle}
         aria-label={t("login", locale)}
         title={t("login", locale)}
       >
@@ -121,7 +123,8 @@ export function AccountMenu({
     <div className="relative" ref={rootRef}>
       <button
         type="button"
-        className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-wf-400 text-wf-700 hover:border-wf-700"
+        className={HEADER_ICON_CLASS}
+        style={headerIconStyle}
         aria-label={`${t("myAccount", locale)} (${label})`}
         aria-expanded={open}
         aria-controls={menuId}
@@ -133,7 +136,8 @@ export function AccountMenu({
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 top-full z-30 mt-2 w-52 rounded-lg border border-wf-300 bg-white py-1.5 shadow-sm"
+          data-em-header-menu
+          className="absolute right-0 top-full z-30 mt-2 w-52 rounded-lg border border-wf-300 bg-white py-1.5 text-[#151515] shadow-sm"
         >
           <p className="truncate border-b border-wf-200 px-3 py-2 text-[11px] text-wf-600">
             {label}
@@ -185,8 +189,7 @@ function MenuLink({
 function UserIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      className="h-[62%] w-[62%]"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

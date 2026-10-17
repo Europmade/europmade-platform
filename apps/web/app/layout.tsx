@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 import "./globals.css"
 import { CookieConsentBanner } from "./_components/cookie-consent-banner"
+import { CrispWebsiteWidget } from "./_components/crisp-website-widget"
 import { AffiliateClickCapture } from "./_components/affiliate-click-capture"
 import { CartProviderRoot } from "./_components/cart/cart-provider-root"
 import { getStorefrontLocaleFromCookies } from "./_lib/i18n/get-storefront-locale"
@@ -32,6 +33,7 @@ export default async function RootLayout({
             <AffiliateClickCapture />
           </Suspense>
         </StorefrontLocaleProvider>
+        <CrispWebsiteWidget />
       </body>
     </html>
   )

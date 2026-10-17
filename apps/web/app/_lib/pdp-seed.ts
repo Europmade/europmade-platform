@@ -82,6 +82,8 @@ export type PdpDetail = {
   selectedSizeId: string
   productLinkGroup?: import("./product-link-pdp").PdpProductLinkGroup | null
   offers: PdpOffer[]
+  availability?: "orderable" | "out_of_stock" | "not_deliverable" | "not_published" | "paused"
+  alternatives?: ListingProduct[]
   buyBoxNotice: string
   productReviews: PdpReview[]
   sellerReviews: PdpReview[]

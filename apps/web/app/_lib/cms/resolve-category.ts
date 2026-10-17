@@ -3,6 +3,7 @@
  * No AI at request time — all content is prebuilt CMS/mock payload.
  */
 
+import { applyCategoryFilterControls } from "@europmade/utils"
 import type { ListingProduct } from "../listing-products"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -11,8 +12,6 @@ import {
   type StorefrontLocale,
 } from "../i18n/locales"
 import type { StorefrontAdCreative } from "../storefront-ads"
-import { bannerProductMockupDataUri } from "../product-mockup"
-import { hashHue } from "../cart-line-meta"
 import {
   type CategoryAiHooks,
   type CategoryBannerCms,
@@ -23,10 +22,7 @@ import {
 import { overlayCategoryEditorial } from "./overlay-category-editorial"
 import { isCmsEntryLive, sortByCmsOrder } from "./publish"
 import { findMarketplaceCategory } from "../marketplace-categories"
-import {
-  CATEGORY_PRODUCT_KIND,
-  type ProductMockKind,
-} from "../product-mockup"
+import { CATEGORY_PRODUCT_KIND } from "../product-mockup"
 import type { AiContentDocument } from "../ai-content/types"
 import { AI_CONTENT_PROMPT_VERSION } from "../ai-content/prompts/versions"
 import type { ProductCloudStoreCategory } from "../product-cloud-store"
@@ -220,6 +216,7 @@ export type ResolvedCategoryPage = {
   countries: ResolvedCategoryCountry[]
   related: ResolvedCategoryRelated[]
   faq: ResolvedCategoryFaq[]
+  usps: { id: string; title: string; body: string }[]
   dynamicBlocks: ResolvedCategoryDynamicBlock[]
   hideWhenProductCountBelow: number | null
   ai: CategoryAiHooks
@@ -280,10 +277,9 @@ const BANNER_PRIORITY_ORDER: CategoryBannerPriority[] = [
 function resolveBanner(
   banner: CategoryBannerCms,
   locale: StorefrontLocale,
-  slug: string
+  _slug: string
 ): StorefrontAdCreative {
-  const hue = hashHue(banner.id)
-  const kind: ProductMockKind = CATEGORY_PRODUCT_KIND[slug] ?? "coffee"
+  const presentation = banner.presentation
   return {
     id: banner.id,
     position: 1,
@@ -294,13 +290,15 @@ function resolveBanner(
     ctaLabel: pickLocalized(banner.ctaLabel, locale),
     href: banner.destinationUrl,
     linkType: banner.linkType,
-    imageSrc:
-      banner.image && banner.image.length > 0
-        ? banner.image
-        : bannerProductMockupDataUri(hue, kind),
+    imageSrc: banner.image && banner.image.length > 0 ? banner.image : "",
     imageAlt: pickLocalized(banner.imageAlt, locale),
     status: "Actief",
     background: banner.background,
+    imageFit: presentation?.fit === "contain" ? "contain" : "cover",
+    imagePosition: `${Number(presentation?.positionX ?? 50)}% ${Number(presentation?.positionY ?? 50)}%`,
+    imageScale: Number(presentation?.scale ?? 1) || 1,
+    textColor: presentation?.textColor === "black" ? "black" : presentation?.textColor === "white" ? "white" : undefined,
+    buttonColor: presentation?.buttonColor === "black" ? "black" : presentation?.buttonColor === "white" ? "white" : undefined,
     logoSrc: banner.logo ?? null,
     productionCountryLabel: banner.productionCountry
       ? pickLocalized(banner.productionCountry, locale)
@@ -460,6 +458,21 @@ export function resolveCategoryPage(
     }
   }
 
+  const filterControls = doc.filterControls ?? []
+  if (filterControls.length > 0) {
+    const controlledFilters = applyCategoryFilterControls(
+      filterGroups,
+      filterControls.map((control) => ({
+        attributeKey: control.attributeKey,
+        visible: control.visible !== false,
+        label: pickLocalized(control.label, locale).trim() || null,
+        sortOrder: Number(control.sortOrder) || 0,
+      }))
+    )
+    filterGroups.length = 0
+    filterGroups.push(...controlledFilters)
+  }
+
   const countryMap = new Map<string, string>()
   for (const p of products) {
     if (p.countryCode && !countryMap.has(p.countryCode)) {
@@ -487,6 +500,14 @@ export function resolveCategoryPage(
       }
     })
     .filter((x): x is ResolvedCategoryRelated => x != null)
+
+  const usps = (doc.usps ?? [])
+    .map((item) => ({
+      id: item.id,
+      title: pickLocalized(item.title, locale).trim(),
+      body: pickLocalized(item.body, locale).trim(),
+    }))
+    .filter((item) => item.title || item.body)
 
   const faq = sortByCmsOrder(doc.faq.filter((f) => isCmsEntryLive(f, now))).map(
     (f) => ({
@@ -614,6 +635,7 @@ export function resolveCategoryPage(
     countries,
     related: relatedResolved,
     faq: faqResolved,
+    usps,
     dynamicBlocks,
     hideWhenProductCountBelow: doc.hideWhenProductCountBelow ?? null,
     ai: aiHooks,

@@ -47,6 +47,7 @@ type CategoryListingClientProps = {
   highlightProducts?: ListingProduct[]
   highlightLabel?: string | null
   top3Heading?: string
+  alternatives?: ListingProduct[]
 }
 
 /**
@@ -65,6 +66,7 @@ export function CategoryListingClient({
   highlightProducts = [],
   highlightLabel,
   top3Heading,
+  alternatives = [],
 }: CategoryListingClientProps) {
   const [localFilters, setLocalFilters] = useState<Set<string>>(new Set())
   const [localCountry, setLocalCountry] = useState<string | null>(null)
@@ -269,14 +271,20 @@ export function CategoryListingClient({
 
           {filtered.length === 0 ? (
             <CategoryEmpty
-              title={t("emptyCategoryTitle", locale)}
+              title={
+                products.length === 0
+                  ? t("emptyMarketCategoryTitle", locale)
+                  : t("emptyCategoryTitle", locale)
+              }
               body={
                 products.length === 0
-                  ? t("emptyCategoryBody", locale)
+                  ? t("emptyMarketCategoryBody", locale)
                   : t("noFilterResults", locale)
               }
               homeLabel={t("ctaHome", locale)}
               categoriesLabel={t("ctaBrowseCategories", locale)}
+              alternatives={products.length === 0 ? alternatives : []}
+              alternativesLabel={t("unavailableAlternatives", locale)}
             />
           ) : (
             <ul className="grid grid-cols-2 items-stretch gap-2.5 tablet:grid-cols-3 desktop:grid-cols-4 desktop:gap-3">

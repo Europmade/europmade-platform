@@ -50,6 +50,14 @@ export type AdCampaignDto = {
   target_value: string | null
   markets: string[]
   image_url: string | null
+  logo_url?: string | null
+  banner_presentation?: {
+    imagePositionX: number
+    imagePositionY: number
+    overlayAlign: "left" | "right"
+    textColor: "white" | "black"
+    logoScale: number
+  } | null
   destination_url: string
   headline: string | null
   subline: string | null
@@ -65,6 +73,17 @@ export type AdCampaignDto = {
   created_at: string
   updated_at: string
   weeks: AdCampaignWeekDto[]
+  visibility?: {
+    approved: boolean
+    publicNow: boolean
+    placement: string
+    markets: string[]
+    activeFrom: string | null
+    activeUntil: string | null
+    reasons: string[]
+    liveMarkets: string[]
+    suppressed: boolean
+  }
 }
 
 export async function listAdCampaigns(status?: string) {

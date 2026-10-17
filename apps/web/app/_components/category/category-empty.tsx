@@ -1,11 +1,14 @@
 import Link from "next/link"
 import { Button } from "@europmade/ui"
+import type { ListingProduct } from "../../_lib/listing-products"
 
 type CategoryEmptyProps = {
   title: string
   body: string
   homeLabel: string
   categoriesLabel: string
+  alternatives?: ListingProduct[]
+  alternativesLabel?: string
 }
 
 /**
@@ -16,6 +19,8 @@ export function CategoryEmpty({
   body,
   homeLabel,
   categoriesLabel,
+  alternatives = [],
+  alternativesLabel,
 }: CategoryEmptyProps) {
   return (
     <div
@@ -26,6 +31,24 @@ export function CategoryEmpty({
       <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-wf-600">
         {body}
       </p>
+      {alternatives.length > 0 ? (
+        <div className="mx-auto mt-5 max-w-lg text-left">
+          {alternativesLabel ? (
+            <p className="mb-2 text-[12px] font-semibold text-wf-800">
+              {alternativesLabel}
+            </p>
+          ) : null}
+          <ul className="space-y-1">
+            {alternatives.slice(0, 4).map((product) => (
+              <li key={product.slug}>
+                <Link href={`/product/${product.slug}`} className="text-[13px] text-wf-800 underline">
+                  {product.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <div className="mt-5 flex flex-wrap justify-center gap-2.5">
         <Link href="/">
           <Button type="button" variant="primary">

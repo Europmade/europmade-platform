@@ -14,12 +14,16 @@ export function HomepageCarousel({
   products,
   locale = DEFAULT_STOREFRONT_LOCALE,
   hideWhenEmpty = true,
+  titleColor,
+  titleFontSize,
 }: {
   title: string
   subtitle?: string
   products: ListingProduct[]
   locale?: StorefrontLocale
   hideWhenEmpty?: boolean
+  titleColor?: string
+  titleFontSize?: number | null
 }) {
   return (
     <ProductCarousel
@@ -30,6 +34,8 @@ export function HomepageCarousel({
       lazy
       hideWhenEmpty={hideWhenEmpty}
       className="!mt-0"
+      titleColor={titleColor}
+      titleFontSize={titleFontSize}
     />
   )
 }

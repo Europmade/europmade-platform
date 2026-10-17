@@ -2,10 +2,17 @@
 
 import Link from "next/link"
 import { Badge, Button } from "@europmade/ui"
-import type {
-  AdminProductDetail,
-  SectionReviewKey,
+import {
+  type AdminProductDetail,
+  type SectionReviewKey,
 } from "../../lib/product-approval-admin-api"
+import {
+  CentralComplianceForm,
+  CentralDescriptionForm,
+  CentralInformationForm,
+  CentralMediaForm,
+  CentralTranslationsForm,
+} from "./admin-central-forms"
 import {
   displayMediaUrl,
   isLikelyPdf,
@@ -16,11 +23,11 @@ import {
 import {
   findSectionReview,
   ProductEndReviewBlock,
-  SectionReviewControls,
   sectionReviewStatusLabel,
 } from "./product-review-panel"
 import { AdminProductManagerCard } from "./admin-product-manager-card"
 import { AdminSectionProposalReviews } from "./admin-section-proposal-reviews"
+import { SectionReviewAside, SectionSplit, sectionNotes } from "./section-review-aside"
 import type { AdminChangeProposal } from "../../lib/change-proposal-admin-api"
 import {
   ADMIN_EVIDENCE_STATUS_LABELS,
@@ -45,8 +52,6 @@ export const ADMIN_WIZARD_STEPS: Array<{
   label: string
 }> = [
   { key: "information", short: "Info", label: "Productinformatie" },
-  { key: "offer", short: "Verkoop", label: "Verkoopinformatie" },
-  { key: "shipping", short: "Voorraad", label: "Voorraad & verzending" },
   { key: "media", short: "Media", label: "Media" },
   { key: "compliance", short: "Compliance", label: "Compliance" },
   { key: "translations", short: "Vertalingen", label: "Vertalingen" },
@@ -113,25 +118,11 @@ export function AdminWizardShell(props: {
   const sortedMedia = [...media].sort(
     (a, b) => Number(a.sort_order ?? 0) - Number(b.sort_order ?? 0)
   )
-  const schema = (product.schema || []) as Array<{
-    id: string
-    code?: string | null
-    name: string
-    requirement_tier?: string
-    value?: string | null
-  }>
-  const offer = (product.offer || null) as Record<string, unknown> | null
-  const offers = (product.offers || null) as Record<string, unknown> | null
-  const shipping = (product.shipping_profile || null) as Record<
-    string,
-    unknown
-  > | null
   const documents = (product.documents || []) as Array<{
     id?: string
     document_type?: string
     storage_reference?: string
   }>
-  const claims = data.claims || []
   const evidence = data.evidence || []
   const mieEvidence = evidence.filter((row) => {
     const e = row as { evidence_kind?: string }
@@ -153,7 +144,9 @@ export function AdminWizardShell(props: {
     reason?: string | null
   }>
   const sectionReviews = data.section_reviews || []
-  const stepIdx = ADMIN_WIZARD_STEPS.findIndex((s) => s.key === step)
+  const activeStep: WizardStep =
+    step === "offer" || step === "shipping" ? "information" : step
+  const stepIdx = ADMIN_WIZARD_STEPS.findIndex((s) => s.key === activeStep)
   const reviewFor = (key: SectionReviewKey) =>
     findSectionReview(sectionReviews, key)
   const reviewBadge = (key: SectionReviewKey) => (
@@ -168,22 +161,6 @@ export function AdminWizardShell(props: {
   ) => {
     if (url) setLightbox({ url, kind, title: t })
   }
-  const money = (v: unknown) => {
-    if (v == null || v === "") return "—"
-    const n = Number(v)
-    if (Number.isNaN(n)) return String(v)
-    return new Intl.NumberFormat("nl-NL", {
-      style: "currency",
-      currency: "EUR",
-    }).format(n)
-  }
-  const schemaByTier: Record<string, typeof schema> = {}
-  for (const f of schema) {
-    const tier = f.requirement_tier || "optional"
-    if (!schemaByTier[tier]) schemaByTier[tier] = []
-    schemaByTier[tier].push(f)
-  }
-
   return (
     <div>
       <p className="mb-4 text-[11.5px] text-wf-500">
@@ -195,10 +172,10 @@ export function AdminWizardShell(props: {
       </p>
 
       <div className="mb-4 flex flex-wrap gap-4 border-b border-wf-300 pb-4">
-        {product.primary_image_url ? (
+        {displayMediaUrl(product.primary_image_url ? String(product.primary_image_url) : null) ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={displayMediaUrl(String(product.primary_image_url)) ?? ""}
+            src={displayMediaUrl(product.primary_image_url ? String(product.primary_image_url) : null) as string}
             alt=""
             className="h-20 w-20 rounded bg-wf-50 object-contain"
           />
@@ -263,7 +240,7 @@ export function AdminWizardShell(props: {
       <div className="mb-5">
         <div className="mb-2 flex justify-between text-[11px]">
           <span className="font-semibold uppercase tracking-wide text-wf-500">
-            Productflow (read-only review)
+                Productflow
           </span>
           <span className="text-wf-600">
             Stap {stepIdx + 1} van {ADMIN_WIZARD_STEPS.length}
@@ -276,7 +253,7 @@ export function AdminWizardShell(props: {
               type="button"
               onClick={() => setStep(s.key)}
               className={`flex min-w-[88px] flex-1 flex-col items-start gap-1 rounded-md border px-2 py-2 text-left ${
-                s.key === step
+                s.key === activeStep
                   ? "border-wf-900 bg-wf-900 text-white"
                   : "border-wf-300 bg-wf-50 text-wf-700"
               }`}
@@ -295,139 +272,75 @@ export function AdminWizardShell(props: {
       {/* MARK_STEPS */}
       <div className="grid grid-cols-1 gap-5 tablet:grid-cols-[1.7fr_1fr]">
         <div className="space-y-4">
-          {step === "information" ? (
+          {activeStep === "information" ? (
             <>
               <Card>
                 <CardTitle>
                   Basisinformatie {reviewBadge("product_info")}
                 </CardTitle>
-                <ReadField label="Productnaam" value={title} />
-                <AdminSectionProposalReviews
-                  proposals={changeProposals}
-                  fields={["title"]}
-                  highlightId={highlightProposalId}
-                  onDecided={load}
-                />
-                <ReadField
-                  label="EAN / GTIN"
-                  value={product.identifier_value || "—"}
-                />
-                <ReadField label="Merk" value={product.brand_name || "—"} />
-                <AdminSectionProposalReviews
-                  proposals={changeProposals}
-                  fields={["brand_id"]}
-                  highlightId={highlightProposalId}
-                  onDecided={load}
-                />
-                <ReadField
-                  label="Fabrikant"
-                  value={
-                    (product.manufacturer_id as string | undefined) || "—"
+                <SectionSplit
+                  aside={
+                    <SectionReviewAside
+                      productId={id}
+                      sectionKey="product_info"
+                      review={reviewFor("product_info")}
+                      onSaved={load}
+                      {...sectionNotes({
+                        section: "information",
+                        blocked,
+                        documents: completeness.documents || [],
+                        manufacturerId: String(product.manufacturer_id || ""),
+                      })}
+                    />
                   }
-                />
-                <AdminSectionProposalReviews
-                  proposals={changeProposals}
-                  fields={["manufacturer_id"]}
-                  highlightId={highlightProposalId}
-                  onDecided={load}
-                />
-                <ReadField
-                  label="Categorie"
-                  value={(product.category_names || []).join(", ") || "—"}
-                />
-                <SectionReviewControls
+                >
+                <CentralInformationForm
+                  key={`${id}:${String(product.manufacturer_id || "")}`}
                   productId={id}
-                  sectionKey="product_info"
-                  review={reviewFor("product_info")}
+                  product={product as Record<string, unknown>}
+                  catalog={(data as { catalog_choices?: {
+                    brands?: Array<{ id: string; name: string }>
+                    manufacturers?: Array<{ id: string; name: string }>
+                    categories?: Array<{ id: string; name: string; parent_id?: string | null }>
+                    variant_types?: string[]
+                  } }).catalog_choices || {}}
                   onSaved={load}
                 />
+                <AdminSectionProposalReviews
+                  proposals={changeProposals}
+                  fields={["title", "brand_id", "manufacturer_id", "attribute"]}
+                  highlightId={highlightProposalId}
+                  onDecided={load}
+                />
+                </SectionSplit>
               </Card>
               <Card>
                 <CardTitle>Beschrijving {reviewBadge("content")}</CardTitle>
-                <p className="whitespace-pre-wrap text-xs text-wf-800">
-                  {product.description || "—"}
-                </p>
+                <SectionSplit
+                  aside={
+                    <SectionReviewAside
+                      productId={id}
+                      sectionKey="content"
+                      review={reviewFor("content")}
+                      onSaved={load}
+                      missing={[]}
+                      failed={[]}
+                    />
+                  }
+                >
+                <CentralDescriptionForm
+                  key={`${id}:${String(product.description ?? "")}`}
+                  productId={id}
+                  product={product as Record<string, unknown>}
+                  onSaved={load}
+                />
                 <AdminSectionProposalReviews
                   proposals={changeProposals}
                   fields={["description"]}
                   highlightId={highlightProposalId}
                   onDecided={load}
                 />
-                <SectionReviewControls
-                  productId={id}
-                  sectionKey="content"
-                  review={reviewFor("content")}
-                  onSaved={load}
-                />
-              </Card>
-              {(
-                [
-                  ["category_required", "Verplichte informatie"],
-                  ["recommended", "Aanbevolen informatie"],
-                  ["optional", "Optionele informatie"],
-                ] as const
-              ).map(([tier, label]) => {
-                const fields = (schemaByTier[tier] || []).filter(
-                  (f) => f.code !== "collects_data" && f.code !== "ce_marking"
-                )
-                if (!fields.length) return null
-                return (
-                  <Card key={tier}>
-                    <CardTitle>{label}</CardTitle>
-                    <div className="grid gap-2 tablet:grid-cols-2">
-                      {fields.map((f) => (
-                        <ReadField
-                          key={f.id}
-                          label={f.name}
-                          value={f.value?.trim() || "—"}
-                        />
-                      ))}
-                    </div>
-                  </Card>
-                )
-              })}
-              <AdminSectionProposalReviews
-                proposals={changeProposals}
-                fields={["attribute"]}
-                highlightId={highlightProposalId}
-                onDecided={load}
-              />
-              <Card>
-                <CardTitle>Seller (commercieel) {reviewBadge("seller")}</CardTitle>
-                <ReadField label="Bedrijfsnaam" value={data.seller_name || "—"} />
-                <ReadField
-                  label="Seller ID"
-                  value={
-                    data.seller_id ? (
-                      <Link
-                        href={`/partners/${data.seller_id}`}
-                        className="font-mono text-[11px] underline"
-                      >
-                        {data.seller_id}
-                      </Link>
-                    ) : (
-                      "—"
-                    )
-                  }
-                />
-                <ReadField
-                  label="Onboarding"
-                  value={data.seller_onboarding_status || "—"}
-                />
-                <ReadField
-                  label="Verificatie"
-                  value={data.seller_verification_status || "—"}
-                />
-                <ReadField
-                  label="Seller MiE (Laag 1)"
-                  value={data.seller_made_in_europe_status || "—"}
-                />
-                <SectionReviewControls
-                  productId={id}
-                  sectionKey="seller"
-                  review={reviewFor("seller")}
-                  onSaved={load}
-                />
+                </SectionSplit>
               </Card>
               <AdminProductManagerCard
                 productId={id}
@@ -442,111 +355,36 @@ export function AdminWizardShell(props: {
               />
               <StepNav
                 onPrev={null}
-                onNext={() => setStep("offer")}
-                nextLabel="Volgende: verkoopinformatie"
-              />
-            </>
-          ) : null}
-          {/* MARK_MORE_STEPS */}
-          {step === "offer" ? (
-            <>
-              <Card>
-                <CardTitle>Verkoopinformatie</CardTitle>
-                <ReadField
-                  label="Aanbod aanwezig"
-                  value={offer?.has_offer ? "Ja" : "Nee"}
-                />
-                <ReadField
-                  label="Prijs"
-                  value={money(offer?.price ?? offers?.price)}
-                />
-                <ReadField label="Promo" value={money(offer?.promo_price)} />
-                <ReadField
-                  label="Effectieve prijs"
-                  value={money(offer?.effective_unit_price)}
-                />
-                <ReadField
-                  label="Verzendkosten"
-                  value={money(offer?.shipping_cost)}
-                />
-                <ReadField
-                  label="Regio"
-                  value={String(offer?.region_code || "—")}
-                />
-                <ReadField
-                  label="Seller SKU"
-                  value={String(offer?.seller_sku || product.sku_hint || "—")}
-                />
-                <ReadField
-                  label="Verkoopstatus"
-                  value={String(
-                    offer?.sales_status || offers?.sales_status || "—"
-                  )}
-                />
-                <ReadField
-                  label="Aantal offers"
-                  value={String(offers?.offer_count ?? "—")}
-                />
-              </Card>
-              <StepNav
-                onPrev={() => setStep("information")}
-                onNext={() => setStep("shipping")}
-                nextLabel="Volgende: voorraad & verzending"
-              />
-            </>
-          ) : null}
-          {step === "shipping" ? (
-            <>
-              <Card>
-                <CardTitle>Voorraad & verzending</CardTitle>
-                <ReadField
-                  label="Voorraad"
-                  value={String(
-                    offer?.stock ??
-                      offer?.quantity_available ??
-                      offers?.stock_total ??
-                      "—"
-                  )}
-                />
-                <ReadField
-                  label="Max. levertijd (dagen)"
-                  value={String(
-                    offer?.delivery_days_max ??
-                      offers?.delivery_days_max ??
-                      "—"
-                  )}
-                />
-                <ReadField
-                  label="Verzendprofiel"
-                  value={
-                    shipping
-                      ? `${String(shipping.name || shipping.id)} (${String(shipping.status || "")})`
-                      : product.shipping_profile_id
-                        ? String(product.shipping_profile_id)
-                        : "Niet gekoppeld"
-                  }
-                />
-                <ReadField
-                  label="Actieve landen"
-                  value={String(shipping?.active_country_count ?? "—")}
-                />
-                <ReadField
-                  label="Min. verzendkosten"
-                  value={money(shipping?.min_shipping_cost)}
-                />
-              </Card>
-              <StepNav
-                onPrev={() => setStep("offer")}
                 onNext={() => setStep("media")}
                 nextLabel="Volgende: media"
               />
             </>
           ) : null}
           {/* MARK_MEDIA */}
-          {step === "media" ? (
+          {activeStep === "media" ? (
             <>
               <Card>
                 <CardTitle>Media {reviewBadge("media")}</CardTitle>
+                <SectionSplit
+                  aside={
+                    <SectionReviewAside
+                      productId={id}
+                      sectionKey="media"
+                      review={reviewFor("media")}
+                      onSaved={load}
+                      {...sectionNotes({
+                        section: "media",
+                        blocked,
+                        documents: completeness.documents || [],
+                      })}
+                    />
+                  }
+                >
+                <CentralMediaForm
+                  productId={id}
+                  product={product as Record<string, unknown>}
+                  onSaved={load}
+                />
                 <AdminSectionProposalReviews
                   proposals={changeProposals}
                   fields={["media_note"]}
@@ -724,27 +562,56 @@ export function AdminWizardShell(props: {
                     </div>
                   </div>
                 ) : null}
-                <SectionReviewControls
-                  productId={id}
-                  sectionKey="media"
-                  review={reviewFor("media")}
-                  onSaved={load}
-                />
+                </SectionSplit>
               </Card>
               <StepNav
-                onPrev={() => setStep("shipping")}
+                onPrev={() => setStep("information")}
                 onNext={() => setStep("compliance")}
                 nextLabel="Volgende: compliance"
               />
             </>
           ) : null}
           {/* MARK_COMPLIANCE */}
-          {step === "compliance" ? (
+          {activeStep === "compliance" ? (
             <>
               <Card>
                 <CardTitle>
                   Made in Europe {reviewBadge("made_in_europe")}
                 </CardTitle>
+                <SectionSplit
+                  aside={
+                    <SectionReviewAside
+                      productId={id}
+                      sectionKey="made_in_europe"
+                      review={reviewFor("made_in_europe")}
+                      onSaved={load}
+                      {...sectionNotes({
+                        section: "mie",
+                        blocked,
+                        documents: completeness.documents || [],
+                      })}
+                    />
+                  }
+                >
+                <CentralComplianceForm
+                  key={`${id}:origin:${String(origin?.production_country || "")}`}
+                  productId={id}
+                  product={product as Record<string, unknown>}
+                  group="origin"
+                  origin={
+                    origin
+                      ? {
+                          production_country: origin.production_country
+                            ? String(origin.production_country)
+                            : null,
+                          production_location: origin.production_location
+                            ? String(origin.production_location)
+                            : null,
+                        }
+                      : null
+                  }
+                  onSaved={load}
+                />
                 {(() => {
                   const miePending = mieEvidence.some((row) => {
                     const s = String(
@@ -809,17 +676,33 @@ export function AdminWizardShell(props: {
                   empty="Geen Made in Europe-evidence."
                   onOpen={openAsset}
                 />
-                <SectionReviewControls
-                  productId={id}
-                  sectionKey="made_in_europe"
-                  review={reviewFor("made_in_europe")}
-                  onSaved={load}
-                />
+                </SectionSplit>
               </Card>
               <Card>
                 <CardTitle>
                   CE / Compliance {reviewBadge("ce_compliance")}
                 </CardTitle>
+                <SectionSplit
+                  aside={
+                    <SectionReviewAside
+                      productId={id}
+                      sectionKey="ce_compliance"
+                      review={reviewFor("ce_compliance")}
+                      onSaved={load}
+                      {...sectionNotes({
+                        section: "ce",
+                        blocked,
+                        documents: completeness.documents || [],
+                      })}
+                    />
+                  }
+                >
+                <CentralComplianceForm
+                  productId={id}
+                  product={product as Record<string, unknown>}
+                  group="ce"
+                  onSaved={load}
+                />
                 {(() => {
                   const cePending = ceEvidence.some((row) => {
                     const s = String(
@@ -895,37 +778,7 @@ export function AdminWizardShell(props: {
                   empty="Geen CE-evidence."
                   onOpen={openAsset}
                 />
-                <SectionReviewControls
-                  productId={id}
-                  sectionKey="ce_compliance"
-                  review={reviewFor("ce_compliance")}
-                  onSaved={load}
-                />
-              </Card>
-              <Card>
-                <CardTitle>Claims {reviewBadge("claims")}</CardTitle>
-                {claims.length === 0 ? (
-                  <p className="text-xs text-wf-600">Geen claims.</p>
-                ) : (
-                  claims.map((c) => (
-                    <div
-                      key={String(c.id)}
-                      className="mb-2 border-b border-wf-100 pb-2 text-xs"
-                    >
-                      <ReadField
-                        label="Status"
-                        value={String(c.status || "—")}
-                      />
-                      <ReadField label="ID" value={String(c.id || "—")} />
-                    </div>
-                  ))
-                )}
-                <SectionReviewControls
-                  productId={id}
-                  sectionKey="claims"
-                  review={reviewFor("claims")}
-                  onSaved={load}
-                />
+                </SectionSplit>
               </Card>
               <StepNav
                 onPrev={() => setStep("media")}
@@ -935,14 +788,37 @@ export function AdminWizardShell(props: {
             </>
           ) : null}
           {/* MARK_PUBLISH */}
-          {step === "translations" ? (
+          {activeStep === "translations" ? (
             <>
               <Card>
                 <CardTitle>Vertalingen</CardTitle>
+                <SectionSplit
+                  aside={
+                    <SectionReviewAside
+                      productId={id}
+                      sectionKey="content"
+                      review={reviewFor("content")}
+                      onSaved={load}
+                      hideControls
+                      {...sectionNotes({
+                        section: "translations",
+                        blocked,
+                        documents: completeness.documents || [],
+                      })}
+                    />
+                  }
+                >
+                <CentralTranslationsForm
+                  productId={id}
+                  product={product as Record<string, unknown>}
+                  languages={
+                    (data as { catalog_choices?: { languages?: string[] } }).catalog_choices
+                      ?.languages || []
+                  }
+                  onSaved={load}
+                />
                 <p className="mb-3 text-xs text-wf-600">
-                  Read-only overzicht van verplichte doeltaal-vertalingen
-                  (titel + omschrijving). Sellers beheren dit in de
-                  productflow; admin kan details openen via Vertalingen.
+                  Lege cellen worden niet weggeschreven, zodat een andere taal behouden blijft.
                 </p>
                 {(() => {
                   const docs = (completeness.documents || []).filter((d) =>
@@ -980,6 +856,7 @@ export function AdminWizardShell(props: {
                 >
                   Open vertalingenbeheer
                 </Link>
+                </SectionSplit>
               </Card>
               <StepNav
                 onPrev={() => setStep("compliance")}
@@ -988,12 +865,24 @@ export function AdminWizardShell(props: {
               />
             </>
           ) : null}
-          {step === "publish" ? (
+          {activeStep === "publish" ? (
             <>
               <Card>
                 <CardTitle>
                   Overige / publicatievereisten {reviewBadge("other")}
                 </CardTitle>
+                <SectionSplit
+                  aside={
+                    <SectionReviewAside
+                      productId={id}
+                      sectionKey="other"
+                      review={reviewFor("other")}
+                      onSaved={load}
+                      missing={[]}
+                      failed={blocked}
+                    />
+                  }
+                >
                 {blocked.length ? (
                   <ul className="list-disc pl-4 text-xs text-red-800">
                     {blocked.map((r) => (
@@ -1005,12 +894,7 @@ export function AdminWizardShell(props: {
                     Geen extra blokkades buiten de secties.
                   </p>
                 )}
-                <SectionReviewControls
-                  productId={id}
-                  sectionKey="other"
-                  review={reviewFor("other")}
-                  onSaved={load}
-                />
+                </SectionSplit>
               </Card>
               <Card>
                 <CardTitle>Audit / geschiedenis</CardTitle>
@@ -1062,8 +946,8 @@ export function AdminWizardShell(props: {
           <div className="rounded-md border border-dashed border-wf-500 p-4 text-[11.5px] text-wf-700">
             <p className="mb-2 font-semibold">Admin review</p>
             <p>
-              Zelfde productflow als de seller. Data is read-only; beoordeel
-              onder elke sectie. Media/evidence openen via Bekijken.
+              Pas een sectie aan en kies Opslaan. Goed, Aanvulling en Afwijzen
+              blijven een aparte beoordeling en keuren het product niet goed.
             </p>
           </div>
           <Button

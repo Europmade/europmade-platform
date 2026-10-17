@@ -6,6 +6,7 @@ import {
   readinessCardStatus,
   readinessCardStep,
   readinessSummary,
+  wizardStepGaps,
   type ReadinessCardKey,
   type WizardStepKey,
   type WizardStepStatus,
@@ -39,10 +40,14 @@ export function PublicationReadinessCards(props: {
 }) {
   const { product, onOpenStep } = props
   const summary = readinessSummary(product)
-  const cards = READINESS_CARDS.map((c) => ({
-    ...c,
-    status: readinessCardStatus(product, c.key),
-  }))
+  const cards = READINESS_CARDS.map((c) => {
+    const status = readinessCardStatus(product, c.key)
+    const gaps =
+      status === "ready" || status === "waiting"
+        ? []
+        : wizardStepGaps(product, readinessCardStep(c.key)).slice(0, 3)
+    return { ...c, status, gaps }
+  })
   const onlyWaiting =
     !summary.ready &&
     cards.every((c) => c.status === "ready" || c.status === "waiting") &&
@@ -100,6 +105,13 @@ export function PublicationReadinessCards(props: {
           >
             <p className="text-xs font-semibold">{card.label}</p>
             <p className="mt-1 text-[11px]">{cardLabel(card.status, card.key)}</p>
+            {card.gaps.length > 0 ? (
+              <ul className="mt-1 space-y-0.5 text-[10px]">
+                {card.gaps.map((gap) => (
+                  <li key={gap}>{gap}</li>
+                ))}
+              </ul>
+            ) : null}
           </button>
         ))}
       </div>

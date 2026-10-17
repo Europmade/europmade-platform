@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react"
 import { overlayCategoryEditorial } from "../../_lib/cms/overlay-category-editorial"
 import { resolveCategoryPage } from "../../_lib/cms/resolve-category"
-import { fetchStorefrontListings } from "../../_lib/client-catalog"
+import {
+  fetchPreviewProductCloudCategory,
+  fetchStorefrontListings,
+} from "../../_lib/client-catalog"
+import type { ProductCloudStoreCategory } from "../../_lib/product-cloud-store"
 import type { ListingProduct } from "../../_lib/listing-products"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -26,6 +30,9 @@ function asLocale(value: string | undefined): StorefrontLocale {
 export function CategoryPreviewClient({ slug }: { slug: string }) {
   const { draft, theme } = useCmsPreviewHost()
   const [products, setProducts] = useState<ListingProduct[]>([])
+  const [productCloud, setProductCloud] = useState<ProductCloudStoreCategory | null>(
+    null
+  )
 
   useEffect(() => {
     fetchStorefrontListings(40)
@@ -41,22 +48,23 @@ export function CategoryPreviewClient({ slug }: { slug: string }) {
   }, [slug])
 
   const locale = asLocale(draft?.locale)
+
+  useEffect(() => {
+    fetchPreviewProductCloudCategory(slug, locale)
+      .then(setProductCloud)
+      .catch(() => setProductCloud(null))
+  }, [locale, slug])
   const page = useMemo(() => {
     const editorial = overlayCategoryEditorial(slug, draft?.document ?? {})
-    const stub = {
-      id: `preview_${slug}`,
-      name: slug,
+    return resolveCategoryPage(
       slug,
-      parent_category_id: null,
+      products,
       locale,
-      name_resolution: {
-        source: "source" as const,
-        translation_status: null,
-      },
-      attributes: [],
-    }
-    return resolveCategoryPage(slug, products, locale, editorial, new Date(), stub)
-  }, [draft?.document, locale, products, slug])
+      editorial,
+      new Date(),
+      productCloud
+    )
+  }, [draft?.document, locale, productCloud, products, slug])
 
   if (!page) {
     return (

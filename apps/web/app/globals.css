@@ -1,1 +1,23 @@
 @import "@europmade/ui/globals.css";
+
+/* Homepage banner height matches one Acties & thema's card (2.4:1). */
+.em-home-banner-slot {
+  container-type: inline-size;
+}
+
+.em-home-banner {
+  aspect-ratio: 2.4 / 0.78;
+}
+
+@media (min-width: 834px) {
+  .em-home-banner {
+    aspect-ratio: 2.4 / 0.46;
+  }
+}
+
+@media (min-width: 1080px) {
+  .em-home-banner {
+    aspect-ratio: auto;
+    height: calc((100cqi - 1.5rem) / 3 / 2.4);
+  }
+}

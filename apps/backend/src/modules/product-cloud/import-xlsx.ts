@@ -437,7 +437,7 @@ export function parseXlsxFirstSheet(buf: Buffer): { headers: string[]; rows: str
 export function parseXlsxProductGrid(buf: Buffer): ParsedImportGrid {
   const workbook = parseXlsxWorkbook(buf)
   const productSheet =
-    workbook.sheetNames.find((n) => /^producten$/i.test(n.trim())) ||
+    workbook.sheetNames.find((n) => /^(producten|importtemplate)$/i.test(n.trim())) ||
     workbook.sheetNames.find((n) => /product/i.test(n) && !NON_PRODUCT_SHEET.test(n.trim()))
   const skip = new Set(
     workbook.sheetNames.filter((n) => NON_PRODUCT_SHEET.test(n.trim()))

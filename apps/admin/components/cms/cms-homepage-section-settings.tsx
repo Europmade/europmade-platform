@@ -7,10 +7,19 @@ import {
   type ReactNode,
   type SetStateAction,
 } from "react"
-import { rewriteCollectionHrefToAction } from "@europmade/utils"
+import {
+  isHeroWhiteColor,
+  brandCardStyleFromLegacy,
+  parseBrandCardPresentation,
+  parseCampaignCardStyle,
+  rewriteCollectionHrefToAction,
+  SECTION_TITLE_COLOR,
+  type CampaignCardStyle,
+} from "@europmade/utils"
 import { Button } from "@europmade/ui"
 import {
   emptyLocalized,
+  fetchPublicCatalogBrands,
   type CmsBannerDto,
   type LocalizedCms,
 } from "../../lib/cms-admin-api"
@@ -21,6 +30,8 @@ import {
   type HomepageSectionDoc,
   type HomepageWhyItemDoc,
 } from "../../lib/cms-homepage-document"
+import { CmsCampaignCardFields } from "./cms-campaign-card-fields"
+import { CmsHeroCtaStyleFields, CmsHeroTextStyleField } from "./cms-hero-style-fields"
 import { CmsLocalizedField } from "./cms-localized-field"
 import { CmsImageField } from "./cms-image-field"
 import { CmsHomepageProductRailSettings } from "./cms-homepage-product-rail-settings"
@@ -73,12 +84,14 @@ type CampaignDoc = {
   image?: string | null
   imageAlt: LocalizedCms
   accentHue: number
+  card: CampaignCardStyle
 }
 
 function asCampaigns(raw: unknown[]): CampaignDoc[] {
   return raw.map((item, i) => {
     const c = (item ?? {}) as Record<string, unknown>
     return {
+      ...c,
       id: typeof c.id === "string" ? c.id : `camp_${i}`,
       slug: typeof c.slug === "string" ? c.slug : "",
       visible: c.visible !== false,
@@ -90,7 +103,8 @@ function asCampaigns(raw: unknown[]): CampaignDoc[] {
       image: typeof c.image === "string" ? c.image : null,
       imageAlt: locObj(c.imageAlt),
       accentHue: Number(c.accentHue ?? 200) || 200,
-    }
+      card: parseCampaignCardStyle(c.card),
+    } as CampaignDoc
   })
 }
 
@@ -169,8 +183,84 @@ function asPartners(raw: HomepagePartnerDoc[] | unknown[]): PartnerDoc[] {
       },
       rating: Number(p.rating ?? 0) || 0,
       productCount: Number(p.productCount ?? 0) || 0,
+      ...parseBrandCardPresentation(p),
+      card:
+        p.card && typeof p.card === "object"
+          ? parseCampaignCardStyle(p.card)
+          : undefined,
+      ctaLabel: locObj(p.ctaLabel),
+      href: typeof p.href === "string" ? p.href : "",
     }
   })
+}
+
+function sectionTitlePicker(color: string | undefined): string {
+  const value = color || SECTION_TITLE_COLOR
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) return value
+  if (/^#[0-9a-fA-F]{3}$/.test(value)) {
+    return `#${value[1]}${value[1]}${value[2]}${value[2]}${value[3]}${value[3]}`
+  }
+  return SECTION_TITLE_COLOR
+}
+
+function SectionTitleStyle(props: {
+  section: HomepageSectionDoc
+  onPatch: (patch: Partial<HomepageSectionDoc>) => void
+}) {
+  const { section, onPatch } = props
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <label className="block text-sm font-semibold text-wf-900">
+        Titelkleur
+        <div className="mt-1.5 flex items-center gap-2">
+          <input
+            type="color"
+            className="h-9 w-12 cursor-pointer rounded border border-wf-300 bg-white p-0.5"
+            value={sectionTitlePicker(section.titleColor)}
+            onChange={(e) => onPatch({ titleColor: e.target.value })}
+            aria-label="Titelkleur"
+          />
+          <input
+            type="text"
+            className="h-9 w-full rounded border border-wf-400 bg-white px-2 font-mono text-xs font-normal"
+            value={section.titleColor || SECTION_TITLE_COLOR}
+            onChange={(e) => {
+              const color = e.target.value.trim()
+              if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color)) return
+              onPatch({ titleColor: color })
+            }}
+            spellCheck={false}
+          />
+        </div>
+      </label>
+      <label className="block text-sm font-semibold text-wf-900">
+        Lettergrootte (px)
+        <input
+          type="number"
+          min={12}
+          max={40}
+          className="mt-1.5 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm font-normal"
+          value={section.titleSize ?? ""}
+          placeholder="16 / 18"
+          onChange={(e) => {
+            const raw = e.target.value.trim()
+            if (!raw) {
+              onPatch({ titleSize: null })
+              return
+            }
+            const size = Number(raw)
+            if (!Number.isFinite(size)) return
+            onPatch({
+              titleSize: Math.min(40, Math.max(12, Math.round(size))),
+            })
+          }}
+        />
+        <span className="mt-1 block text-[11px] font-normal text-wf-500">
+          Leeg laat de huidige grootte staan (16px, vanaf tablet 18px).
+        </span>
+      </label>
+    </div>
+  )
 }
 
 function SectionBasics(props: {
@@ -200,6 +290,7 @@ function SectionBasics(props: {
         meta={meta}
         onMetaChange={onMeta}
       />
+      <SectionTitleStyle section={section} onPatch={onPatch} />
       <CmsLocalizedField
         label="Subtitel / beschrijving"
         field={`${section.id}.subtitle`}
@@ -288,10 +379,82 @@ export function CmsHomepageHeroSettings(props: {
   return (
     <div className="space-y-4">
       <CmsImageField
-        label="Hero-afbeelding (desktop)"
+        label="Linker banner — achtergrondafbeelding"
+        url={doc.hero.backgroundImage ?? null}
+        large
+        advice="Aanbevolen 1800 × 630 px (2,85:1). De banner houdt deze verhouding; de hoogte schaalt met de breedte."
+        previewRatio="2.85 / 1"
+        hint="JPEG, PNG of WEBP."
+        placement="homepage_hero"
+        onChange={(backgroundImage) =>
+          setDoc((d) => ({ ...d, hero: { ...d.hero, backgroundImage } }))
+        }
+        onError={onError}
+      />
+      <div className="grid gap-3 tablet:grid-cols-2">
+        <CmsHeroTextStyleField
+          label="Titelkleur"
+          role="title"
+          value={doc.hero.titleColor}
+          onChange={(titleColor) =>
+            setDoc((d) => ({
+              ...d,
+              hero: {
+                ...d.hero,
+                titleColor,
+                textColor: isHeroWhiteColor(titleColor.color) ? "white" : "black",
+              },
+            }))
+          }
+        />
+        <CmsHeroTextStyleField
+          label="Subtitelkleur"
+          role="subtitle"
+          value={doc.hero.subtitleColor}
+          onChange={(subtitleColor) =>
+            setDoc((d) => ({ ...d, hero: { ...d.hero, subtitleColor } }))
+          }
+        />
+        <label className="block text-sm font-semibold">
+          Afbeelding passen
+          <select
+            className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
+            value={doc.hero.imageFit === "contain" ? "contain" : "cover"}
+            onChange={(e) =>
+              setDoc((d) => ({
+                ...d,
+                hero: {
+                  ...d.hero,
+                  imageFit: e.target.value === "contain" ? "contain" : "cover",
+                },
+              }))
+            }
+          >
+            <option value="cover">Cover — sfeerbeeld vult de banner</option>
+            <option value="contain">Contain — afbeelding blijft volledig zichtbaar</option>
+          </select>
+        </label>
+        <label className="block text-sm font-semibold">
+          Afbeeldingspositie
+          <input
+            className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
+            value={doc.hero.imagePosition || "50% 50%"}
+            onChange={(e) =>
+              setDoc((d) => ({
+                ...d,
+                hero: { ...d.hero, imagePosition: e.target.value },
+              }))
+            }
+          />
+        </label>
+      </div>
+      <CmsImageField
+        label="Rechter productbanner"
         url={doc.hero.heroImage ?? null}
         large
-        advice="Adviesformaat: 1920 × 800 px (breed landschap). Geen vaste crop-eis."
+        advice="Aanbevolen 1800 × 630 px (2,85:1). De banner houdt deze verhouding; de hoogte schaalt met de breedte."
+        previewRatio="2.85 / 1"
+        previewFit="contain"
         hint="Aanbevolen: breed beeld, JPEG/JPG, PNG of WEBP."
         placement="homepage_hero"
         onChange={(heroImage) =>
@@ -374,6 +537,15 @@ export function CmsHomepageHeroSettings(props: {
             }
           />
         </label>
+        <CmsHeroCtaStyleFields
+          value={doc.hero.cta1.style}
+          onChange={(style) =>
+            setDoc((d) => ({
+              ...d,
+              hero: { ...d.hero, cta1: { ...d.hero.cta1, style } },
+            }))
+          }
+        />
       </div>
       <div className="space-y-2 rounded-lg border border-wf-200 p-3">
         <p className="text-xs font-bold uppercase tracking-wide text-wf-500">
@@ -389,7 +561,7 @@ export function CmsHomepageHeroSettings(props: {
                   ...d,
                   hero: {
                     ...d.hero,
-                    cta2: { label: emptyLocalized(), href: "" },
+                    cta2: { ...d.hero.cta2, label: emptyLocalized(), href: "" },
                   },
                 }))
               } else if (!doc.hero.cta2.href) {
@@ -398,6 +570,7 @@ export function CmsHomepageHeroSettings(props: {
                   hero: {
                     ...d.hero,
                     cta2: {
+                      ...d.hero.cta2,
                       label: {
                         nl: "Word verkoper",
                         en: "Become a seller",
@@ -442,6 +615,15 @@ export function CmsHomepageHeroSettings(props: {
             }
           />
         </label>
+        <CmsHeroCtaStyleFields
+          value={doc.hero.cta2.style}
+          onChange={(style) =>
+            setDoc((d) => ({
+              ...d,
+              hero: { ...d.hero, cta2: { ...d.hero.cta2, style } },
+            }))
+          }
+        />
       </div>
       <div className="space-y-2">
         <p className="text-xs font-bold uppercase tracking-wide text-wf-500">
@@ -502,6 +684,130 @@ export function CmsHomepageHeroSettings(props: {
           </div>
         ))}
       </div>
+      <div className="space-y-2 rounded-lg border border-wf-200 p-3">
+        <p className="text-xs font-bold uppercase tracking-wide text-wf-500">
+          Rechter banner
+        </p>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={doc.hero.productBanner?.visible !== false}
+            onChange={(e) =>
+              setDoc((d) => ({
+                ...d,
+                hero: {
+                  ...d.hero,
+                  productBanner: {
+                    visible: e.target.checked,
+                    title: d.hero.productBanner?.title ?? emptyLocalized(),
+                    subtitle: d.hero.productBanner?.subtitle ?? emptyLocalized(),
+                    ctaLabel: d.hero.productBanner?.ctaLabel ?? emptyLocalized(),
+                    href: d.hero.productBanner?.href ?? "",
+                    image: d.hero.productBanner?.image ?? null,
+                    background: d.hero.productBanner?.background ?? "",
+                    textColor: d.hero.productBanner?.textColor ?? "black",
+                    buttonColor: d.hero.productBanner?.buttonColor ?? "black",
+                    imageFit: d.hero.productBanner?.imageFit ?? "contain",
+                    imagePosition: d.hero.productBanner?.imagePosition ?? "center",
+                  },
+                },
+              }))
+            }
+          />
+          Rechter banner zichtbaar
+        </label>
+        <p className="text-[12px] text-wf-600">
+          Zonder titel blijft de huidige productcompositie of geüploade afbeelding staan.
+        </p>
+        <CmsLocalizedField
+          label="Titel"
+          field="hero.productBanner.title"
+          value={doc.hero.productBanner?.title ?? emptyLocalized()}
+          onChange={(title) =>
+            setDoc((d) => ({
+              ...d,
+              hero: {
+                ...d.hero,
+                productBanner: {
+                  visible: d.hero.productBanner?.visible !== false,
+                  title,
+                  subtitle: d.hero.productBanner?.subtitle ?? emptyLocalized(),
+                  ctaLabel: d.hero.productBanner?.ctaLabel ?? emptyLocalized(),
+                  href: d.hero.productBanner?.href ?? "",
+                  image: d.hero.heroImage ?? null,
+                  background: d.hero.productBanner?.background ?? "",
+                  textColor: d.hero.productBanner?.textColor ?? "black",
+                  buttonColor: d.hero.productBanner?.buttonColor ?? "black",
+                  imageFit: d.hero.productBanner?.imageFit ?? "contain",
+                  imagePosition: d.hero.productBanner?.imagePosition ?? "center",
+                },
+              },
+            }))
+          }
+          meta={meta}
+          onMetaChange={setMeta}
+        />
+        <CmsLocalizedField
+          label="Tekst"
+          field="hero.productBanner.subtitle"
+          value={doc.hero.productBanner?.subtitle ?? emptyLocalized()}
+          onChange={(subtitle) =>
+            setDoc((d) => ({
+              ...d,
+              hero: {
+                ...d.hero,
+                productBanner: {
+                  visible: d.hero.productBanner?.visible !== false,
+                  title: d.hero.productBanner?.title ?? emptyLocalized(),
+                  subtitle,
+                  ctaLabel: d.hero.productBanner?.ctaLabel ?? emptyLocalized(),
+                  href: d.hero.productBanner?.href ?? "",
+                  image: d.hero.heroImage ?? null,
+                  background: d.hero.productBanner?.background ?? "",
+                  textColor: d.hero.productBanner?.textColor ?? "black",
+                  buttonColor: d.hero.productBanner?.buttonColor ?? "black",
+                  imageFit: d.hero.productBanner?.imageFit ?? "contain",
+                  imagePosition: d.hero.productBanner?.imagePosition ?? "center",
+                },
+              },
+            }))
+          }
+          meta={meta}
+          onMetaChange={setMeta}
+          multiline
+        />
+        <label className="block text-sm font-semibold">
+          Weergave productafbeelding
+          <select
+            className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
+            value={doc.hero.productBanner?.imageFit === "cover" ? "cover" : "contain"}
+            onChange={(e) =>
+              setDoc((d) => ({
+                ...d,
+                hero: {
+                  ...d.hero,
+                  productBanner: {
+                    visible: d.hero.productBanner?.visible !== false,
+                    title: d.hero.productBanner?.title ?? emptyLocalized(),
+                    subtitle: d.hero.productBanner?.subtitle ?? emptyLocalized(),
+                    ctaLabel: d.hero.productBanner?.ctaLabel ?? emptyLocalized(),
+                    href: d.hero.productBanner?.href ?? "",
+                    image: d.hero.heroImage ?? null,
+                    background: d.hero.productBanner?.background ?? "",
+                    textColor: d.hero.productBanner?.textColor ?? "black",
+                    buttonColor: d.hero.productBanner?.buttonColor ?? "black",
+                    imageFit: e.target.value === "cover" ? "cover" : "contain",
+                    imagePosition: d.hero.productBanner?.imagePosition ?? "center",
+                  },
+                },
+              }))
+            }
+          >
+            <option value="contain">Contain — product blijft volledig zichtbaar</option>
+            <option value="cover">Cover — sfeerbeeld vult de banner</option>
+          </select>
+        </label>
+      </div>
       <label className="flex items-center gap-2 text-sm text-wf-800">
         <input
           type="checkbox"
@@ -530,6 +836,9 @@ export function CmsHomepageSectionSettings(props: {
 }) {
   const { section, doc, setDoc, meta, setMeta, banners, onError } = props
   const [pcCategories, setPcCategories] = useState<AdminTaxonomyCategory[]>([])
+  const [catalogBrands, setCatalogBrands] = useState<
+    Array<{ id: string; name: string; slug: string }>
+  >([])
 
   useEffect(() => {
     listTaxonomyCategories()
@@ -539,7 +848,12 @@ export function CmsHomepageSectionSettings(props: {
         )
       )
       .catch(() => setPcCategories([]))
-  }, [])
+    if (section.key === "partners") {
+      fetchPublicCatalogBrands()
+        .then(setCatalogBrands)
+        .catch(() => setCatalogBrands([]))
+    }
+  }, [section.key])
 
   function patchSection(patch: Partial<HomepageSectionDoc>) {
     setDoc((d) => ({
@@ -679,11 +993,12 @@ export function CmsHomepageSectionSettings(props: {
                 />
                 <CmsImageField
                   label="Afbeelding"
-                  advice="Adviesformaat: 800 × 800 px (1:1). Vierkant tegelkader op de homepage."
-                  hint="Product- of sfeervisual. Volledige afbeelding blijft zichtbaar (contain)."
+                  advice="Aanbevolen 800 × 460 px (1,75:1). De kaart toont de afbeelding in deze verhouding."
+                  hint="Sfeer- of productbeeld. De afbeelding vult de kaart (cover)."
                   url={cat.image ?? null}
                   placement="brand_story_photo"
-                  previewFit="contain"
+                  previewFit="cover"
+                  previewRatio="1.75 / 1"
                   onChange={(image) =>
                     setDoc((d) => ({
                       ...d,
@@ -817,6 +1132,7 @@ export function CmsHomepageSectionSettings(props: {
                   image: null,
                   imageAlt: emptyLocalized(),
                   accentHue: 200,
+                  card: parseCampaignCardStyle(undefined),
                 },
               ],
             }))
@@ -912,11 +1228,13 @@ export function CmsHomepageSectionSettings(props: {
               </label>
               <p className="text-[11px] text-wf-500">
                 Echte actie: /acties/&#123;slug&#125; (geen collectie= query).
+                De hele kaart opent deze link. Zet de knop uit om alleen de afbeelding klikbaar te houden.
               </p>
                 <CmsImageField
                 label="Afbeelding"
-                advice="Adviesformaat: 1200 × 495 px (16:6,6). Bij deze verhouding vult de afbeelding het bovenste kaartvlak volledig. Andere verhoudingen worden gecropt (object-cover)."
-                hint="De afbeelding vult het volledige bovenste beeldvlak van de campagnekaart."
+                advice="Aanbevolen 1200 × 500 px (2,4:1). De actiekaart houdt deze verhouding."
+                hint="De afbeelding vult de kaart. Titel, logo en knop staan er los overheen."
+                previewRatio="2.4 / 1"
                 url={camp.image ?? null}
                 placement="homepage_hero"
                 previewFit="cover"
@@ -929,6 +1247,18 @@ export function CmsHomepageSectionSettings(props: {
                   }))
                 }
                 onError={onError}
+              />
+              <CmsCampaignCardFields
+                value={camp.card}
+                onError={onError}
+                onChange={(card) =>
+                  setDoc((d) => ({
+                    ...d,
+                    campaigns: campaigns.map((c) =>
+                      c.id === camp.id ? { ...c, card } : c
+                    ),
+                  }))
+                }
               />
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -1226,7 +1556,10 @@ export function CmsHomepageSectionSettings(props: {
                   subtitle: emptyLocalized(),
                   image: null,
                   logo: null,
+                  ...parseBrandCardPresentation({}),
                   backgroundKey: "light",
+                  ctaLabel: emptyLocalized(),
+                  href: "",
                   country: emptyLocalized(),
                   rating: 0,
                   productCount: 0,
@@ -1241,23 +1574,87 @@ export function CmsHomepageSectionSettings(props: {
               className="space-y-3 rounded-lg border border-wf-100 p-3"
             >
               <label className="block text-sm font-semibold">
-                Merk-slug (URL: /merk/…)
-                <input
+                Merk
+                <select
                   className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
                   value={partner.slug}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const slug = e.target.value
+                    const known = catalogBrands.find((b) => b.slug === slug)
                     setDoc((d) => ({
                       ...d,
-                      partnerSpotlight: partners.map((p) =>
-                        p.id === partner.id
-                          ? { ...p, slug: e.target.value }
-                          : p
-                      ),
+                      partnerSpotlight: partners.map((p) => {
+                        if (p.id !== partner.id) return p
+                        const titleEmpty = !p.title.nl && !p.title.en && !p.title.de && !p.title.fr
+                        return {
+                          ...p,
+                          slug,
+                          title:
+                            titleEmpty && known
+                              ? { ...p.title, nl: known.name }
+                              : p.title,
+                        }
+                      }),
                     }))
-                  }
-                  placeholder="bosch"
-                />
+                  }}
+                >
+                  <option value="">Kies een bestaand merk</option>
+                  {partner.slug &&
+                  !catalogBrands.some((b) => b.slug === partner.slug) ? (
+                    <option value={partner.slug}>
+                      {partner.slug} (huidige koppeling)
+                    </option>
+                  ) : null}
+                  {catalogBrands.map((brand) => (
+                    <option key={brand.id} value={brand.slug}>
+                      {brand.name}
+                    </option>
+                  ))}
+                </select>
               </label>
+              <p className="text-[12px] text-wf-600">
+                Klikbestemming:{" "}
+                {partner.slug.trim()
+                  ? `/merk/${partner.slug.trim()}`
+                  : "koppel een merk om de hele kaart naar de merkpagina te laten gaan."}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={partner.visible}
+                    onChange={(e) =>
+                      setDoc((d) => ({
+                        ...d,
+                        partnerSpotlight: partners.map((p) =>
+                          p.id === partner.id
+                            ? { ...p, visible: e.target.checked }
+                            : p
+                        ),
+                      }))
+                    }
+                  />
+                  Zichtbaar
+                </label>
+                <label className="block text-sm font-semibold">
+                  Volgorde
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
+                    type="number"
+                    value={String(partner.sortOrder)}
+                    onChange={(e) =>
+                      setDoc((d) => ({
+                        ...d,
+                        partnerSpotlight: partners.map((p) =>
+                          p.id === partner.id
+                            ? { ...p, sortOrder: Number(e.target.value) || 0 }
+                            : p
+                        ),
+                      }))
+                    }
+                  />
+                </label>
+              </div>
               <CmsLocalizedField
                 label="Merknaam"
                 field={`partner.${partner.id}.title`}
@@ -1274,7 +1671,7 @@ export function CmsHomepageSectionSettings(props: {
                 onMetaChange={setMeta}
               />
               <CmsLocalizedField
-                label="Korte omschrijving"
+                label="Tekst onder het logo"
                 field={`partner.${partner.id}.subtitle`}
                 value={partner.subtitle}
                 onChange={(subtitle) =>
@@ -1350,13 +1747,14 @@ export function CmsHomepageSectionSettings(props: {
                 </label>
               </div>
               <CmsImageField
-                label="Merkafbeelding / productvisual"
-                advice="Adviesformaat: 800 × 360 px (ongeveer 20:9). Vult het bovenste merkkaartvlak (h-28/h-32). Andere verhoudingen worden gecropt."
-                hint="De afbeelding vult het volledige bovenste beeldvlak (object-cover)."
+                label="Sfeerachtergrond"
+                advice="Aanbevolen 1600 × 470 px (3,4:1). De achtergrond vult de hele merkkaart."
+                hint="Eigen sfeerbeeld van dit merk. De afbeelding vult de kaart (cover)."
                 url={partner.image ?? null}
                 large
                 placement="brand_story_photo"
                 previewFit="cover"
+                previewRatio="3.4 / 1"
                 onChange={(image) =>
                   setDoc((d) => ({
                     ...d,
@@ -1367,26 +1765,79 @@ export function CmsHomepageSectionSettings(props: {
                 }
                 onError={onError}
               />
-              <CmsImageField
-                label="Merklogo (vierkant)"
-                advice="Adviesformaat: 400 × 400 px (1:1)."
-                hint="Vierkant logo-overlay op de merkkaart (niet gecropt)."
-                url={partner.logo ?? null}
-                placement="brand_story_photo"
-                previewFit="contain"
-                onChange={(logo) =>
+              <label className="block text-sm font-semibold">
+                Link naar merkpagina
+                <input
+                  className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
+                  value={partner.href}
+                  placeholder={
+                    partner.slug.trim()
+                      ? `/merk/${partner.slug.trim()}`
+                      : "/merk/slug"
+                  }
+                  onChange={(e) =>
+                    setDoc((d) => ({
+                      ...d,
+                      partnerSpotlight: partners.map((p) =>
+                        p.id === partner.id ? { ...p, href: e.target.value } : p
+                      ),
+                    }))
+                  }
+                />
+              </label>
+              <p className="text-[11px] text-wf-500">
+                Leeg: de hele kaart opent{" "}
+                {partner.slug.trim()
+                  ? `/merk/${partner.slug.trim()}`
+                  : "de merkpagina zodra een merk is gekozen"}
+                . Er is één link, ook als de knop zichtbaar is.
+              </p>
+              <CmsLocalizedField
+                label="Knoptekst"
+                field={`partner.${partner.id}.cta`}
+                value={partner.ctaLabel}
+                onChange={(ctaLabel) =>
                   setDoc((d) => ({
                     ...d,
                     partnerSpotlight: partners.map((p) =>
-                      p.id === partner.id ? { ...p, logo } : p
+                      p.id === partner.id ? { ...p, ctaLabel } : p
                     ),
                   }))
                 }
+                meta={meta}
+                onMetaChange={setMeta}
+              />
+              <CmsCampaignCardFields
+                value={partner.card ?? brandCardStyleFromLegacy(partner)}
+                previewRatio="3.4 / 1"
                 onError={onError}
+                onChange={(card) =>
+                  setDoc((d) => ({
+                    ...d,
+                    partnerSpotlight: partners.map((p) =>
+                      p.id === partner.id
+                        ? {
+                            ...p,
+                            card,
+                            logo: card.logo,
+                            logoSize: Math.min(160, Math.max(48, card.logoWidth)),
+                            logoPosition: card.horizontal,
+                            textColor: card.titleColor,
+                            overlayStrength:
+                              card.overlay === "none"
+                                ? 0
+                                : card.overlay === "dark"
+                                  ? 55
+                                  : 62,
+                          }
+                        : p
+                    ),
+                  }))
+                }
               />
               <fieldset>
                 <legend className="text-sm font-semibold">
-                  Achtergrondkleur merkkaart
+                  Achtergrondkleur als er geen sfeerbeeld is
                 </legend>
                 <div className="mt-2 grid grid-cols-1 gap-1.5">
                   {BRAND_BACKGROUNDS.map((opt) => (

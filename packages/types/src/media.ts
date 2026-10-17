@@ -28,6 +28,7 @@ export type MediaPlacement =
   | "cms_banner"
   | "cms_action_banner"
   | "cms_site_logo"
+  | "campaign_logo"
   | "homepage_hero"
   | "facility_photo"
   | "brand_story_photo"

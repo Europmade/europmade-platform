@@ -1,3 +1,4 @@
+import { parseBrandCardPresentation, selectConfiguredBrandSpotlights } from "@europmade/utils"
 import { slugifyForBrand } from "./brand-slug"
 import type { ResolvedPartnerSpotlight } from "./cms/resolve-homepage"
 import type { ListingProduct } from "./listing-products"
@@ -26,8 +27,9 @@ export function liveBrandSpotlightsFromProducts(
         rating: product.rating || 0,
         productCount: 1,
         description: "",
-        image: product.imageUrl ?? null,
+        image: null,
         logo: null,
+        ...parseBrandCardPresentation({}),
         backgroundKey: "light",
         ratingSum: product.rating || 0,
         ratingN: product.rating ? 1 : 0,
@@ -39,7 +41,6 @@ export function liveBrandSpotlightsFromProducts(
       current.ratingSum += product.rating
       current.ratingN += 1
     }
-    if (!current.image && product.imageUrl) current.image = product.imageUrl
   }
   return [...map.values()]
     .map(({ ratingSum, ratingN, ...row }) => ({
@@ -54,35 +55,8 @@ export function liveBrandSpotlightsFromProducts(
 
 export function mergeHomepageBrandSpotlights(
   cmsItems: ResolvedPartnerSpotlight[],
-  live: ResolvedPartnerSpotlight[],
-  limit = 6
+  catalog: ResolvedPartnerSpotlight[] = [],
+  limit = 12
 ): ResolvedPartnerSpotlight[] {
-  const liveBySlug = new Map(live.map((row) => [row.slug, row]))
-  const out: ResolvedPartnerSpotlight[] = []
-  const seen = new Set<string>()
-
-  for (const item of cmsItems) {
-    const slug = item.slug?.trim()
-    if (!slug) continue
-    const hit = liveBySlug.get(slug)
-    if (!hit) continue
-    seen.add(slug)
-    out.push({
-      ...hit,
-      name: item.name || hit.name,
-      description: item.description || hit.description,
-      logo: item.logo || hit.logo,
-      image: item.image || hit.image,
-      country: item.country || hit.country,
-      backgroundKey: item.backgroundKey || hit.backgroundKey,
-    })
-    if (out.length >= limit) return out
-  }
-
-  for (const row of live) {
-    if (seen.has(row.slug)) continue
-    out.push(row)
-    if (out.length >= limit) break
-  }
-  return out
+  return selectConfiguredBrandSpotlights(cmsItems, catalog).slice(0, limit)
 }

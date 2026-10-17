@@ -157,6 +157,22 @@ export const MEDIA_REQUIREMENTS: Record<MediaPlacement, MediaRequirements> = {
     enforceDimensions: false,
     enforceAspectRatio: false,
   },
+  campaign_logo: {
+    placement: "campaign_logo",
+    label: "Campagnelogo",
+    recommendedSize: null,
+    minSize: null,
+    maxSize: null,
+    aspectRatio: null,
+    aspectRatioValue: null,
+    maxBytes: 2 * MB,
+    mimeTypes: ["image/png", "image/webp"],
+    transparency: "recommended",
+    notes:
+      "Merklogo op een actiekaart. PNG of WebP met transparante achtergrond. Wordt met object-contain geschaald en niet bijgesneden.",
+    enforceDimensions: false,
+    enforceAspectRatio: false,
+  },
   homepage_hero: {
     placement: "homepage_hero",
     label: "Homepage hero",

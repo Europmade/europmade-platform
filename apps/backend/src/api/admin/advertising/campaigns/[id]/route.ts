@@ -3,6 +3,7 @@ import {
   ContainerRegistrationKeys,
   MedusaError,
 } from "@medusajs/framework/utils"
+import { requestBackendOrigin } from "../../../../request-backend-origin"
 import { CMS_MODULE } from "../../../../../modules/cms"
 import type CmsModuleService from "../../../../../modules/cms/service"
 import { serializeAdminCampaign } from "../../enrich-campaign"
@@ -79,7 +80,8 @@ export async function GET(req: Req, res: MedusaResponse) {
     campaign: await serializeAdminCampaign(
       req.scope,
       row as Record<string, unknown>,
-      weeks as Array<Record<string, unknown>>
+      weeks as Array<Record<string, unknown>>,
+      requestBackendOrigin(req)
     ),
   })
 }
@@ -173,7 +175,8 @@ export async function PATCH(req: Req, res: MedusaResponse) {
     campaign: await serializeAdminCampaign(
       req.scope,
       updated as Record<string, unknown>,
-      weeks as Array<Record<string, unknown>>
+      weeks as Array<Record<string, unknown>>,
+      requestBackendOrigin(req)
     ),
   })
 }

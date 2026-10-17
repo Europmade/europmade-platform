@@ -3,8 +3,10 @@
 import type { ProductManagerDetail } from "../../../_lib/product-cloud-api"
 import {
   WIZARD_STEPS,
+  wizardChromeStatus,
   wizardStepGaps,
-  wizardStepStatus,
+  wizardStepShowsGaps,
+  type WizardAttention,
   type WizardStepKey,
   type WizardStepStatus,
 } from "../_lib/product-wizard"
@@ -27,10 +29,13 @@ function dot(status: WizardStepStatus): string {
 export function ProductWizardProgress(props: {
   product: ProductManagerDetail
   current: WizardStepKey
+  attention: WizardAttention
   onSelect: (step: WizardStepKey) => void
 }) {
-  const { product, current, onSelect } = props
+  const { product, current, attention, onSelect } = props
   const currentGaps = wizardStepGaps(product, current)
+  const showGaps = wizardStepShowsGaps(current, attention)
+  const visibleGaps = showGaps ? currentGaps : []
 
   return (
     <div className="mb-5">
@@ -45,16 +50,19 @@ export function ProductWizardProgress(props: {
       </div>
       <div className="flex gap-1 overflow-x-auto pb-1">
         {WIZARD_STEPS.map((step, index) => {
-          const status = wizardStepStatus(product, step.key)
+          const status = wizardChromeStatus(product, step.key, attention)
           const active = step.key === current
+          const stepGaps = wizardStepShowsGaps(step.key, attention)
+            ? wizardStepGaps(product, step.key)
+            : []
           return (
             <button
               key={step.key}
               type="button"
               onClick={() => onSelect(step.key)}
               title={
-                wizardStepGaps(product, step.key).slice(0, 3).join(" · ") ||
-                "Compleet"
+                stepGaps.slice(0, 3).join(" · ") ||
+                (status === "ready" ? "Compleet" : step.label)
               }
               className={`flex min-w-[88px] flex-1 flex-col items-start gap-1 rounded-md border px-2 py-2 text-left transition ${statusClasses(status, active)}`}
             >
@@ -71,24 +79,36 @@ export function ProductWizardProgress(props: {
           )
         })}
       </div>
-      {currentGaps.length > 0 ? (
+      {visibleGaps.length > 0 ? (
         <ul
+          id="product-wizard-gaps"
           className={`mt-2 space-y-0.5 rounded border px-2 py-1.5 text-[11px] ${
-            wizardStepStatus(product, current) === "waiting"
+            wizardChromeStatus(product, current, attention) === "waiting"
               ? "border-blue-200 bg-blue-50 text-blue-950"
               : "border-amber-200 bg-amber-50 text-amber-950"
           }`}
         >
-          {currentGaps.slice(0, 5).map((gap) => (
+          {visibleGaps.slice(0, 5).map((gap) => (
             <li key={gap}>
-              {wizardStepStatus(product, current) === "waiting" ? "⏳" : "❌"}{" "}
+              {wizardChromeStatus(product, current, attention) === "waiting"
+                ? "⏳"
+                : "❌"}{" "}
               {gap}
             </li>
           ))}
         </ul>
-      ) : (
+      ) : currentGaps.length === 0 ? (
         <p className="mt-2 text-[11px] font-semibold text-emerald-800">
           ✓ Deze stap is compleet
+        </p>
+      ) : current === "publish" ? (
+        <p className="mt-2 text-[11px] text-wf-600">
+          Publicatiecontrole staat hieronder. Opslaan kan al; publiceren pas
+          als de checklist compleet is.
+        </p>
+      ) : (
+        <p className="mt-2 text-[11px] text-wf-600">
+          Vul deze stap in. Ontbrekende gegevens verschijnen als je verdergaat.
         </p>
       )}
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-wf-200">

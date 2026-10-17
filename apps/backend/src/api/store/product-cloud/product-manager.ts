@@ -206,6 +206,9 @@ export type SellerOfferSummary = {
   delivery_days_max: number | null
   is_sellable: boolean
   has_offer: boolean
+  promo_price?: number | null
+  promo_starts_at?: string | null
+  promo_ends_at?: string | null
 }
 
 /**
@@ -271,6 +274,9 @@ export type OfferLookupMaps = {
     {
       base_price: unknown
       shipping_cost: unknown
+      promo_price?: unknown
+      promo_starts_at?: unknown
+      promo_ends_at?: unknown
     }
   >
   stockByOffer: Map<string, number>
@@ -313,6 +319,9 @@ export async function loadSellerOfferLookup(
     {
       base_price: unknown
       shipping_cost: unknown
+      promo_price?: unknown
+      promo_starts_at?: unknown
+      promo_ends_at?: unknown
     }
   >()
   const stockByOffer = new Map<string, number>()
@@ -327,6 +336,9 @@ export async function loadSellerOfferLookup(
         offer?: { id?: string }
         base_price: unknown
         shipping_cost: unknown
+        promo_price?: unknown
+        promo_starts_at?: unknown
+        promo_ends_at?: unknown
       }>
       for (const price of prices) {
         const offerId = price.offer_id || price.offer?.id
@@ -334,6 +346,9 @@ export async function loadSellerOfferLookup(
         priceByOffer.set(offerId, {
           base_price: price.base_price,
           shipping_cost: price.shipping_cost,
+          promo_price: price.promo_price,
+          promo_starts_at: price.promo_starts_at,
+          promo_ends_at: price.promo_ends_at,
         })
       }
       const inventories = (await commerce.listOfferInventories(
@@ -361,6 +376,9 @@ export async function loadSellerOfferLookup(
           priceByOffer.set(offer.id, {
             base_price: price.base_price,
             shipping_cost: price.shipping_cost,
+            promo_price: price.promo_price,
+            promo_starts_at: price.promo_starts_at,
+            promo_ends_at: price.promo_ends_at,
           })
         }
         if (inv) {
@@ -421,7 +439,18 @@ function summarizeOffer(
       offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
     is_sellable: sales_status === "active" && (stock ?? 0) > 0,
     has_offer: true,
+    promo_price: moneyNumber(priceRow?.promo_price),
+    promo_starts_at: promoInstant(priceRow?.promo_starts_at),
+    promo_ends_at: promoInstant(priceRow?.promo_ends_at),
   }
+}
+
+function promoInstant(value: unknown): string | null {
+  if (value == null || value === "") return null
+  if (value instanceof Date) return value.toISOString()
+  const text = String(value)
+  const parsed = Date.parse(text)
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : text
 }
 
 function emptyOffer(identifierId: string | null): SellerOfferSummary {
@@ -1054,10 +1083,13 @@ export async function buildSellerProductManagerDetail(
   productId: string,
   sellerId: string,
   partner?: PartnerModuleService | null,
-  container?: MedusaContainer | null
+  container?: MedusaContainer | null,
+  options?: { skipSellerAccess?: boolean }
 ) {
   const product = await productCloud.retrieveProduct(productId)
-  if (container) {
+  if (options?.skipSellerAccess) {
+    /* Admin review reads every central product, including imports without a product manager. */
+  } else if (container) {
     let sellerCompanyId: string | null = null
     if (partner) {
       try {

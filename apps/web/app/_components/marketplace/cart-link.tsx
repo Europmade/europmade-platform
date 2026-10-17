@@ -7,6 +7,7 @@ import {
 } from "../../_lib/i18n/locales"
 import { t, tFormat } from "../../_lib/i18n/messages"
 import { useCart } from "../cart/cart-provider"
+import { HEADER_ICON_CLASS, headerIconStyle } from "./header-chrome"
 
 /**
  * Winkelwagenicoon + teller — locale-aware aria labels.
@@ -22,7 +23,8 @@ export function CartLink({
   return (
     <Link
       href="/cart"
-      className="relative inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-wf-400 text-wf-700 hover:border-wf-700"
+      className={`relative ${HEADER_ICON_CLASS}`}
+      style={headerIconStyle}
       aria-label={
         count != null && count > 0
           ? tFormat("cartWithCount", locale, { count })
@@ -43,8 +45,7 @@ export function CartLink({
 function CartIcon() {
   return (
     <svg
-      width="14"
-      height="14"
+      className="h-[62%] w-[62%]"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

@@ -86,7 +86,7 @@ export default function AdminProductDetailPage() {
   }, [lightbox])
 
   if (loading) return <p className="text-sm text-wf-600">Laden…</p>
-  if (!data) {
+  if (!data?.product) {
     return <Notice variant="warning">{error ?? "Product niet gevonden."}</Notice>
   }
 

@@ -59,6 +59,12 @@ export async function PUT(req: BannerReq, res: MedusaResponse) {
     patch.background =
       typeof body.background === "string" ? body.background : null
   }
+  if (body.presentation !== undefined) {
+    patch.presentation =
+      body.presentation && typeof body.presentation === "object"
+        ? body.presentation
+        : null
+  }
   if (body.logo_url !== undefined) {
     patch.logo_url =
       typeof body.logo_url === "string"

@@ -14,6 +14,7 @@ import {
   type CommercialNavGroupDto,
 } from "../../_lib/category-nav"
 import { CommercialCategoryIcon } from "./commercial-category-icon"
+import { HOMEPAGE_CONTENT_GUTTER } from "@europmade/utils"
 
 const OPEN_DELAY_MS = 90
 const CLOSE_DELAY_MS = 160
@@ -84,12 +85,16 @@ export function CategoryMegaMenu({ locale }: { locale: StorefrontLocale }) {
       data-em-commercial-nav={groups.length}
       onMouseLeave={intendClose}
     >
-      <div className="flex items-center gap-5 overflow-hidden px-8 pb-3 text-[13px] text-wf-700">
+      <div
+        className={`em-header-nav flex items-center gap-5 overflow-hidden pb-3 ${HOMEPAGE_CONTENT_GUTTER}`}
+        style={{
+          color: "var(--em-header-text, #4a4a4a)",
+          fontSize: "var(--em-header-nav-size, 13px)",
+        }}
+      >
         <button
           type="button"
-          className={`shrink-0 hover:text-wf-900 hover:underline ${
-            open ? "font-semibold text-wf-900" : ""
-          }`}
+          className={`shrink-0 hover:underline ${open ? "font-semibold" : ""}`}
           aria-expanded={open}
           aria-controls={megaId}
           onMouseEnter={() => intendOpen(active?.key ?? groups[0]?.key ?? null)}
@@ -106,7 +111,11 @@ export function CategoryMegaMenu({ locale }: { locale: StorefrontLocale }) {
             <Link
               key={group.key}
               href={group.href}
-              className="shrink-0 hover:text-wf-900 hover:underline"
+              className="em-header-category shrink-0 hover:underline"
+              style={{
+                color: "var(--em-header-category, #4a4a4a)",
+                fontSize: "var(--em-header-category-size, 13px)",
+              }}
               onMouseEnter={() => intendOpen(group.key)}
             >
               {group.name}
@@ -115,7 +124,7 @@ export function CategoryMegaMenu({ locale }: { locale: StorefrontLocale }) {
         </div>
         <Link
           href="/over"
-          className="ml-auto shrink-0 hover:text-wf-900 hover:underline"
+          className="ml-auto shrink-0 hover:underline"
         >
           {t("navAbout", locale)}
         </Link>
@@ -129,7 +138,10 @@ export function CategoryMegaMenu({ locale }: { locale: StorefrontLocale }) {
           className="absolute left-0 right-0 top-full z-40 pt-1"
           onMouseEnter={() => intendOpen(active?.key ?? null)}
         >
-          <div className="border-b border-t border-wf-200 bg-white px-6 py-4 shadow-sm desktop:px-8">
+          <div
+            data-em-category-panel
+            className="border-b border-t border-wf-200 bg-white px-6 py-4 text-[#151515] shadow-sm desktop:px-8"
+          >
             <div className="grid grid-cols-[minmax(14rem,18rem)_1fr] gap-6 desktop:gap-8">
               <ul className="space-y-0.5">
                 {groups.map((group) => (

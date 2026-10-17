@@ -18,6 +18,7 @@ const CmsBanner = model
     image_alt: model.json(),
     background: model.text().nullable(),
     logo_url: model.text().nullable(),
+    presentation: model.json().nullable(),
     market_scope: model.text().default("all"),
     markets: model.json().default([]),
     visible: model.boolean().default(true),

@@ -86,6 +86,11 @@ export type CatalogListProduct = {
   country_code: string | null
   offer_count: number
   from_price: number | null
+  affiliate_commission_percent?: number | null
+  affiliate_commission_label?: string | null
+  affiliate_earnings?: number | null
+  affiliate_offer_id?: string | null
+  affiliate_offer_price?: number | null
   average_review_score: number | null
   review_count: number
   image_url?: string | null
@@ -113,6 +118,8 @@ export type CatalogOffer = {
   rank: number
   is_winner: boolean
   score: number
+  affiliate_commission_percent?: number | null
+  affiliate_earnings?: number | null
 }
 
 export type CatalogReview = {
@@ -221,6 +228,7 @@ export type CatalogEuropeanOwnership = {
 }
 
 export type CatalogProductDetail = {
+  availability?: "orderable" | "out_of_stock" | "not_deliverable" | "not_published" | "paused"
   product: {
     id: string
     title: string

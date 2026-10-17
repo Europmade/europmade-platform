@@ -1,4 +1,5 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { requestBackendOrigin } from "../../../request-backend-origin"
 import { CMS_MODULE } from "../../../../modules/cms"
 import type CmsModuleService from "../../../../modules/cms/service"
 import { serializeAdminCampaign } from "../enrich-campaign"
@@ -28,7 +29,9 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       await serializeAdminCampaign(
         req.scope,
         row as Record<string, unknown>,
-        weeks as Array<Record<string, unknown>>
+        weeks as Array<Record<string, unknown>>,
+        requestBackendOrigin(req),
+        { includeProducts: false }
       )
     )
   }

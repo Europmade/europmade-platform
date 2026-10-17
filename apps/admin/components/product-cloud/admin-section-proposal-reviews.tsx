@@ -145,15 +145,19 @@ function AdminProposalCard(props: {
             </p>
             {c.storage_references?.length ? (
               <div className="mt-2 flex flex-wrap gap-2">
-                {c.storage_references.map((ref) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={ref}
-                    src={displayMediaUrl(ref)}
-                    alt="Voorgestelde media"
-                    className="h-16 w-16 rounded border border-wf-300 object-cover"
-                  />
-                ))}
+                {c.storage_references.map((ref) => {
+                  const src = displayMediaUrl(ref)
+                  if (!src) return null
+                  return (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={ref}
+                      src={src}
+                      alt="Voorgestelde media"
+                      className="h-16 w-16 rounded border border-wf-300 object-cover"
+                    />
+                  )
+                })}
               </div>
             ) : null}
           </div>

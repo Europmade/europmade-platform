@@ -644,9 +644,11 @@ export default function SellerProductsPage() {
                 </select>
               </label>
               <p className="basis-full text-[11px] text-wf-600">
-                {canOpenProductLinkDialog(selection.size)
-                  ? "Bulkacties: producten koppelen, EU Compliance, merk of verzendprofiel."
-                  : "Selecteer minimaal 2 producten om te koppelen. Overige bulkacties blijven beschikbaar."}
+                {selection.size > 4
+                  ? "Koppel 2, 3 of 4 producten. Overige bulkacties blijven beschikbaar."
+                  : canOpenProductLinkDialog(selection.size)
+                    ? "Bulkacties: producten koppelen, EU Compliance, merk of verzendprofiel."
+                    : "Selecteer 2, 3 of 4 producten om te koppelen. Overige bulkacties blijven beschikbaar."}
               </p>
             </div>
           ) : null}

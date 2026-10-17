@@ -21,12 +21,38 @@ export type CmsThemeColors = {
   hover: string
 }
 
-/** Sitewide storefront header chrome (CMP-001) — optional overrides. */
+/** Sitewide storefront header chrome (CMP-001). */
 export type CmsThemeHeader = {
   /** Media URL or storage ref; null = default text wordmark. */
   logo: string | null
   /** Header bar background (hex). */
   backgroundColor: string
+  logoHeight: number
+  textColor: string
+  navFontSize: number
+  categoryColor: string
+  categoryFontSize: number
+  searchBackground: string
+  searchText: string
+  searchBorder: string
+  searchHeight: number
+  localeColor: string
+  localeFontSize: number
+  currencyColor: string
+  currencyFontSize: number
+  iconColor: string
+  iconSize: number
+}
+
+export const HEADER_NAVY = "#10396B"
+export const HEADER_WHITE = "#ffffff"
+
+const LIGHT_HEADER_INK = {
+  textColor: "#2c2c2c",
+  categoryColor: "#4a4a4a",
+  localeColor: "#4a4a4a",
+  currencyColor: "#4a4a4a",
+  iconColor: "#4a4a4a",
 }
 
 export type CmsThemeDocument = {
@@ -54,7 +80,22 @@ export type CmsThemeDocument = {
 
 export const DEFAULT_CMS_HEADER: CmsThemeHeader = {
   logo: null,
-  backgroundColor: "#ffffff",
+  backgroundColor: HEADER_NAVY,
+  logoHeight: 32,
+  textColor: HEADER_WHITE,
+  navFontSize: 13,
+  categoryColor: HEADER_WHITE,
+  categoryFontSize: 13,
+  searchBackground: HEADER_WHITE,
+  searchText: HEADER_NAVY,
+  searchBorder: HEADER_WHITE,
+  searchHeight: 40,
+  localeColor: HEADER_WHITE,
+  localeFontSize: 11,
+  currencyColor: HEADER_WHITE,
+  currencyFontSize: 11,
+  iconColor: HEADER_WHITE,
+  iconSize: 22,
 }
 
 export const CMS_THEME_PRESETS: Record<CmsThemePreset, Partial<CmsThemeDocument>> = {
@@ -207,17 +248,134 @@ export function parseCmsTheme(raw: unknown): CmsThemeDocument {
     typography: {
       headingWeight: typography.headingWeight === "semibold" ? "semibold" : "bold",
     },
-    header: {
-      logo:
-        typeof headerIn.logo === "string" && headerIn.logo.trim()
-          ? headerIn.logo.trim()
-          : null,
-      backgroundColor: hex(
-        headerIn.backgroundColor,
-        base.header.backgroundColor
-      ),
-    },
+    header: parseCmsHeader(headerIn, base.header, hex),
   }
+}
+
+function isDarkHex(color: string): boolean {
+  const raw = color.replace("#", "")
+  const full =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : raw
+  const red = Number.parseInt(full.slice(0, 2), 16)
+  const green = Number.parseInt(full.slice(2, 4), 16)
+  const blue = Number.parseInt(full.slice(4, 6), 16)
+  if (![red, green, blue].every(Number.isFinite)) return false
+  return (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255 < 0.55
+}
+
+function px(value: unknown, fallback: number, min: number, max: number): number {
+  const next = Number(value)
+  if (!Number.isFinite(next)) return fallback
+  return Math.min(max, Math.max(min, Math.round(next)))
+}
+
+export function parseCmsHeader(
+  headerIn: Record<string, unknown>,
+  base: CmsThemeHeader = DEFAULT_CMS_HEADER,
+  hex: (value: unknown, fallback: string) => string = (value, fallback) =>
+    typeof value === "string" && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value)
+      ? value
+      : fallback
+): CmsThemeHeader {
+  const backgroundColor = hex(headerIn.backgroundColor, base.backgroundColor)
+  const ink = isDarkHex(backgroundColor) ? null : LIGHT_HEADER_INK
+  return {
+    logo:
+      typeof headerIn.logo === "string" && headerIn.logo.trim()
+        ? headerIn.logo.trim()
+        : null,
+    backgroundColor,
+    logoHeight: px(headerIn.logoHeight, base.logoHeight, 20, 72),
+    textColor: hex(headerIn.textColor, ink?.textColor ?? base.textColor),
+    navFontSize: px(headerIn.navFontSize, base.navFontSize, 10, 24),
+    categoryColor: hex(
+      headerIn.categoryColor,
+      ink?.categoryColor ?? base.categoryColor
+    ),
+    categoryFontSize: px(headerIn.categoryFontSize, base.categoryFontSize, 10, 24),
+    searchBackground: hex(headerIn.searchBackground, base.searchBackground),
+    searchText: hex(headerIn.searchText, base.searchText),
+    searchBorder: hex(
+      headerIn.searchBorder,
+      isDarkHex(backgroundColor) ? base.searchBorder : "#4a4a4a"
+    ),
+    searchHeight: px(headerIn.searchHeight, base.searchHeight, 32, 64),
+    localeColor: hex(headerIn.localeColor, ink?.localeColor ?? base.localeColor),
+    localeFontSize: px(headerIn.localeFontSize, base.localeFontSize, 10, 20),
+    currencyColor: hex(
+      headerIn.currencyColor,
+      ink?.currencyColor ?? base.currencyColor
+    ),
+    currencyFontSize: px(
+      headerIn.currencyFontSize,
+      base.currencyFontSize,
+      10,
+      20
+    ),
+    iconColor: hex(headerIn.iconColor, ink?.iconColor ?? base.iconColor),
+    iconSize: px(headerIn.iconSize, base.iconSize, 16, 40),
+  }
+}
+
+const LIGHT_INK_COLORS = new Set([
+  LIGHT_HEADER_INK.textColor,
+  LIGHT_HEADER_INK.categoryColor,
+  LIGHT_HEADER_INK.localeColor,
+  LIGHT_HEADER_INK.currencyColor,
+  LIGHT_HEADER_INK.iconColor,
+])
+
+function sameHex(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase()
+}
+
+/**
+ * When the editor switches the bar between light and dark, flip only the
+ * ink colors that still match the previous default. Custom colors stay.
+ * Search-field colors are independent and are not changed.
+ */
+export function headerWithBackground(
+  header: CmsThemeHeader,
+  backgroundColor: string
+): CmsThemeHeader {
+  const next = { ...header, backgroundColor }
+  const wasDark = isDarkHex(header.backgroundColor)
+  const nowDark = isDarkHex(backgroundColor)
+  if (wasDark === nowDark) return next
+  const flip = (
+    current: string,
+    light: string,
+    dark: string
+  ): string => {
+    if (nowDark && (sameHex(current, light) || LIGHT_INK_COLORS.has(current.toLowerCase()))) {
+      return dark
+    }
+    if (!nowDark && sameHex(current, dark)) return light
+    return current
+  }
+  next.textColor = flip(header.textColor, LIGHT_HEADER_INK.textColor, HEADER_WHITE)
+  next.categoryColor = flip(
+    header.categoryColor,
+    LIGHT_HEADER_INK.categoryColor,
+    HEADER_WHITE
+  )
+  next.localeColor = flip(
+    header.localeColor,
+    LIGHT_HEADER_INK.localeColor,
+    HEADER_WHITE
+  )
+  next.currencyColor = flip(
+    header.currencyColor,
+    LIGHT_HEADER_INK.currencyColor,
+    HEADER_WHITE
+  )
+  next.iconColor = flip(header.iconColor, LIGHT_HEADER_INK.iconColor, HEADER_WHITE)
+  return next
 }
 
 export function applyCmsThemePreset(
@@ -251,12 +409,12 @@ export function cmsThemeToCss(theme: CmsThemeDocument): string {
   const cardBorder = theme.cards.border
     ? `1px solid ${theme.colors.border}`
     : "1px solid transparent"
-  const sectionPad =
+  const sectionPadY =
     theme.spacing.section === "compact"
-      ? "0.65rem 1rem"
+      ? "0.65rem"
       : theme.spacing.section === "relaxed"
-        ? "1.35rem 1rem"
-        : "0.9rem 1rem"
+        ? "1.35rem"
+        : "0.9rem"
   const maxW = theme.spacing.contentWidth === "wide" ? "1280px" : "1160px"
   const headingW = theme.typography.headingWeight === "semibold" ? "600" : "700"
   return `
@@ -273,6 +431,21 @@ export function cmsThemeToCss(theme: CmsThemeDocument): string {
   --em-link: ${theme.colors.link};
   --em-hover: ${theme.colors.hover};
   --em-header-bg: ${theme.header.backgroundColor};
+  --em-header-text: ${theme.header.textColor};
+  --em-header-icon: ${theme.header.iconColor};
+  --em-header-icon-size: ${theme.header.iconSize}px;
+  --em-header-nav-size: ${theme.header.navFontSize}px;
+  --em-header-category: ${theme.header.categoryColor};
+  --em-header-category-size: ${theme.header.categoryFontSize}px;
+  --em-header-search-bg: ${theme.header.searchBackground};
+  --em-header-search-text: ${theme.header.searchText};
+  --em-header-search-border: ${theme.header.searchBorder};
+  --em-header-search-h: ${theme.header.searchHeight}px;
+  --em-header-locale: ${theme.header.localeColor};
+  --em-header-locale-size: ${theme.header.localeFontSize}px;
+  --em-header-currency: ${theme.header.currencyColor};
+  --em-header-currency-size: ${theme.header.currencyFontSize}px;
+  --em-header-logo-h: ${theme.header.logoHeight}px;
   --em-radius: ${radius};
   --em-card-radius: ${theme.cards.radius}px;
   color: ${theme.colors.text};
@@ -280,6 +453,42 @@ export function cmsThemeToCss(theme: CmsThemeDocument): string {
 }
 .em-cms-theme [data-em-header="chrome"] {
   background-color: ${theme.header.backgroundColor};
+  color: ${theme.header.textColor};
+}
+.em-cms-theme [data-em-header="chrome"] a.em-header-logo {
+  color: var(--em-header-text);
+}
+.em-cms-theme [data-em-header="chrome"] .em-header-nav,
+.em-cms-theme [data-em-header="chrome"] .em-header-nav a {
+  color: var(--em-header-text);
+  font-size: var(--em-header-nav-size);
+}
+.em-cms-theme [data-em-header="chrome"] .em-header-icon {
+  color: var(--em-header-icon);
+  border-color: var(--em-header-icon);
+  width: var(--em-header-icon-size);
+  height: var(--em-header-icon-size);
+}
+.em-cms-theme [data-em-header="chrome"] a.em-header-category,
+.em-cms-theme [data-em-header="chrome"] .em-header-category {
+  color: var(--em-header-category);
+  font-size: var(--em-header-category-size);
+}
+.em-cms-theme [data-em-header="chrome"] .em-header-locale {
+  color: var(--em-header-locale);
+  font-size: var(--em-header-locale-size);
+}
+.em-cms-theme [data-em-header="chrome"] .em-header-currency {
+  color: var(--em-header-currency);
+  font-size: var(--em-header-currency-size);
+}
+.em-cms-theme [data-em-header="chrome"] [data-em-header-menu],
+.em-cms-theme [data-em-header="chrome"] [data-em-header-menu] a,
+.em-cms-theme [data-em-header="chrome"] [data-em-category-panel],
+.em-cms-theme [data-em-header="chrome"] [data-em-category-panel] a,
+.em-cms-theme [data-em-header="chrome"] [data-em-category-panel] button {
+  color: #151515;
+  font-size: 13px;
 }
 .em-cms-theme a:not(.bg-wf-900) {
   color: ${theme.colors.link};
@@ -314,9 +523,9 @@ export function cmsThemeToCss(theme: CmsThemeDocument): string {
   border: ${cardBorder};
   background: ${theme.colors.card};
 }
-.em-cms-theme [class*="px-4 py-3.5"],
-.em-cms-theme [class*="tablet:px-8 tablet:py-4"] {
-  padding: ${sectionPad};
+.em-cms-theme .em-home-section {
+  padding-top: ${sectionPadY};
+  padding-bottom: ${sectionPadY};
 }
 `
 }

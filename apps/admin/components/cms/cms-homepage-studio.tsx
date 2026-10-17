@@ -47,6 +47,7 @@ function Inner() {
   const [ok, setOk] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [published, setPublished] = useState(false)
+  const [hasDraft, setHasDraft] = useState(false)
   const [viewport, setViewport] = useState<CmsViewport>("desktop")
   const [doc, setDoc] = useState<HomepageCmsDoc>(emptyHomepageDocument)
   const [seoTitle, setSeoTitle] = useState<LocalizedCms>(emptyLocalized())
@@ -64,12 +65,13 @@ function Inner() {
 
   useEffect(() => {
     getCmsHomepage()
-      .then(({ homepage }) => {
+      .then(({ homepage, has_draft }) => {
         if (!homepage) return
         const next = normalizeHomepageDocument(homepage.document)
         setDoc(next)
         setMeta(next._i18n ?? {})
         setPublished(homepage.published)
+        setHasDraft(Boolean(has_draft))
         if (homepage.seo_title) setSeoTitle(homepage.seo_title)
         if (homepage.seo_description) setSeoDescription(homepage.seo_description)
         if (homepage.seo_canonical) setSeoCanonical(homepage.seo_canonical)
@@ -97,7 +99,7 @@ function Inner() {
 
   const structure = useMemo(
     () => [
-      { id: "chrome_header", label: "Header", hint: "Logo + achtergrond", locked: true },
+      { id: "chrome_header", label: "Header", hint: "Kleuren en groottes", locked: true },
       { id: "hero", label: "Hero", hint: "Kop + beeld + CTA", visible: doc.hero.visible, locked: true },
       ...sorted.map((s) => ({
         id: s.id,
@@ -130,7 +132,7 @@ function Inner() {
     setError(null)
     setOk(null)
     try {
-      await putCmsHomepage({
+      const saved = await putCmsHomepage({
         document: { ...doc, _i18n: meta },
         seo_title: seoTitle,
         seo_description: seoDescription,
@@ -145,7 +147,8 @@ function Inner() {
         published: nextPublished ? true : themePublished,
       })
       if (nextPublished) setThemePublished(true)
-      setPublished(nextPublished)
+      setPublished(saved.homepage.published)
+      setHasDraft(Boolean(saved.has_draft))
       setOk(nextPublished ? "Homepage gepubliceerd." : "Concept opgeslagen.")
     } catch (e) {
       setError(e instanceof Error ? e.message : "Opslaan mislukt")
@@ -163,6 +166,7 @@ function Inner() {
         title="Homepage"
         templateLabel="Homepage"
         published={published}
+        statusExtra={published && hasDraft ? "concept bewaard" : undefined}
         busy={busy}
         error={error}
         ok={ok}

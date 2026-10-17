@@ -1,8 +1,12 @@
+import { HOMEPAGE_CONTENT_GUTTER, SECTION_TITLE_COLOR } from "@europmade/utils"
 import type { HomepageBannerCms } from "../../_lib/cms/homepage-cms"
 import type { ResolvedHomepageSection } from "../../_lib/cms/resolve-homepage"
 import type { StoreCmsHomepageResponse } from "../../_lib/cms/fetch-store-cms"
 
-export const HOMEPAGE_SECTION_CLASS = "px-4 py-3.5 tablet:px-8 tablet:py-4"
+export { HOMEPAGE_CONTENT_GUTTER }
+
+/** Shared horizontal inset. Theme CSS may only change the vertical padding. */
+export const HOMEPAGE_SECTION_CLASS = `${HOMEPAGE_CONTENT_GUTTER} em-home-section py-3.5 tablet:py-4`
 export const HOMEPAGE_AD_WRAP = "py-1 tablet:py-1.5"
 
 export function withLegacyBanners(
@@ -17,6 +21,8 @@ export function withLegacyBanners(
     key: "banner",
     title: "",
     subtitle: "",
+    titleColor: SECTION_TITLE_COLOR,
+    titleSize: null,
   })
   const newsIdx = out.findIndex((s) => s.key === "newsletter")
   out.splice(newsIdx >= 0 ? newsIdx : out.length, 0, {
@@ -24,6 +30,8 @@ export function withLegacyBanners(
     key: "banner",
     title: "",
     subtitle: "",
+    titleColor: SECTION_TITLE_COLOR,
+    titleSize: null,
   })
   return out
 }
@@ -48,6 +56,7 @@ export function mapApiBanners(
     image: b.image_url,
     imageAlt: b.image_alt,
     background: b.background ?? "",
+    presentation: b.presentation ?? null,
     logo: b.logo_url,
     marketScope: b.market_scope,
     markets: b.markets,

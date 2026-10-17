@@ -40,7 +40,6 @@ export type SectionReviewKey =
   | "made_in_europe"
   | "ce_compliance"
   | "content"
-  | "claims"
   | "other"
 
 export type SectionReviewRow = {
@@ -78,6 +77,8 @@ export type ApprovalProductRow = {
     }>
   }
   publication_status?: string | null
+  offer_count?: number
+  seller_offer_count?: number
   lifecycle_status?: string | null
   workflow_status?: string | null
   admin_review_outcome?: string | null
@@ -115,6 +116,7 @@ export type AdminProductListParams = {
   q?: string
   publication_status?: string
   lifecycle_status?: string
+  offer_presence?: "" | "none" | "single" | "multi"
   limit?: number
   offset?: number
 }
@@ -209,6 +211,7 @@ export function listAdminProducts(params: AdminProductListParams | string = {}) 
   if (p.q) sp.set("q", p.q)
   if (p.publication_status) sp.set("publication_status", p.publication_status)
   if (p.lifecycle_status) sp.set("lifecycle_status", p.lifecycle_status)
+  if (p.offer_presence) sp.set("offer_presence", p.offer_presence)
   if (p.limit != null) sp.set("limit", String(p.limit))
   if (p.offset != null) sp.set("offset", String(p.offset))
   const qs = sp.toString()
@@ -222,6 +225,20 @@ export function listAdminProducts(params: AdminProductListParams | string = {}) 
 
 export function getAdminProduct(id: string) {
   return request<AdminProductDetail>(`/admin/product-cloud/products/${id}`)
+}
+
+export function saveAdminProductSection(id: string, body: Record<string, unknown>) {
+  return request<{ saved: boolean; section: string }>(
+    `/admin/product-cloud/products/${id}/central`,
+    { method: "POST", body: JSON.stringify(body) }
+  )
+}
+
+export function updateAdminProductGtin(id: string, identifier_value: string) {
+  return request<{ identifier_value: string; updated: boolean }>(
+    `/admin/product-cloud/products/${id}/identifier`,
+    { method: "POST", body: JSON.stringify({ identifier_value }) }
+  )
 }
 
 export function assignAdminProductManager(
@@ -459,6 +476,59 @@ export function saveSectionReview(
   }>(`/admin/product-cloud/products/${productId}/section-reviews`, {
     method: "PUT",
     body: JSON.stringify(body),
+  })
+}
+
+export type BulkApprovalRow = {
+  product_id: string
+  title: string | null
+  status: "eligible" | "approved" | "skipped" | "failed"
+  reason: string | null
+}
+
+export type BulkApprovalReport = {
+  dry_run: boolean
+  mode: "selected" | "relation"
+  eligible_count: number
+  approved_count: number
+  skipped_count: number
+  failed_count: number
+  limit_reached: boolean
+  results: BulkApprovalRow[]
+}
+
+export function loadBulkApprovalChoices() {
+  return request<{
+    mode: "choices"
+    brands: Array<{ id: string; name: string }>
+    manufacturers: Array<{ id: string; name: string }>
+  }>(`/admin/product-cloud/products/bulk-approval`, {
+    method: "POST",
+    body: JSON.stringify({ mode: "choices" }),
+  })
+}
+
+export function previewBulkApproval(body: {
+  mode: "selected" | "relation"
+  product_ids?: string[]
+  brand_id?: string
+  manufacturer_id?: string
+}) {
+  return request<BulkApprovalReport>(`/admin/product-cloud/products/bulk-approval`, {
+    method: "POST",
+    body: JSON.stringify({ ...body, dry_run: true }),
+  })
+}
+
+export function applyBulkApproval(body: {
+  mode: "selected" | "relation"
+  product_ids?: string[]
+  brand_id?: string
+  manufacturer_id?: string
+}) {
+  return request<BulkApprovalReport>(`/admin/product-cloud/products/bulk-approval`, {
+    method: "POST",
+    body: JSON.stringify({ ...body, dry_run: false }),
   })
 }
 

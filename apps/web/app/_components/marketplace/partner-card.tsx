@@ -1,11 +1,18 @@
 import Link from "next/link"
 import {
+  BRAND_SPOTLIGHT_FRAME_CLASS,
+  BRAND_SPOTLIGHT_GRID_CLASS,
+  brandSpotlightHref,
+  type CampaignCardStyle,
+} from "@europmade/utils"
+import {
   findPartnerProfile,
   partnerCoverStyle,
   partnerLogoStyle,
 } from "../../_lib/partner-profiles"
 import { starsForRating } from "../../_lib/listing-products"
 import type { PartnerCardBackgroundKey } from "../../_lib/cms/resolve-homepage"
+import { PromoCardOverlay } from "../homepage/promo-card-overlay"
 
 const BACKGROUNDS: Record<PartnerCardBackgroundKey, string> = {
   light: "linear-gradient(155deg, #f8f9fb 0%, #eef1f5 48%, #e4e9ef 100%)",
@@ -160,12 +167,21 @@ export function HomepageProducerGrid({
     description?: string
     image?: string | null
     logo?: string | null
+    logoSize?: number
+    logoPosition?: "left" | "center" | "right"
+    textColor?: string
+    overlayStrength?: number
     backgroundKey?: PartnerCardBackgroundKey
+    card?: CampaignCardStyle
+    ctaLabel?: string
+    href?: string | null
   }>
   viewLabel?: string
   productsSuffix?: string
 }) {
-  const list = (partners ?? []).filter((row) => Boolean(row.slug?.trim()))
+  const list = (partners ?? []).filter((row) =>
+    Boolean(row.slug?.trim() || row.name?.trim() || row.image || row.logo)
+  )
   if (list.length === 0) {
     return (
       <p className="text-[13px] text-wf-500">Geen merken ingesteld</p>
@@ -173,25 +189,104 @@ export function HomepageProducerGrid({
   }
 
   return (
-    <ul className="grid grid-cols-1 gap-2.5 tablet:grid-cols-2 desktop:grid-cols-3 desktop:gap-3">
-      {list.map((r) => (
-        <li key={r.slug}>
-          <PartnerCard
-            slug={r.slug}
-            name={r.name}
-            country={r.country}
-            rating={r.rating}
-            productCount={r.productCount}
-            description={r.description}
-            image={r.image}
-            logo={r.logo}
-            backgroundKey={r.backgroundKey}
-            viewLabel={viewLabel}
-            productsSuffix={productsSuffix}
-            href={`/merk/${r.slug}`}
-          />
-        </li>
-      ))}
+    <ul className={BRAND_SPOTLIGHT_GRID_CLASS}>
+      {list.map((r, index) => {
+        const slug = r.slug?.trim() ?? ""
+        const href = brandSpotlightHref({ href: r.href, slug })
+        const background = BACKGROUNDS[r.backgroundKey ?? "light"]
+        const position = r.logoPosition ?? "left"
+        const align =
+          position === "center"
+            ? "items-center text-center"
+            : position === "right"
+              ? "items-end text-right"
+              : "items-start text-left"
+        const place =
+          position === "center"
+            ? "justify-center"
+            : position === "right"
+              ? "justify-end"
+              : "justify-start"
+        const overlay = Math.min(100, Math.max(0, r.overlayStrength ?? 62)) / 100
+        const logoSize = Math.min(160, Math.max(48, r.logoSize ?? 96))
+        const styled = r.card
+          ? { ...r.card, logo: r.card.logo || r.logo || null }
+          : null
+        const card = (
+          <article className={BRAND_SPOTLIGHT_FRAME_CLASS}>
+            <div
+              className="absolute inset-0"
+              style={{ background }}
+              aria-hidden
+            />
+            {r.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={r.image}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            ) : null}
+            {styled ? (
+              <PromoCardOverlay
+                card={styled}
+                title={r.name}
+                description={r.description}
+                ctaLabel={r.ctaLabel}
+              />
+            ) : (
+              <div className={`pointer-events-none absolute inset-0 z-[1] flex h-full items-center p-3 tablet:p-4 ${place}`}>
+                <div className={`relative flex h-full max-w-[78%] flex-col justify-center gap-1 ${align}`}>
+                  <div
+                    className="absolute -inset-x-6 -inset-y-3 rounded-[2rem] blur-md"
+                    style={{ background: `rgba(255,255,255,${overlay})` }}
+                    aria-hidden
+                  />
+                  {r.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={r.logo}
+                      alt=""
+                      className="relative h-auto w-auto max-w-full object-contain"
+                      style={{ maxHeight: `min(${logoSize}px, 42%)` }}
+                    />
+                  ) : (
+                    <p
+                      className="relative text-[18px] font-bold leading-none tracking-tight tablet:text-[22px]"
+                      style={{ color: r.textColor || "#111827" }}
+                    >
+                      {r.name}
+                    </p>
+                  )}
+                  {r.description ? (
+                    <p
+                      className="relative line-clamp-2 text-[12px] font-medium leading-snug tablet:text-[13px]"
+                      style={{ color: r.textColor || "#111827" }}
+                    >
+                      {r.description}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            )}
+            <span className="sr-only">
+              {viewLabel} {r.name}
+              {r.productCount > 0 ? `, ${r.productCount} ${productsSuffix ?? ""}` : ""}
+            </span>
+          </article>
+        )
+        return (
+          <li key={`${slug || r.name || "merk"}-${index}`}>
+            {href ? (
+              <Link href={href} className="block">
+                {card}
+              </Link>
+            ) : (
+              card
+            )}
+          </li>
+        )
+      })}
     </ul>
   )
 }

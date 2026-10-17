@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   AdCampaignLandingPreview,
   AD_CAMPAIGN_DESIGNS,
@@ -9,12 +9,20 @@ import {
   Input,
   Notice,
 } from "@europmade/ui"
+import {
+  DEFAULT_SELLER_BANNER_PRESENTATION,
+  explainAdCampaign,
+  formatUtcDate,
+  parseSellerBannerPresentation,
+  resolveMediaUrl,
+  type AdVisibilityReason,
+  type SellerBannerPresentation,
+} from "@europmade/utils"
 import { SellerGate } from "../../_components/seller-gate"
 import { DashboardSection } from "../../_components/dashboard-section"
 import { EmptyState } from "../../_components/empty-state"
 import { formatEuro } from "../../../_components/storefront-shell"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
-import { storefrontIntlLocale } from "../../../_lib/i18n/locales"
 import { t, type StorefrontLocale } from "../../../_lib/i18n/messages"
 import { statusLabel as campaignStatusLabel } from "../../../_lib/i18n/status-labels"
 import { medusaBackendUrl } from "../../../_lib/medusa-backend-url"
@@ -22,6 +30,7 @@ import {
   listOwnProducts,
   type CatalogProduct,
 } from "../../_lib/product-cloud-api"
+import { resolveSellerMediaUrl } from "../../_lib/media-url"
 
 type Placement = "homepage" | "category" | "search"
 type WeekSlot = {
@@ -41,6 +50,8 @@ type Campaign = {
   total_price: number
   destination_url: string
   image_url: string | null
+  logo_url?: string | null
+  banner_presentation?: SellerBannerPresentation | null
   headline: string | null
   subline: string | null
   cta_key: string
@@ -49,6 +60,22 @@ type Campaign = {
   campaign_slug: string | null
   seller_public_slug: string | null
   admin_note: string | null
+  visibility?: {
+    approved: boolean
+    publicNow: boolean
+    activeFrom: string | null
+    activeUntil: string | null
+    reasons: AdVisibilityReason[]
+    liveMarkets: string[]
+    markets: string[]
+    suppressed?: boolean
+  }
+  products?: Array<{
+    id: string
+    title: string | null
+    image_url: string | null
+    href?: string | null
+  }>
   weeks: Array<{
     market_code: string
     week_start: string
@@ -57,9 +84,29 @@ type Campaign = {
   }>
   created_at: string
 }
-type Brand = { id: string; name: string; logo_url: string | null }
-
 const PLACEMENTS: Placement[] = ["homepage", "category", "search"]
+
+function browserMedia(raw: string | null | undefined): string | null {
+  return resolveMediaUrl(raw, medusaBackendUrl())
+}
+
+type AdProductPick = {
+  id: string
+  title: string | null
+  primary_image_url?: string | null
+  sku_hint?: string | null
+  identifier_value?: string | null
+}
+
+function pickFromCatalog(product: CatalogProduct): AdProductPick {
+  return {
+    id: product.id,
+    title: product.title,
+    primary_image_url: resolveSellerMediaUrl(product.primary_image_url) || null,
+    sku_hint: product.sku_hint,
+    identifier_value: product.identifier_value,
+  }
+}
 
 const MARKET_OPTIONS = [
   { code: "NL", label: "Nederland" },
@@ -97,10 +144,44 @@ function ctaLabel(key: string, locale: StorefrontLocale): string {
   return opt.nl
 }
 
-function formatWeekRange(ws: string, we: string, intl: string): string {
-  const s = new Date(ws)
-  const e = new Date(we)
-  return `${s.toLocaleDateString(intl, { day: "numeric", month: "short" })} – ${e.toLocaleDateString(intl, { day: "numeric", month: "short", year: "numeric" })}`
+function formatWeekRange(ws: string, we: string): string {
+  const start = formatUtcDate(ws)
+  const end = formatUtcDate(we)
+  if (!start || !end) return "—"
+  return `${start} – ${end} UTC`
+}
+
+function campaignWindow(weeks: Campaign["weeks"]): string {
+  const starts = weeks
+    .map((week) => new Date(week.week_start).getTime())
+    .filter((value) => Number.isFinite(value))
+  const ends = weeks
+    .map((week) => new Date(week.week_end).getTime())
+    .filter((value) => Number.isFinite(value))
+  if (starts.length === 0 || ends.length === 0) return "—"
+  return formatWeekRange(
+    new Date(Math.min(...starts)).toISOString(),
+    new Date(Math.max(...ends)).toISOString()
+  )
+}
+
+function reasonText(code: AdVisibilityReason, locale: StorefrontLocale): string {
+  const nl: Record<AdVisibilityReason, string> = {
+    draft: "Concept, nog niet ingediend.",
+    pending_review: "Nog niet goedgekeurd door EuropMade.",
+    rejected: "Afgekeurd.",
+    cancelled: "Geannuleerd.",
+    not_approved: "Geen goedgekeurde status.",
+    no_weeks: "Geen geboekte weken.",
+    not_started: "De geboekte periode is nog niet begonnen.",
+    expired: "De geboekte periode is afgelopen.",
+    outside_period: "Buiten de geboekte weken.",
+    market_mismatch: "Niet geboekt voor dit land.",
+    placement_mismatch: "Andere plaatsing.",
+    later_booking: "Een eerdere boeking op dezelfde plaatsing wordt getoond. Deze boeking blijft bestaan.",
+  }
+  if (locale === "nl") return nl[code]
+  return code.replaceAll("_", " ")
 }
 
 function weekKey(iso: string): string {
@@ -134,13 +215,12 @@ async function apiUpload(path: string, formData: FormData) {
 
 export default function SellerBannerCampaignsPage() {
   const locale = useStorefrontLocale()
-  const intl = storefrontIntlLocale(locale)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const logoInputRef = useRef<HTMLInputElement>(null)
 
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [weekSlots, setWeekSlots] = useState<WeekSlot[]>([])
-  const [brands, setBrands] = useState<Brand[]>([])
 
   const [name, setName] = useState("")
   const [placement, setPlacement] = useState<Placement>("homepage")
@@ -148,12 +228,17 @@ export default function SellerBannerCampaignsPage() {
   const [selectedMarkets, setSelectedMarkets] = useState<string[]>([])
   const [selectedWeeks, setSelectedWeeks] = useState<string[]>([])
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [presentation, setPresentation] = useState<SellerBannerPresentation>(
+    DEFAULT_SELLER_BANNER_PRESENTATION
+  )
   const [headline, setHeadline] = useState("")
   const [subline, setSubline] = useState("")
   const [ctaKey, setCtaKey] = useState("view_product")
   const [designKey, setDesignKey] = useState("design_1")
-  const [useBrandLogo, setUseBrandLogo] = useState(true)
   const [uploading, setUploading] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [openVisibilityId, setOpenVisibilityId] = useState<string | null>(null)
   const [formNote, setFormNote] = useState<{ type: "info" | "error"; msg: string } | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
@@ -165,13 +250,8 @@ export default function SellerBannerCampaignsPage() {
   const [productQuery, setProductQuery] = useState("")
   const [productHits, setProductHits] = useState<CatalogProduct[]>([])
   const [productSearchBusy, setProductSearchBusy] = useState(false)
-  const [selectedProducts, setSelectedProducts] = useState<CatalogProduct[]>([])
-
-  const activeBrandLogo = useMemo(() => {
-    if (!useBrandLogo) return null
-    const withLogo = brands.find((b) => b.logo_url)
-    return withLogo?.logo_url ?? null
-  }, [brands, useBrandLogo])
+  const [productSearchError, setProductSearchError] = useState<string | null>(null)
+  const [selectedProducts, setSelectedProducts] = useState<AdProductPick[]>([])
 
   const selectedProductIds = useMemo(
     () => selectedProducts.map((p) => p.id),
@@ -191,23 +271,10 @@ export default function SellerBannerCampaignsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [catRes, brandRes] = await Promise.all([
-          apiFetch("/store/product-cloud/categories"),
-          apiFetch("/store/brands"),
-        ])
+        const catRes = await apiFetch("/store/product-cloud/categories")
         if (catRes.ok) {
           const data = await catRes.json()
           setCategories(data.categories || [])
-        }
-        if (brandRes.ok) {
-          const data = await brandRes.json()
-          setBrands(
-            (data.brands || []).map((b: Record<string, unknown>) => ({
-              id: b.id as string,
-              name: (b.name as string) || "",
-              logo_url: (b.logo_url as string) || null,
-            }))
-          )
         }
       } catch { /* noop */ }
     }
@@ -263,13 +330,19 @@ export default function SellerBannerCampaignsPage() {
     let cancelled = false
     const handle = window.setTimeout(async () => {
       setProductSearchBusy(true)
+      setProductSearchError(null)
       try {
         const res = await listOwnProducts({
           q: productQuery.trim() || undefined,
         })
         if (!cancelled) setProductHits(res.products || [])
-      } catch {
-        if (!cancelled) setProductHits([])
+      } catch (error) {
+        if (!cancelled) {
+          setProductHits([])
+          setProductSearchError(
+            error instanceof Error ? error.message : "Producten laden mislukt."
+          )
+        }
       } finally {
         if (!cancelled) setProductSearchBusy(false)
       }
@@ -286,6 +359,8 @@ export default function SellerBannerCampaignsPage() {
     setSelectedMarkets([])
     setSelectedWeeks([])
     setImageUrl(null)
+    setLogoUrl(null)
+    setPresentation(DEFAULT_SELLER_BANNER_PRESENTATION)
     setHeadline("")
     setSubline("")
     setCtaKey("view_product")
@@ -319,6 +394,8 @@ export default function SellerBannerCampaignsPage() {
     )
     setSelectedWeeks([])
     setImageUrl(c.image_url || null)
+    setLogoUrl(c.logo_url || null)
+    setPresentation(parseSellerBannerPresentation(c.banner_presentation))
     setHeadline(c.headline || "")
     setSubline(c.subline || "")
     setCtaKey(c.cta_key || "view_product")
@@ -327,19 +404,32 @@ export default function SellerBannerCampaignsPage() {
     setFormNote(null)
 
     const ids = Array.isArray(c.product_ids) ? c.product_ids : []
+    const saved = new Map(
+      (c.products ?? []).map((product) => [
+        product.id,
+        {
+          id: product.id,
+          title: product.title,
+          primary_image_url: browserMedia(product.image_url),
+        } satisfies AdProductPick,
+      ])
+    )
+    let picks: AdProductPick[] = ids.map(
+      (id) => saved.get(id) ?? { id, title: id, primary_image_url: null }
+    )
     if (ids.length) {
       try {
         const res = await listOwnProducts()
         const map = new Map((res.products || []).map((p) => [p.id, p]))
-        setSelectedProducts(
-          ids.map((id) => map.get(id)).filter(Boolean) as CatalogProduct[]
-        )
+        picks = ids.map((id) => {
+          const row = map.get(id)
+          return row ? pickFromCatalog(row) : (saved.get(id) ?? picks.find((p) => p.id === id)!)
+        })
       } catch {
-        setSelectedProducts([])
+        // Bewaar de opgeslagen selectie als de cataloguslijst niet laadt.
       }
-    } else {
-      setSelectedProducts([])
     }
+    setSelectedProducts(ids.length ? picks : [])
 
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
@@ -357,7 +447,7 @@ export default function SellerBannerCampaignsPage() {
     )
   }
 
-  function toggleProduct(p: CatalogProduct) {
+  function toggleProduct(p: AdProductPick) {
     setSelectedProducts((prev) => {
       if (prev.some((x) => x.id === p.id)) {
         return prev.filter((x) => x.id !== p.id)
@@ -387,14 +477,15 @@ export default function SellerBannerCampaignsPage() {
       selectedProducts.map((p) => ({
         id: p.id,
         title: p.title,
-        image_url: p.primary_image_url ?? null,
-        href: null,
+        image_url: browserMedia(p.primary_image_url),
+        href: `/product/${encodeURIComponent(p.id)}`,
       })),
     [selectedProducts]
   )
 
-  async function handleFileUpload(file: File) {
-    setUploading(true)
+  async function handleFileUpload(file: File, target: "banner" | "logo") {
+    if (target === "logo") setUploadingLogo(true)
+    else setUploading(true)
     setFormNote(null)
     try {
       const fd = new FormData()
@@ -402,7 +493,9 @@ export default function SellerBannerCampaignsPage() {
       const res = await apiUpload("/store/advertising/media", fd)
       if (res.ok) {
         const data = await res.json()
-        setImageUrl(data.url)
+        const url = typeof data.url === "string" ? data.url : ""
+        if (target === "logo") setLogoUrl(url || null)
+        else setImageUrl(url || null)
       } else {
         const err = await res.json().catch(() => ({}))
         setFormNote({
@@ -413,7 +506,8 @@ export default function SellerBannerCampaignsPage() {
     } catch {
       setFormNote({ type: "error", msg: t("adUploadFailed", locale) })
     } finally {
-      setUploading(false)
+      if (target === "logo") setUploadingLogo(false)
+      else setUploading(false)
     }
   }
 
@@ -441,6 +535,8 @@ export default function SellerBannerCampaignsPage() {
       markets: selectedMarkets,
       week_starts: selectedWeeks,
       image_url: imageUrl || undefined,
+      logo_url: logoUrl || undefined,
+      banner_presentation: presentation,
       headline: headline.trim() || undefined,
       subline: subline.trim() || undefined,
       cta_key: ctaKey,
@@ -585,36 +681,78 @@ export default function SellerBannerCampaignsPage() {
               <p className="text-[10px] text-wf-400 mb-2">{t("adBannerFormat", locale)}: {BANNER_REC_W}×{BANNER_REC_H} px ({BANNER_RATIO})</p>
               <div className="flex items-center gap-3">
                 <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f) }} />
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFileUpload(f, "banner") }} />
                 <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
                   {uploading ? t("adUploading", locale) : t("adUploadImage", locale)}
                 </Button>
                 {imageUrl && (
                   <div className="h-16 w-24 overflow-hidden rounded border border-wf-300 bg-white">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={imageUrl} alt="" className="h-full w-full object-contain" />
+                    <img src={browserMedia(imageUrl) || ""} alt="" className="h-full w-full object-contain" />
                   </div>
                 )}
               </div>
             </div>
 
             <div className="mt-4">
-              <label className="flex items-center gap-2 text-xs text-wf-800">
-                <input type="checkbox" checked={useBrandLogo} onChange={(e) => setUseBrandLogo(e.target.checked)} className="accent-wf-800" />
-                {t("adUseBrandLogo", locale)}
-              </label>
-              {useBrandLogo && !activeBrandLogo && (
-                <p className="mt-1 text-[10px] text-wf-400">{t("adNoLogoAvailable", locale)}</p>
-              )}
-              {useBrandLogo && activeBrandLogo && (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <div className="h-8 w-16 overflow-hidden rounded border border-wf-200 bg-white p-1">
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">{t("adLogoUpload", locale)}</label>
+              <p className="mb-2 text-[10px] text-wf-500">{t("adLogoHint", locale)}</p>
+              <div className="flex items-center gap-3">
+                <input ref={logoInputRef} type="file" accept="image/png,image/webp" className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleFileUpload(f, "logo") }} />
+                <Button type="button" variant="outline" size="sm" disabled={uploadingLogo} onClick={() => logoInputRef.current?.click()}>
+                  {uploadingLogo ? t("adUploading", locale) : t("adUploadImage", locale)}
+                </Button>
+                {logoUrl ? (
+                  <div className="flex h-10 w-16 items-center justify-center rounded border border-dashed border-wf-300 bg-transparent p-1">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={activeBrandLogo} alt="" className="h-full w-full object-contain" />
+                    <img src={browserMedia(logoUrl) || ""} alt="" className="max-h-full max-w-full object-contain" />
                   </div>
-                  <span className="text-[10px] text-wf-500">{t("adLogoFromBrand", locale)}</span>
-                </div>
-              )}
+                ) : null}
+                {logoUrl ? (
+                  <button type="button" className="text-[10px] text-wf-500 underline" onClick={() => setLogoUrl(null)}>
+                    {t("commonCancel", locale)}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 tablet:grid-cols-4">
+              <label className="text-[11px] text-wf-700">
+                {t("adImagePosition", locale)}
+                <select className={`${selectClass} mt-1`} value={presentation.imagePositionX} onChange={(e) => setPresentation((prev) => ({ ...prev, imagePositionX: Number(e.target.value) }))}>
+                  <option value={0}>Links</option>
+                  <option value={50}>Midden</option>
+                  <option value={100}>Rechts</option>
+                </select>
+                <select className={`${selectClass} mt-1`} value={presentation.imagePositionY} onChange={(e) => setPresentation((prev) => ({ ...prev, imagePositionY: Number(e.target.value) }))}>
+                  <option value={0}>Boven</option>
+                  <option value={50}>Midden</option>
+                  <option value={100}>Onder</option>
+                </select>
+              </label>
+              <label className="text-[11px] text-wf-700">
+                {t("adOverlayPosition", locale)}
+                <select className={`${selectClass} mt-1`} value={presentation.overlayAlign} onChange={(e) => setPresentation((prev) => ({ ...prev, overlayAlign: e.target.value === "right" ? "right" : "left" }))}>
+                  <option value="left">Links</option>
+                  <option value="right">Rechts</option>
+                </select>
+              </label>
+              <label className="text-[11px] text-wf-700">
+                {t("adTextColor", locale)}
+                <select className={`${selectClass} mt-1`} value={presentation.textColor} onChange={(e) => setPresentation((prev) => ({ ...prev, textColor: e.target.value === "black" ? "black" : "white" }))}>
+                  <option value="white">Wit</option>
+                  <option value="black">Zwart</option>
+                </select>
+              </label>
+              <label className="text-[11px] text-wf-700">
+                {t("adLogoScale", locale)}
+                <select className={`${selectClass} mt-1`} value={presentation.logoScale} onChange={(e) => setPresentation((prev) => ({ ...prev, logoScale: Number(e.target.value) }))}>
+                  <option value={0.75}>Klein</option>
+                  <option value={1}>Normaal</option>
+                  <option value={1.35}>Groot</option>
+                </select>
+              </label>
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-3 tablet:grid-cols-2">
@@ -654,6 +792,9 @@ export default function SellerBannerCampaignsPage() {
               onChange={(e) => setProductQuery(e.target.value)}
               placeholder={t("adProductSearchPlaceholder", locale)}
             />
+            {productSearchError ? (
+              <p className="mt-2 text-[10px] text-red-700">{productSearchError}</p>
+            ) : null}
             {productSearchBusy && (
               <p className="mt-2 text-[10px] text-wf-400">{t("adProductSearching", locale)}</p>
             )}
@@ -667,14 +808,14 @@ export default function SellerBannerCampaignsPage() {
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => toggleProduct(p)}
+                      onClick={() => toggleProduct(pickFromCatalog(p))}
                       className={`flex w-full items-center gap-3 border-b border-wf-100 px-3 py-2 text-left last:border-b-0 ${selected ? "bg-wf-100" : "hover:bg-wf-50"}`}
                     >
                       <input type="checkbox" readOnly checked={selected} className="accent-wf-800" />
                       <div className="h-10 w-10 shrink-0 overflow-hidden rounded border border-wf-200 bg-wf-50">
                         {p.primary_image_url ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.primary_image_url} alt="" className="h-full w-full object-contain" />
+                          <img src={resolveSellerMediaUrl(p.primary_image_url)} alt="" className="h-full w-full object-contain" />
                         ) : null}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -719,8 +860,10 @@ export default function SellerBannerCampaignsPage() {
                 headline,
                 subline,
                 ctaLabel: ctaLabel(ctaKey, locale),
-                imageUrl,
-                logoUrl: activeBrandLogo,
+                imageUrl: browserMedia(imageUrl),
+                logoUrl: browserMedia(logoUrl),
+                presentation,
+                previewLabel: t("adPreviewNotPublic", locale),
                 headlineFallback: t("adPreviewHeadline", locale),
                 sublineFallback: t("adPreviewSubline", locale),
               }}
@@ -748,7 +891,7 @@ export default function SellerBannerCampaignsPage() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <input type="checkbox" checked={selected} disabled={!fullyAvailable} onChange={() => toggleWeek(slot.week_start)} className="accent-wf-800" />
-                            <span className="text-xs font-medium text-wf-800">{formatWeekRange(slot.week_start, slot.week_end, intl)}</span>
+                            <span className="text-xs font-medium text-wf-800">{formatWeekRange(slot.week_start, slot.week_end)}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {fullyAvailable ? (
@@ -792,8 +935,10 @@ export default function SellerBannerCampaignsPage() {
                     headline,
                     subline,
                     ctaLabel: ctaLabel(ctaKey, locale),
-                    imageUrl,
-                    logoUrl: activeBrandLogo,
+                    imageUrl: browserMedia(imageUrl),
+                    logoUrl: browserMedia(logoUrl),
+                    presentation,
+                    previewLabel: t("adPreviewNotPublic", locale),
                     headlineFallback: t("adPreviewHeadline", locale),
                     sublineFallback: t("adPreviewSubline", locale),
                   }}
@@ -813,7 +958,7 @@ export default function SellerBannerCampaignsPage() {
                 <div><strong>{t("adCountries", locale)}:</strong> {selectedMarkets.join(", ")}</div>
                 <div>
                   <strong>{t("adPeriod", locale)}:</strong>{" "}
-                  {selectedWeeks.map((ws) => { const slot = weekSlots.find((s) => s.week_start === ws); return slot ? formatWeekRange(slot.week_start, slot.week_end, intl) : ws }).join("; ")}
+                  {selectedWeeks.map((ws) => { const slot = weekSlots.find((s) => s.week_start === ws); return slot ? formatWeekRange(slot.week_start, slot.week_end) : ws }).join("; ")}
                 </div>
                 <div><strong>{t("adSelectedProducts", locale)}:</strong> {selectedProducts.map((p) => p.title || p.id).join(", ")}</div>
                 <div className="text-[16px] font-bold text-wf-900"><strong>{t("commonTotal", locale)}:</strong> {formatEuro(totalPrice)}</div>
@@ -862,8 +1007,20 @@ export default function SellerBannerCampaignsPage() {
                 </tr>
               </thead>
               <tbody>
-                {campaigns.map((c) => (
-                  <tr key={c.id} className="border-b border-wf-200 last:border-b-0">
+                {campaigns.map((c) => {
+                  const visibility =
+                    c.visibility ??
+                    explainAdCampaign({
+                      id: c.id,
+                      status: c.status,
+                      placement: c.placement,
+                      markets: c.markets,
+                      weeks: c.weeks,
+                    })
+                  const canPreview = visibility.approved
+                  return (
+                  <Fragment key={c.id}>
+                  <tr className="border-b border-wf-200 last:border-b-0">
                     <td className="px-4 py-2.5">
                       <Badge
                         variant={
@@ -890,7 +1047,7 @@ export default function SellerBannerCampaignsPage() {
                     <td className="px-4 py-2.5 font-medium text-wf-800">{c.name}</td>
                     <td className="px-4 py-2.5 text-wf-700">{placementLabel(c.placement, locale)}{c.target_value ? ` · ${c.target_value}` : ""}</td>
                     <td className="px-4 py-2.5 text-wf-700">{c.markets.join(", ")}</td>
-                    <td className="px-4 py-2.5 text-wf-700">{c.weeks.length > 0 ? formatWeekRange(c.weeks[0].week_start, c.weeks[c.weeks.length - 1].week_end, intl) : "—"}</td>
+                    <td className="px-4 py-2.5 text-wf-700">{campaignWindow(c.weeks)}</td>
                     <td className="px-4 py-2.5 font-medium text-wf-800">{formatEuro(c.total_price)}</td>
                     <td className="px-4 py-2.5">
                       {c.status === "rejected" && (
@@ -903,9 +1060,73 @@ export default function SellerBannerCampaignsPage() {
                           {t("adEditResubmit", locale)}
                         </Button>
                       )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="ml-2"
+                        onClick={() =>
+                          setOpenVisibilityId((current) => (current === c.id ? null : c.id))
+                        }
+                      >
+                        {t("adVisibility", locale)}
+                      </Button>
                     </td>
                   </tr>
-                ))}
+                  {openVisibilityId === c.id ? (
+                    <tr className="border-b border-wf-200 bg-wf-50">
+                      <td colSpan={7} className="px-4 py-4">
+                        <p className="text-[11px] font-semibold text-amber-900">{t("adPreviewNotPublic", locale)}</p>
+                        <dl className="mt-2 grid gap-1 text-[11px] text-wf-800 sm:grid-cols-2">
+                          <div>{t("commonStatus", locale)}: {campaignStatusLabel(c.status, locale)} ({visibility.approved ? "goedgekeurd" : "niet goedgekeurd"})</div>
+                          <div>{t("adPlacement", locale)}: {placementLabel(c.placement, locale)}</div>
+                          <div>{t("adCountries", locale)}: {(visibility.markets.length ? visibility.markets : c.markets).join(", ") || "—"}</div>
+                          <div>{t("adPeriod", locale)}: {visibility.activeFrom && visibility.activeUntil ? formatWeekRange(visibility.activeFrom, visibility.activeUntil) : campaignWindow(c.weeks)}</div>
+                          <div>Publiek nu: {visibility.publicNow ? "ja" : "nee"}</div>
+                          {!visibility.publicNow && visibility.reasons.length > 0 ? (
+                            <div>Reden: {visibility.reasons.map((code) => reasonText(code, locale)).join(" ")}</div>
+                          ) : null}
+                        </dl>
+                        <div className="mt-3 max-w-4xl">
+                          <AdCampaignLandingPreview
+                            banner={{
+                              designKey: c.design_key,
+                              headline: c.headline,
+                              subline: c.subline,
+                              ctaLabel: ctaLabel(c.cta_key, locale),
+                              imageUrl: browserMedia(c.image_url),
+                              logoUrl: browserMedia(c.logo_url),
+                              presentation: parseSellerBannerPresentation(c.banner_presentation),
+                              previewLabel: "Preview",
+                            }}
+                            sellerName={c.name}
+                            products={(c.products ?? []).map((product) => ({
+                              id: product.id,
+                              title: product.title,
+                              image_url: browserMedia(product.image_url),
+                              href: product.href || `/product/${encodeURIComponent(product.id)}`,
+                            }))}
+                            linkProducts
+                          />
+                        </div>
+                        {canPreview ? (
+                          <a
+                            className="mt-3 inline-block text-[11px] font-semibold text-blue-700 underline"
+                            href={`/?adPreview=${encodeURIComponent(c.id)}&market=NL`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {t("adStorefrontPreview", locale)}
+                          </a>
+                        ) : (
+                          <p className="mt-3 text-[11px] text-wf-500">Een niet-goedgekeurde campagne krijgt geen storefront-preview.</p>
+                        )}
+                      </td>
+                    </tr>
+                  ) : null}
+                  </Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>

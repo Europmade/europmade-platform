@@ -66,37 +66,43 @@ export function CategoryHero({
         </ol>
       </nav>
 
-      <div className="grid items-center gap-3 desktop:grid-cols-[1.05fr_0.95fr] desktop:gap-4">
-        <div className="flex min-w-0 flex-col justify-center desktop:min-h-[150px]">
-          <h1 className="text-[21px] font-bold leading-tight tracking-tight text-wf-900 tablet:text-[25px]">
-            {title}
-          </h1>
-          <p className="mt-1.5 max-w-xl text-[12.5px] leading-snug text-wf-600 line-clamp-3 tablet:text-[13px]">
+      <div className="max-w-3xl">
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight text-wf-900 tablet:text-[34px]">
+          {title}
+        </h1>
+        {intro ? (
+          <p className="mt-1.5 max-w-2xl text-[13px] leading-snug text-wf-600">
             {intro}
           </p>
-          <ul className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-wf-700">
-            <li>
-              <span className="font-bold text-wf-900">{stats.productCount}</span>{" "}
-              {t("productsSuffix", locale)}
-            </li>
-            <li>
-              <span className="font-bold text-wf-900">{stats.producerCount}</span>{" "}
-              {t("producers", locale)}
-            </li>
-            <li>
-              <span className="font-bold text-wf-900">{stats.retailerCount}</span>{" "}
-              {t("retailers", locale)}
-            </li>
-            <li>
-              <span className="font-bold text-wf-900">
-                {stats.productionCountryCount}
-              </span>{" "}
-              {t("productionCountries", locale)}
-            </li>
-          </ul>
-        </div>
+        ) : null}
+        <ul className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-wf-700">
+          <li>
+            <span className="font-bold text-wf-900">{stats.productCount}</span>{" "}
+            {t("productsSuffix", locale)}
+          </li>
+          <li>
+            <span className="font-bold text-wf-900">{stats.producerCount}</span>{" "}
+            {t("producers", locale)}
+          </li>
+          <li>
+            <span className="font-bold text-wf-900">{stats.retailerCount}</span>{" "}
+            {t("retailers", locale)}
+          </li>
+          <li>
+            <span className="font-bold text-wf-900">
+              {stats.productionCountryCount}
+            </span>{" "}
+            {t("productionCountries", locale)}
+          </li>
+        </ul>
+      </div>
 
-        <div data-banner-priority={bannerPriority ?? "none"} data-cms-section="banner">
+      {banner ? (
+        <div
+          className="mt-4 w-full"
+          data-banner-priority={bannerPriority ?? "none"}
+          data-cms-section="banner"
+        >
           <AdSlot
             position={1}
             location="category"
@@ -105,10 +111,9 @@ export function CategoryHero({
             adLabel={t("advertisement", locale)}
             productKind={productKind}
             flush
-            compact
           />
         </div>
-      </div>
+      ) : null}
     </section>
   )
 }

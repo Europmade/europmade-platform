@@ -30,13 +30,19 @@ import {
   DEFAULT_STOREFRONT_LOCALE,
   type StorefrontLocale,
 } from "./i18n/locales"
+import { getStorefrontMarketFromRequest } from "./i18n/get-storefront-market"
+import type { EuMarketCode } from "@europmade/types"
+import type { ProductAvailability } from "@europmade/utils"
 import {
   categoryNavLabel,
   countryDisplayLabel,
   t,
   tFormat,
 } from "./i18n/messages"
-import { resolveOfferDeliveryLabel } from "./offer-delivery"
+import {
+  FREE_SHIPPING_SENTINEL,
+  resolveOfferDeliveryLabel,
+} from "./offer-delivery"
 
 export type DataSource = "api"
 
@@ -133,14 +139,15 @@ function hasValidCommerceOffer(item: CatalogListProduct): boolean {
 
 async function toStorefrontProducts(
   items: CatalogListProduct[],
-  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
+  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE,
+  market: EuMarketCode = "NL"
 ): Promise<ListingProduct[]> {
   const backendOrigin = await getPageBackendOrigin()
   const coarse = items.filter(hasValidCommerceOffer)
   const checks = await Promise.all(
     coarse.map(async (item) => {
       try {
-        const detail = await getCatalogProduct(item.id)
+        const detail = await getCatalogProduct(item.id, market)
         const candidates = detail.offers.filter(
           (o) => o.offer_id.startsWith("offr_") && Number(o.quantity_available) > 0
         )
@@ -178,11 +185,14 @@ export async function resolveListingProducts(opts?: {
   offset?: number
   limit?: number
   locale?: StorefrontLocale
+  market?: EuMarketCode
 }): Promise<{ products: ListingProduct[]; count: number; source: DataSource }> {
   const locale = opts?.locale ?? DEFAULT_STOREFRONT_LOCALE
+  const market = opts?.market ?? (await getStorefrontMarketFromRequest())
   const backendOrigin = await getPageBackendOrigin()
   try {
     const res = await listCatalogProducts({
+      region_code: market,
       category: opts?.categorySlug,
       q: opts?.query,
       ids: opts?.ids,
@@ -237,7 +247,7 @@ export async function resolveBrandPage(
 ): Promise<BrandPageData | null> {
   try {
     const page = await getCatalogBrand(slug, {
-      region_code: "NL",
+      region_code: await getStorefrontMarketFromRequest(),
       locale,
     })
     const backendOrigin = await getPageBackendOrigin()
@@ -411,7 +421,8 @@ function mapOffers(
 
 async function mapApiDetail(
   detail: CatalogProductDetail,
-  locale: StorefrontLocale
+  locale: StorefrontLocale,
+  market?: EuMarketCode
 ): Promise<PdpDetail> {
   const p = detail.product
   const backendOrigin = await getPageBackendOrigin()
@@ -463,8 +474,10 @@ async function mapApiDetail(
   try {
     const relatedList = await listCatalogProducts({
       category: p.category_names[0],
+      region_code: market,
+      limit: 8,
     })
-    related = (await toStorefrontProducts(relatedList.products, locale))
+    related = (await toStorefrontProducts(relatedList.products, locale, market ?? "NL"))
       .filter((x) => x.slug !== p.id && x.categorySlugs.includes(catSlug))
       .slice(0, 5)
   } catch {
@@ -562,6 +575,8 @@ async function mapApiDetail(
         }
       : null,
     offers,
+    availability: detail.availability ?? (offers.length > 0 ? "orderable" : "not_deliverable"),
+    alternatives: offers.length > 0 ? [] : related,
     buyBoxNotice: t("buyBoxNotice", locale),
     productReviews:
       productReviews.length > 0
@@ -706,10 +721,12 @@ function buildGallerySlides(
  */
 export async function resolvePdpDetail(
   slug: string,
-  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
+  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE,
+  market?: EuMarketCode
 ): Promise<{ detail: PdpDetail; source: DataSource } | null> {
   try {
-    const api = await getCatalogProduct(slug, "NL", { cache: "no-store" })
+    const region = market ?? (await getStorefrontMarketFromRequest())
+    const api = await getCatalogProduct(slug, region, { cache: "no-store" })
     const validOffers = []
     for (const offer of api.offers) {
       if (!offer.offer_id.startsWith("offr_")) continue
@@ -718,13 +735,21 @@ export async function resolvePdpDetail(
         validOffers.push(offer)
       }
     }
-    if (validOffers.length === 0) return null
+    const availability: ProductAvailability =
+      validOffers.length > 0
+        ? "orderable"
+        : api.availability && api.availability !== "orderable"
+          ? api.availability
+          : "out_of_stock"
     return {
-      detail: await mapApiDetail({ ...api, offers: validOffers }, locale),
+      detail: await mapApiDetail(
+        { ...api, offers: validOffers, availability },
+        locale,
+        region
+      ),
       source: "api",
     }
   } catch {
-    // Niet zichtbaar op storefront zonder geldige Commerce Cloud-offers.
     return null
   }
 }

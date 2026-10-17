@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button, Notice } from "@europmade/ui"
 import { SellerGate } from "../../../_components/seller-gate"
 import {
@@ -13,9 +13,12 @@ import {
   shippingProfileSaveErrorMessage,
   type SellerShippingProfile,
 } from "../../../_lib/commerce-cloud-api"
+import { shippingProfileReturnPath } from "../../../_lib/shipping-profile-return"
 
 export default function NewShippingProfilePage() {
   const router = useRouter()
+  const search = useSearchParams()
+  const returnTo = search.get("returnTo")
   const [draft, setDraft] = useState<Partial<SellerShippingProfile>>(
     buildEmptyProfileDraft()
   )
@@ -32,7 +35,11 @@ export default function NewShippingProfilePage() {
         name: draft.name?.trim() || "",
         status: asActive ? "active" : "draft",
       })
-      router.push(`/seller/settings/shipping/${res.shipping_profile.id}`)
+      const back = shippingProfileReturnPath(
+        returnTo,
+        res.shipping_profile.id
+      )
+      router.push(back || `/seller/settings/shipping/${res.shipping_profile.id}`)
     } catch (err: unknown) {
       setError(shippingProfileSaveErrorMessage(err))
     } finally {
@@ -49,6 +56,11 @@ export default function NewShippingProfilePage() {
       ]}
     >
       <h1 className="mb-4 text-lg font-bold text-wf-900">Nieuw verzendprofiel</h1>
+      {returnTo ? (
+        <p className="mb-3 text-xs text-wf-600">
+          Na opslaan ga je terug naar het product waar je mee bezig was.
+        </p>
+      ) : null}
       {error ? <Notice variant="warning">{error}</Notice> : null}
       <ShippingProfileEditor
         draft={draft}

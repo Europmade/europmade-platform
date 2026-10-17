@@ -24,6 +24,11 @@ import {
   type BulkGenericRow,
 } from "../../../../lib/product-approval-admin-api"
 import { displayMediaUrl } from "../../../../lib/media-url"
+import {
+  ProductSectionNav,
+  offerCountLabel,
+} from "../../../../components/product-cloud/product-section-nav"
+import { BulkApprovalDialog } from "../../../../components/product-cloud/bulk-approval-dialog"
 
 function formatDate(value: string | null | undefined) {
   if (!value) return "—"
@@ -40,7 +45,7 @@ function candidateKey(c: BulkPmCandidate): string {
   return `${c.kind}:${c.seller_id || ""}`
 }
 
-type BulkAction = "" | "product_manager" | "brand" | "eu_compliance"
+type BulkAction = "" | "product_manager" | "brand" | "eu_compliance" | "approve"
 
 /**
  * Admin Product Management overzicht (P2.20) + atomic bulk Productbeheerder.
@@ -54,6 +59,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState("")
   const [publicationStatus, setPublicationStatus] = useState("")
   const [lifecycleStatus, setLifecycleStatus] = useState("")
+  const [offerPresence, setOfferPresence] = useState<"" | "none" | "single" | "multi">("")
   const [page, setPage] = useState(1)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkAction, setBulkAction] = useState<BulkAction>("")
@@ -83,6 +89,8 @@ export default function AdminProductsPage() {
   } | null>(null)
   const [euForm, setEuForm] = useState<Record<string, string>>({})
   const [euConfirm, setEuConfirm] = useState<BulkGenericRow[] | null>(null)
+  const [approvalOpen, setApprovalOpen] = useState(false)
+  const [approvalMode, setApprovalMode] = useState<"selected" | "relation">("selected")
 
   const load = useCallback(async () => {
     setError(null)
@@ -92,6 +100,7 @@ export default function AdminProductsPage() {
         q: search || undefined,
         publication_status: publicationStatus || undefined,
         lifecycle_status: lifecycleStatus || undefined,
+        offer_presence: offerPresence || undefined,
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
       })
@@ -106,6 +115,7 @@ export default function AdminProductsPage() {
       setConfirmRows(null)
       setConfirmChoice(null)
       setInvalidRows([])
+      setApprovalOpen(false)
     } catch (err) {
       setError(
         err instanceof ProductApprovalAdminApiError
@@ -115,7 +125,7 @@ export default function AdminProductsPage() {
       setRows([])
       setCount(0)
     }
-  }, [search, publicationStatus, lifecycleStatus, page])
+  }, [search, publicationStatus, lifecycleStatus, offerPresence, page])
 
   useEffect(() => {
     void load()
@@ -155,6 +165,7 @@ export default function AdminProductsPage() {
     closePmDialog()
     closeBrandDialog()
     closeEuDialog()
+    setApprovalOpen(false)
   }
 
   function toggleOne(id: string) {
@@ -263,19 +274,29 @@ export default function AdminProductsPage() {
     if (next === "product_manager") {
       closeBrandDialog()
       closeEuDialog()
+      setApprovalOpen(false)
       void openProductManagerDialog()
     } else if (next === "brand") {
       closePmDialog()
       closeEuDialog()
+      setApprovalOpen(false)
       void openBrandDialog()
     } else if (next === "eu_compliance") {
       closePmDialog()
       closeBrandDialog()
+      setApprovalOpen(false)
       void openEuDialog()
+    } else if (next === "approve") {
+      closePmDialog()
+      closeBrandDialog()
+      closeEuDialog()
+      setApprovalMode("selected")
+      setApprovalOpen(true)
     } else {
       closePmDialog()
       closeBrandDialog()
       closeEuDialog()
+      setApprovalOpen(false)
     }
   }
 
@@ -492,11 +513,9 @@ export default function AdminProductsPage() {
       </p>
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-lg font-bold text-wf-900">Product Management</h1>
+          <h1 className="text-lg font-bold text-wf-900">Productcatalogus</h1>
           <p className="mt-1.5 text-xs text-wf-600">
-            Zoek, filter en selecteer producten voor beoordeling of bulk
-            Productbeheerder-toewijzing. Detailpagina blijft de primaire plek
-            voor inhoudelijk beheer.
+            Centrale producten, ook zonder seller-offer. Verkoopgegevens staan in de offerlijst.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -580,7 +599,40 @@ export default function AdminProductsPage() {
             </option>
           ))}
         </select>
+        <select
+          value={offerPresence}
+          onChange={(e) => {
+            setOfferPresence(e.target.value as "" | "none" | "single" | "multi")
+            setPage(1)
+          }}
+          className="h-9 rounded-[5px] border border-wf-400 px-2 text-xs text-wf-800"
+        >
+          <option value="">Alle aanbodstatussen</option>
+          <option value="none">Geen offer</option>
+          <option value="single">Eén offer</option>
+          <option value="multi">Meerdere offers</option>
+        </select>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          disabled={bulkBusy}
+          onClick={() => {
+            closePmDialog()
+            closeBrandDialog()
+            closeEuDialog()
+            setBulkAction("")
+            setApprovalMode("relation")
+            setApprovalOpen(true)
+          }}
+        >
+          Merk of fabrikant goedkeuren
+        </Button>
       </div>
+      <ProductSectionNav
+        active="catalog"
+        counts={{ catalog: rows === "loading" ? undefined : count }}
+      />
 
       {selectedList.length > 0 ? (
         <div className="sticky top-0 z-20 mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-wf-400 bg-white px-3 py-2 shadow-sm">
@@ -606,9 +658,23 @@ export default function AdminProductsPage() {
               <option value="product_manager">Productbeheerder toewijzen</option>
               <option value="brand">Merk koppelen</option>
               <option value="eu_compliance">EU Compliance</option>
+              <option value="approve">Geselecteerde producten goedkeuren</option>
             </select>
           </label>
         </div>
+      ) : null}
+
+      {approvalOpen ? (
+        <BulkApprovalDialog
+          mode={approvalMode}
+          productIds={selectedList}
+          onClose={(applied) => {
+            setApprovalOpen(false)
+            setBulkAction("")
+            if (applied) void load()
+          }}
+          onApplied={(message) => setNotice(message)}
+        />
       ) : null}
 
       {pmDialogOpen && preview ? (
@@ -1128,11 +1194,11 @@ export default function AdminProductsPage() {
                   </th>
                   {[
                     "Product",
-                    "Seller",
                     "SKU",
                     "EAN/GTIN",
                     "Categorie",
                     "Merk",
+                    "Offers",
                     "Made in Europe",
                     "Approval",
                     "Compliance",
@@ -1162,10 +1228,10 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="border-b border-wf-200 px-3 py-2.5 font-medium text-wf-800">
                       <div className="flex items-center gap-2.5">
-                        {row.primary_image_url ? (
+                        {displayMediaUrl(row.primary_image_url) ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={displayMediaUrl(row.primary_image_url) || ""}
+                            src={displayMediaUrl(row.primary_image_url) as string}
                             alt=""
                             className="h-10 w-10 shrink-0 rounded object-cover"
                           />
@@ -1176,18 +1242,6 @@ export default function AdminProductsPage() {
                         )}
                         <span>{row.title || row.id.slice(-10)}</span>
                       </div>
-                    </td>
-                    <td className="border-b border-wf-200 px-3 py-2.5 text-wf-700">
-                      {row.seller_id ? (
-                        <Link
-                          href={`/partners/${row.seller_id}`}
-                          className="underline"
-                        >
-                          {row.seller_name || row.seller_id.slice(-10)}
-                        </Link>
-                      ) : (
-                        "—"
-                      )}
                     </td>
                     <td className="border-b border-wf-200 px-3 py-2.5 font-mono text-[10px] text-wf-600">
                       {row.sku_hint || "—"}
@@ -1200,6 +1254,14 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="border-b border-wf-200 px-3 py-2.5 text-wf-700">
                       {row.brand_name || "—"}
+                    </td>
+                    <td className="border-b border-wf-200 px-3 py-2.5 text-wf-700">
+                      <Link
+                        href={`/product-cloud/offers?product_id=${encodeURIComponent(row.id)}`}
+                        className="underline"
+                      >
+                        {offerCountLabel(row.offer_count)}
+                      </Link>
                     </td>
                     <td className="border-b border-wf-200 px-3 py-2.5 text-wf-700">
                       {row.made_in_europe_status || "—"}

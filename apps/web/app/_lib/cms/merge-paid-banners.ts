@@ -1,11 +1,12 @@
+import { mergeSellerOverPlatform } from "@europmade/utils"
 import type { StorefrontLocale } from "../i18n/locales"
 import type { StorefrontAdCreative } from "../storefront-ads"
 import type { LiveAdSlot } from "../advertising-live-slots"
 import { CTA_LABELS_NL } from "../advertising-public"
 
 /**
- * Paid seller campaign wins the first homepage slot when live this week.
- * Otherwise keep platform CMS banners. Never inject mock ads.
+ * A live seller campaign replaces the platform banner on that placement.
+ * When nothing is live, the platform banners stay as they are.
  */
 export function mergePaidHomepageBanners(
   platform: StorefrontAdCreative[],
@@ -14,6 +15,7 @@ export function mergePaidHomepageBanners(
 ): StorefrontAdCreative[] {
   const seller = paid[0]
   if (!seller) return platform
+  const presentation = seller.banner_presentation
   const paidCreative: StorefrontAdCreative = {
     id: String(seller.id),
     position: 1,
@@ -26,9 +28,20 @@ export function mergePaidHomepageBanners(
     linkType: "external",
     imageSrc: seller.image_url || "",
     imageAlt: seller.headline || seller.name,
+    imageFit: "cover",
+    imagePosition: presentation
+      ? `${presentation.imagePositionX}% ${presentation.imagePositionY}%`
+      : "50% 50%",
+    textColor: presentation?.textColor,
+    buttonColor: presentation?.textColor,
+    logoSrc: seller.logo_url,
+    designKey: seller.design_key,
+    overlayAlign: presentation?.overlayAlign,
+    logoScale: presentation?.logoScale,
+    previewOnly: Boolean(seller.preview),
+    productIds: seller.product_ids ?? [],
     status: "Actief",
     source: "seller",
   }
-  const rest = platform.filter((b) => b.position !== 1)
-  return [paidCreative, ...rest]
+  return mergeSellerOverPlatform(platform, paidCreative)
 }

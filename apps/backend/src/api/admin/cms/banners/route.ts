@@ -72,6 +72,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     image_alt: asLocalized(body.image_alt ?? emptyLocalized()),
     background:
       typeof body.background === "string" ? body.background : null,
+    presentation:
+      body.presentation && typeof body.presentation === "object"
+        ? body.presentation
+        : null,
     logo_url:
       typeof body.logo_url === "string"
         ? persistMediaReference(body.logo_url)

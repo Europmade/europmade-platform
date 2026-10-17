@@ -1,6 +1,7 @@
 import { z } from "@medusajs/framework/zod"
 
 export const StoreCheckoutRevalidateBody = z.object({
+  delivery_country: z.string().trim().min(2).max(2).optional(),
   lines: z
     .array(
       z.object({

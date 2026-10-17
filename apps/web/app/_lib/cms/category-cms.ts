@@ -61,6 +61,21 @@ export type CategoryBannerCms = CmsPublishMeta & {
   showVerifiedBadge?: boolean
   activeFrom?: string | null
   activeTo?: string | null
+  presentation?: {
+    fit?: "cover" | "contain"
+    positionX?: number
+    positionY?: number
+    scale?: number
+    textColor?: "white" | "black"
+    buttonColor?: "white" | "black"
+  } | null
+}
+
+export type CategoryFilterControlCms = {
+  attributeKey: string
+  visible: boolean
+  label: LocalizedString
+  sortOrder: number
 }
 
 export type CategoryFilterOptionCms = {
@@ -91,6 +106,12 @@ export type CategoryFaqCms = CmsPublishMeta & {
   id: string
   question: LocalizedString
   answer: LocalizedString
+}
+
+export type CategoryUspCms = {
+  id: string
+  title: LocalizedString
+  body: LocalizedString
 }
 
 export type CategoryDynamicBlockKey =
@@ -134,9 +155,11 @@ export type CategoryCmsDocument = CmsPublishMeta & {
   }
   banners: CategoryBannerCms[]
   filterGroups: CategoryFilterGroupCms[]
+  filterControls?: CategoryFilterControlCms[]
   countries: CategoryCountryCms[]
   relatedCategorySlugs: string[]
   faq: CategoryFaqCms[]
+  usps?: CategoryUspCms[]
   dynamicBlocks: CategoryDynamicBlockCms[]
   /** Hide category from nav/index when product count below threshold (architecture). */
   hideWhenProductCountBelow?: number | null

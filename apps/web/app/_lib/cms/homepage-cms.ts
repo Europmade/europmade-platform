@@ -3,6 +3,7 @@
  * Every section supports title/subtitle/image/sort/visibility/publish/expiry.
  */
 
+import type { CampaignCardStyle, HeroCtaStyle, HeroTextStyle } from "@europmade/utils"
 import { L, type LocalizedString } from "../i18n/locales"
 import { manufacturerLogoSrc } from "../product-mockup"
 import type { CmsPublishMeta } from "./publish"
@@ -11,12 +12,33 @@ export type HomepageHeroCms = CmsPublishMeta & {
   id: string
   title: LocalizedString
   subtitle: LocalizedString
-  cta1: { label: LocalizedString; href: string }
-  cta2: { label: LocalizedString; href: string }
+  cta1: { label: LocalizedString; href: string; style?: HeroCtaStyle }
+  cta2: { label: LocalizedString; href: string; style?: HeroCtaStyle }
+  titleColor?: HeroTextStyle
+  subtitleColor?: HeroTextStyle
   /** Optional injected hero image; empty → composition placeholder. */
   heroImage?: string | null
   heroImageAlt: LocalizedString
+  /** Left banner background photo. Empty keeps the background color. */
+  backgroundImage?: string | null
   backgroundGradient: string
+  textColor?: "white" | "black"
+  buttonColor?: "white" | "black"
+  imageFit?: "cover" | "contain"
+  imagePosition?: string
+  productBanner?: {
+    visible?: boolean
+    title?: LocalizedString
+    subtitle?: LocalizedString
+    ctaLabel?: LocalizedString
+    href?: string
+    image?: string | null
+    background?: string
+    textColor?: "white" | "black"
+    buttonColor?: "white" | "black"
+    imageFit?: "cover" | "contain"
+    imagePosition?: string
+  } | null
   trustBullets: LocalizedString[]
   captionTitle?: LocalizedString
   captionBody?: LocalizedString
@@ -32,6 +54,7 @@ export type HomepageCampaignCms = CmsPublishMeta & {
   image?: string | null
   imageAlt: LocalizedString
   accentHue: number
+  card?: CampaignCardStyle
 }
 
 export type HomepageBannerCms = CmsPublishMeta & {
@@ -46,6 +69,14 @@ export type HomepageBannerCms = CmsPublishMeta & {
   image?: string | null
   imageAlt: LocalizedString
   background: string
+  presentation?: {
+    fit?: "cover" | "contain"
+    positionX?: number
+    positionY?: number
+    scale?: number
+    textColor?: "white" | "black"
+    buttonColor?: "white" | "black"
+  } | null
   logo?: string | null
   /** Active campaign window (also mirrored in publishAt/expiresAt). */
   activeFrom?: string | null
@@ -78,6 +109,8 @@ export type HomepageSectionCms = CmsPublishMeta & {
   key: HomepageSectionKey
   title: LocalizedString
   subtitle: LocalizedString
+  titleColor?: string
+  titleSize?: number | null
   image?: string | null
   body?: LocalizedString
   href?: string
@@ -133,10 +166,20 @@ export type HomepagePartnerSpotlightCms = CmsPublishMeta & {
   subtitle: LocalizedString
   /** Cover / product visual (wide). */
   image?: string | null
-  /** Square logo (optional). */
+  /** Transparent logo (optional). Shown with object-contain. */
   logo?: string | null
+  logoSize?: number
+  logoPosition?: "left" | "center" | "right"
+  textColor?: string
+  /** 0–100 white contrast cloud behind the logo and caption. */
+  overlayStrength?: number
   /** Controlled brand-card background key. */
   backgroundKey?: "light" | "dark" | "green" | "beige" | "earth"
+  /** Same overlay controls as a campaign card. Absent on older documents. */
+  card?: CampaignCardStyle
+  ctaLabel?: LocalizedString
+  /** Empty: the storefront uses /merk/{slug}. */
+  href?: string
   country: LocalizedString
   rating: number
   productCount: number

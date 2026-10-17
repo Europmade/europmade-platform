@@ -11,9 +11,17 @@ import { readLocaleFromBrowser } from "./i18n/use-storefront-locale"
 import { t } from "./i18n/messages"
 import { resolveMediaUrl } from "@europmade/utils"
 import { medusaBackendUrl } from "./medusa-backend-url"
+import type { ProductCloudStoreCategory } from "./product-cloud-store"
 
 function browserStorefrontLocale(): StorefrontLocale {
   return readLocaleFromBrowser()
+}
+
+function browserStorefrontMarket(): string {
+  if (typeof document === "undefined") return "NL"
+  const match = document.cookie.match(/(?:^|; )em_storefront_market=([^;]*)/)
+  const code = decodeURIComponent(match?.[1] ?? "").trim().toUpperCase()
+  return /^[A-Z]{2}$/.test(code) ? code : "NL"
 }
 
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
@@ -70,7 +78,7 @@ export async function suggestStorefrontSearch(
   const qs = new URLSearchParams()
   qs.set("q", query)
   qs.set("limit", String(limit))
-  qs.set("region_code", "NL")
+  qs.set("region_code", browserStorefrontMarket())
   const response = await fetch(`/api/catalog/suggest?${qs}`, {
     signal: opts?.signal,
     credentials: "same-origin",
@@ -108,11 +116,26 @@ function toListing(item: CatalogListProduct): ListingProduct {
   }
 }
 
+export async function fetchPreviewProductCloudCategory(
+  slug: string,
+  locale: string
+): Promise<ProductCloudStoreCategory | null> {
+  try {
+    const qs = new URLSearchParams({ slug, locale })
+    const data = await catalogFetch<{ categories: ProductCloudStoreCategory[] }>(
+      `/store/product-cloud/categories?${qs}`
+    )
+    return data.categories?.find((category) => category.slug === slug) ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function fetchStorefrontListings(limit = 12): Promise<ListingProduct[]> {
   try {
     const qs = new URLSearchParams()
     qs.set("limit", String(Math.min(48, Math.max(1, limit))))
-    qs.set("region_code", "NL")
+    qs.set("region_code", browserStorefrontMarket())
     const res = await catalogFetch<{ products: CatalogListProduct[] }>(
       `/store/catalog/products?${qs}`
     )
@@ -137,7 +160,7 @@ export async function enrichOfferMetaFromCatalog(
       const detail = await catalogFetch<{
         product: { id: string; title: string; brand_name: string | null }
         offers: CatalogOffer[]
-      }>(`/store/catalog/products/${encodeURIComponent(item.id)}?region_code=NL`)
+      }>(`/store/catalog/products/${encodeURIComponent(item.id)}?region_code=${encodeURIComponent(browserStorefrontMarket())}`)
       const offer = detail.offers.find((o) => o.offer_id === offerId)
       if (!offer) continue
       const locale = browserStorefrontLocale()

@@ -29,6 +29,11 @@ export type StorefrontAdCreative = {
   status: "Actief" | "Gepland" | "Afgerond"
   /** CSS background for campaign panel (CMS). */
   background?: string
+  imageFit?: "cover" | "contain"
+  imagePosition?: string
+  imageScale?: number
+  textColor?: "white" | "black"
+  buttonColor?: "white" | "black"
   /** Optional manufacturer logo URL. */
   logoSrc?: string | null
   /** Optional production country label (category banners). */
@@ -39,6 +44,13 @@ export type StorefrontAdCreative = {
   activeTo?: string | null
   /** Paid seller campaign vs platform CMS banner. */
   source?: "platform" | "seller"
+  designKey?: string | null
+  overlayAlign?: "left" | "right"
+  logoScale?: number
+  /** Read-only storefront preview. Not public visibility. */
+  previewOnly?: boolean
+  /** Seller campaign products. Used only to hide a banner with no deliverable offer. */
+  productIds?: string[]
 }
 
 const PUBLISHED_ADS: StorefrontAdCreative[] = [

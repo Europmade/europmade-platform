@@ -1,4 +1,7 @@
-import { resolveMediaUrl } from "@europmade/utils"
+import {
+  parseSellerBannerPresentation,
+  resolveMediaUrl,
+} from "@europmade/utils"
 import type CmsModuleService from "../../../modules/cms/service"
 
 /** Default weekly prices (used when no admin pricing rule exists). */
@@ -138,6 +141,13 @@ export function serializeCampaign(
     image_url: resolveMediaUrl(
       (campaign.image_url as string | null) ?? null,
       backendOrigin
+    ),
+    logo_url: resolveMediaUrl(
+      (campaign.logo_url as string | null) ?? null,
+      backendOrigin
+    ),
+    banner_presentation: parseSellerBannerPresentation(
+      campaign.banner_presentation
     ),
     destination_url: campaign.destination_url,
     headline: campaign.headline,

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { HOMEPAGE_CONTENT_GUTTER } from "@europmade/utils"
 import {
   DEFAULT_STOREFRONT_LOCALE,
   type StorefrontLocale,
@@ -58,7 +59,7 @@ export function SiteFooter({
   const currency = "€"
   return (
     <footer role="contentinfo" className="border-t border-wf-200 bg-white">
-      <div className="grid gap-4 px-4 py-4 tablet:grid-cols-2 tablet:gap-5 tablet:px-8 desktop:grid-cols-4">
+      <div className={`grid gap-4 py-4 tablet:grid-cols-2 tablet:gap-5 desktop:grid-cols-4 ${HOMEPAGE_CONTENT_GUTTER}`}>
         {FOOTER_COLUMNS.map((col) => (
           <div key={col.titleKey}>
             <h2 className="mb-1.5 text-[12px] font-bold tracking-tight text-wf-900">
@@ -79,7 +80,7 @@ export function SiteFooter({
           </div>
         ))}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-wf-200 px-4 py-2.5 text-[11px] text-wf-500 tablet:px-8">
+      <div className={`flex flex-wrap items-center justify-between gap-2 border-t border-wf-200 py-2.5 text-[11px] text-wf-500 ${HOMEPAGE_CONTENT_GUTTER}`}>
         <p>© EuropMade</p>
         <p aria-label="Current locale">
           {locale.toUpperCase()} · {currency}

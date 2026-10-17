@@ -24,6 +24,8 @@ import {
   parseOrderAddress,
   resolveDestinationVatRate,
 } from "@europmade/utils"
+import { offerReachesDestination } from "../../modules/commerce-cloud/offer-destination"
+import { isOfferActiveForSale } from "../../modules/commerce-cloud/offer-sellability"
 
 export type CheckoutLineInput = {
   offer_id: string
@@ -108,10 +110,13 @@ export async function revalidateCheckoutLines(
     )
   }
 
-  const destinationCode =
-    normalizeCountryCode(deliveryCountry) ||
-    "NL"
+  const explicitDestination = normalizeCountryCode(deliveryCountry)
+  const destinationCode = explicitDestination || "NL"
   const destinationVat = resolveDestinationVatRate(destinationCode)
+  const profileCache = new Map<
+    string,
+    { status: string; countryActive: boolean } | null
+  >()
 
   const result: RevalidatedLine[] = []
   for (const line of lines) {
@@ -140,6 +145,52 @@ export async function revalidateCheckoutLines(
         `Offer ${offer.id} mist prijs of voorraad.`
       )
     }
+    if (!isOfferActiveForSale(offer.sales_status)) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        `Aanbod ${offer.id} is gepauzeerd en kan niet besteld worden.`
+      )
+    }
+    const shipCountry =
+      explicitDestination || (offer.region_code || "NL").toUpperCase()
+    const reaches = await offerReachesDestination(
+      offer,
+      shipCountry,
+      async (profileId) => {
+        const [profile] = await commerce.listSellerShippingProfiles({
+          id: profileId,
+        })
+        return profile ?? null
+      },
+      profileCache
+    )
+    if (!reaches) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        `Dit aanbod levert niet naar ${shipCountry}.`
+      )
+    }
+
+    const identifier = await productCloud.retrieveIdentifier(
+      offer.identifier_id
+    )
+    const variant = await productCloud.retrieveProductVariant(
+      identifier.product_variant_id
+    )
+    const published = await productCloud.listProductVersions(
+      {
+        product_id: variant.product_id,
+        publication_status: "Gepubliceerd",
+      },
+      { take: 1 }
+    )
+    if (published.length === 0) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Dit product is niet gepubliceerd."
+      )
+    }
+
     const available = Number(inventory.quantity_available)
     if (available < line.quantity) {
       throw new MedusaError(
@@ -147,10 +198,6 @@ export async function revalidateCheckoutLines(
         `Onvoldoende voorraad voor offer ${offer.id} (beschikbaar: ${available}).`
       )
     }
-
-    const identifier = await productCloud.retrieveIdentifier(
-      offer.identifier_id
-    )
 
     const unit = Number(price.base_price)
     const extra =

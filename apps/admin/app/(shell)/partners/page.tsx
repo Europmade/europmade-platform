@@ -27,6 +27,15 @@ function formatDate(value: string | null | undefined) {
 
 export default function PartnersOverviewPage() {
   const [filterKey, setFilterKey] = useState("all");
+  const [filterReady, setFilterReady] = useState(false);
+
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (tab && STATUS_FILTERS.some((filter) => filter.key === tab)) {
+      setFilterKey(tab);
+    }
+    setFilterReady(true);
+  }, []);
   const [q, setQ] = useState("");
   const [search, setSearch] = useState("");
   const [partners, setPartners] = useState<PartnerListItem[]>([]);
@@ -79,8 +88,9 @@ export default function PartnersOverviewPage() {
   }, [activeFilter, search]);
 
   useEffect(() => {
+    if (!filterReady) return;
     load();
-  }, [load]);
+  }, [load, filterReady]);
 
   return (
     <div>

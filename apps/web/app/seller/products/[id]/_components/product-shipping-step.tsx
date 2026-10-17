@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@europmade/ui"
 import type { ProductManagerDetail } from "../../../_lib/product-cloud-api"
 import { assignProductShippingProfile } from "../../../_lib/product-cloud-api"
@@ -23,6 +22,9 @@ type Props = {
   onReload: () => void
   onSaveStock: () => Promise<void>
   stockSaving: boolean
+  showProfileGap: boolean
+  stockError?: string
+  onCreateProfile: () => void
 }
 
 export function ProductShippingStep(props: Props) {
@@ -32,10 +34,12 @@ export function ProductShippingStep(props: Props) {
     offerDraft,
     onQuantityChange,
     onReload,
-    onSaveStock,
-    stockSaving,
-  } = props
-  const router = useRouter()
+  onSaveStock,
+  stockSaving,
+  showProfileGap,
+  stockError,
+  onCreateProfile,
+} = props
   const [profiles, setProfiles] = useState<SellerShippingProfile[]>([])
   const [selectedId, setSelectedId] = useState(
     product.shipping_profile_id || ""
@@ -116,15 +120,15 @@ export function ProductShippingStep(props: Props) {
           (niet alleen in dit scherm). Landen en tarieven beheer je centraal
           onder Instellingen → Verzending.
         </p>
-        {!product.shipping_profile_id ? (
+        {showProfileGap && !product.shipping_profile_id ? (
           <p className="mt-2 text-[11px] font-semibold text-amber-800">
             ❌ Verzendprofiel ontbreekt — kies een profiel hieronder.
           </p>
-        ) : (
+        ) : product.shipping_profile_id ? (
           <p className="mt-2 text-[11px] font-semibold text-emerald-800">
             ✓ Verzendprofiel gekoppeld
           </p>
-        )}
+        ) : null}
       </div>
 
       <section className="rounded border border-wf-300 bg-white p-3">
@@ -158,6 +162,7 @@ export function ProductShippingStep(props: Props) {
               Verzendprofiel
             </label>
             <select
+              id="shipping-profile"
               className="h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
               value={selectedId}
               disabled={busy}
@@ -179,7 +184,7 @@ export function ProductShippingStep(props: Props) {
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => router.push("/seller/settings/shipping/new")}
+            onClick={onCreateProfile}
           >
             Nieuw profiel
           </Button>
@@ -204,10 +209,12 @@ export function ProductShippingStep(props: Props) {
               Beschikbare voorraad
             </label>
             <input
+              id="offer-stock"
               type="number"
               inputMode="numeric"
               min={0}
               step={1}
+              aria-invalid={stockError ? true : undefined}
               className="h-9 w-full rounded border border-wf-400 px-2 text-xs"
               value={offerDraft.quantity_available}
               onChange={(e) => {
@@ -220,6 +227,11 @@ export function ProductShippingStep(props: Props) {
                 onQuantityChange(raw)
               }}
             />
+            {stockError ? (
+              <p className="mt-1 text-[11px] text-red-700" role="alert">
+                {stockError}
+              </p>
+            ) : null}
           </div>
           <p className="mt-2 text-[10px] text-wf-500">
             Geheel getal, minimaal 0. Voorraad hoort bij je verkoopaanbod (regio{" "}

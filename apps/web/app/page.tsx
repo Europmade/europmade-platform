@@ -69,8 +69,15 @@ export async function generateMetadata({
   }
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function HomePage({ searchParams }: HomeProps) {
   const sp = searchParams ? await searchParams : {}
   const marketParam = parseMarketSearchParam(sp.market)
-  return <Homepage marketOverride={marketParam} />
+  const previewRaw = Array.isArray(sp.adPreview) ? sp.adPreview[0] : sp.adPreview
+  const adPreviewId =
+    typeof previewRaw === "string" && /^adcmp_[0-9A-Za-z]+$/.test(previewRaw)
+      ? previewRaw
+      : null
+  return <Homepage marketOverride={marketParam} adPreviewId={adPreviewId} />
 }

@@ -1,3 +1,11 @@
+import type { HTMLAttributes, ReactNode } from "react"
+import { AdCampaignBanner } from "@europmade/ui"
+import {
+  HOMEPAGE_BANNER_FRAME_CLASS,
+  HOMEPAGE_BANNER_SLOT_CLASS,
+  HOMEPAGE_CONTENT_GUTTER,
+  parseSellerBannerPresentation,
+} from "@europmade/utils"
 import Link from "next/link"
 import {
   resolveBannerHref,
@@ -22,12 +30,44 @@ type AdSlotProps = {
   flush?: boolean
 }
 
-const BANNER_H = "min-h-[200px] h-[220px]"
-const BANNER_H_COMPACT = "min-h-[150px] h-[160px]"
+const BANNER_RATIO = { aspectRatio: "4 / 1" } as const
+
+function AdFrame({
+  flush,
+  matchCampaignCard,
+  className,
+  children,
+  ...rest
+}: {
+  flush: boolean
+  matchCampaignCard: boolean
+  className: string
+  children: ReactNode
+} & HTMLAttributes<HTMLElement>) {
+  return (
+    <div
+      className={
+        flush
+          ? "w-full min-w-0 self-stretch"
+          : `${matchCampaignCard ? `${HOMEPAGE_BANNER_SLOT_CLASS} ` : ""}w-full min-w-0 self-stretch ${HOMEPAGE_CONTENT_GUTTER}`
+      }
+    >
+      <aside
+        className={`relative block w-full max-w-none overflow-hidden ${
+          matchCampaignCard ? `${HOMEPAGE_BANNER_FRAME_CLASS} ` : ""
+        }${className}`}
+        style={matchCampaignCard ? undefined : BANNER_RATIO}
+        {...rest}
+      >
+        {children}
+      </aside>
+    </div>
+  )
+}
 
 /**
- * CMP-033 Advertisement Banner — premium ad position (~220px; compact ~160px).
- * When an image is set it fills the full banner as a cover background with text overlay.
+ * Advertisement banner. A 2400×600 creative is 4:1 and fills the content width.
+ * object-fit is cover or contain, never stretched.
  */
 export function AdSlot({
   position,
@@ -39,18 +79,68 @@ export function AdSlot({
   productKind: _productKind,
   flush = false,
 }: AdSlotProps) {
+  const matchCampaignCard = location === "homepage" && !compact && !flush
   // `undefined` = legacy callers without CMS. Explicit `null` = no live banner (no mock ads).
   const ad =
     creative === undefined
       ? resolveStorefrontAd({ position, location })
       : creative
   const label = adLabel ?? t("advertisement", locale)
-  const edge = flush ? "mx-0" : "mx-4 tablet:mx-8"
-  const heightClass = compact ? BANNER_H_COMPACT : BANNER_H
 
   if (ad) {
     const href = resolveBannerHref(ad)
     const isExternal = ad.linkType === "external" || /^https?:\/\//i.test(href)
+    if (ad.source === "seller") {
+      const [xRaw, yRaw] = (ad.imagePosition || "50% 50%").split("%")
+      const presentation = parseSellerBannerPresentation({
+        imagePositionX: Number(xRaw),
+        imagePositionY: Number(yRaw),
+        overlayAlign: ad.overlayAlign,
+        textColor: ad.textColor,
+        logoScale: ad.logoScale,
+      })
+      const sellerInner = (
+        <AdCampaignBanner
+          fill
+          designKey={ad.designKey}
+          headline={ad.headline}
+          subline={ad.description}
+          ctaLabel={ad.ctaLabel}
+          imageUrl={ad.imageSrc}
+          logoUrl={ad.logoSrc}
+          presentation={presentation}
+          className="h-full rounded-none"
+          previewLabel={ad.previewOnly ? "Preview" : null}
+        />
+      )
+      return (
+        <AdFrame
+          flush={flush}
+          matchCampaignCard={matchCampaignCard}
+          className="rounded-2xl border border-wf-200 shadow-[0_8px_24px_rgba(15,23,42,0.05)]"
+          aria-label={`${label}: ${ad.title}`}
+          data-ad-position={position}
+          data-ad-id={ad.id}
+          data-ad-source="seller"
+          data-ad-preview={ad.previewOnly ? "true" : "false"}
+        >
+          {isExternal ? (
+            <a
+              href={href}
+              className="absolute inset-0 block"
+              rel="sponsored noopener noreferrer"
+              target="_blank"
+            >
+              {sellerInner}
+            </a>
+          ) : (
+            <Link href={href} className="absolute inset-0 block" rel="sponsored">
+              {sellerInner}
+            </Link>
+          )}
+        </AdFrame>
+      )
+    }
     const hue = hashHue(ad.id)
     const productSrc =
       ad.imageSrc && ad.imageSrc.length > 0 ? ad.imageSrc : null
@@ -64,7 +154,16 @@ export function AdSlot({
       Boolean(ad.productionCountryLabel) ||
       ad.showVerifiedBadge === true
 
-    const textOnImage = Boolean(productSrc)
+    const textOnImage = ad.textColor
+      ? ad.textColor === "white"
+      : Boolean(productSrc)
+    const buttonOnImage = ad.buttonColor
+      ? ad.buttonColor === "white"
+      : textOnImage
+    const imageFit = ad.imageFit === "contain" ? "contain" : "cover"
+    const imagePosition = ad.imagePosition || "50% 50%"
+    const imageScale =
+      ad.imageScale && ad.imageScale > 1 ? Math.min(2, ad.imageScale) : 1
 
     const content = (
       <>
@@ -97,7 +196,7 @@ export function AdSlot({
         </p>
         <span
           className={`mt-2.5 inline-flex w-fit items-center justify-center rounded-xl px-3.5 text-[12px] font-semibold shadow-sm ${
-            textOnImage
+            buttonOnImage
               ? "bg-white text-wf-900"
               : "bg-wf-900 text-white"
           } ${compact ? "h-8" : "mt-3.5 h-9 px-4 text-[12.5px]"}`}
@@ -109,11 +208,17 @@ export function AdSlot({
 
     const inner = productSrc ? (
       <div className="relative flex h-full w-full overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${productSrc})` }}
-          role="img"
-          aria-label={ad.imageAlt || ad.headline}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={productSrc}
+          alt={ad.imageAlt || ad.headline}
+          className="absolute inset-0 h-full w-full"
+          style={{
+            objectFit: imageFit,
+            objectPosition: imagePosition,
+            transform: `scale(${imageScale})`,
+            transformOrigin: imagePosition,
+          }}
         />
         <div
           className="absolute inset-0"
@@ -183,8 +288,10 @@ export function AdSlot({
     )
 
     return (
-      <aside
-        className={`relative overflow-hidden rounded-2xl border border-wf-200 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)] ${edge} ${heightClass}`}
+      <AdFrame
+        flush={flush}
+        matchCampaignCard={matchCampaignCard}
+        className="rounded-2xl border border-wf-200 shadow-[0_8px_24px_rgba(15,23,42,0.05)] transition hover:shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
         aria-label={`${label}: ${ad.title}`}
         data-ad-position={position}
         data-ad-id={ad.id}
@@ -204,27 +311,31 @@ export function AdSlot({
             {inner}
           </Link>
         )}
-      </aside>
+      </AdFrame>
     )
   }
 
   return (
-    <aside
-      className={`relative flex items-center overflow-hidden rounded-2xl border border-dashed border-wf-400 bg-wf-100 ${edge} ${heightClass}`}
+    <AdFrame
+      flush={flush}
+      matchCampaignCard={matchCampaignCard}
+      className="rounded-2xl border border-dashed border-wf-400 bg-wf-100"
       aria-label={`${label} ${t("position", locale)} ${position}`}
       data-ad-position={position}
     >
-      <div className="px-5 tablet:px-8">
-        <span className="mb-2 inline-flex rounded border border-wf-300 bg-white px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-wf-600">
-          {label}
-        </span>
-        <p className="text-[18px] font-bold text-wf-800">
-          Geen actieve banner
-        </p>
-        <p className="mt-1 max-w-md text-[13px] text-wf-600">
-          {t("position", locale)} {position} — {t("adSlotHint", locale)}
-        </p>
+      <div className="absolute inset-0 flex items-center px-5 tablet:px-8">
+        <div>
+          <span className="mb-2 inline-flex rounded border border-wf-300 bg-white px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-wf-600">
+            {label}
+          </span>
+          <p className="text-[18px] font-bold text-wf-800">
+            Geen actieve banner
+          </p>
+          <p className="mt-1 max-w-md text-[13px] text-wf-600">
+            {t("position", locale)} {position} — {t("adSlotHint", locale)}
+          </p>
+        </div>
       </div>
-    </aside>
+    </AdFrame>
   )
 }

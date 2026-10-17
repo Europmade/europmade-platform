@@ -335,7 +335,7 @@ function num(value: string | undefined): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-async function applyAttributeCodes(
+export async function applyAttributeCodes(
   productCloud: ProductCloudModuleService,
   productId: string,
   versionId: string | undefined,

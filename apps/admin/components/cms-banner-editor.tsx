@@ -17,6 +17,7 @@ import {
 } from "../lib/cms-admin-api"
 import { adminMarketOptions } from "../lib/market-labels"
 import { displayMediaUrl } from "../lib/media-url"
+import { bannerImageStyle, parseBannerPresentation } from "@europmade/utils"
 import type { CmsI18nMeta } from "../lib/cms-i18n"
 import {
   CmsLocaleProvider,
@@ -36,6 +37,7 @@ function CmsBannerEditorInner({ bannerId }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [localPreview, setLocalPreview] = useState<string | null>(null)
   const [meta, setMeta] = useState<CmsI18nMeta>({})
   const [tab, setTab] = useState<"edit" | "preview">("edit")
   const [viewport, setViewport] = useState<"desktop" | "mobile">("desktop")
@@ -50,6 +52,7 @@ function CmsBannerEditorInner({ bannerId }: Props) {
     image_url: "" as string,
     image_alt: emptyLocalized(),
     background: "",
+    presentation: parseBannerPresentation(null),
     market_scope: "all" as "all" | "selected",
     markets: [] as string[],
     visible: true,
@@ -72,6 +75,14 @@ function CmsBannerEditorInner({ bannerId }: Props) {
           image_url: banner.image_url ?? "",
           image_alt: banner.image_alt,
           background: banner.background ?? "",
+          presentation: parseBannerPresentation(banner.presentation, {
+            fit: "cover",
+            positionX: 50,
+            positionY: 50,
+            scale: 1,
+            textColor: banner.image_url ? "white" : "black",
+            buttonColor: banner.image_url ? "white" : "black",
+          }),
           market_scope: banner.market_scope,
           markets: banner.markets,
           visible: banner.visible,
@@ -82,6 +93,16 @@ function CmsBannerEditorInner({ bannerId }: Props) {
       })
       .catch((e: Error) => setError(e.message))
   }, [bannerId, isNew])
+
+  useEffect(() => {
+    if (!file) {
+      setLocalPreview(null)
+      return
+    }
+    const url = URL.createObjectURL(file)
+    setLocalPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
 
   function toggleMarket(code: string) {
     setForm((prev) => {
@@ -117,6 +138,7 @@ function CmsBannerEditorInner({ bannerId }: Props) {
         image_url,
         image_alt: form.image_alt,
         background: form.background || null,
+        presentation: form.presentation,
         market_scope: form.market_scope,
         markets: form.market_scope === "selected" ? form.markets : [],
         visible: form.visible,
@@ -142,7 +164,7 @@ function CmsBannerEditorInner({ bannerId }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-6">
+    <div className="mx-auto max-w-6xl space-y-4 p-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-wf-500">
           <Link href="/cms" className="hover:underline">
@@ -182,17 +204,14 @@ function CmsBannerEditorInner({ bannerId }: Props) {
             <Button type="button" variant={viewport === "mobile" ? "primary" : "secondary"} onClick={() => setViewport("mobile")}>Mobiel</Button>
           </div>
           <CmsPreviewFrame viewport={viewport}>
-            <div className="p-6">
-              {displayMediaUrl(form.image_url) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={displayMediaUrl(form.image_url) ?? ""} alt="" className="mb-3 max-h-40 w-full object-cover" />
-              ) : null}
-              <h2 className="text-xl font-bold text-wf-900">{form.title[locale] || form.title.nl}</h2>
-              <p className="mt-1 text-sm text-wf-600">{form.subtitle[locale] || form.subtitle.nl}</p>
-              <span className="mt-3 inline-flex rounded-xl bg-wf-900 px-3 py-2 text-sm font-semibold text-white">
-                {form.cta_label[locale] || form.cta_label.nl}
-              </span>
-            </div>
+            <BannerSurface
+              imageUrl={displayMediaUrl(form.image_url)}
+              background={form.background}
+              title={form.title[locale] || form.title.nl}
+              subtitle={form.subtitle[locale] || form.subtitle.nl}
+              cta={form.cta_label[locale] || form.cta_label.nl}
+              presentation={form.presentation}
+            />
           </CmsPreviewFrame>
         </div>
       ) : (
@@ -336,24 +355,138 @@ function CmsBannerEditorInner({ bannerId }: Props) {
           value={file}
           onChange={setFile}
         />
-        {displayMediaUrl(form.image_url) ? (
-          <div className="space-y-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={displayMediaUrl(form.image_url) ?? ""} alt="" className="max-h-40 rounded object-cover" />
-            <p className="text-xs text-wf-600">
-              Huidige media:{" "}
-              <a href={displayMediaUrl(form.image_url) ?? "#"} className="underline" target="_blank" rel="noreferrer">
-                openen
-              </a>
-            </p>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setForm((p) => ({ ...p, image_url: "" }))}
+        <BannerSurface
+          imageUrl={localPreview || displayMediaUrl(form.image_url)}
+          background={form.background}
+          title={form.title[locale] || form.title.nl || "Titel"}
+          subtitle={form.subtitle[locale] || form.subtitle.nl}
+          cta={form.cta_label[locale] || form.cta_label.nl}
+          presentation={form.presentation}
+        />
+        <div className="grid gap-3 tablet:grid-cols-2">
+          <label className="text-sm font-semibold">
+            Weergave
+            <select
+              className="mt-1 w-full rounded-lg border border-wf-300 px-3 py-2"
+              value={form.presentation.fit}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  presentation: {
+                    ...p.presentation,
+                    fit: e.target.value === "contain" ? "contain" : "cover",
+                  },
+                }))
+              }
             >
-              Afbeelding verwijderen
-            </Button>
-          </div>
+              <option value="cover">Cover — sfeerbeeld vult 2400×600</option>
+              <option value="contain">Contain — product blijft volledig zichtbaar</option>
+            </select>
+          </label>
+          <label className="text-sm font-semibold">
+            Achtergrondkleur
+            <input
+              className="mt-1 w-full rounded-lg border border-wf-300 px-3 py-2"
+              value={form.background}
+              onChange={(e) => setForm((p) => ({ ...p, background: e.target.value }))}
+              placeholder="#10381f of een CSS-kleur"
+            />
+          </label>
+          <label className="text-sm font-semibold">
+            Horizontale positie ({form.presentation.positionX}%)
+            <input
+              className="mt-1 w-full"
+              type="range"
+              min={0}
+              max={100}
+              value={form.presentation.positionX}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  presentation: { ...p.presentation, positionX: Number(e.target.value) },
+                }))
+              }
+            />
+          </label>
+          <label className="text-sm font-semibold">
+            Verticale positie ({form.presentation.positionY}%)
+            <input
+              className="mt-1 w-full"
+              type="range"
+              min={0}
+              max={100}
+              value={form.presentation.positionY}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  presentation: { ...p.presentation, positionY: Number(e.target.value) },
+                }))
+              }
+            />
+          </label>
+          <label className="text-sm font-semibold">
+            Schaal ({form.presentation.scale.toFixed(2)})
+            <input
+              className="mt-1 w-full"
+              type="range"
+              min={100}
+              max={200}
+              value={Math.round(form.presentation.scale * 100)}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  presentation: { ...p.presentation, scale: Number(e.target.value) / 100 },
+                }))
+              }
+            />
+          </label>
+          <label className="text-sm font-semibold">
+            Tekstkleur
+            <select
+              className="mt-1 w-full rounded-lg border border-wf-300 px-3 py-2"
+              value={form.presentation.textColor}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  presentation: {
+                    ...p.presentation,
+                    textColor: e.target.value === "black" ? "black" : "white",
+                  },
+                }))
+              }
+            >
+              <option value="white">Wit</option>
+              <option value="black">Zwart</option>
+            </select>
+          </label>
+          <label className="text-sm font-semibold">
+            Knopkleur
+            <select
+              className="mt-1 w-full rounded-lg border border-wf-300 px-3 py-2"
+              value={form.presentation.buttonColor}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  presentation: {
+                    ...p.presentation,
+                    buttonColor: e.target.value === "black" ? "black" : "white",
+                  },
+                }))
+              }
+            >
+              <option value="white">Wit</option>
+              <option value="black">Zwart</option>
+            </select>
+          </label>
+        </div>
+        {displayMediaUrl(form.image_url) ? (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setForm((p) => ({ ...p, image_url: "" }))}
+          >
+            Afbeelding verwijderen
+          </Button>
         ) : null}
 
         <div className="flex flex-wrap gap-4 text-sm">
@@ -405,6 +538,54 @@ function CmsBannerEditorInner({ bannerId }: Props) {
         </div>
       </form>
       )}
+    </div>
+  )
+}
+
+function BannerSurface({
+  imageUrl,
+  background,
+  title,
+  subtitle,
+  cta,
+  presentation,
+}: {
+  imageUrl: string | null
+  background: string
+  title: string
+  subtitle: string
+  cta: string
+  presentation: ReturnType<typeof parseBannerPresentation>
+}) {
+  const imageStyle = bannerImageStyle(presentation)
+  const lightText = presentation.textColor === "white"
+  const lightButton = presentation.buttonColor === "white"
+  return (
+    <div
+      className="relative aspect-[4/1] w-full overflow-hidden rounded-2xl border border-wf-200"
+      style={{ background: background || "#f3f4f6" }}
+    >
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={imageUrl} alt="" className="absolute inset-0 h-full w-full" style={imageStyle} />
+      ) : null}
+      <div className="relative z-[1] flex h-full flex-col justify-center px-6">
+        <p className={`text-xl font-bold ${lightText ? "text-white" : "text-wf-900"}`}>{title}</p>
+        {subtitle ? (
+          <p className={`mt-1 max-w-xl text-sm ${lightText ? "text-white/90" : "text-wf-600"}`}>
+            {subtitle}
+          </p>
+        ) : null}
+        {cta ? (
+          <span
+            className={`mt-3 inline-flex h-9 w-fit items-center rounded-lg px-3 text-sm font-semibold ${
+              lightButton ? "bg-white text-wf-900" : "bg-wf-900 text-white"
+            }`}
+          >
+            {cta}
+          </span>
+        ) : null}
+      </div>
     </div>
   )
 }

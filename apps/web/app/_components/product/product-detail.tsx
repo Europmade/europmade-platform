@@ -134,6 +134,16 @@ export function ProductDetailPage({
     [offers]
   )
 
+  useEffect(() => {
+    const offerId = new URLSearchParams(window.location.search).get("offer")
+    if (!offerId || !offerId.startsWith("offr_")) return
+    setOffers((prev) => {
+      if (!prev.some((o) => o.id === offerId)) return prev
+      if (prev.some((o) => o.selected && o.id === offerId)) return prev
+      return prev.map((o) => ({ ...o, selected: o.id === offerId }))
+    })
+  }, [detail.slug])
+
   const buybox = presentation?.buybox
   const sections = presentation?.sections
   const showPrice = buybox?.showPrice !== false
@@ -557,6 +567,8 @@ export function ProductDetailPage({
           <BuyBox
             selected={selected}
             offerCount={offers.length}
+            availability={detail.availability}
+            alternatives={detail.alternatives}
             notice={detail.buyBoxNotice}
             cartBusy={cartBusy}
             cartNote={cartNote}
@@ -1133,6 +1145,8 @@ function resolveBuyBoxNotice(notice: string, locale: StorefrontLocale): string {
 function BuyBox({
   selected,
   offerCount,
+  availability,
+  alternatives = [],
   notice,
   cartBusy,
   cartNote,
@@ -1148,6 +1162,8 @@ function BuyBox({
 }: {
   selected: PdpOffer | null
   offerCount: number
+  availability?: PdpDetail["availability"]
+  alternatives?: ListingProduct[]
   notice: string
   cartBusy: boolean
   cartNote: string | null
@@ -1170,11 +1186,39 @@ function BuyBox({
         aria-label="Buy Box"
       >
         <p className="text-sm font-semibold text-wf-900">
-          {t("noActiveOffer", locale)}
+          {availability === "out_of_stock"
+            ? t("unavailableOutOfStock", locale)
+            : availability === "not_published"
+              ? t("unavailableNotPublished", locale)
+              : availability === "paused"
+                ? t("unavailablePaused", locale)
+                : availability === "not_deliverable"
+                  ? t("unavailableNotDeliverable", locale)
+                  : t("noActiveOffer", locale)}
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-wf-700">
-          {t("noCommerceOfferBody", locale)}
+          {availability === "out_of_stock"
+            ? t("unavailableOutOfStock", locale)
+            : availability === "not_deliverable"
+              ? t("unavailableNotDeliverable", locale)
+              : t("noCommerceOfferBody", locale)}
         </p>
+        {alternatives.length > 0 ? (
+          <div className="mt-3">
+            <p className="text-[12px] font-semibold text-wf-800">
+              {t("unavailableAlternatives", locale)}
+            </p>
+            <ul className="mt-1 space-y-1">
+              {alternatives.slice(0, 4).map((item) => (
+                <li key={item.slug}>
+                  <Link href={`/product/${item.slug}`} className="text-[13px] text-wf-800 underline">
+                    {item.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
         <Notice variant="info" className="mt-3 text-[11px]">
           ⓘ {noticeText}{" "}
           <Link href="/buy-box" className="text-wf-800 underline">

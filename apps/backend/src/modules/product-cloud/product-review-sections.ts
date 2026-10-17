@@ -10,7 +10,6 @@ export const PRODUCT_REVIEW_SECTION_KEYS = [
   "made_in_europe",
   "ce_compliance",
   "content",
-  "claims",
   "other",
 ] as const
 
@@ -47,7 +46,6 @@ export const PRODUCT_REVIEW_SECTION_LABELS_NL: Record<
   made_in_europe: "Made in Europe",
   ce_compliance: "CE / Compliance",
   content: "Productomschrijving / content",
-  claims: "Claims",
   other: "Overige vereisten",
 }
 

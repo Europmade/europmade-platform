@@ -18,12 +18,14 @@ import { HomepageWhySection } from "./homepage-why"
 import { NewsletterForm } from "./newsletter-form"
 import { CmsSectionFrame } from "../cms/cms-section-frame"
 import { CmsThemeStyle } from "../cms/cms-theme-style"
-import type { CmsThemeDocument } from "@europmade/utils"
+import { homepageSectionBody, type CmsThemeDocument } from "@europmade/utils"
 import {
   HOMEPAGE_AD_WRAP,
+  HOMEPAGE_CONTENT_GUTTER,
   HOMEPAGE_SECTION_CLASS,
   withLegacyBanners,
 } from "./homepage-shared"
+import { HomepageSectionTitle } from "./homepage-section-title"
 
 export function HomepageView({
   cms,
@@ -31,6 +33,7 @@ export function HomepageView({
   newest,
   bestSold,
   locale,
+  adPreviewNotice,
   preview,
 }: {
   cms: ResolvedHomepage
@@ -38,6 +41,7 @@ export function HomepageView({
   newest: ListingProduct[]
   bestSold: ListingProduct[]
   locale: StorefrontLocale
+  adPreviewNotice?: string | null
   preview?: {
     selectedId: string
     interactive: boolean
@@ -76,6 +80,11 @@ export function HomepageView({
           : undefined
       }
     >
+      {adPreviewNotice ? (
+        <div className="bg-amber-100 px-4 py-2 text-center text-xs font-semibold text-amber-950">
+          {adPreviewNotice}
+        </div>
+      ) : null}
       <CmsThemeStyle theme={preview?.theme ?? null} />
       <div className="em-cms-frame mx-auto max-w-[1160px] border border-wf-200 bg-white shadow-sm">
         <CmsSectionFrame
@@ -85,8 +94,7 @@ export function HomepageView({
         >
           <PublicHeader
             locale={locale}
-            logoSrc={preview?.theme?.header?.logo ?? undefined}
-            backgroundColor={preview?.theme?.header?.backgroundColor ?? undefined}
+            chrome={preview?.theme?.header}
             loadThemeChrome={!preview?.theme}
           />
         </CmsSectionFrame>
@@ -118,10 +126,14 @@ export function HomepageView({
 
           if (section.key === "categories") {
             return frame(
-              <section className={HOMEPAGE_SECTION_CLASS}>
-                <h2 className="mb-2 text-base font-bold text-wf-900 tablet:text-lg">
+              <section className={`${HOMEPAGE_CONTENT_GUTTER} pb-3.5 pt-2 tablet:pb-4 tablet:pt-2`}>
+                <HomepageSectionTitle
+                  color={section.titleColor}
+                  fontSize={section.titleSize}
+                  className="mb-2"
+                >
                   {section.title}
-                </h2>
+                </HomepageSectionTitle>
                 {cms.categories.length === 0 && preview?.honestEmpty ? (
                   <p className="text-[13px] text-wf-500">Geen content ingesteld</p>
                 ) : (
@@ -134,19 +146,26 @@ export function HomepageView({
             )
           }
           if (section.key === "campaigns") {
+            const campaignBody = homepageSectionBody(cms.campaigns.length)
             return frame(
               <section className={HOMEPAGE_SECTION_CLASS}>
-                {cms.campaigns.length === 0 && preview?.honestEmpty ? (
+                {campaignBody === "placeholder" ? (
                   <>
-                    <h2 className="mb-2 text-base font-bold text-wf-900">
+                    <HomepageSectionTitle
+                      color={section.titleColor}
+                      fontSize={section.titleSize}
+                      className="mb-2"
+                    >
                       {section.title}
-                    </h2>
+                    </HomepageSectionTitle>
                     <p className="text-[13px] text-wf-500">Geen content ingesteld</p>
                   </>
                 ) : (
                   <HomepageCampaignSlider
                     campaigns={cms.campaigns}
                     title={section.title}
+                    titleColor={section.titleColor}
+                    titleSize={section.titleSize}
                     prevLabel={t("prevCampaigns", locale)}
                     nextLabel={t("nextCampaigns", locale)}
                   />
@@ -159,16 +178,20 @@ export function HomepageView({
               <section className={HOMEPAGE_SECTION_CLASS}>
                 {featuredProducts.length === 0 ? (
                   <>
-                    <h2 className="mb-2 text-base font-bold text-wf-900">
+                    <HomepageSectionTitle
+                      color={section.titleColor}
+                      fontSize={section.titleSize}
+                      className="mb-2"
+                    >
                       {section.title}
-                    </h2>
+                    </HomepageSectionTitle>
                     {section.subtitle ? (
                       <p className="mb-2 text-[12px] text-wf-600">
                         {section.subtitle}
                       </p>
                     ) : null}
                     <p className="text-[13px] text-wf-500">
-                      Geen Product Cloud-producten beschikbaar
+                      {t("emptyMarketCategoryBody", locale)}
                     </p>
                   </>
                 ) : (
@@ -178,6 +201,8 @@ export function HomepageView({
                     products={featuredProducts}
                     locale={locale}
                     hideWhenEmpty={false}
+                    titleColor={section.titleColor}
+                    titleFontSize={section.titleSize}
                   />
                 )}
               </section>
@@ -206,15 +231,19 @@ export function HomepageView({
           if (section.key === "partners") {
             return frame(
               <section className={HOMEPAGE_SECTION_CLASS}>
-                <h2 className="mb-0.5 text-base font-bold text-wf-900 tablet:text-lg">
+                <HomepageSectionTitle
+                  color={section.titleColor}
+                  fontSize={section.titleSize}
+                  className="mb-0.5"
+                >
                   {section.title}
-                </h2>
+                </HomepageSectionTitle>
                 {section.subtitle ? (
                   <p className="mb-2 text-[12px] text-wf-600">
                     {section.subtitle}
                   </p>
                 ) : null}
-                {cms.partners.items.length === 0 ? (
+                {homepageSectionBody(cms.partners.items.length) === "placeholder" ? (
                   <p className="text-[13px] text-wf-500">Geen content ingesteld</p>
                 ) : (
                   <HomepageProducerGrid
@@ -234,6 +263,8 @@ export function HomepageView({
                 image={cms.why.image}
                 items={cms.why.items}
                 honestEmpty={preview?.honestEmpty}
+                titleColor={section.titleColor}
+                titleSize={section.titleSize}
               />
             )
           }
@@ -242,16 +273,20 @@ export function HomepageView({
               <section className={HOMEPAGE_SECTION_CLASS}>
                 {newest.length === 0 ? (
                   <>
-                    <h2 className="mb-2 text-base font-bold text-wf-900">
+                    <HomepageSectionTitle
+                      color={section.titleColor}
+                      fontSize={section.titleSize}
+                      className="mb-2"
+                    >
                       {section.title}
-                    </h2>
+                    </HomepageSectionTitle>
                     {section.subtitle ? (
                       <p className="mb-2 text-[12px] text-wf-600">
                         {section.subtitle}
                       </p>
                     ) : null}
                     <p className="text-[13px] text-wf-500">
-                      Geen Product Cloud-producten beschikbaar
+                      {t("emptyMarketCategoryBody", locale)}
                     </p>
                   </>
                 ) : (
@@ -261,6 +296,8 @@ export function HomepageView({
                     products={newest}
                     locale={locale}
                     hideWhenEmpty={false}
+                    titleColor={section.titleColor}
+                    titleFontSize={section.titleSize}
                   />
                 )}
               </section>
@@ -271,16 +308,20 @@ export function HomepageView({
               <section className={HOMEPAGE_SECTION_CLASS}>
                 {bestSold.length === 0 ? (
                   <>
-                    <h2 className="mb-2 text-base font-bold text-wf-900">
+                    <HomepageSectionTitle
+                      color={section.titleColor}
+                      fontSize={section.titleSize}
+                      className="mb-2"
+                    >
                       {section.title}
-                    </h2>
+                    </HomepageSectionTitle>
                     {section.subtitle ? (
                       <p className="mb-2 text-[12px] text-wf-600">
                         {section.subtitle}
                       </p>
                     ) : null}
                     <p className="text-[13px] text-wf-500">
-                      Geen Product Cloud-producten beschikbaar
+                      {t("emptyMarketCategoryBody", locale)}
                     </p>
                   </>
                 ) : (
@@ -290,6 +331,8 @@ export function HomepageView({
                     products={bestSold}
                     locale={locale}
                     hideWhenEmpty={false}
+                    titleColor={section.titleColor}
+                    titleFontSize={section.titleSize}
                   />
                 )}
               </section>
@@ -297,7 +340,7 @@ export function HomepageView({
           }
           if (section.key === "newsletter") {
             return frame(
-              <section className="border-t border-wf-100 px-4 py-3.5 tablet:px-8 tablet:py-4">
+              <section className={`border-t border-wf-100 ${HOMEPAGE_SECTION_CLASS}`}>
                 <div
                   className={`grid w-full gap-4 ${
                     cms.newsletter.image
@@ -317,9 +360,13 @@ export function HomepageView({
                     </div>
                   ) : null}
                   <div className="flex flex-col justify-center text-left">
-                    <h2 className="mb-1 text-base font-bold text-wf-900 tablet:text-lg">
+                    <HomepageSectionTitle
+                      color={section.titleColor}
+                      fontSize={section.titleSize}
+                      className="mb-1"
+                    >
                       {cms.newsletter.title || section.title}
-                    </h2>
+                    </HomepageSectionTitle>
                     <p className="mb-3 text-[12px] leading-relaxed text-wf-600">
                       {cms.newsletter.subtitle || section.subtitle}
                     </p>
@@ -337,9 +384,12 @@ export function HomepageView({
           if (section.key === "seller_cta") {
             return frame(
               <section className={`${HOMEPAGE_SECTION_CLASS} text-center`}>
-                <h2 className="text-base font-bold text-wf-900 tablet:text-lg">
+                <HomepageSectionTitle
+                  color={section.titleColor}
+                  fontSize={section.titleSize}
+                >
                   {section.title}
-                </h2>
+                </HomepageSectionTitle>
                 {section.subtitle ? (
                   <p className="mx-auto mt-1 max-w-lg text-[12px] text-wf-600">
                     {section.subtitle}
@@ -357,9 +407,13 @@ export function HomepageView({
           if (section.key === "faq") {
             return frame(
               <section className={HOMEPAGE_SECTION_CLASS}>
-                <h2 className="mb-2 text-base font-bold text-wf-900 tablet:text-lg">
+                <HomepageSectionTitle
+                  color={section.titleColor}
+                  fontSize={section.titleSize}
+                  className="mb-2"
+                >
                   {section.title}
-                </h2>
+                </HomepageSectionTitle>
                 {cms.faqItems.length === 0 && preview?.honestEmpty ? (
                   <p className="text-[13px] text-wf-500">Geen content ingesteld</p>
                 ) : (
@@ -379,9 +433,12 @@ export function HomepageView({
           }
           return frame(
             <section className={HOMEPAGE_SECTION_CLASS}>
-              <h2 className="text-base font-bold text-wf-900 tablet:text-lg">
+              <HomepageSectionTitle
+                color={section.titleColor}
+                fontSize={section.titleSize}
+              >
                 {section.title}
-              </h2>
+              </HomepageSectionTitle>
               {section.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

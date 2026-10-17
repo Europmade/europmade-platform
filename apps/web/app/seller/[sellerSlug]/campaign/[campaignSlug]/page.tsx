@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { AdCampaignLandingPreview } from "@europmade/ui"
+import { parseSellerBannerPresentation } from "@europmade/utils"
 import { PublicStorefrontChrome } from "../../../../_components/marketplace/public-storefront-chrome"
 import { getStorefrontLocaleFromCookies } from "../../../../_lib/i18n/get-storefront-locale"
 import {
@@ -48,6 +49,10 @@ export default async function PublicSellerCampaignPage({ params }: PageProps) {
             subline: data.campaign.subline,
             ctaLabel,
             imageUrl: data.campaign.image_url,
+            logoUrl: data.campaign.logo_url,
+            presentation: parseSellerBannerPresentation(
+              data.campaign.banner_presentation
+            ),
           }}
           sellerName={data.seller.name}
           products={data.products}

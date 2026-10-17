@@ -3,6 +3,8 @@ import {
   type CategoryAiHooks,
   type CategoryCmsDocument,
   type CategoryFaqCms,
+  type CategoryFilterControlCms,
+  type CategoryUspCms,
 } from "./category-cms"
 
 const EMPTY_AI: CategoryAiHooks = {
@@ -53,6 +55,24 @@ function locOf(value: unknown): LocalizedString {
     de: typeof v.de === "string" ? v.de : "",
     fr: typeof v.fr === "string" ? v.fr : "",
   }
+}
+
+function parseFilterControls(raw: unknown): CategoryFilterControlCms[] {
+  if (!Array.isArray(raw)) return []
+  return raw.flatMap((item, index) => {
+    if (!item || typeof item !== "object") return []
+    const row = item as Record<string, unknown>
+    const attributeKey = typeof row.attributeKey === "string" ? row.attributeKey.trim() : ""
+    if (!attributeKey) return []
+    return [
+      {
+        attributeKey,
+        visible: row.visible !== false,
+        label: locOf(row.label),
+        sortOrder: Number.isFinite(Number(row.sortOrder)) ? Number(row.sortOrder) : index,
+      },
+    ]
+  })
 }
 
 function emptyCategoryDocument(slug: string): CategoryCmsDocument {
@@ -117,6 +137,26 @@ export function overlayCategoryEditorial(
     fr: [intro.fr, madeInEurope.fr].filter(Boolean).join("\n\n"),
   }
 
+  let usps: CategoryUspCms[] = []
+  if (Array.isArray(d.usps)) {
+    usps = d.usps.flatMap((item, i): CategoryUspCms[] => {
+      const u = (item ?? {}) as Record<string, unknown>
+      const title = locOf(u.title)
+      const body = locOf(u.body)
+      const hasText = [title, body].some((value) =>
+        Boolean(value.nl.trim() || value.en.trim() || value.de.trim() || value.fr.trim())
+      )
+      if (!hasText) return []
+      return [
+        {
+          id: typeof u.id === "string" ? u.id : `cms-usp-${i}`,
+          title,
+          body,
+        },
+      ]
+    })
+  }
+
   let faq: CategoryFaqCms[] = []
   if (Array.isArray(d.faq)) {
     faq = d.faq.map((item, i): CategoryFaqCms => {
@@ -135,14 +175,23 @@ export function overlayCategoryEditorial(
   if (bannerVisible && d.banner && typeof d.banner === "object") {
     const b = d.banner as Record<string, unknown>
     const bannerTitle = locOf(b.title)
+    const bannerSubtitle = locOf(b.subtitle)
+    const bannerCta = locOf(b.cta_label)
+    const hasSubtitle = Boolean(
+      bannerSubtitle.nl || bannerSubtitle.en || bannerSubtitle.de || bannerSubtitle.fr
+    )
     banners.push({
       id: typeof b.id === "string" ? b.id : `cms_banner_${slug}`,
       priority: "default",
       visible: true,
       sortOrder: 0,
       title: bannerTitle,
-      subtitle: subtitle.nl || subtitle.en ? subtitle : introCombined,
-      ctaLabel: emptyLoc(),
+      subtitle: hasSubtitle
+        ? bannerSubtitle
+        : subtitle.nl || subtitle.en
+          ? subtitle
+          : introCombined,
+      ctaLabel: bannerCta,
       destinationUrl:
         typeof b.destination_url === "string" && b.destination_url
           ? b.destination_url
@@ -150,7 +199,11 @@ export function overlayCategoryEditorial(
       linkType: "category",
       image: typeof b.image_url === "string" ? b.image_url : undefined,
       imageAlt: bannerTitle,
-      background: "",
+      background: typeof b.background === "string" ? b.background : "",
+      presentation:
+        b.presentation && typeof b.presentation === "object"
+          ? (b.presentation as CategoryCmsDocument["banners"][number]["presentation"])
+          : null,
     })
   } else if (heroVisible && heroImage) {
     banners.push({
@@ -190,7 +243,9 @@ export function overlayCategoryEditorial(
       h1: title,
     },
     faq,
+    usps,
     banners,
+    filterControls: parseFilterControls(d.filterControls),
     listingPresentation: {
       title: locOf(d.productsTitle),
       sort: productsSort,

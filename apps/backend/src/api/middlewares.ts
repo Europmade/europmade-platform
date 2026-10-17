@@ -984,6 +984,36 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/product-cloud/offers",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/offers/:id",
+      methods: ["GET", "POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/brand-import/preview",
+      methods: ["POST"],
+      middlewares: [adminAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/admin/product-cloud/brand-import",
+      methods: ["POST"],
+      middlewares: [adminAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/admin/product-cloud/brand-import/batches",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/brand-import/template",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/product-cloud/products/bulk-product-manager",
       methods: ["POST"],
       middlewares: [adminAuth],
@@ -999,8 +1029,23 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/product-cloud/products/bulk-approval",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/product-cloud/products/:id",
       methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/:id/identifier",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/product-cloud/products/:id/central",
+      methods: ["POST"],
       middlewares: [adminAuth],
     },
     {

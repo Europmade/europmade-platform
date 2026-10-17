@@ -69,6 +69,10 @@ export default async function ActionPage({ params }: ActionPageProps) {
     limit: Math.max(productIds.length, 1),
     locale,
   })
+  const alternatives =
+    raw.length === 0
+      ? (await resolveListingProducts({ locale, limit: 4 })).products
+      : []
   const taxonomy = (await fetchStorefrontCategories(locale)) ?? []
   const products = withExpandedProductCategories(raw, taxonomy)
   const filterGroups = deriveActionCategoryFilters(products, taxonomy, locale)
@@ -98,6 +102,7 @@ export default async function ActionPage({ params }: ActionPageProps) {
       products={products}
       filterGroups={filterGroups}
       countries={countries}
+      alternatives={alternatives}
     />
   )
 }

@@ -23,6 +23,7 @@ export function CmsImageField({
   placement = "cms_banner",
   onError,
   previewFit = "cover",
+  previewRatio,
 }: {
   label: string
   url: string | null
@@ -35,6 +36,8 @@ export function CmsImageField({
   onError?: (message: string | null) => void
   /** How the editor thumbnail should fit the preview box. */
   previewFit?: "cover" | "contain"
+  /** CSS aspect-ratio for the preview, for example "2.85 / 1". */
+  previewRatio?: string
 }) {
   const req = getMediaRequirements(placement as MediaPlacement)
   const accept = mediaAcceptAttribute(req.mimeTypes)
@@ -101,14 +104,33 @@ export function CmsImageField({
       ) : null}
       {display ? (
         <div className="mb-2 overflow-hidden rounded-xl border border-wf-200 bg-wf-50">
+          <div
+            className={
+              previewRatio
+                ? `relative w-full ${
+                    previewFit === "contain"
+                      ? "bg-[linear-gradient(45deg,#e7e9ee_25%,transparent_25%,transparent_75%,#e7e9ee_75%),linear-gradient(45deg,#e7e9ee_25%,transparent_25%,transparent_75%,#e7e9ee_75%)] bg-[length:16px_16px] bg-[position:0_0,8px_8px]"
+                      : "bg-wf-100"
+                  }`
+                : undefined
+            }
+            style={previewRatio ? { aspectRatio: previewRatio } : undefined}
+          >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={display}
             alt=""
-            className={`w-full ${
-              previewFit === "contain" ? "object-contain" : "object-cover"
-            } ${large ? "max-h-56" : "max-h-36"}`}
+            className={
+              previewRatio
+                ? `absolute inset-0 h-full w-full ${
+                    previewFit === "contain" ? "object-contain" : "object-cover"
+                  }`
+                : `w-full ${
+                    previewFit === "contain" ? "object-contain" : "object-cover"
+                  } ${large ? "max-h-56" : "max-h-36"}`
+            }
           />
+          </div>
           <div className="flex items-center justify-between gap-2 px-2 py-1.5">
             <p className="truncate text-[11px] text-wf-600">{name}</p>
             <Button

@@ -22,6 +22,8 @@ import ProductFieldChange from "./product-field-change"
 import ProductSectionReview from "./product-section-review"
 import ProductLinkGroup from "./product-link-group"
 import ProductLinkMember from "./product-link-member"
+import ImportBatch from "./import-batch"
+import ImportMappingProfile from "./import-mapping-profile"
 
 export {
   ProductFamily,
@@ -48,4 +50,6 @@ export {
   ProductSectionReview,
   ProductLinkGroup,
   ProductLinkMember,
+  ImportBatch,
+  ImportMappingProfile,
 }

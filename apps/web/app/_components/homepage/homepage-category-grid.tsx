@@ -11,7 +11,7 @@ function CategoryVisual({
   const src = image && image.trim() ? image.trim() : null
   return (
     <div
-      className="relative aspect-square w-full overflow-hidden rounded-lg bg-[#f5f6f8]"
+      className="relative aspect-[1.75/1] w-full overflow-hidden rounded-lg bg-[#f5f6f8]"
       role="img"
       aria-label={label}
     >
@@ -20,7 +20,7 @@ function CategoryVisual({
         <img
           src={src}
           alt=""
-          className="h-full w-full object-contain p-1.5"
+          className="h-full w-full object-cover"
           loading="lazy"
           decoding="async"
         />
@@ -44,8 +44,9 @@ export function HomepageCategoryGrid({
             className="group flex h-full flex-col rounded-xl border border-wf-200 bg-white p-1.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-wf-300 hover:shadow-md"
           >
             <CategoryVisual label={cat.label} image={cat.image} />
-            <p className="mt-1 truncate text-[12px] font-bold leading-tight text-wf-900">
-              {cat.label}
+            <p className="mt-1 flex items-center justify-between gap-2 text-[13px] font-bold leading-tight text-wf-900">
+              <span className="truncate">{cat.label}</span>
+              <span aria-hidden className="text-wf-500">→</span>
             </p>
           </Link>
         </li>

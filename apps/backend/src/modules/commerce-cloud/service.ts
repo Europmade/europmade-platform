@@ -25,8 +25,11 @@ import {
   isOfferActiveForSale,
   normalizeSellerSku,
   generateSellerSku,
+  inheritedSellerSku,
+  sellerSkuUsedByOtherProduct,
 } from "./offer-sellability"
 import { buildEffectivePriceView } from "./offer-pricing"
+import { offerReachesDestination } from "./offer-destination"
 
 function resolvePromoFields(
   input: {
@@ -198,6 +201,7 @@ class CommerceCloudModuleService extends MedusaService({
           input.seller_id,
           sellerSku,
           offer.id,
+          input.identifier_id,
           sharedContext
         )
       }
@@ -341,6 +345,15 @@ class CommerceCloudModuleService extends MedusaService({
         price_changed = true
       }
 
+      if (sellerSku) {
+        await this.alignIdentifierSellerSku_(
+          input.seller_id,
+          input.identifier_id,
+          sellerSku,
+          sharedContext
+        )
+      }
+
       return {
         offer_id: offer.id,
         inventory_id,
@@ -360,13 +373,31 @@ class CommerceCloudModuleService extends MedusaService({
       }
     }
 
-    const sellerSku = explicitSellerSku ?? generateSellerSku()
+    const siblings = await this.listOffers(
+      {
+        seller_id: input.seller_id,
+        identifier_id: input.identifier_id,
+      },
+      {},
+      sharedContext
+    )
+    const sellerSku =
+      explicitSellerSku ||
+      inheritedSellerSku(
+        siblings.map((row) => ({
+          identifier_id: String(row.identifier_id),
+          seller_sku: row.seller_sku != null ? String(row.seller_sku) : null,
+        })),
+        input.identifier_id
+      ) ||
+      generateSellerSku()
 
     if (sellerSku) {
       await this.assertSellerSkuUnique_(
         input.seller_id,
         sellerSku,
         null,
+        input.identifier_id,
         sharedContext
       )
     }
@@ -410,6 +441,15 @@ class CommerceCloudModuleService extends MedusaService({
       sharedContext
     )
 
+    if (sellerSku) {
+      await this.alignIdentifierSellerSku_(
+        input.seller_id,
+        input.identifier_id,
+        sellerSku,
+        sharedContext
+      )
+    }
+
     return {
       offer_id: offer.id,
       inventory_id: inventory.id,
@@ -433,6 +473,7 @@ class CommerceCloudModuleService extends MedusaService({
     sellerId: string,
     sellerSku: string,
     excludeOfferId: string | null,
+    identifierId: string,
     sharedContext: Context
   ): Promise<void> {
     const clashes = await this.listOffers(
@@ -440,11 +481,43 @@ class CommerceCloudModuleService extends MedusaService({
       {},
       sharedContext
     )
-    const other = clashes.find((row) => row.id !== excludeOfferId)
-    if (other) {
+    const conflict = sellerSkuUsedByOtherProduct(
+      clashes.map((row) => ({
+        id: row.id,
+        identifier_id: String(row.identifier_id),
+        seller_sku: row.seller_sku != null ? String(row.seller_sku) : null,
+      })),
+      {
+        sellerSku,
+        identifierId,
+        excludeOfferId,
+      }
+    )
+    if (conflict) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
         "Seller SKU is al in gebruik voor een ander aanbod van deze seller."
+      )
+    }
+  }
+
+  /** One seller SKU per product, shared by every market offer of that identifier. */
+  protected async alignIdentifierSellerSku_(
+    sellerId: string,
+    identifierId: string,
+    sellerSku: string,
+    sharedContext: Context
+  ): Promise<void> {
+    const rows = await this.listOffers(
+      { seller_id: sellerId, identifier_id: identifierId },
+      {},
+      sharedContext
+    )
+    for (const row of rows) {
+      if (String(row.seller_sku || "") === sellerSku) continue
+      await this.updateOffers(
+        { id: row.id, seller_sku: sellerSku },
+        sharedContext
       )
     }
   }
@@ -595,9 +668,27 @@ class CommerceCloudModuleService extends MedusaService({
       {},
       sharedContext
     )
+    const profileCache = new Map<
+      string,
+      { status: string; countryActive: boolean } | null
+    >()
     const inputs: BuyBoxOfferInput[] = []
     for (const offer of offers) {
       if (!isOfferActiveForSale(offer.sales_status)) continue
+      const reaches = await offerReachesDestination(
+        offer,
+        region_code,
+        async (profileId) => {
+          const [profile] = await this.listSellerShippingProfiles(
+            { id: profileId },
+            {},
+            sharedContext
+          )
+          return profile ?? null
+        },
+        profileCache
+      )
+      if (!reaches) continue
       const [inventory] = await this.listOfferInventories(
         { offer_id: offer.id },
         {},

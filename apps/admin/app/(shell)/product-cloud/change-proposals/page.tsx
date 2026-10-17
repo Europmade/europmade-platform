@@ -49,15 +49,19 @@ function FieldChanges({ row }: { row: AdminChangeProposal }) {
                   Voorgestelde media
                 </p>
                 <div className="mt-1 flex flex-wrap gap-2">
-                  {c.storage_references.map((ref) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={ref}
-                      src={displayMediaUrl(ref)}
-                      alt="Voorgestelde media"
-                      className="h-20 w-20 rounded border border-wf-300 object-cover"
-                    />
-                  ))}
+                  {c.storage_references.map((ref) => {
+                    const src = displayMediaUrl(ref)
+                    if (!src) return null
+                    return (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={ref}
+                        src={src}
+                        alt="Voorgestelde media"
+                        className="h-20 w-20 rounded border border-wf-300 object-cover"
+                      />
+                    )
+                  })}
                 </div>
               </div>
             ) : null}

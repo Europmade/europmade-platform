@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Badge, Button, Input, Notice } from "@europmade/ui"
@@ -18,7 +18,7 @@ import {
   deleteProductMedia,
   setProductMediaPrimary,
   reorderProductMedia,
-  listProductVariants,
+  assignProductShippingProfile,
   getMadeInEuropeEvidence,
   submitProductForApproval,
   submitChangeProposal,
@@ -54,17 +54,26 @@ import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
 import type { StorefrontLocale } from "../../../_lib/i18n/locales"
 import { t } from "../../../_lib/i18n/messages"
 import { statusLabel } from "../../../_lib/i18n/status-labels"
-import { SellerVariantsPanel } from "./_components/variants-panel"
 import { ProposeInlineForm } from "./_components/propose-inline-form"
 import { ProductManagerRequestSection } from "./_components/product-manager-request-section"
 import { ProductWizardProgress } from "./_components/product-wizard-progress"
 import { PublicationReadinessCards } from "./_components/publication-readiness-cards"
 import { ProductShippingStep } from "./_components/product-shipping-step"
 import {
+  emptyWizardAttention,
+  markWizardAttempted,
+  markWizardVisited,
   nextWizardStep,
   resolveWizardStep,
+  wizardStepGaps,
+  type WizardAttention,
   type WizardStepKey,
 } from "./_lib/product-wizard"
+import {
+  clearProductDraftSnapshot,
+  readProductDraftSnapshot,
+  saveProductDraftSnapshot,
+} from "./_lib/product-draft-session"
 import { UnifiedComplianceEvidenceSection } from "../../_components/compliance-evidence-section"
 import { EuropeanOwnershipSection } from "../../_components/european-ownership-section"
 import {
@@ -103,17 +112,6 @@ const EU_MARKET_CODES = [
   "LT",
   "CY",
   "MT",
-] as const
-
-const VARIANT_AXIS_KEYS = [
-  "vpAxisColor",
-  "vpAxisSize",
-  "vpAxisContent",
-  "vpAxisPower",
-  "vpAxisVoltage",
-  "vpAxisMaterial",
-  "vpAxisVariant",
-  "vpAxisBundle",
 ] as const
 
 type HistoryFilter = "all" | "compliance" | "price" | "variants" | "media" | "rest"
@@ -560,6 +558,24 @@ function draftFromOffer(
   }
 }
 
+function focusField(id: string) {
+  window.requestAnimationFrame(() => {
+    const el = document.getElementById(id)
+    if (!el) return
+    el.scrollIntoView({ behavior: "smooth", block: "center" })
+    if (el instanceof HTMLElement) el.focus()
+  })
+}
+
+function offerFieldForMessage(message: string): string | null {
+  const lower = message.toLowerCase()
+  if (lower.includes("sku")) return "offer-seller-sku"
+  if (lower.includes("actieprijs") || lower.includes("promo")) return "offer-promo-price"
+  if (lower.includes("prijs")) return "offer-base-price"
+  if (lower.includes("voorraad")) return "offer-stock"
+  return null
+}
+
 function emptyOfferDraft(identifierId: string, region = "NL"): OfferDraft {
   return {
     offer_id: null,
@@ -598,7 +614,13 @@ export default function SellerProductDetailPage() {
     "loading"
   )
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState<string | null>(null)
+  const [attention, setAttention] = useState<WizardAttention>(() =>
+    emptyWizardAttention(initialStep)
+  )
+  const selectedOfferIdRef = useRef<string | null>(null)
+  const resumeOnce = useRef(false)
   const [saving, setSaving] = useState(false)
   const [offerSaving, setOfferSaving] = useState(false)
   const [mediaBusy, setMediaBusy] = useState(false)
@@ -619,11 +641,9 @@ export default function SellerProductDetailPage() {
   >("Overige afbeelding")
   const [openHintCode, setOpenHintCode] = useState<string | null>(null)
   const [addMarketCode, setAddMarketCode] = useState("")
+  const [addMarketPrice, setAddMarketPrice] = useState("")
+  const [addMarketPromo, setAddMarketPromo] = useState("")
   const [marketBusy, setMarketBusy] = useState(false)
-  const [suggestedAxes, setSuggestedAxes] = useState<string[]>([])
-  const [allowedVariantTypes, setAllowedVariantTypes] = useState<string[]>(
-    VARIANT_AXIS_KEYS.map((k) => t(k, locale))
-  )
   const [mie, setMie] = useState<MadeInEuropeEvidenceResponse | null>(null)
   const [publishBusy, setPublishBusy] = useState(false)
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("all")
@@ -752,25 +772,26 @@ export default function SellerProductDetailPage() {
           allOffers.find((o) => o.is_sellable)?.offer_id ||
           allOffers[0]?.offer_id ||
           null
-        setSelectedOfferId(primaryId)
+        const kept =
+          allOffers.find((o) => o.offer_id === selectedOfferIdRef.current) ||
+          null
+        const chosenId = kept?.offer_id || primaryId
+        setSelectedOfferId(chosenId)
         const primary =
-          allOffers.find((o) => o.offer_id === primaryId) ||
+          allOffers.find((o) => o.offer_id === chosenId) ||
           res.product.offer ||
           null
         if (primary?.has_offer && primary.identifier_id) {
-          setOfferDraft(draftFromOffer(primary, primary.identifier_id))
+          const draft = draftFromOffer(primary, primary.identifier_id)
+          setOfferDraft(draft)
+          setRegularPriceDraft(draft.base_price)
         } else if (res.product.identifier_id) {
           setOfferDraft(emptyOfferDraft(res.product.identifier_id))
+          setRegularPriceDraft("")
         } else {
           setOfferDraft(null)
+          setRegularPriceDraft("")
         }
-        setRegularPriceDraft(
-          res.product.regular_customer_price != null
-            ? String(res.product.regular_customer_price)
-            : primary?.price != null
-              ? String(primary.price)
-              : ""
-        )
         void listSellerManufacturers()
           .then((rows) => {
             setManufacturers(rows.manufacturers || [])
@@ -796,6 +817,36 @@ export default function SellerProductDetailPage() {
   }, [load])
 
   useEffect(() => {
+    selectedOfferIdRef.current = selectedOfferId
+  }, [selectedOfferId])
+
+  useEffect(() => {
+    const storageKey = `em-wizard-attention:${productId}`
+    try {
+      const raw = sessionStorage.getItem(storageKey)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as WizardAttention
+      if (Array.isArray(parsed.visited) && Array.isArray(parsed.attempted)) {
+        setAttention(parsed)
+      }
+    } catch {
+      /* ignore corrupt wizard state */
+    }
+  }, [productId])
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      `em-wizard-attention:${productId}`,
+      JSON.stringify(attention)
+    )
+  }, [attention, productId])
+
+  useEffect(() => {
+    if (tab === "history") return
+    setAttention((prev) => markWizardVisited(prev, tab))
+  }, [tab])
+
+  useEffect(() => {
     const next = search.get("tab")
     if (next === "history") {
       setTabState("history")
@@ -804,6 +855,45 @@ export default function SellerProductDetailPage() {
     const step = search.get("step") || search.get("tab")
     if (step) setTabState(resolveWizardStep(step))
   }, [search])
+
+  useEffect(() => {
+    if (resumeOnce.current) return
+    if (!product || product === "loading") return
+    if (search.get("resume") !== "1") return
+    resumeOnce.current = true
+    const snap = readProductDraftSnapshot(productId)
+    if (snap) {
+      if (snap.offerDraft && typeof snap.offerDraft === "object") {
+        setOfferDraft(snap.offerDraft as OfferDraft)
+      }
+      if (typeof snap.regularPriceDraft === "string") {
+        setRegularPriceDraft(snap.regularPriceDraft)
+      }
+      if (typeof snap.title === "string") setTitle(snap.title)
+      if (typeof snap.description === "string") setDescription(snap.description)
+      clearProductDraftSnapshot(productId)
+    }
+    const profileId = search.get("profile")
+    if (profileId) {
+      void assignProductShippingProfile(productId, profileId)
+        .then(() => {
+          setProduct((prev) =>
+            prev && prev !== "loading"
+              ? { ...prev, shipping_profile_id: profileId }
+              : prev
+          )
+          setNotice("Nieuw verzendprofiel gekoppeld.")
+        })
+        .catch((err: unknown) => {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Verzendprofiel koppelen mislukt."
+          )
+        })
+    }
+    setTab("shipping")
+  }, [product, productId, search])
 
   useEffect(() => {
     if (tab !== "information") return
@@ -816,17 +906,6 @@ export default function SellerProductDetailPage() {
   useEffect(() => {
     if (!product || product === "loading") return
     let cancelled = false
-    void listProductVariants(productId)
-      .then((res) => {
-        if (cancelled) return
-        setSuggestedAxes(res.suggested_axes || [])
-        if (res.allowed_variant_types?.length) {
-          setAllowedVariantTypes(res.allowed_variant_types)
-        }
-      })
-      .catch(() => {
-        /* manager already has variants; axes optional */
-      })
     void getMadeInEuropeEvidence(productId)
       .then((res) => {
         if (!cancelled) setMie(res)
@@ -1109,8 +1188,45 @@ export default function SellerProductDetailPage() {
   function selectOffer(offer: SellerOfferSummary) {
     if (!offer.offer_id || !offer.identifier_id) return
     setSelectedOfferId(offer.offer_id)
-    setOfferDraft(draftFromOffer(offer, offer.identifier_id))
+    const draft = draftFromOffer(offer, offer.identifier_id)
+    setOfferDraft(draft)
+    setRegularPriceDraft(draft.base_price)
+    setFieldErrors({})
     setTab("offer")
+  }
+
+  function reportFieldError(fieldId: string, message: string, summary: string) {
+    setFieldErrors({ [fieldId]: message })
+    setError(summary)
+    focusField(fieldId)
+  }
+
+  function revealAndMaybeAdvance(from: WizardStepKey, to?: WizardStepKey) {
+    if (!product || product === "loading") return
+    const gaps = wizardStepGaps(product, from)
+    const already = attention.attempted.includes(from)
+    setAttention((prev) => markWizardAttempted(prev, from))
+    if (gaps.length > 0 && !already) {
+      setError("Deze stap mist nog gegevens.")
+      focusField("product-wizard-gaps")
+      return
+    }
+    setError(null)
+    const next = to || nextWizardStep(from)
+    if (next) setTab(next)
+  }
+
+  function leaveForNewShippingProfile() {
+    saveProductDraftSnapshot(productId, {
+      offerDraft,
+      regularPriceDraft,
+      title,
+      description,
+    })
+    const returnTo = `/seller/products/${productId}?step=shipping&resume=1`
+    router.push(
+      `/seller/settings/shipping/new?returnTo=${encodeURIComponent(returnTo)}`
+    )
   }
 
   async function handleCreateBrand() {
@@ -1477,7 +1593,13 @@ export default function SellerProductDetailPage() {
       const vat_rate = resolveDestinationVatRate(offerDraft.region_code)
 
       if (!Number.isFinite(regular) || !Number.isFinite(vat_rate)) {
-        throw new Error(t("offerPriceInvalid", locale))
+        reportFieldError(
+          "offer-base-price",
+          t("offerPriceInvalid", locale),
+          "Controleer de gemarkeerde velden."
+        )
+        setOfferSaving(false)
+        return
       }
       const base_price = Math.round(regular * 100) / 100
 
@@ -1503,20 +1625,31 @@ export default function SellerProductDetailPage() {
         promoPayload.promo_price != null &&
         !Number.isFinite(promoPayload.promo_price)
       ) {
-        throw new Error(t("pdpActionPriceInvalid", locale))
+        reportFieldError(
+          "offer-promo-price",
+          t("pdpActionPriceInvalid", locale),
+          "Controleer de gemarkeerde velden."
+        )
+        setOfferSaving(false)
+        return
       }
       if (
         !offerDraft.clear_promo &&
         promoPayload.promo_price != null &&
         promoPayload.promo_price < 0
       ) {
-        throw new Error(t("pdpActionPriceNegative", locale))
+        reportFieldError(
+          "offer-promo-price",
+          t("pdpActionPriceNegative", locale),
+          "Controleer de gemarkeerde velden."
+        )
+        setOfferSaving(false)
+        return
       }
 
       if (offerDraft.offer_id) {
         await patchOffer(offerDraft.offer_id, {
           base_price,
-          regular_customer_price: base_price,
           shipping_cost,
           extra_delivery_cost,
           quantity_available,
@@ -1531,7 +1664,6 @@ export default function SellerProductDetailPage() {
           identifier_id: offerDraft.identifier_id,
           region_code: offerDraft.region_code || "NL",
           base_price,
-          regular_customer_price: base_price,
           shipping_cost,
           extra_delivery_cost,
           quantity_available,
@@ -1542,6 +1674,7 @@ export default function SellerProductDetailPage() {
           ...promoPayload,
         })
       }
+      setFieldErrors({})
       setNotice(t("pdpOfferSaved", locale))
       load()
       if (opts?.advanceFrom) {
@@ -1549,11 +1682,16 @@ export default function SellerProductDetailPage() {
         if (next) setTab(next)
       }
     } catch (err: unknown) {
-      setError(
+      const message =
         err instanceof CommerceCloudApiError || err instanceof Error
           ? err.message
           : t("pdpOfferSaveFailed", locale)
-      )
+      const fieldId = offerFieldForMessage(message)
+      if (fieldId) {
+        reportFieldError(fieldId, message, "Controleer de gemarkeerde velden.")
+      } else {
+        setError(message)
+      }
     } finally {
       setOfferSaving(false)
     }
@@ -1563,9 +1701,19 @@ export default function SellerProductDetailPage() {
     if (!offerDraft) return
     const regular = Number(regularPriceDraft || offerDraft.base_price)
     if (!Number.isFinite(regular) || regular <= 0) {
-      setError(t("offerPriceInvalid", locale))
+      setAttention((prev) => markWizardAttempted(prev, "offer"))
+      reportFieldError(
+        "offer-base-price",
+        t("offerPriceInvalid", locale),
+        "Controleer de gemarkeerde velden."
+      )
       return
     }
+    setFieldErrors((prev) => {
+      const next = { ...prev }
+      delete next["offer-base-price"]
+      return next
+    })
     await persistOfferDraft({ advanceFrom: "offer" })
   }
 
@@ -1574,7 +1722,12 @@ export default function SellerProductDetailPage() {
     const shipping_cost = Number(offerDraft.shipping_cost)
     const quantityRaw = offerDraft.quantity_available.trim()
     if (quantityRaw === "" || !/^\d+$/.test(quantityRaw)) {
-      setError("Vul een geldige voorraad in (geheel getal, minimaal 0).")
+      setAttention((prev) => markWizardAttempted(prev, "shipping"))
+      reportFieldError(
+        "offer-stock",
+        "Vul een geldige voorraad in (geheel getal, minimaal 0).",
+        "Controleer de gemarkeerde velden."
+      )
       return
     }
     const quantity_available = Number(quantityRaw)
@@ -1584,7 +1737,12 @@ export default function SellerProductDetailPage() {
       quantity_available < 0 ||
       !Number.isInteger(quantity_available)
     ) {
-      setError("Vul een geldige voorraad in (geheel getal, minimaal 0).")
+      setAttention((prev) => markWizardAttempted(prev, "shipping"))
+      reportFieldError(
+        "offer-stock",
+        "Vul een geldige voorraad in (geheel getal, minimaal 0).",
+        "Controleer de gemarkeerde velden."
+      )
       return
     }
     await persistOfferDraft({ advanceFrom: "shipping" })
@@ -1622,25 +1780,48 @@ export default function SellerProductDetailPage() {
       offersForSelectedIdentifier.map((o) => (o.region_code || "").toUpperCase())
     )
     if (taken.has(addMarketCode.toUpperCase())) {
-      setError(`Er bestaat al een offer voor markt ${addMarketCode}.`)
+      reportFieldError(
+        "market-code",
+        `Er bestaat al een offer voor markt ${addMarketCode}.`,
+        "Controleer de gemarkeerde velden."
+      )
+      return
+    }
+    const base = Number(addMarketPrice)
+    if (!Number.isFinite(base) || base <= 0) {
+      reportFieldError(
+        "market-base-price",
+        "Vul een standaardprijs in voor deze markt.",
+        "Controleer de gemarkeerde velden."
+      )
+      return
+    }
+    const promoRaw = addMarketPromo.trim()
+    const promo = promoRaw === "" ? null : Number(promoRaw)
+    if (promo != null && (!Number.isFinite(promo) || promo < 0 || promo >= base)) {
+      reportFieldError(
+        "market-promo-price",
+        "Actieprijs moet lager zijn dan de standaardprijs van deze markt.",
+        "Controleer de gemarkeerde velden."
+      )
       return
     }
     setMarketBusy(true)
     setError(null)
+    setFieldErrors({})
     setNotice(null)
     try {
       const shipping = Number(offerDraft.shipping_cost) || 0
       const extra = Number(offerDraft.extra_delivery_cost) || 0
-      const base = Number(regularPriceDraft || offerDraft.base_price) || 0
       await upsertOffer({
         identifier_id: offerDraft.identifier_id,
         region_code: addMarketCode.toUpperCase(),
-        base_price: base,
-        regular_customer_price: base,
+        base_price: Math.round(base * 100) / 100,
         shipping_cost: shipping,
         extra_delivery_cost: extra,
         quantity_available: Number(offerDraft.quantity_available) || 0,
         seller_sku: offerDraft.seller_sku.trim() || null,
+        promo_price: promo == null ? null : Math.round(promo * 100) / 100,
         delivery_days_max:
           offerDraft.delivery_days_max.trim() === ""
             ? null
@@ -1648,14 +1829,33 @@ export default function SellerProductDetailPage() {
         sales_status: "active",
       })
       setAddMarketCode("")
+      setAddMarketPrice("")
+      setAddMarketPromo("")
       setNotice(`Markt ${addMarketCode.toUpperCase()} toegevoegd.`)
       load()
     } catch (err: unknown) {
-      setError(
+      const message =
         err instanceof CommerceCloudApiError || err instanceof Error
           ? err.message
           : t("pdpMarketAddFailed", locale)
-      )
+      const fieldId = offerFieldForMessage(message)
+      if (fieldId === "offer-seller-sku") {
+        reportFieldError(fieldId, message, "Controleer de gemarkeerde velden.")
+      } else if (fieldId === "offer-base-price") {
+        reportFieldError(
+          "market-base-price",
+          message,
+          "Controleer de gemarkeerde velden."
+        )
+      } else if (fieldId === "offer-promo-price") {
+        reportFieldError(
+          "market-promo-price",
+          message,
+          "Controleer de gemarkeerde velden."
+        )
+      } else {
+        setError(message)
+      }
     } finally {
       setMarketBusy(false)
     }
@@ -2081,7 +2281,7 @@ export default function SellerProductDetailPage() {
             </Badge>
             <span
               className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${sales.className}`}
-              title={sales.detail || sales.offerHint || undefined}
+              title={sales.offerHint || undefined}
             >
               {t("pdpSaleLabel", locale)}: {sales.label}
               {sales.offerHint ? (
@@ -2090,11 +2290,6 @@ export default function SellerProductDetailPage() {
                 </span>
               ) : null}
             </span>
-            {sales.detail ? (
-              <span className="w-full text-[11px] text-red-700">
-                {t("saleBlockedNeedList", locale)}: {sales.detail}
-              </span>
-            ) : null}
             <span
               className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${pub.className}`}
             >
@@ -2151,7 +2346,13 @@ export default function SellerProductDetailPage() {
           <ProductWizardProgress
             product={product}
             current={tab === "history" ? "information" : tab}
-            onSelect={(step) => setTab(step)}
+            attention={attention}
+            onSelect={(step) => {
+              if (tab !== "history" && step !== tab) {
+                setAttention((prev) => markWizardAttempted(prev, tab))
+              }
+              setTab(step)
+            }}
           />
         ) : null}
         <button
@@ -2463,21 +2664,20 @@ export default function SellerProductDetailPage() {
             )
           })}
 
-          <SellerVariantsPanel
-            productId={productId}
-            product={product}
-            suggestedAxes={suggestedAxes}
-            allowedAxes={allowedVariantTypes}
-            locale={locale}
-            catalogEditable={canEditCatalog}
-            onReload={load}
-            onNotice={setNotice}
-            onError={setError}
-            onOpenOfferTab={(offer) => {
-              selectOffer(offer)
-              setTab("offer")
-            }}
-          />
+          <section className="rounded border border-wf-300 bg-white p-3 text-xs">
+            <h2 className="font-semibold text-wf-900">Varianten</h2>
+            <p className="mt-1 text-[11px] text-wf-600">
+              Dit product blijft een zelfstandig product met eigen gegevens en
+              aanbod. Varianten koppel je achteraf: selecteer 2, 3 of 4
+              producten in het productoverzicht en kies Producten koppelen.
+            </p>
+            <Link
+              href="/seller/products"
+              className="mt-2 inline-block text-[11px] font-semibold underline"
+            >
+              Naar productoverzicht
+            </Link>
+          </section>
 
           <div className="sticky bottom-0 z-10 -mx-1 border-t border-wf-300 bg-white/95 px-1 py-2 backdrop-blur">
             <div className="flex flex-wrap gap-2">
@@ -2493,7 +2693,7 @@ export default function SellerProductDetailPage() {
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={() => setTab("offer")}
+                onClick={() => revealAndMaybeAdvance("information")}
               >
                 Volgende: verkoopinformatie
               </Button>
@@ -3026,7 +3226,7 @@ export default function SellerProductDetailPage() {
                 variant="secondary"
                 onClick={() => {
                   if (canEditCatalog) void saveInformation()
-                  setTab("translations")
+                  revealAndMaybeAdvance("compliance")
                 }}
               >
                 Volgende: vertalingen
@@ -3156,59 +3356,6 @@ export default function SellerProductDetailPage() {
         <div className="space-y-3">
           <div className="rounded border border-wf-300 bg-white p-3 text-xs">
             <p className="font-semibold text-wf-900">
-              {sales.label.toLowerCase().includes("geblokkeerd") ||
-              product.completeness?.sale_presentation === "blocked"
-                ? "Verkoop blokkeert publicatie"
-                : "Verkoopstatus"}
-            </p>
-            <ul className="mt-2 space-y-1 text-[11px]">
-              {(product.completeness?.sale_blocked_reasons || [])
-                .filter(
-                  (r) =>
-                    !r.toLowerCase().includes("veiligheid") &&
-                    !r.toLowerCase().includes("safety")
-                )
-                .map((reason) => (
-                  <li key={reason} className="text-red-800">
-                    ❌ {reason}
-                    {reason.toLowerCase().includes("verzend") ? (
-                      <button
-                        type="button"
-                        className="ml-2 underline"
-                        onClick={() => setTab("shipping")}
-                      >
-                        Naar verzending
-                      </button>
-                    ) : null}
-                    {reason.toLowerCase().includes("hoofdafbeelding") ||
-                    reason.toLowerCase().includes("media") ? (
-                      <button
-                        type="button"
-                        className="ml-2 underline"
-                        onClick={() => setTab("media")}
-                      >
-                        Naar media
-                      </button>
-                    ) : null}
-                  </li>
-                ))}
-              {(product.completeness?.sale_blocked_reasons || []).filter(
-                (r) =>
-                  !r.toLowerCase().includes("veiligheid") &&
-                  !r.toLowerCase().includes("safety")
-              ).length === 0 ? (
-                <li className="text-emerald-800">✅ Verkoopvoorwaarden in orde</li>
-              ) : null}
-              {product.offer?.has_offer || (product.offers?.offer_count ?? 0) > 0 ? (
-                <li className="text-emerald-800">✅ Verkoopaanbod aanwezig</li>
-              ) : (
-                <li className="text-red-800">❌ Verkoopaanbod ontbreekt</li>
-              )}
-            </ul>
-          </div>
-
-          <div className="rounded border border-wf-300 bg-white p-3 text-xs">
-            <p className="font-semibold text-wf-900">
               Seller offer · gescheiden van cataloguspublicatie
             </p>
             <p className="mt-1 text-[11px] text-wf-600">
@@ -3217,8 +3364,8 @@ export default function SellerProductDetailPage() {
             </p>
             {(product.offers?.offer_count ?? 0) > 1 ? (
               <p className="mt-1 text-[11px] text-wf-600">
-                Dit product heeft {product.offers?.offer_count} offers. Selecteer
-                een variant-offer hieronder of via Varianten.
+                Dit product heeft {product.offers?.offer_count} offers. Elke markt
+                heeft een eigen prijs. Selecteer een markt hieronder.
               </p>
             ) : null}
           </div>
@@ -3283,17 +3430,28 @@ export default function SellerProductDetailPage() {
                     </p>
                   ) : null}
                   <Input
+                    id="offer-base-price"
+                    label={`Standaardprijs (${offerDraft.region_code || "NL"})`}
+                    error={fieldErrors["offer-base-price"]}
                     value={regularPriceDraft}
                     onChange={(e) => {
                       setRegularPriceDraft(e.target.value)
                       setOfferDraft({ ...offerDraft, base_price: e.target.value })
+                      setFieldErrors((prev) => {
+                        if (!prev["offer-base-price"]) return prev
+                        const next = { ...prev }
+                        delete next["offer-base-price"]
+                        return next
+                      })
                     }}
                   />
                 </div>
 
                 <div>
                   <Input
-                    label={t("offerPromoLabel", locale)}
+                    id="offer-promo-price"
+                    label={`${t("offerPromoLabel", locale)} (${offerDraft.region_code || "NL"})`}
+                    error={fieldErrors["offer-promo-price"]}
                     value={offerDraft.promo_price}
                     disabled={offerDraft.clear_promo}
                     onChange={(e) =>
@@ -3375,13 +3533,24 @@ export default function SellerProductDetailPage() {
                     {t("vatAutoByMarket", locale)} ({offerDraft.region_code})
                   </p>
                 </div>
-                <Input
-                  label="Seller SKU"
-                  value={offerDraft.seller_sku}
-                  onChange={(e) =>
-                    setOfferDraft({ ...offerDraft, seller_sku: e.target.value })
-                  }
-                />
+                <div>
+                  <Input
+                    id="offer-seller-sku"
+                    label="Seller SKU"
+                    error={fieldErrors["offer-seller-sku"]}
+                    hint="Deze SKU hoort bij het product en blijft gelijk in elke markt."
+                    value={offerDraft.seller_sku}
+                    onChange={(e) => {
+                      setOfferDraft({ ...offerDraft, seller_sku: e.target.value })
+                      setFieldErrors((prev) => {
+                        if (!prev["offer-seller-sku"]) return prev
+                        const next = { ...prev }
+                        delete next["offer-seller-sku"]
+                        return next
+                      })
+                    }}
+                  />
+                </div>
                 <div className="rounded border border-wf-200 bg-wf-50 p-2 text-[11px] text-wf-700 tablet:col-span-2">
                   <p>
                     {t("offerEffectivePrice", locale)}
@@ -3430,8 +3599,8 @@ export default function SellerProductDetailPage() {
               <div className="mt-4 rounded border border-wf-200 bg-wf-50 p-3">
                 <h3 className="text-xs font-bold text-wf-900">Markten</h3>
                 <p className="mt-1 text-[11px] text-wf-600">
-                  Alle offers voor deze identifier (EAN) in verschillende
-                  regio&apos;s.
+                  Elke markt heeft een eigen standaardprijs en actieprijs. De
+                  seller-SKU blijft dezelfde.
                 </p>
                 {offersForSelectedIdentifier.length === 0 ? (
                   <p className="mt-2 text-[11px] text-wf-500">
@@ -3451,7 +3620,12 @@ export default function SellerProductDetailPage() {
                           onClick={() => selectOffer(mo)}
                         >
                           {mo.region_code || "—"}
-                          {mo.price != null ? ` · ${formatEuro(mo.price)}` : ""}
+                          {mo.price != null
+                            ? ` · standaard ${formatEuro(mo.price)}`
+                            : " · standaardprijs ontbreekt"}
+                          {mo.promo_price != null
+                            ? ` · actie ${formatEuro(mo.promo_price)}`
+                            : ""}
                           {mo.sales_status ? ` · ${mo.sales_status}` : ""}
                         </button>
                       </li>
@@ -3464,6 +3638,7 @@ export default function SellerProductDetailPage() {
                       + Markt toevoegen
                     </label>
                     <select
+                      id="market-code"
                       className="h-9 rounded border border-wf-400 bg-white px-2 text-xs"
                       value={addMarketCode}
                       onChange={(e) => setAddMarketCode(e.target.value)}
@@ -3481,6 +3656,51 @@ export default function SellerProductDetailPage() {
                         </option>
                       ))}
                     </select>
+                    {fieldErrors["market-code"] ? (
+                      <p className="mt-1 text-[11px] text-red-700" role="alert">
+                        {fieldErrors["market-code"]}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <label
+                      className="mb-1 block text-[11px] font-semibold text-wf-700"
+                      htmlFor="market-base-price"
+                    >
+                      Standaardprijs
+                    </label>
+                    <input
+                      id="market-base-price"
+                      inputMode="decimal"
+                      className="h-9 w-28 rounded border border-wf-400 bg-white px-2 text-xs"
+                      value={addMarketPrice}
+                      onChange={(e) => setAddMarketPrice(e.target.value)}
+                    />
+                    {fieldErrors["market-base-price"] ? (
+                      <p className="mt-1 text-[11px] text-red-700" role="alert">
+                        {fieldErrors["market-base-price"]}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div>
+                    <label
+                      className="mb-1 block text-[11px] font-semibold text-wf-700"
+                      htmlFor="market-promo-price"
+                    >
+                      Actieprijs
+                    </label>
+                    <input
+                      id="market-promo-price"
+                      inputMode="decimal"
+                      className="h-9 w-28 rounded border border-wf-400 bg-white px-2 text-xs"
+                      value={addMarketPromo}
+                      onChange={(e) => setAddMarketPromo(e.target.value)}
+                    />
+                    {fieldErrors["market-promo-price"] ? (
+                      <p className="mt-1 text-[11px] text-red-700" role="alert">
+                        {fieldErrors["market-promo-price"]}
+                      </p>
+                    ) : null}
                   </div>
                   <Button
                     size="sm"
@@ -3516,7 +3736,7 @@ export default function SellerProductDetailPage() {
                 <Button
                   size="sm"
                   variant="secondary"
-                  onClick={() => setTab("shipping")}
+                  onClick={() => revealAndMaybeAdvance("offer")}
                 >
                   Volgende: voorraad & verzending
                 </Button>
@@ -3562,6 +3782,9 @@ export default function SellerProductDetailPage() {
           onReload={load}
           onSaveStock={saveShipping}
           stockSaving={offerSaving}
+          showProfileGap={attention.attempted.includes("shipping")}
+          stockError={fieldErrors["offer-stock"]}
+          onCreateProfile={leaveForNewShippingProfile}
         />
       ) : null}
 
@@ -3868,7 +4091,7 @@ export default function SellerProductDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={() => setTab("compliance")}>
+            <Button size="sm" variant="secondary" onClick={() => revealAndMaybeAdvance("media")}>
               Volgende: compliance
             </Button>
           </div>
@@ -3901,7 +4124,7 @@ export default function SellerProductDetailPage() {
             Vertalingen beheren
           </Link>
           <div className="mt-3">
-            <Button size="sm" variant="secondary" onClick={() => setTab("publish")}>
+            <Button size="sm" variant="secondary" onClick={() => revealAndMaybeAdvance("translations")}>
               Volgende: publiceren
             </Button>
           </div>

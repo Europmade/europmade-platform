@@ -21,6 +21,10 @@ import {
   computeCampaignPrice,
   serializeCampaign,
 } from "../helpers"
+import { visibilityForCampaign } from "../live-slots/route"
+import { PRODUCT_CLOUD_MODULE } from "../../../../modules/product-cloud"
+import type ProductCloudModuleService from "../../../../modules/product-cloud/service"
+import { loadResolvedAdvertisingProductCards } from "../public-product-cards"
 
 /**
  * GET /store/advertising/campaigns — list seller's own campaigns.
@@ -35,6 +39,10 @@ export async function GET(
     req.auth_context.actor_id
   )
   const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
+  const productCloud = req.scope.resolve(
+    PRODUCT_CLOUD_MODULE
+  ) as ProductCloudModuleService
+  const origin = requestBackendOrigin(req)
 
   const rows = await cms.listAdCampaigns(
     { seller_id: seller.id },
@@ -42,12 +50,35 @@ export async function GET(
   )
 
   const enriched = []
+  const visibilityCache = new Map()
   for (const row of rows) {
     const weeks = await cms.listAdCampaignWeeks(
       { campaign_id: row.id },
       { order: { week_start: "ASC" } }
     )
-    enriched.push(serializeCampaign(row, weeks, requestBackendOrigin(req)))
+    const serialized = serializeCampaign(row, weeks, origin)
+    const productIds = Array.isArray(serialized.product_ids)
+      ? (serialized.product_ids as string[])
+      : []
+    const products = await loadResolvedAdvertisingProductCards(
+      productCloud,
+      productIds,
+      origin
+    )
+    const visibility = await visibilityForCampaign(
+      cms,
+      row as Record<string, unknown> & { id: string },
+      weeks as Array<{
+        campaign_id?: string
+        market_code?: string
+        week_start?: unknown
+        week_end?: unknown
+        created_at?: unknown
+      }>,
+      new Date(),
+      visibilityCache
+    )
+    enriched.push({ ...serialized, products, visibility })
   }
 
   res.json({ campaigns: enriched })
@@ -94,6 +125,8 @@ export async function POST(
     target_value: input.target_value,
     markets: input.markets,
     image_url: input.image_url,
+    logo_url: input.logo_url,
+    banner_presentation: input.banner_presentation,
     destination_url,
     headline: input.headline,
     subline: input.subline,

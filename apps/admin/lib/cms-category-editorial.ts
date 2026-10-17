@@ -1,10 +1,28 @@
 import { emptyLocalized, type LocalizedCms } from "./cms-admin-api"
 
+export type CmsCategoryFilterControl = {
+  attributeKey: string
+  visible: boolean
+  label: LocalizedCms
+  sortOrder: number
+}
+
 export type CmsCategoryBannerRef = {
   id: string
   title: LocalizedCms
+  subtitle?: LocalizedCms
+  cta_label?: LocalizedCms
   image_url: string | null
   destination_url: string
+  background?: string | null
+  presentation?: {
+    fit?: "cover" | "contain"
+    positionX?: number
+    positionY?: number
+    scale?: number
+    textColor?: "white" | "black"
+    buttonColor?: "white" | "black"
+  } | null
   published: boolean
 }
 
@@ -26,6 +44,7 @@ export type CmsCategoryEditorial = {
   madeInEurope: LocalizedCms
   usps: Array<{ id: string; title: LocalizedCms; body: LocalizedCms }>
   faq: Array<{ id: string; question: LocalizedCms; answer: LocalizedCms }>
+  filterControls: CmsCategoryFilterControl[]
 }
 
 export function emptyCategoryEditorial(): CmsCategoryEditorial {
@@ -47,6 +66,7 @@ export function emptyCategoryEditorial(): CmsCategoryEditorial {
     madeInEurope: emptyLocalized(),
     usps: [],
     faq: [],
+    filterControls: [],
   }
 }
 
@@ -77,9 +97,16 @@ export function parseCategoryEditorial(raw: unknown): CmsCategoryEditorial {
     banner = {
       id: typeof b.id === "string" ? b.id : "",
       title: loc(b.title),
+      subtitle: loc(b.subtitle),
+      cta_label: loc(b.cta_label),
       image_url: typeof b.image_url === "string" ? b.image_url : null,
       destination_url:
         typeof b.destination_url === "string" ? b.destination_url : "",
+      background: typeof b.background === "string" ? b.background : null,
+      presentation:
+        b.presentation && typeof b.presentation === "object"
+          ? (b.presentation as CmsCategoryBannerRef["presentation"])
+          : null,
       published: b.published === true,
     }
   }
@@ -119,6 +146,24 @@ export function parseCategoryEditorial(raw: unknown): CmsCategoryEditorial {
             question: loc(f.question),
             answer: loc(f.answer),
           }
+        })
+      : [],
+    filterControls: Array.isArray(d.filterControls)
+      ? d.filterControls.flatMap((item, i) => {
+          const row = (item ?? {}) as Record<string, unknown>
+          const attributeKey =
+            typeof row.attributeKey === "string" ? row.attributeKey.trim() : ""
+          if (!attributeKey) return []
+          return [
+            {
+              attributeKey,
+              visible: row.visible !== false,
+              label: loc(row.label),
+              sortOrder: Number.isFinite(Number(row.sortOrder))
+                ? Number(row.sortOrder)
+                : i,
+            },
+          ]
         })
       : [],
   }

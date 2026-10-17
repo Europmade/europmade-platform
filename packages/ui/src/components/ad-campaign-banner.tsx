@@ -1,5 +1,10 @@
 import * as React from "react"
-import { cn } from "@europmade/utils"
+import {
+  cn,
+  sellerBannerImageStyle,
+  sellerLogoFrame,
+  type SellerBannerPresentation,
+} from "@europmade/utils"
 
 export const AD_CAMPAIGN_DESIGNS = [
   {
@@ -9,7 +14,6 @@ export const AD_CAMPAIGN_DESIGNS = [
     textClass: "text-white",
     ctaBg: "bg-white/20",
     ctaText: "text-white",
-    invertLogo: true,
   },
   {
     key: "design_2",
@@ -18,7 +22,6 @@ export const AD_CAMPAIGN_DESIGNS = [
     textClass: "text-white",
     ctaBg: "bg-white/25",
     ctaText: "text-white",
-    invertLogo: true,
   },
   {
     key: "design_3",
@@ -27,7 +30,6 @@ export const AD_CAMPAIGN_DESIGNS = [
     textClass: "text-white",
     ctaBg: "bg-white/25",
     ctaText: "text-white",
-    invertLogo: true,
   },
   {
     key: "design_4",
@@ -36,7 +38,6 @@ export const AD_CAMPAIGN_DESIGNS = [
     textClass: "text-neutral-900",
     ctaBg: "bg-neutral-800",
     ctaText: "text-white",
-    invertLogo: false,
   },
   {
     key: "design_5",
@@ -45,7 +46,6 @@ export const AD_CAMPAIGN_DESIGNS = [
     textClass: "text-white",
     ctaBg: "bg-white/20",
     ctaText: "text-white",
-    invertLogo: true,
   },
 ] as const
 
@@ -64,14 +64,19 @@ export type AdCampaignBannerProps = {
   ctaLabel: string
   imageUrl?: string | null
   logoUrl?: string | null
+  presentation?: SellerBannerPresentation | null
   headlineFallback?: string
   sublineFallback?: string
   className?: string
   minHeight?: number
+  /** Fill a parent frame instead of forcing the 4:1 box. */
+  fill?: boolean
+  previewLabel?: string | null
 }
 
 /**
- * Shared campaign banner — Seller preview, Admin Review, public landing.
+ * Shared campaign banner — Seller preview, Admin review, public landing, storefront.
+ * An uploaded image is the full-bleed background. The logo stays a separate overlay.
  */
 export function AdCampaignBanner({
   designKey,
@@ -80,74 +85,110 @@ export function AdCampaignBanner({
   ctaLabel,
   imageUrl,
   logoUrl,
+  presentation,
   headlineFallback = "Headline",
   sublineFallback = "Subline",
   className,
-  minHeight = 180,
+  minHeight = 148,
+  fill = false,
+  previewLabel,
 }: AdCampaignBannerProps) {
   const design = resolveAdCampaignDesign(designKey)
   const title = (headline || "").trim() || headlineFallback
   const subtitle = (subline || "").trim() || sublineFallback
+  const align = presentation?.overlayAlign === "right" ? "right" : "left"
+  const textColor =
+    presentation?.textColor ?? (design.textClass === "text-white" ? "white" : "black")
+  const lightText = textColor === "white"
+  const imageStyle = presentation
+    ? sellerBannerImageStyle(presentation)
+    : sellerBannerImageStyle({
+        imagePositionX: 50,
+        imagePositionY: 50,
+        overlayAlign: "left",
+        textColor: "white",
+        logoScale: 1,
+      })
+  const logo = sellerLogoFrame(presentation?.logoScale ?? 1)
+  const scrim = lightText
+    ? align === "left"
+      ? "linear-gradient(90deg, rgba(15,23,42,0.55) 0%, rgba(15,23,42,0.18) 72%, rgba(15,23,42,0) 100%)"
+      : "linear-gradient(270deg, rgba(15,23,42,0.55) 0%, rgba(15,23,42,0.18) 72%, rgba(15,23,42,0) 100%)"
+    : align === "left"
+      ? "linear-gradient(90deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.28) 72%, rgba(255,255,255,0) 100%)"
+      : "linear-gradient(270deg, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.28) 72%, rgba(255,255,255,0) 100%)"
 
   return (
     <div
-      className={cn(
-        "relative overflow-hidden rounded-xl",
-        design.textClass,
-        className
-      )}
+      className={cn("relative overflow-hidden rounded-xl", className)}
       style={{
-        background: design.bgStyle,
-        aspectRatio: "4 / 1",
-        minHeight,
+        background: imageUrl ? "#0f172a" : design.bgStyle,
+        aspectRatio: fill ? undefined : "4 / 1",
+        minHeight: fill ? undefined : minHeight,
+        height: fill ? "100%" : undefined,
       }}
+      data-banner-layout="cover"
     >
-      <div className="absolute inset-0 flex items-center">
-        {imageUrl ? (
-          <div className="absolute right-4 top-1/2 flex h-[85%] w-[30%] -translate-y-1/2 items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt=""
-              className="max-h-full max-w-full object-contain drop-shadow-lg"
-            />
-          </div>
+      {imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full"
+          style={imageStyle}
+        />
+      ) : null}
+      <div
+        className={cn(
+          "absolute inset-y-0 z-[1] w-[68%] tablet:w-1/4",
+          align === "right" ? "right-0" : "left-0"
+        )}
+        style={{ background: scrim }}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-y-0 z-[2] flex w-[68%] flex-col justify-center py-2 tablet:w-1/4 tablet:py-3",
+          align === "right"
+            ? "right-0 items-end pl-3 pr-5 text-right tablet:pr-10 desktop:pr-12"
+            : "left-0 items-start pl-5 pr-3 text-left tablet:pl-10 desktop:pl-12",
+          lightText ? "text-white" : "text-neutral-900"
+        )}
+        data-banner-align={align}
+      >
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logoUrl}
+            alt=""
+            className="mb-1.5 w-auto bg-transparent object-contain"
+            style={{
+              height: logo.height,
+              maxWidth: logo.maxWidth,
+              objectFit: logo.objectFit,
+            }}
+          />
         ) : null}
-
-        <div
-          className="relative z-10 flex flex-col justify-center px-8 py-6"
-          style={{ maxWidth: imageUrl ? "62%" : "80%" }}
+        <h2 className="text-sm font-extrabold leading-tight tracking-tight tablet:text-xl">
+          {title}
+        </h2>
+        <p className={cn("mt-0.5 line-clamp-2 text-[11px] leading-snug tablet:text-xs", lightText ? "text-white/90" : "text-neutral-700")}>
+          {subtitle}
+        </p>
+        <span
+          className={cn(
+            "mt-2 inline-block rounded-md px-2.5 py-1 text-[11px] font-bold tablet:text-xs",
+            lightText ? "bg-white text-neutral-900" : "bg-neutral-900 text-white"
+          )}
         >
-          {logoUrl ? (
-            <div className="mb-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={logoUrl}
-                alt=""
-                className="h-8 w-auto max-w-[120px] object-contain"
-                style={{
-                  filter: design.invertLogo ? "brightness(0) invert(1)" : "none",
-                }}
-              />
-            </div>
-          ) : null}
-          <h2 className="text-2xl font-extrabold leading-tight tracking-tight">
-            {title}
-          </h2>
-          <p className="mt-1.5 text-sm leading-snug opacity-85">{subtitle}</p>
-          <div className="mt-4">
-            <span
-              className={cn(
-                "inline-block rounded-lg px-5 py-2 text-sm font-bold shadow-sm backdrop-blur-sm",
-                design.ctaBg,
-                design.ctaText
-              )}
-            >
-              {ctaLabel}
-            </span>
-          </div>
-        </div>
+          {ctaLabel}
+        </span>
       </div>
+      {previewLabel ? (
+        <span className="absolute right-2 top-2 z-[3] rounded bg-amber-400 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-neutral-900">
+          {previewLabel}
+        </span>
+      ) : null}
     </div>
   )
 }

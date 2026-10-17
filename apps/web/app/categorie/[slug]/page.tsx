@@ -100,6 +100,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     categorySlug: catalogCategoryFilterForSlug(slug),
     locale,
   })
+  const alternatives =
+    products.length === 0
+      ? (await resolveListingProducts({ locale, limit: 4 })).products
+      : []
 
   const remoteCms = await fetchStoreCmsCategory(slug)
   const cmsDocument = overlayCategoryEditorial(
@@ -117,5 +121,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   )
   if (!page) notFound()
 
-  return <CategoryPageView page={page} products={products} />
+  return (
+    <CategoryPageView
+      page={page}
+      products={products}
+      alternatives={alternatives}
+    />
+  )
 }

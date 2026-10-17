@@ -91,10 +91,10 @@ export default function ProductApprovalsPage() {
                 <tr key={row.id} className="border-b border-wf-100 align-top">
                   <td className="px-3 py-3">
                     <div className="flex gap-2">
-                      {row.primary_image_url ? (
+                      {displayMediaUrl(row.primary_image_url) ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={displayMediaUrl(row.primary_image_url) || ""}
+                          src={displayMediaUrl(row.primary_image_url) as string}
                           alt=""
                           className="h-10 w-10 rounded object-cover"
                         />

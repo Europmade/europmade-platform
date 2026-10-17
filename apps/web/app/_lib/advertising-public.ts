@@ -21,6 +21,8 @@ export type PublicAdCampaign = {
   id: string
   name: string
   image_url: string | null
+  logo_url?: string | null
+  banner_presentation?: unknown
   headline: string | null
   subline: string | null
   cta_key: string

@@ -21,6 +21,7 @@ export function CmsEditorShell({
   title,
   templateLabel,
   published,
+  statusExtra,
   busy,
   error,
   ok,
@@ -46,6 +47,8 @@ export function CmsEditorShell({
   title: string
   templateLabel: string
   published: boolean
+  /** Extra status, for example a saved concept while the live page stays online. */
+  statusExtra?: string
   busy: boolean
   error: string | null
   ok: string | null
@@ -80,7 +83,7 @@ export function CmsEditorShell({
               <span className="rounded-full border border-wf-200 bg-wf-50 px-2 py-0.5 text-[10px] font-semibold text-wf-600">
                 {templateLabel}
               </span>
-              <CmsStatusBadge published={published} />
+              <CmsStatusBadge published={published} extra={statusExtra} />
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">

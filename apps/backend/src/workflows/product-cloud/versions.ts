@@ -623,13 +623,9 @@ export const adminDecideVersionStep = createStep(
       })
     }
 
-    const published = await productCloud.publishVersionGraph({
-      product_id: input.product_id,
-      version_id: version.id,
-      current_lifecycle_status: product.lifecycle_status,
-    })
-    await productCloud.updateProductVersions({
+    const updated = await productCloud.updateProductVersions({
       id: version.id,
+      publication_status: "Goedgekeurd",
       approval_rejection_reason: null,
       approval_decided_at: new Date(),
       approval_decided_by: input.actor_id,
@@ -643,7 +639,7 @@ export const adminDecideVersionStep = createStep(
       field_code: "publication.approval",
       field_label: "Productgoedkeuring",
       old_value: "In review",
-      new_value: "Gepubliceerd",
+      new_value: "Goedgekeurd",
       status: "approved",
       reason: input.reason || "Goedgekeurd door EuropMade",
     })
@@ -651,8 +647,8 @@ export const adminDecideVersionStep = createStep(
       `[audit] product approval approved product=${input.product_id} version=${version.id}`
     )
     return new StepResponse({
-      version: published.version as ProductVersionRow,
-      lifecycle_status: published.lifecycle_status,
+      version: (Array.isArray(updated) ? updated[0] : updated) as ProductVersionRow,
+      lifecycle_status: product.lifecycle_status,
       decision: "approved" as const,
     })
   }

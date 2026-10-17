@@ -23,6 +23,14 @@ export type StoreCmsBanner = {
   image_url: string | null
   image_alt: LocalizedString
   background: string | null
+  presentation?: {
+    fit?: "cover" | "contain"
+    positionX?: number
+    positionY?: number
+    scale?: number
+    textColor?: "white" | "black"
+    buttonColor?: "white" | "black"
+  } | null
   logo_url: string | null
   market_scope: "all" | "selected"
   markets: string[]

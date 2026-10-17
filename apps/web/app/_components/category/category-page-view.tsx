@@ -11,12 +11,17 @@ import { CommercialNavVisitBeacon } from "../../_lib/commercial-nav-visit"
 type CategoryPageViewProps = {
   page: ResolvedCategoryPage
   products: ListingProduct[]
+  alternatives?: ListingProduct[]
 }
 
 /**
  * Premium category page shell — interactive guide + CMS content (no AI on load).
  */
-export function CategoryPageView({ page, products }: CategoryPageViewProps) {
+export function CategoryPageView({
+  page,
+  products,
+  alternatives = [],
+}: CategoryPageViewProps) {
   const productKind = CATEGORY_PRODUCT_KIND[page.slug] ?? "coffee"
 
   return (
@@ -40,7 +45,7 @@ export function CategoryPageView({ page, products }: CategoryPageViewProps) {
         productKind={productKind}
       />
 
-      <CategoryExperience page={page} products={products} />
+      <CategoryExperience page={page} products={products} alternatives={alternatives} />
     </PublicStorefrontChrome>
   )
 }

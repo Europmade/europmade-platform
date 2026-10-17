@@ -3,6 +3,8 @@
  * Prefer `resolveHomepageCms(locale).campaigns` on the homepage.
  */
 
+import type { CampaignCardStyle } from "@europmade/utils"
+
 export type HomepageCampaign = {
   id: string
   slug: string
@@ -15,6 +17,7 @@ export type HomepageCampaign = {
   imageAlt: string
   /** Hue-seed voor placeholder. */
   accentHue: number
+  card?: CampaignCardStyle
 }
 
 /** Temporary NL fallback — mirrored from CMS mock. */

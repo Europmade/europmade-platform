@@ -3,9 +3,12 @@
  * Prefer `resolveHomepageCms(locale).hero` on the homepage.
  */
 
+import type { HeroCtaStyle, HeroTextStyle } from "@europmade/utils"
+
 export type HomepageHeroCta = {
   label: string
   href: string
+  style?: HeroCtaStyle
 }
 
 export type HomepageHeroImage = {
@@ -13,6 +16,23 @@ export type HomepageHeroImage = {
   alt: string
   captionTitle?: string
   captionBody?: string
+}
+
+export type HomepageBannerTone = "white" | "black"
+export type HomepageBannerFit = "cover" | "contain"
+
+export type HomepageProductBanner = {
+  visible: boolean
+  title: string
+  subtitle: string
+  ctaLabel: string
+  href: string
+  image?: string
+  background: string
+  textColor: HomepageBannerTone
+  buttonColor: HomepageBannerTone
+  imageFit: HomepageBannerFit
+  imagePosition: string
 }
 
 export type HomepageHeroContent = {
@@ -23,6 +43,14 @@ export type HomepageHeroContent = {
   image: HomepageHeroImage
   trustItems: readonly string[]
   backgroundGradient?: string
+  backgroundImage?: string
+  textColor?: HomepageBannerTone
+  buttonColor?: HomepageBannerTone
+  titleColor?: HeroTextStyle
+  subtitleColor?: HeroTextStyle
+  imageFit?: HomepageBannerFit
+  imagePosition?: string
+  productBanner?: HomepageProductBanner | null
 }
 
 /** Temporary NL fallback if CMS resolve is unavailable. */

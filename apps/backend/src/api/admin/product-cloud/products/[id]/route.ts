@@ -2,6 +2,7 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
+import { MedusaError } from "@medusajs/framework/utils"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { COMMERCE_CLOUD_MODULE } from "../../../../../modules/commerce-cloud"
@@ -32,6 +33,8 @@ import {
   brandOwnerCompanyId,
   type BrandPublicRow,
 } from "../../../../store/brands/ownership"
+import { VARIANT_TYPES } from "../../../../../modules/product-cloud/import-columns"
+import { PRODUCT_CLOUD_ACTIVE_LANGUAGES } from "../../../../../modules/product-cloud/languages"
 
 type RouteParams = { id: string }
 
@@ -77,8 +80,15 @@ export async function GET(
     id,
     product.current_owner_seller_id,
     partner,
-    req.scope
+    req.scope,
+    { skipSellerAccess: true }
   )
+  if (!detail) {
+    throw new MedusaError(
+      MedusaError.Types.NOT_FOUND,
+      "Product niet gevonden."
+    )
+  }
 
   const versions = await productCloud.listProductVersions({ product_id: id })
   const ownership = await productCloud.listOwnershipRecords({ product_id: id })
@@ -241,8 +251,25 @@ export async function GET(
     history: pmHistory,
   }
 
+  const categoryLinks = await productCloud.listProductCategories({ product_id: id })
+  const categoryIds = (categoryLinks as Array<{ category_id: string }>).map(
+    (row) => row.category_id
+  )
+  const versionId = (detail as { version_id?: string | null }).version_id
+  const translations = versionId
+    ? await productCloud.listProductTranslations(
+        { entity_type: "product_version", entity_id: versionId },
+        { take: 200 }
+      )
+    : []
+  const [brands, manufacturers, categories] = await Promise.all([
+    partner.listBrands({}, { take: 500, order: { name: "ASC" } }).catch(() => []),
+    partner.listManufacturers({}, { take: 500, order: { name: "ASC" } }).catch(() => []),
+    productCloud.listCategories({}, { take: 500, order: { name: "ASC" } }),
+  ])
+
   res.json({
-    product: detail,
+    product: { ...detail, category_ids: categoryIds, translations },
     identity: product,
     versions,
     ownership_records: ownership,
@@ -260,5 +287,24 @@ export async function GET(
     approval_actions,
     publishable,
     product_management,
+    catalog_choices: {
+      brands: (brands as Array<{ id: string; name?: string }>).map((row) => ({
+        id: row.id,
+        name: row.name || row.id,
+      })),
+      manufacturers: (manufacturers as Array<{ id: string; name?: string }>).map((row) => ({
+        id: row.id,
+        name: row.name || row.id,
+      })),
+      categories: (
+        categories as Array<{ id: string; name?: string; parent_category_id?: string | null }>
+      ).map((row) => ({
+        id: row.id,
+        name: row.name || row.id,
+        parent_id: row.parent_category_id || null,
+      })),
+      variant_types: [...VARIANT_TYPES],
+      languages: [...PRODUCT_CLOUD_ACTIVE_LANGUAGES],
+    },
   })
 }

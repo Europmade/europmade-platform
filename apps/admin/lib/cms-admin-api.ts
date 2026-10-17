@@ -50,6 +50,14 @@ export type CmsBannerDto = {
   image_url: string | null
   image_alt: LocalizedCms
   background: string | null
+  presentation?: {
+    fit?: "cover" | "contain"
+    positionX?: number
+    positionY?: number
+    scale?: number
+    textColor?: "white" | "black"
+    buttonColor?: "white" | "black"
+  } | null
   logo_url: string | null
   market_scope: "all" | "selected"
   markets: string[]
@@ -164,16 +172,21 @@ export function putCmsTheme(body: Record<string, unknown>) {
 }
 
 export function getCmsHomepage() {
-  return request<{ homepage: CmsHomepageDto | null; markets: string[] }>(
-    "/admin/cms/homepage"
-  )
+  return request<{
+    homepage: CmsHomepageDto | null
+    has_draft?: boolean
+    markets: string[]
+  }>("/admin/cms/homepage")
 }
 
 export function putCmsHomepage(body: Record<string, unknown>) {
-  return request<{ homepage: CmsHomepageDto }>("/admin/cms/homepage", {
-    method: "PUT",
-    body: JSON.stringify(body),
-  })
+  return request<{ homepage: CmsHomepageDto; has_draft?: boolean }>(
+    "/admin/cms/homepage",
+    {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }
+  )
 }
 
 export function listCmsPages() {
@@ -243,6 +256,53 @@ export async function fetchPublicCatalogProducts(opts?: {
   })
   if (!res.ok) return { products: [] as Array<Record<string, unknown>> }
   return (await res.json()) as { products: Array<Record<string, unknown>> }
+}
+
+export async function fetchPublicCatalogBrands() {
+  const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+  const res = await fetch(`${medusaBackendUrl()}/store/catalog/brands`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(key ? { "x-publishable-api-key": key } : {}),
+    },
+  })
+  if (!res.ok) return [] as Array<{ id: string; name: string; slug: string }>
+  const body = (await res.json()) as {
+    brands?: Array<{ id?: string; name?: string; slug?: string }>
+  }
+  return (body.brands ?? []).flatMap((brand) => {
+    const slug = brand.slug?.trim() ?? ""
+    const name = brand.name?.trim() ?? ""
+    if (!slug || !name) return []
+    return [{ id: brand.id || slug, name, slug }]
+  })
+}
+
+export async function fetchPublicCategoryAttributes(slug: string) {
+  const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
+  const qs = new URLSearchParams({ slug })
+  const res = await fetch(
+    `${medusaBackendUrl()}/store/product-cloud/categories?${qs}`,
+    {
+      headers: {
+        "Content-Type": "application/json",
+        ...(key ? { "x-publishable-api-key": key } : {}),
+      },
+    }
+  )
+  if (!res.ok) return [] as Array<{ code: string; name: string }>
+  const body = (await res.json()) as {
+    categories?: Array<{
+      attributes?: Array<{ code?: string | null; name?: string; is_filterable?: boolean }>
+    }>
+  }
+  const attributes = body.categories?.[0]?.attributes ?? []
+  return attributes
+    .filter((attribute) => attribute.is_filterable && (attribute.code || attribute.name))
+    .map((attribute) => ({
+      code: attribute.code || attribute.name || "",
+      name: attribute.name || attribute.code || "",
+    }))
 }
 
 export function getCmsTranslateStatus() {

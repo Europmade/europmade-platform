@@ -1,5 +1,11 @@
-import { persistMediaReference } from "@europmade/utils"
+import {
+  classifyProductAvailability,
+  formatAffiliateCommissionPercent,
+  persistMediaReference,
+  type ProductAvailability,
+} from "@europmade/utils"
 import type { MedusaContainer } from "@medusajs/framework/types"
+import { commissionForSellerProduct } from "../../../modules/affiliate/offer-commission"
 import { COMMERCE_CLOUD_MODULE } from "../../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../../modules/commerce-cloud/service"
 import { PARTNER_MODULE } from "../../../modules/partner"
@@ -21,6 +27,8 @@ import {
 import { VERIFICATION_MODULE } from "../../../modules/verification"
 import type VerificationModuleService from "../../../modules/verification/service"
 import { buildEffectivePriceView } from "../../../modules/commerce-cloud/offer-pricing"
+import { offerReachesDestination } from "../../../modules/commerce-cloud/offer-destination"
+import { normalizeCountryRates } from "../../../modules/commerce-cloud/shipping-profile-types"
 import { toPublicProductLinkGroup } from "../../../modules/product-cloud/product-link-groups"
 
 type PublishedVersion = {
@@ -47,6 +55,15 @@ export type CatalogListItem = {
   country_code: string | null
   offer_count: number
   from_price: number | null
+  /** Hoogste totale affiliatecommissie over de verkoopbare offers, in procentpunten. */
+  affiliate_commission_percent: number | null
+  /** "Tot 15%" bij meerdere offers, anders "11%". */
+  affiliate_commission_label: string | null
+  /** Verdienste op de offer met de hoogste commissie. */
+  affiliate_earnings: number | null
+  affiliate_offer_id: string | null
+  /** Prijs van diezelfde offer (eenheidsprijs, zonder verzending). */
+  affiliate_offer_price: number | null
   average_review_score: number | null
   review_count: number
   image_url: string | null
@@ -97,6 +114,8 @@ export type CatalogOfferView = {
   rank: number
   is_winner: boolean
   score: number
+  affiliate_commission_percent: number | null
+  affiliate_earnings: number | null
 }
 
 type IdentifierHit = {
@@ -234,6 +253,7 @@ export async function listPublishedCatalogProducts(
   const brandCountryById = new Map<string, string | null>()
   const versionIdByProduct = new Map<string, string>()
   const brandIdByProduct = new Map<string, string>()
+  const identifierIdsByProduct = new Map<string, string[]>()
   const needsNamesDuringScan = Boolean(
     brandFilter ||
       manufacturerFilter ||
@@ -339,6 +359,10 @@ export async function listPublishedCatalogProducts(
   }
 
   const items: CatalogListItem[] = []
+  const profileCache = new Map<
+    string,
+    { status: string; countryActive: boolean } | null
+  >()
   for (const version of scanList) {
     const identifierBundle = await listProductIdentifiers(
       productCloud,
@@ -441,7 +465,12 @@ export async function listPublishedCatalogProducts(
     let offer_count = 0
     let from_price: number | null = null
     for (const identifierId of idsForOffers) {
-      const pricing = await minOfferPricing(commerce, identifierId, region)
+      const pricing = await minOfferPricing(
+        commerce,
+        identifierId,
+        region,
+        profileCache
+      )
       offer_count += pricing.offer_count
       if (
         pricing.from_price != null &&
@@ -460,6 +489,7 @@ export async function listPublishedCatalogProducts(
 
     versionIdByProduct.set(version.product_id, version.id)
     brandIdByProduct.set(version.product_id, preview.brand_id)
+    identifierIdsByProduct.set(version.product_id, idsForOffers)
 
     items.push({
       id: version.product_id,
@@ -476,6 +506,11 @@ export async function listPublishedCatalogProducts(
       country_code,
       offer_count,
       from_price,
+      affiliate_commission_percent: null,
+      affiliate_commission_label: null,
+      affiliate_earnings: null,
+      affiliate_offer_id: null,
+      affiliate_offer_price: null,
       average_review_score: null,
       review_count: 0,
       image_url: null,
@@ -585,6 +620,13 @@ export async function listPublishedCatalogProducts(
       item.brand_name = brand_name
       item.manufacturer_name = manufacturer_name
       item.country_code = country_code
+      await attachHighestAffiliateCommission(
+        commerce,
+        partner,
+        item,
+        identifierIdsByProduct.get(item.id) ?? [],
+        region
+      )
     })
   )
 
@@ -708,7 +750,38 @@ export async function loadCatalogProductDetail(
     { order: { version_number: "DESC" }, take: 1 }
   )) as PublishedVersion[]
   const version = versions[0]
-  if (!version) return null
+  if (!version) {
+    const latest = (await productCloud.listProductVersions(
+      { product_id: productId },
+      { order: { version_number: "DESC" }, take: 1 }
+    )) as PublishedVersion[]
+    return {
+      availability: "not_published" as const,
+      product: {
+        id: product.id,
+        title: latest[0]?.title?.trim() || "Product",
+        description: "",
+        lifecycle_status: product.lifecycle_status,
+        brand_name: null,
+        manufacturer_name: null,
+        category_names: [],
+        identifier_id: null,
+        identifier_type: null,
+        identifier_value: null,
+        country_code: null,
+        image_url: null,
+        media: [],
+      },
+      made_in_europe: null,
+      european_ownership: null,
+      buy_box: null,
+      offers: [],
+      reviews: [],
+      seller_reviews: [],
+      seller_review_aggregate: { average_score: null, count: 0 },
+      product_link_group: null,
+    }
+  }
 
   const preview = await buildProductCloudPreview(productCloud, productId)
   const brand_name = await resolveBrandName(partner, preview.brand_id)
@@ -728,7 +801,12 @@ export async function loadCatalogProductDetail(
       preview.identifier_id,
       region
     )
-    offers = await enrichRankedOffers(commerce, partner, buy_box)
+    offers = await enrichRankedOffers(
+      commerce,
+      partner,
+      buy_box,
+      productId
+    )
   }
 
   const productReviews = await reviews.listReviews(
@@ -864,7 +942,50 @@ export async function loadCatalogProductDetail(
     })
   }
 
+  let availability: ProductAvailability = "not_deliverable"
+  if (preview.identifier_id) {
+    const regionOffers = await commerce.listOffers({
+      identifier_id: preview.identifier_id,
+      region_code: region,
+    })
+    const facts = []
+    for (const offer of regionOffers) {
+      const [inventory] = await commerce.listOfferInventories({
+        offer_id: offer.id,
+      })
+      const profile = offer.shipping_profile_id
+        ? await loadShippingProfile(commerce, offer.shipping_profile_id)
+        : null
+      const rates = profile
+        ? normalizeCountryRates(
+            profile.country_rates as Record<string, unknown> | null
+          )
+        : null
+      const rate = rates?.[region]
+      facts.push({
+        salesStatus: offer.sales_status,
+        quantityAvailable: Number(inventory?.quantity_available ?? 0),
+        regionCode: offer.region_code,
+        shippingProfileId: offer.shipping_profile_id,
+        profileStatus: profile
+          ? String(profile.status ?? "active")
+          : offer.shipping_profile_id
+            ? "inactive"
+            : null,
+        countryActive: offer.shipping_profile_id
+          ? Boolean(rate && rate.active !== false)
+          : null,
+      })
+    }
+    availability = classifyProductAvailability({
+      published: true,
+      destinationCountry: region,
+      offers: facts,
+    })
+  }
+
   return {
+    availability,
     product: {
       id: product.id,
       title: preview.title ?? version.title,
@@ -1027,18 +1148,39 @@ async function resolveManufacturerCountry(
   }
 }
 
+async function loadShippingProfile(
+  commerce: CommerceCloudModuleService,
+  profileId: string
+) {
+  const [profile] = await commerce.listSellerShippingProfiles({ id: profileId })
+  return profile ?? null
+}
+
 async function minOfferPricing(
   commerce: CommerceCloudModuleService,
   identifierId: string,
-  regionCode: string
+  regionCode: string,
+  profileCache: Map<string, { status: string; countryActive: boolean } | null> = new Map()
 ): Promise<{ offer_count: number; from_price: number | null }> {
   const offers = await commerce.listOffers({
     identifier_id: identifierId,
     region_code: regionCode,
   })
-  const active = offers.filter(
-    (offer) => (offer.sales_status ?? "active") === "active"
-  )
+  const reachable = []
+  for (const offer of offers) {
+    if ((offer.sales_status ?? "active") !== "active") continue
+    if (
+      await offerReachesDestination(
+        offer,
+        regionCode,
+        (id) => loadShippingProfile(commerce, id),
+        profileCache
+      )
+    ) {
+      reachable.push(offer)
+    }
+  }
+  const active = reachable
   const priced = await Promise.all(
     active.map(async (offer) => {
       const [[inventory], [price]] = await Promise.all([
@@ -1072,13 +1214,131 @@ async function minOfferPricing(
   return { offer_count, from_price }
 }
 
+type SellableOfferRow = {
+  offer_id: string
+  seller_id: string
+  unit_price: number
+}
+
+async function listSellableOfferRows(
+  commerce: CommerceCloudModuleService,
+  identifierId: string,
+  regionCode: string
+): Promise<SellableOfferRow[]> {
+  const offers = await commerce.listOffers({
+    identifier_id: identifierId,
+    region_code: regionCode,
+  })
+  const reachable = []
+  for (const offer of offers) {
+    if ((offer.sales_status ?? "active") !== "active") continue
+    if (
+      await offerReachesDestination(offer, regionCode, (id) =>
+        loadShippingProfile(commerce, id)
+      )
+    ) {
+      reachable.push(offer)
+    }
+  }
+  const active = reachable
+  const rows = await Promise.all(
+    active.map(async (offer) => {
+      const [[inventory], [price]] = await Promise.all([
+        commerce.listOfferInventories({ offer_id: offer.id }),
+        commerce.listOfferPrices({ offer_id: offer.id }),
+      ])
+      if (!inventory || !price) return null
+      if (Number(inventory.quantity_available) <= 0) return null
+      const view = buildEffectivePriceView({
+        base_price: Number(price.base_price),
+        shipping_cost: Number(price.shipping_cost),
+        extra_delivery_cost:
+          price.extra_delivery_cost != null
+            ? Number(price.extra_delivery_cost)
+            : null,
+        promo_price:
+          price.promo_price != null ? Number(price.promo_price) : null,
+        promo_starts_at: price.promo_starts_at ?? null,
+        promo_ends_at: price.promo_ends_at ?? null,
+      })
+      return {
+        offer_id: offer.id,
+        seller_id: offer.seller_id,
+        unit_price: view.unit_price,
+      }
+    })
+  )
+  return rows.filter((row): row is SellableOfferRow => row != null)
+}
+
+async function cachedSellerCommissionSettings(
+  partner: PartnerModuleService,
+  sellerId: string,
+  cache: Map<string, unknown>
+): Promise<unknown> {
+  if (cache.has(sellerId)) return cache.get(sellerId)
+  try {
+    const seller = await partner.retrieveSeller(sellerId)
+    const raw = (
+      seller as { affiliate_commission_settings?: unknown }
+    ).affiliate_commission_settings
+    cache.set(sellerId, raw ?? null)
+    return raw ?? null
+  } catch {
+    cache.set(sellerId, null)
+    return null
+  }
+}
+
+async function attachHighestAffiliateCommission(
+  commerce: CommerceCloudModuleService,
+  partner: PartnerModuleService,
+  item: CatalogListItem,
+  identifierIds: string[],
+  regionCode: string
+): Promise<void> {
+  const rows: SellableOfferRow[] = []
+  for (const identifierId of identifierIds) {
+    rows.push(...(await listSellableOfferRows(commerce, identifierId, regionCode)))
+  }
+  if (rows.length === 0) return
+  const settingsCache = new Map<string, unknown>()
+  const rated = await Promise.all(
+    rows.map(async (row) => {
+      const settings = await cachedSellerCommissionSettings(
+        partner,
+        row.seller_id,
+        settingsCache
+      )
+      const commission = commissionForSellerProduct(settings, item.id)
+      return { ...row, totalPercent: commission.totalPercent }
+    })
+  )
+  rated.sort(
+    (a, b) => b.totalPercent - a.totalPercent || b.unit_price - a.unit_price
+  )
+  const best = rated[0]
+  if (!best) return
+  item.affiliate_commission_percent = best.totalPercent
+  item.affiliate_commission_label =
+    rated.length > 1
+      ? `Tot ${formatAffiliateCommissionPercent(best.totalPercent)}`
+      : formatAffiliateCommissionPercent(best.totalPercent)
+  item.affiliate_earnings = Math.round(best.unit_price * best.totalPercent) / 100
+  item.affiliate_offer_id = best.offer_id
+  item.affiliate_offer_price = best.unit_price
+}
+
 async function enrichRankedOffers(
   commerce: CommerceCloudModuleService,
   partner: PartnerModuleService,
-  buy_box: Awaited<ReturnType<typeof loadBuyBoxForIdentifier>>
+  buy_box: Awaited<ReturnType<typeof loadBuyBoxForIdentifier>>,
+  productId?: string
 ): Promise<CatalogOfferView[]> {
   const views: CatalogOfferView[] = []
+  const settingsCache = new Map<string, unknown>()
   for (const ranked of buy_box.ranked) {
+    if (Number(ranked.quantity_available) <= 0) continue
     const [price] = await commerce.listOfferPrices({
       offer_id: ranked.offer_id,
     })
@@ -1099,18 +1359,33 @@ async function enrichRankedOffers(
             promo_ends_at: price.promo_ends_at ?? null,
           })
         : null
+    const unitPrice = view ? view.unit_price : ranked.total_price
+    let affiliate_commission_percent: number | null = null
+    let affiliate_earnings: number | null = null
+    if (productId) {
+      const settings = await cachedSellerCommissionSettings(
+        partner,
+        ranked.seller_id,
+        settingsCache
+      )
+      const rated = commissionForSellerProduct(settings, productId)
+      affiliate_commission_percent = rated.totalPercent
+      affiliate_earnings = Math.round(unitPrice * rated.totalPercent) / 100
+    }
     views.push({
       offer_id: ranked.offer_id,
       seller_id: ranked.seller_id,
       seller_name,
       seller_slug,
-      base_price: view ? view.unit_price : ranked.total_price,
+      base_price: unitPrice,
       shipping_cost: view ? view.shipping_cost + view.extra_delivery_cost : 0,
       total_price: view ? view.total_customer_price : ranked.total_price,
       quantity_available: ranked.quantity_available,
       rank: ranked.rank,
       is_winner: ranked.is_winner,
       score: ranked.score,
+      affiliate_commission_percent,
+      affiliate_earnings,
     })
   }
   return views

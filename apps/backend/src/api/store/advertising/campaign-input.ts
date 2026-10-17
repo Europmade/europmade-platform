@@ -1,4 +1,8 @@
-import { persistMediaReference } from "@europmade/utils"
+import {
+  parseSellerBannerPresentation,
+  persistMediaReference,
+  type SellerBannerPresentation,
+} from "@europmade/utils"
 import { MedusaError } from "@medusajs/framework/utils"
 import type CmsModuleService from "../../../modules/cms/service"
 import { normalizeWeekStart } from "./helpers"
@@ -11,6 +15,8 @@ export type ParsedCampaignInput = {
   markets: string[]
   weekStarts: Date[]
   image_url: string | null
+  logo_url: string | null
+  banner_presentation: SellerBannerPresentation
   headline: string | null
   subline: string | null
   cta_key: string
@@ -88,6 +94,13 @@ export function parseCampaignInput(body: Record<string, unknown>): ParsedCampaig
     typeof body.image_url === "string" && body.image_url.trim()
       ? persistMediaReference(body.image_url.trim())
       : null
+  const logo_url =
+    typeof body.logo_url === "string" && body.logo_url.trim()
+      ? persistMediaReference(body.logo_url.trim())
+      : null
+  const banner_presentation = parseSellerBannerPresentation(
+    body.banner_presentation
+  )
   const headline =
     typeof body.headline === "string" ? body.headline.trim() || null : null
   const subline =
@@ -121,6 +134,8 @@ export function parseCampaignInput(body: Record<string, unknown>): ParsedCampaig
     markets,
     weekStarts,
     image_url,
+    logo_url,
+    banner_presentation,
     headline,
     subline,
     cta_key,

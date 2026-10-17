@@ -25,3 +25,37 @@ export function isValidGtin(value: string | null | undefined): boolean {
   const digits = normalizeGtinDigits(value)
   return isValidGtinChecksum(digits)
 }
+
+export type GtinOwner = {
+  identifier_id: string
+  product_id: string
+  value: string
+}
+
+export function planGtinAssignment(input: {
+  raw: string
+  productId: string
+  currentValue: string | null
+  owners: GtinOwner[]
+}): { ok: true; digits: string; unchanged: boolean } | { ok: false; message: string } {
+  const digits = normalizeGtinDigits(input.raw || "")
+  if (!digits) return { ok: false, message: "Vul een EAN/GTIN in." }
+  if (!isValidGtin(digits)) {
+    return { ok: false, message: "EAN/GTIN is ongeldig (lengte of checksum)." }
+  }
+  const other = input.owners.find(
+    (owner) =>
+      normalizeGtinDigits(owner.value) === digits && owner.product_id !== input.productId
+  )
+  if (other) {
+    return {
+      ok: false,
+      message: `Deze EAN/GTIN hoort al bij een ander product (${other.product_id}).`,
+    }
+  }
+  return {
+    ok: true,
+    digits,
+    unchanged: normalizeGtinDigits(input.currentValue || "") === digits,
+  }
+}

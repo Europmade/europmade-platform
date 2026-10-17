@@ -196,8 +196,8 @@ export function normalizeProductLinkProposal(
     }
   }
 
-  if (membersIn.length < 1) {
-    fail("Minimaal één product is verplicht.")
+  if (membersIn.length < 2 || membersIn.length > 4) {
+    fail("Koppel 2, 3 of 4 producten.")
   }
 
   const productIds: string[] = []

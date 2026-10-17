@@ -114,51 +114,18 @@ export function wizardStepGaps(
     case "information": {
       if (!product.title?.trim()) gaps.push("Producttitel ontbreekt")
       if (!product.brand_id) gaps.push("Merk ontbreekt")
-      const required = (c?.missing_required || []).filter(
-        (m) =>
-          m.group !== "compliance" &&
-          !String(m.code || "").includes("safety") &&
-          !String(m.name || "").toLowerCase().includes("veiligheid")
-      )
-      for (const m of required.slice(0, 4)) {
-        if (!gaps.includes(m.name)) gaps.push(m.name)
-      }
       break
     }
     case "offer": {
-      const reasons = (c?.sale_blocked_reasons || []).filter(
-        (r) =>
-          !r.toLowerCase().includes("veiligheid") &&
-          !r.toLowerCase().includes("safety") &&
-          !r.toLowerCase().includes("verzendprofiel") &&
-          !r.toLowerCase().includes("media") &&
-          !r.toLowerCase().includes("hoofdafbeelding") &&
-          !r.toLowerCase().includes("bewijs") &&
-          !r.toLowerCase().includes("compliance")
+      const hasOffer = Boolean(
+        offer?.has_offer || (product.offers?.offer_count ?? 0) > 0
       )
-      if (!offer?.has_offer && !(product.offers?.offer_count ?? 0)) {
+      if (!hasOffer) {
         gaps.push("Verkoopaanbod ontbreekt")
+        break
       }
-      for (const r of reasons) {
-        if (!gaps.includes(r)) gaps.push(r)
-      }
-      if (
-        gaps.length === 0 &&
-        c?.sale_presentation &&
-        c.sale_presentation !== "for_sale" &&
-        c.sale_presentation !== "not_published"
-      ) {
-        // fall through to generic blocked reasons without media/compliance noise
-        for (const r of c.sale_blocked_reasons || []) {
-          if (
-            r.toLowerCase().includes("prijs") ||
-            r.toLowerCase().includes("voorraad") ||
-            r.toLowerCase().includes("aanbod")
-          ) {
-            gaps.push(r)
-          }
-        }
-      }
+      const price = offer?.price ?? product.offers?.price ?? null
+      if (price == null) gaps.push("Standaardprijs ontbreekt")
       break
     }
     case "shipping": {
@@ -174,9 +141,6 @@ export function wizardStepGaps(
       const media = product.media || []
       if (!media.some((m) => m.media_type === "Hoofdafbeelding")) {
         gaps.push("Hoofdafbeelding ontbreekt")
-      }
-      if (media.length === 0) {
-        gaps.push("Nog geen media toegevoegd")
       }
       break
     }
@@ -226,7 +190,8 @@ export function wizardStepGaps(
         }
       }
       break
-    }    case "publish": {
+    }
+    case "publish": {
       if (product.publication_status === "Gepubliceerd") return []
       if (c?.publishable) return []
       for (const r of c?.publication_blocked_reasons || []) {
@@ -245,6 +210,58 @@ export function wizardStepGaps(
       break
   }
   return gaps
+}
+
+export type WizardAttention = {
+  visited: WizardStepKey[]
+  attempted: WizardStepKey[]
+}
+
+export function emptyWizardAttention(current?: WizardStepKey): WizardAttention {
+  return { visited: current ? [current] : [], attempted: [] }
+}
+
+export function markWizardVisited(
+  attention: WizardAttention,
+  step: WizardStepKey
+): WizardAttention {
+  if (attention.visited.includes(step)) return attention
+  return { ...attention, visited: [...attention.visited, step] }
+}
+
+export function markWizardAttempted(
+  attention: WizardAttention,
+  step: WizardStepKey
+): WizardAttention {
+  const visited = attention.visited.includes(step)
+    ? attention.visited
+    : [...attention.visited, step]
+  if (attention.attempted.includes(step)) return { ...attention, visited }
+  return { ...attention, visited, attempted: [...attention.attempted, step] }
+}
+
+/** Missing fields of a step stay hidden until the seller tries to leave it. */
+export function wizardStepShowsGaps(
+  step: WizardStepKey,
+  attention: WizardAttention
+): boolean {
+  if (step === "publish") return false
+  return attention.attempted.includes(step)
+}
+
+/**
+ * Incomplete steps stay neutral until the seller tries to skip or continue.
+ * Ready and waiting states stay visible.
+ */
+export function wizardChromeStatus(
+  product: ProductManagerDetail,
+  step: WizardStepKey,
+  attention: WizardAttention
+): WizardStepStatus {
+  const real = wizardStepStatus(product, step)
+  if (real === "ready" || real === "waiting") return real
+  if (!attention.attempted.includes(step)) return "empty"
+  return real
 }
 
 export type ReadinessCardKey =

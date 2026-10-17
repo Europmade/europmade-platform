@@ -39,6 +39,7 @@ type ControlsProps = {
   sectionKey: SectionReviewKey
   review: SectionReviewRow | undefined
   onSaved: () => Promise<void>
+  compact?: boolean
 }
 
 /**
@@ -50,6 +51,7 @@ export function SectionReviewControls({
   sectionKey,
   review,
   onSaved,
+  compact = false,
 }: ControlsProps) {
   const [status, setStatus] = useState<SectionReviewStatus>(
     review?.status ?? "unreviewed"
@@ -102,16 +104,18 @@ export function SectionReviewControls({
   }
 
   return (
-    <div className="mt-4 border-t border-wf-200 pt-3">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">
-          Beoordeling (sectie)
-        </p>
-        <span className="text-[11px] font-medium text-wf-700">
-          {sectionReviewStatusLabel(status)}
-        </span>
-      </div>
-      {review?.decided_at ? (
+    <div className={compact ? "" : "mt-4 border-t border-wf-200 pt-3"}>
+      {compact ? null : (
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+            Beoordeling (sectie)
+          </p>
+          <span className="text-[11px] font-medium text-wf-700">
+            {sectionReviewStatusLabel(status)}
+          </span>
+        </div>
+      )}
+      {review?.decided_at && !compact ? (
         <p className="mb-2 text-[10px] text-wf-500">
           Laatst opgeslagen: {new Date(review.decided_at).toLocaleString("nl-NL")}
           {review.decided_by ? ` · ${review.decided_by}` : ""}
@@ -127,10 +131,12 @@ export function SectionReviewControls({
           {savedHint}
         </Notice>
       ) : null}
-      <p className="mb-2 text-[10px] text-wf-500">
-        Eén klik slaat de sectiebeoordeling direct op (geen aparte
-        opslagknop). Dit is geen wijzigingsvoorstel-goedkeuring.
-      </p>
+      {compact ? null : (
+        <p className="mb-2 text-[10px] text-wf-500">
+          Eén klik slaat de sectiebeoordeling direct op. Dit is geen
+          wijzigingsvoorstel-goedkeuring.
+        </p>
+      )}
       <div className="mb-2 flex flex-wrap gap-2">
         {STATUS_BTN.map((btn) => (
           <Button
@@ -205,7 +211,7 @@ export function ProductEndReviewBlock({
       setEndReason("")
       setSuccess(
         decision === "approved"
-          ? "Product goedgekeurd (publicatie volgens bestaande regels)."
+          ? "Product goedgekeurd. Publicatie blijft een aparte stap."
           : decision === "request_info"
             ? "Aanvulling gevraagd — feedback is opgeslagen voor de seller."
             : "Product afgewezen."

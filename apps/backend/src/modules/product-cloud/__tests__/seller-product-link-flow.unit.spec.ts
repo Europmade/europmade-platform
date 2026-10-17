@@ -89,6 +89,8 @@ describe("seller product link bulk flow", () => {
   it("requires at least two products to open the link dialog", () => {
     expect(canOpenProductLinkDialog(1)).toBe(false)
     expect(canOpenProductLinkDialog(2)).toBe(true)
+    expect(canOpenProductLinkDialog(4)).toBe(true)
+    expect(canOpenProductLinkDialog(5)).toBe(false)
   })
 
   it("builds a proposal with dimension values and no status", () => {

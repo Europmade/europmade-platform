@@ -1,3 +1,6 @@
+import { HOMEPAGE_SECTION_CLASS } from "./homepage-shared"
+import { HomepageSectionTitle } from "./homepage-section-title"
+
 type WhyItem = { id?: string; title: string; body: string; image?: string | null }
 
 export function HomepageWhySection({
@@ -6,22 +9,30 @@ export function HomepageWhySection({
   image,
   items,
   honestEmpty,
+  titleColor,
+  titleSize,
 }: {
   title: string
   subtitle: string
   image?: string | null
   items: readonly WhyItem[]
   honestEmpty?: boolean
+  titleColor?: string
+  titleSize?: number | null
 }) {
   if (!title && items.length === 0) return null
   if (!title && !honestEmpty) return null
 
   return (
-    <section className="px-4 py-3.5 tablet:px-8 tablet:py-4">
+    <section className={HOMEPAGE_SECTION_CLASS}>
       {title ? (
-        <h2 className="mb-0.5 text-base font-bold text-wf-900 tablet:text-lg">
+        <HomepageSectionTitle
+          color={titleColor}
+          fontSize={titleSize}
+          className="mb-0.5"
+        >
           {title}
-        </h2>
+        </HomepageSectionTitle>
       ) : null}
       {subtitle ? (
         <p className="mb-2 max-w-xl text-[12px] text-wf-600">{subtitle}</p>

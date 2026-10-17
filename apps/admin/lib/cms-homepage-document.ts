@@ -1,3 +1,13 @@
+import {
+  legacyHeroCtaStyle,
+  parseBrandCardPresentation,
+  parseCampaignCardStyle,
+  parseHeroCtaStyle,
+  parseHeroTextStyle,
+  type CampaignCardStyle,
+  type HeroCtaStyle,
+  type HeroTextStyle,
+} from "@europmade/utils"
 import { emptyLocalized, type LocalizedCms } from "./cms-admin-api"
 import type { CmsI18nMeta } from "./cms-i18n"
 
@@ -42,6 +52,10 @@ export type HomepageSectionDoc = {
   sortOrder: number
   title: LocalizedCms
   subtitle: LocalizedCms
+  /** Hex. Missing means the storefront default #10396B. */
+  titleColor?: string
+  /** Pixel size 12–40. Missing keeps the current responsive title size. */
+  titleSize?: number | null
   image?: string | null
   body?: LocalizedCms
   href?: string
@@ -69,7 +83,16 @@ export type HomepagePartnerDoc = {
   subtitle: LocalizedCms
   image?: string | null
   logo?: string | null
+  /** Max logo height in px. The logo is contained, never cropped. */
+  logoSize: number
+  logoPosition: "left" | "center" | "right"
+  textColor: string
+  /** 0–100 opacity of the white contrast cloud behind logo and text. */
+  overlayStrength: number
   backgroundKey: "light" | "dark" | "green" | "beige" | "earth"
+  card?: CampaignCardStyle
+  ctaLabel: LocalizedCms
+  href: string
   country: LocalizedCms
   rating: number
   productCount: number
@@ -81,11 +104,31 @@ export type HomepageHeroDoc = {
   sortOrder: number
   title: LocalizedCms
   subtitle: LocalizedCms
-  cta1: { label: LocalizedCms; href: string }
-  cta2: { label: LocalizedCms; href: string }
+  titleColor: HeroTextStyle
+  subtitleColor: HeroTextStyle
+  cta1: { label: LocalizedCms; href: string; style: HeroCtaStyle }
+  cta2: { label: LocalizedCms; href: string; style: HeroCtaStyle }
   heroImage?: string | null
   heroImageAlt: LocalizedCms
+  backgroundImage?: string | null
   backgroundGradient: string
+  textColor?: "white" | "black"
+  buttonColor?: "white" | "black"
+  imageFit?: "cover" | "contain"
+  imagePosition?: string
+  productBanner?: {
+    visible: boolean
+    title: LocalizedCms
+    subtitle: LocalizedCms
+    ctaLabel: LocalizedCms
+    href: string
+    image?: string | null
+    background: string
+    textColor: "white" | "black"
+    buttonColor: "white" | "black"
+    imageFit: "cover" | "contain"
+    imagePosition: string
+  }
   trustBullets: LocalizedCms[]
   captionTitle?: LocalizedCms
   captionBody?: LocalizedCms
@@ -144,6 +187,38 @@ function loc(value: unknown): LocalizedCms {
   }
 }
 
+function hexOrUndefined(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined
+  const color = value.trim()
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color) ? color : undefined
+}
+
+function titleSizeOrUndefined(value: unknown): number | null {
+  const size = Number(value)
+  if (!Number.isFinite(size) || size <= 0) return null
+  return Math.min(40, Math.max(12, Math.round(size)))
+}
+
+function parseProductBanner(raw: unknown): HomepageHeroDoc["productBanner"] {
+  const source = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {}
+  return {
+    visible: source.visible !== false,
+    title: loc(source.title),
+    subtitle: loc(source.subtitle),
+    ctaLabel: loc(source.ctaLabel),
+    href: typeof source.href === "string" ? source.href : "",
+    image: typeof source.image === "string" ? source.image : null,
+    background: typeof source.background === "string" ? source.background : "",
+    textColor: source.textColor === "white" ? "white" : "black",
+    buttonColor: source.buttonColor === "white" ? "white" : "black",
+    imageFit: source.imageFit === "contain" ? "contain" : "cover",
+    imagePosition:
+      typeof source.imagePosition === "string" && source.imagePosition
+        ? source.imagePosition
+        : "center",
+  }
+}
+
 function isSectionKey(value: string): value is HomepageSectionKey {
   return (HOMEPAGE_SECTION_KEYS as readonly string[]).includes(value)
 }
@@ -165,6 +240,8 @@ export function defaultHero(): HomepageHeroDoc {
       de: "Kaufen Sie direkt bei europäischen Produzenten und offiziellen Händlern.",
       fr: "Achetez directement auprès de producteurs européens et de détaillants officiels.",
     },
+    titleColor: parseHeroTextStyle(undefined, "black", "title"),
+    subtitleColor: parseHeroTextStyle(undefined, "black", "subtitle"),
     cta1: {
       label: {
         nl: "Waarom EuropMade?",
@@ -173,6 +250,7 @@ export function defaultHero(): HomepageHeroDoc {
         fr: "Pourquoi EuropMade ?",
       },
       href: "/waarom-kopen",
+      style: legacyHeroCtaStyle("primary", "black"),
     },
     cta2: {
       label: {
@@ -182,8 +260,14 @@ export function defaultHero(): HomepageHeroDoc {
         fr: "Devenir vendeur",
       },
       href: "/waarom-verkopen",
+      style: legacyHeroCtaStyle("secondary", "black"),
     },
     heroImage: null,
+    backgroundImage: null,
+    textColor: "black",
+    buttonColor: "black",
+    imageFit: "cover",
+    imagePosition: "50% 50%",
     heroImageAlt: {
       nl: "Europese producten",
       en: "European products",
@@ -303,6 +387,8 @@ export function normalizeHomepageDocument(raw: unknown): HomepageCmsDoc {
             sortOrder: Number(s.sortOrder ?? i * 10) || 0,
             title: loc(s.title),
             subtitle: loc(s.subtitle),
+            titleColor: hexOrUndefined(s.titleColor),
+            titleSize: titleSizeOrUndefined(s.titleSize),
             image: typeof s.image === "string" ? s.image : null,
             body: loc(s.body),
             href: typeof s.href === "string" ? s.href : "",
@@ -393,6 +479,7 @@ export function normalizeHomepageDocument(raw: unknown): HomepageCmsDoc {
           subtitle: loc(p.subtitle),
           image: typeof p.image === "string" ? p.image : null,
           logo: typeof p.logo === "string" ? p.logo : null,
+          ...parseBrandCardPresentation(p),
           backgroundKey:
             bg === "dark" ||
             bg === "green" ||
@@ -401,6 +488,12 @@ export function normalizeHomepageDocument(raw: unknown): HomepageCmsDoc {
             bg === "light"
               ? bg
               : "light",
+          card:
+            p.card && typeof p.card === "object"
+              ? parseCampaignCardStyle(p.card)
+              : undefined,
+          ctaLabel: loc(p.ctaLabel),
+          href: typeof p.href === "string" ? p.href : "",
           country: loc(p.country),
           rating: Number(p.rating ?? 0) || 0,
           productCount: Number(p.productCount ?? 0) || 0,
@@ -415,16 +508,34 @@ export function normalizeHomepageDocument(raw: unknown): HomepageCmsDoc {
       visible: heroIn.visible !== false,
       title: loc(heroIn.title) ,
       subtitle: loc(heroIn.subtitle),
+      titleColor: parseHeroTextStyle(heroIn.titleColor, heroIn.textColor, "title"),
+      subtitleColor: parseHeroTextStyle(
+        heroIn.subtitleColor,
+        heroIn.textColor,
+        "subtitle"
+      ),
       cta1: {
         label: loc(cta1.label),
         href: typeof cta1.href === "string" ? cta1.href : "/waarom-kopen",
+        style: parseHeroCtaStyle(cta1.style, "primary", heroIn.buttonColor),
       },
       cta2: {
         label: loc(cta2.label),
         href: typeof cta2.href === "string" ? cta2.href : "/waarom-verkopen",
+        style: parseHeroCtaStyle(cta2.style, "secondary", heroIn.buttonColor),
       },
       heroImage: typeof heroIn.heroImage === "string" ? heroIn.heroImage : null,
       heroImageAlt: loc(heroIn.heroImageAlt),
+      backgroundImage:
+        typeof heroIn.backgroundImage === "string" ? heroIn.backgroundImage : null,
+      textColor: heroIn.textColor === "white" ? "white" : "black",
+      buttonColor: heroIn.buttonColor === "white" ? "white" : "black",
+      imageFit: heroIn.imageFit === "contain" ? "contain" : "cover",
+      imagePosition:
+        typeof heroIn.imagePosition === "string" && heroIn.imagePosition
+          ? heroIn.imagePosition
+          : "50% 50%",
+      productBanner: parseProductBanner(heroIn.productBanner),
       backgroundGradient:
         typeof heroIn.backgroundGradient === "string"
           ? heroIn.backgroundGradient

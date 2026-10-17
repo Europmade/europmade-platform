@@ -53,6 +53,11 @@ export async function listSectionReviewsForProduct(
   })
 }
 
+/** Claims stays stored historically and does not gate product approval. */
+export function reviewsThatGateApproval(rows: SectionReviewRow[]): SectionReviewRow[] {
+  return rows.filter((row) => row.section_key !== ("claims" as SectionReviewRow["section_key"]))
+}
+
 export function summarizeSectionReviews(rows: SectionReviewRow[]) {
   const needs_info = rows.filter((r) => r.status === "needs_info")
   const rejected = rows.filter((r) => r.status === "rejected")

@@ -15,6 +15,7 @@ import type ProductCloudModuleService from "../../modules/product-cloud/service"
 import { executeRecomputeBuyBox } from "./recompute-buy-box"
 import type { BuyBoxComputationResult } from "../../modules/commerce-cloud/buy-box-engine"
 import { emitCommerceEvent } from "./commerce-events"
+import { basePriceForThisOffer } from "../../modules/commerce-cloud/offer-market-price"
 
 export type UpsertOfferInput = {
   seller_id: string
@@ -91,9 +92,8 @@ export const upsertOfferStep = createStep(
       )
     }
 
-    let identifier
     try {
-      identifier = await productCloud.retrieveIdentifier(input.identifier_id)
+      await productCloud.retrieveIdentifier(input.identifier_id)
     } catch {
       throw new MedusaError(
         MedusaError.Types.NOT_FOUND,
@@ -101,58 +101,17 @@ export const upsertOfferStep = createStep(
       )
     }
 
-    const variant = await productCloud.retrieveProductVariant(
-      identifier.product_variant_id
-    )
-    const product = await productCloud.retrieveProduct(variant.product_id)
-    const existingCentral =
-      product.regular_customer_price != null
-        ? Number(product.regular_customer_price)
-        : null
-    const requestedCentral =
-      input.regular_customer_price != null
-        ? Number(input.regular_customer_price)
-        : input.base_price
-    const central =
-      existingCentral != null && input.regular_customer_price == null
-        ? existingCentral
-        : requestedCentral
-    if (existingCentral == null || existingCentral !== central) {
-      await productCloud.updateProducts({
-        id: product.id,
-        regular_customer_price: central,
-      })
-    }
+    const offerBasePrice = basePriceForThisOffer({
+      base_price: input.base_price,
+      regular_customer_price: input.regular_customer_price,
+      existing_base_price: input.base_price,
+    })
 
     const result = await commerce.upsertOfferGraph({
       ...input,
-      base_price: central,
+      base_price: offerBasePrice,
       region_code: region,
     })
-
-    const variants = await productCloud.listProductVariants({
-      product_id: product.id,
-    })
-    for (const v of variants) {
-      const ids = await productCloud.listIdentifiers({
-        product_variant_id: v.id,
-      })
-      for (const idRow of ids) {
-        const offers = await commerce.listOffers({
-          seller_id: input.seller_id,
-          identifier_id: idRow.id,
-        })
-        for (const offer of offers) {
-          const [price] = await commerce.listOfferPrices({ offer_id: offer.id })
-          if (price && Number(price.base_price) !== central) {
-            await commerce.updateOfferPrices({
-              id: price.id,
-              base_price: central,
-            })
-          }
-        }
-      }
-    }
 
     if (result.created) {
       await emitCommerceEvent(container, "OfferCreated", {
@@ -313,36 +272,18 @@ export const patchOfferStep = createStep(
       )
     }
 
-    const identifier = await productCloud.retrieveIdentifier(
-      offer.identifier_id
-    )
-    const variant = await productCloud.retrieveProductVariant(
-      identifier.product_variant_id
-    )
-    const product = await productCloud.retrieveProduct(variant.product_id)
-    const existingCentral =
-      product.regular_customer_price != null
-        ? Number(product.regular_customer_price)
-        : Number(price.base_price)
-    const centralRequested =
-      input.regular_customer_price != null
-        ? Number(input.regular_customer_price)
-        : input.base_price != null
-          ? Number(input.base_price)
-          : null
-    const central =
-      centralRequested != null ? centralRequested : existingCentral
-    if (centralRequested != null && central !== existingCentral) {
-      await productCloud.updateProducts({
-        id: product.id,
-        regular_customer_price: central,
-      })
-    }
+    const nextBase = basePriceForThisOffer({
+      base_price: input.base_price,
+      regular_customer_price: input.regular_customer_price,
+      existing_base_price: Number(price.base_price),
+    })
+    const priceTouched =
+      input.base_price != null || input.regular_customer_price != null
 
     const next = {
       quantity_available:
         input.quantity_available ?? Number(inventory.quantity_available),
-      base_price: central,
+      base_price: nextBase,
       shipping_cost: input.shipping_cost ?? Number(price.shipping_cost),
       vat_rate: input.vat_rate ?? Number(price.vat_rate),
     }
@@ -361,8 +302,7 @@ export const patchOfferStep = createStep(
     const result = await commerce.patchOfferGraph({
       offer_id: offer.id,
       quantity_available: input.quantity_available,
-      base_price:
-        centralRequested != null ? central : undefined,
+      base_price: priceTouched ? nextBase : undefined,
       shipping_cost: input.shipping_cost,
       extra_delivery_cost: input.extra_delivery_cost,
       vat_rate: input.vat_rate,
@@ -374,34 +314,6 @@ export const patchOfferStep = createStep(
       promo_ends_at: input.promo_ends_at,
       clear_promo: input.clear_promo,
     })
-
-    if (centralRequested != null) {
-      const variants = await productCloud.listProductVariants({
-        product_id: product.id,
-      })
-      for (const v of variants) {
-        const ids = await productCloud.listIdentifiers({
-          product_variant_id: v.id,
-        })
-        for (const idRow of ids) {
-          const offers = await commerce.listOffers({
-            seller_id: input.seller_id,
-            identifier_id: idRow.id,
-          })
-          for (const sibling of offers) {
-            const [sibPrice] = await commerce.listOfferPrices({
-              offer_id: sibling.id,
-            })
-            if (sibPrice && Number(sibPrice.base_price) !== central) {
-              await commerce.updateOfferPrices({
-                id: sibPrice.id,
-                base_price: central,
-              })
-            }
-          }
-        }
-      }
-    }
 
     if (result.inventory_changed) {
       await emitCommerceEvent(container, "InventoryChanged", {

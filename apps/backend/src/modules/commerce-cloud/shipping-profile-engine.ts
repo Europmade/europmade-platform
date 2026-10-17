@@ -12,6 +12,13 @@ import {
   type ShippingProfileRecord,
 } from "./shipping-profile-types"
 
+export function shippingProfileBelongsToSeller(
+  profile: { seller_id?: string | null } | null | undefined,
+  sellerId: string
+): boolean {
+  return !!profile && profile.seller_id === sellerId
+}
+
 export type EnrichedShippingProfile = ShippingProfileRecord & {
   linked_product_count: number
   active_country_count: number
@@ -118,6 +125,21 @@ export async function syncProfileToProductOffers(
     )
   }
 
+  let ownedProfile: { seller_id?: string | null; country_rates?: unknown } | null =
+    null
+  if (opts.profileId) {
+    const [profile] = await commerce.listSellerShippingProfiles({
+      id: opts.profileId,
+    })
+    if (!shippingProfileBelongsToSeller(profile, opts.sellerId)) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_FOUND,
+        "Verzendprofiel niet gevonden."
+      )
+    }
+    ownedProfile = profile
+  }
+
   await productCloud.updateProducts({
     id: product.id,
     shipping_profile_id: opts.profileId,
@@ -149,10 +171,8 @@ export async function syncProfileToProductOffers(
     return { offers_updated }
   }
 
-  const [profile] = await commerce.listSellerShippingProfiles({
-    id: opts.profileId,
-  })
-  if (!profile || profile.seller_id !== opts.sellerId) {
+  const profile = ownedProfile
+  if (!profile) {
     throw new MedusaError(
       MedusaError.Types.NOT_FOUND,
       "Verzendprofiel niet gevonden."

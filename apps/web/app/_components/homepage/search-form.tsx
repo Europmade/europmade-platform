@@ -154,7 +154,7 @@ export function SearchForm({
   const shell =
     variant === "hero"
       ? "mx-auto flex h-[52px] w-full max-w-[720px] items-center rounded-xl border border-wf-300 bg-white px-4 shadow-sm transition focus-within:border-wf-800 focus-within:shadow-md"
-      : "flex h-10 flex-1 items-center rounded-md border-[1.5px] border-wf-700 px-3.5"
+      : "em-header-search flex flex-1 items-center rounded-md border-[1.5px] px-3.5"
 
   const listbox =
     showPanel && mounted && panelBox ? (
@@ -259,6 +259,16 @@ export function SearchForm({
         role="search"
         onSubmit={onSubmit}
         className={shell}
+        style={
+          variant === "header"
+            ? {
+                backgroundColor: "var(--em-header-search-bg, transparent)",
+                borderColor: "var(--em-header-search-border, #4a4a4a)",
+                color: "var(--em-header-search-text, #151515)",
+                height: "var(--em-header-search-h, 2.5rem)",
+              }
+            : undefined
+        }
         aria-label={t("searchAria", locale)}
       >
         <label htmlFor={inputId} className="sr-only">
@@ -295,7 +305,11 @@ export function SearchForm({
             }
           }}
           placeholder={placeholder}
-          className="w-full bg-transparent text-sm text-wf-900 placeholder:text-wf-600 focus:outline-none"
+          className={`w-full bg-transparent text-sm focus:outline-none ${
+            variant === "header"
+              ? "text-inherit placeholder:text-current placeholder:opacity-60"
+              : "text-wf-900 placeholder:text-wf-600"
+          }`}
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}

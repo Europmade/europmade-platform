@@ -8,6 +8,7 @@ import {
   useState,
   type KeyboardEvent,
   type MouseEvent,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react"
 import { Badge } from "@europmade/ui"
@@ -47,6 +48,8 @@ export type ProductCarouselProps = {
   /** IntersectionObserver lazy mount — default true. */
   lazy?: boolean
   locale?: StorefrontLocale
+  titleColor?: string
+  titleFontSize?: number | null
 }
 
 /**
@@ -313,6 +316,8 @@ export function ProductCarousel({
   className = "",
   lazy = true,
   locale = DEFAULT_STOREFRONT_LOCALE,
+  titleColor,
+  titleFontSize,
 }: ProductCarouselProps) {
   const rootRef = useRef<HTMLElement>(null)
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -327,6 +332,12 @@ export function ProductCarousel({
 
   const compact = variant === "compact"
   const showSkeletons = loading || (lazy && !inView)
+  const titleStyle: CSSProperties = {}
+  if (titleColor) titleStyle.color = titleColor
+  if (titleFontSize) titleStyle.fontSize = titleFontSize
+  const titleClass = `font-bold text-wf-900 ${
+    titleFontSize ? "" : compact ? "text-sm" : "text-lg"
+  }`
   const skeletonCount = compact ? 4 : 5
 
   const updateArrows = useCallback(() => {
@@ -413,9 +424,7 @@ export function ProductCarousel({
         ref={rootRef}
         className={`${compact ? "mt-5" : "mt-10"} ${className}`}
       >
-        <h2
-          className={`font-bold text-wf-900 ${compact ? "text-sm" : "text-lg"}`}
-        >
+        <h2 className={titleClass} style={titleStyle}>
           {title}
         </h2>
         {subtitle ? (
@@ -435,9 +444,7 @@ export function ProductCarousel({
       aria-busy={showSkeletons || undefined}
     >
       <div className="mb-2">
-        <h2
-          className={`font-bold text-wf-900 ${compact ? "text-sm" : "text-lg"}`}
-        >
+        <h2 className={titleClass} style={titleStyle}>
           {title}
         </h2>
         {subtitle ? (

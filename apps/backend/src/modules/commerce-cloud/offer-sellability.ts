@@ -46,3 +46,42 @@ export function isOfferSellable(input: {
     (input.quantity_available ?? 0) > 0
   )
 }
+
+/**
+ * Same seller SKU is allowed on other regions of the same product (identifier).
+ * It conflicts only when another product of this seller already uses it.
+ */
+export function sellerSkuUsedByOtherProduct(
+  offers: Array<{
+    id: string
+    identifier_id: string
+    seller_sku?: string | null
+  }>,
+  input: {
+    sellerSku: string
+    identifierId: string
+    excludeOfferId?: string | null
+  }
+): boolean {
+  const sku = normalizeSellerSku(input.sellerSku)
+  if (!sku) return false
+  return offers.some(
+    (row) =>
+      normalizeSellerSku(row.seller_sku) === sku &&
+      row.id !== (input.excludeOfferId ?? null) &&
+      row.identifier_id !== input.identifierId
+  )
+}
+
+/** SKU already stored on another market of this same product. */
+export function inheritedSellerSku(
+  offers: Array<{ identifier_id: string; seller_sku?: string | null }>,
+  identifierId: string
+): string | null {
+  for (const row of offers) {
+    if (row.identifier_id !== identifierId) continue
+    const sku = normalizeSellerSku(row.seller_sku)
+    if (sku) return sku
+  }
+  return null
+}

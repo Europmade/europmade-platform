@@ -31,6 +31,8 @@ import {
   ProductSectionReview,
   ProductLinkGroup,
   ProductLinkMember,
+  ImportBatch,
+  ImportMappingProfile,
 } from "./models"
 import type { ProductCloudIdentifierType } from "./identifier-types"
 import {
@@ -164,6 +166,8 @@ class ProductCloudModuleService extends MedusaService({
   ProductSectionReview,
   ProductLinkGroup,
   ProductLinkMember,
+  ImportBatch,
+  ImportMappingProfile,
 }) {
   @InjectManager()
   async createProductGraph(

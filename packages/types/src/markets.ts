@@ -70,6 +70,28 @@ export function normalizeMarketCode(value: string): EuMarketCode | null {
  * Zichtbaarheid van CMS-content met market targeting.
  * marketScope "all" → alle EU-markten; "selected" → alleen listed markets.
  */
+export type VisitorMarketSource = "explicit" | "cookie" | "suggestion" | "default"
+
+/**
+ * Land van de bezoeker. Taal telt niet mee.
+ * Een expliciete keuze of cookie wint van een IP-voorstel.
+ */
+export function resolveVisitorMarket(input: {
+  explicit?: string | null
+  cookie?: string | null
+  geoSuggestion?: string | null
+  locale?: string | null
+}): { market: EuMarketCode; source: VisitorMarketSource } {
+  void input.locale
+  const explicit = normalizeMarketCode(input.explicit ?? "")
+  if (explicit) return { market: explicit, source: "explicit" }
+  const cookie = normalizeMarketCode(input.cookie ?? "")
+  if (cookie) return { market: cookie, source: "cookie" }
+  const suggestion = normalizeMarketCode(input.geoSuggestion ?? "")
+  if (suggestion) return { market: suggestion, source: "suggestion" }
+  return { market: "NL", source: "default" }
+}
+
 export function isVisibleInMarket(
   targeting: MarketTargeting,
   visitorMarket: string | null | undefined

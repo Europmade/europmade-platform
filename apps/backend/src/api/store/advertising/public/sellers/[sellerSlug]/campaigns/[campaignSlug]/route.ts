@@ -4,20 +4,17 @@ import { CMS_MODULE } from "../../../../../../../../modules/cms"
 import type CmsModuleService from "../../../../../../../../modules/cms/service"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../../../../modules/product-cloud/service"
+import { explainAdCampaign } from "@europmade/utils"
 import { serializeCampaign } from "../../../../../helpers"
 import { resolveSellerPublicSlug } from "../../../../../destination"
-import { loadAdvertisingProductCards } from "../../../../../public-product-cards"
+import { requestBackendOrigin } from "../../../../../../../request-backend-origin"
+import { loadResolvedAdvertisingProductCards } from "../../../../../public-product-cards"
 
 type Req = MedusaRequest & {
   params: { sellerSlug: string; campaignSlug: string }
 }
 
-const VIEWABLE = new Set([
-  "pending_review",
-  "approved",
-  "scheduled",
-  "active",
-])
+const VIEWABLE = new Set(["approved", "scheduled", "active"])
 
 /**
  * GET /store/advertising/public/sellers/:sellerSlug/campaigns/:campaignSlug
@@ -49,15 +46,38 @@ export async function GET(req: Req, res: MedusaResponse) {
     { campaign_id: campaign.id },
     { order: { week_start: "ASC" } }
   )
+  const visibility = explainAdCampaign(
+    {
+      id: String(campaign.id),
+      status: String(campaign.status ?? ""),
+      placement: String(campaign.placement ?? ""),
+      weeks: weeks as Array<{
+        market_code?: string
+        week_start?: unknown
+        week_end?: unknown
+      }>,
+    },
+    { now: new Date() }
+  )
+  if (!visibility.publicNow) {
+    throw new MedusaError(MedusaError.Types.NOT_FOUND, "Campaign not found.")
+  }
+  const origin = requestBackendOrigin(req)
   const serialized = serializeCampaign(
     campaign as Record<string, unknown>,
-    weeks as Array<Record<string, unknown>>
+    weeks as Array<Record<string, unknown>>,
+    origin
   )
 
   const productIds = Array.isArray(serialized.product_ids)
     ? (serialized.product_ids as string[])
     : []
-  const products = await loadAdvertisingProductCards(productCloud, productIds)
+  const products = await loadResolvedAdvertisingProductCards(
+    productCloud,
+    productIds,
+    origin,
+    { requirePublished: true }
+  )
 
   res.json({
     seller: {

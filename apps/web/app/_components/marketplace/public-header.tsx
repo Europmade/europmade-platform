@@ -1,11 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useId, useState } from "react"
+import { useEffect, useId, useState, type CSSProperties } from "react"
 import {
   DEFAULT_CMS_HEADER,
+  HOMEPAGE_CONTENT_GUTTER,
   parseCmsTheme,
   resolveMediaUrl,
+  type CmsThemeHeader,
 } from "@europmade/utils"
 import {
   DEFAULT_STOREFRONT_LOCALE,
@@ -22,30 +24,23 @@ import {
   CategoryMobileNav,
 } from "./category-mega-menu"
 import { LocaleCurrencySwitcher } from "./locale-currency-switcher"
+import { HEADER_ICON_CLASS, headerChromeStyle, headerIconStyle } from "./header-chrome"
 
 type PublicHeaderProps = {
   searchQuery?: string
   alwaysShowSearch?: boolean
   locale?: StorefrontLocale
-  /** CMS theme header logo (absolute or storage ref). */
-  logoSrc?: string | null
-  /** CMS theme header background (hex). */
-  backgroundColor?: string | null
+  /** Parsed CMS header. Preview and the published homepage pass this directly. */
+  chrome?: CmsThemeHeader | null
   /**
-   * When true (default), load published theme header if logo/bg props omitted.
-   * Preview/homepage can pass explicit props and set this to false.
+   * When true (default), load the published theme header if `chrome` is omitted.
    */
   loadThemeChrome?: boolean
 }
 
 const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
 
-type HeaderChrome = {
-  logoSrc: string | null
-  backgroundColor: string
-}
-
-async function fetchPublishedHeaderChrome(): Promise<HeaderChrome> {
+async function fetchPublishedHeaderChrome(): Promise<CmsThemeHeader | null> {
   try {
     const res = await fetch(`${medusaBackendUrl()}/store/cms/theme`, {
       credentials: "omit",
@@ -56,31 +51,14 @@ async function fetchPublishedHeaderChrome(): Promise<HeaderChrome> {
           : {}),
       },
     })
-    if (!res.ok) {
-      return {
-        logoSrc: null,
-        backgroundColor: DEFAULT_CMS_HEADER.backgroundColor,
-      }
-    }
+    if (!res.ok) return null
     const body = (await res.json()) as {
       theme?: { document?: unknown; published?: boolean } | null
     }
-    if (!body.theme?.published || !body.theme.document) {
-      return {
-        logoSrc: null,
-        backgroundColor: DEFAULT_CMS_HEADER.backgroundColor,
-      }
-    }
-    const theme = parseCmsTheme(body.theme.document)
-    return {
-      logoSrc: resolveMediaUrl(theme.header.logo, medusaBackendUrl()),
-      backgroundColor: theme.header.backgroundColor,
-    }
+    if (!body.theme?.published || !body.theme.document) return null
+    return parseCmsTheme(body.theme.document).header
   } catch {
-    return {
-      logoSrc: null,
-      backgroundColor: DEFAULT_CMS_HEADER.backgroundColor,
-    }
+    return null
   }
 }
 
@@ -91,19 +69,17 @@ export function PublicHeader({
   searchQuery = "",
   alwaysShowSearch = true,
   locale = DEFAULT_STOREFRONT_LOCALE,
-  logoSrc: logoSrcProp,
-  backgroundColor: backgroundColorProp,
+  chrome: chromeProp,
   loadThemeChrome = true,
 }: PublicHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const mobileNavId = useId()
-  const [remoteChrome, setRemoteChrome] = useState<HeaderChrome | null>(null)
-
-  const propsProvided =
-    logoSrcProp !== undefined || backgroundColorProp !== undefined
+  const [remoteChrome, setRemoteChrome] = useState<
+    CmsThemeHeader | null | undefined
+  >(undefined)
 
   useEffect(() => {
-    if (!loadThemeChrome || propsProvided) return
+    if (!loadThemeChrome || chromeProp) return
     let cancelled = false
     fetchPublishedHeaderChrome().then((chrome) => {
       if (!cancelled) setRemoteChrome(chrome)
@@ -111,27 +87,28 @@ export function PublicHeader({
     return () => {
       cancelled = true
     }
-  }, [loadThemeChrome, propsProvided])
+  }, [loadThemeChrome, chromeProp])
 
-  const logoSrc =
-    logoSrcProp !== undefined
-      ? resolveMediaUrl(logoSrcProp, medusaBackendUrl())
-      : (remoteChrome?.logoSrc ?? null)
-  const backgroundColor =
-    backgroundColorProp &&
-    /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(backgroundColorProp)
-      ? backgroundColorProp
-      : (remoteChrome?.backgroundColor ?? DEFAULT_CMS_HEADER.backgroundColor)
+  const header = chromeProp
+    ? chromeProp
+    : remoteChrome === undefined
+      ? null
+      : (remoteChrome ?? DEFAULT_CMS_HEADER)
+  const logoSrc = header
+    ? resolveMediaUrl(header.logo, medusaBackendUrl())
+    : null
 
   return (
-    <>
+    <div
+      data-em-header="chrome"
+      className="relative z-50"
+      style={header ? headerChromeStyle(header) : undefined}
+    >
       <header
         role="banner"
-        data-em-header="chrome"
-        className="relative z-50 flex items-center gap-3 overflow-visible border-b border-wf-300 px-4 py-3.5 tablet:gap-5 tablet:px-8"
-        style={{ backgroundColor }}
+        className={`flex items-center gap-3 overflow-visible border-b border-black/10 py-3.5 tablet:gap-5 ${HOMEPAGE_CONTENT_GUTTER}`}
       >
-        <BrandLogo imageSrc={logoSrc} />
+        <BrandLogo imageSrc={logoSrc} variant="header" />
 
         <div
           className={`min-w-0 flex-1 ${alwaysShowSearch ? "" : "hidden tablet:block"}`}
@@ -144,13 +121,14 @@ export function PublicHeader({
           />
         </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2.5 text-xs text-wf-600 tablet:gap-4">
+        <div className="ml-auto flex shrink-0 items-center gap-2.5 tablet:gap-4">
           <LocaleCurrencySwitcher />
           <AccountMenu locale={locale} />
           <CartLink locale={locale} />
           <button
             type="button"
-            className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-full border border-wf-400 text-[10px] font-bold text-wf-700 tablet:hidden"
+            className={`${HEADER_ICON_CLASS} text-[10px] font-bold tablet:hidden`}
+            style={headerIconStyle}
             aria-label={t("menu", locale)}
             aria-expanded={menuOpen}
             aria-controls={mobileNavId}
@@ -168,7 +146,16 @@ export function PublicHeader({
       {menuOpen ? (
         <nav
           id={mobileNavId}
-          className="border-b border-wf-200 px-4 py-3 tablet:hidden"
+          data-em-header-menu
+          className={`border-b border-wf-200 bg-white py-3 text-[#151515] tablet:hidden ${HOMEPAGE_CONTENT_GUTTER}`}
+          style={
+            {
+              color: "#151515",
+              "--em-header-locale": "#4a4a4a",
+              "--em-header-currency": "#4a4a4a",
+              "--em-header-text": "#151515",
+            } as CSSProperties
+          }
           aria-label={t("menu", locale)}
         >
           <CategoryMobileNav
@@ -177,7 +164,7 @@ export function PublicHeader({
           />
           <Link
             href="/over"
-            className="mt-2 block text-[12px] text-wf-700"
+            className="mt-2 block text-[12px] text-wf-800"
             onClick={() => setMenuOpen(false)}
           >
             {t("navAbout", locale)}
@@ -187,6 +174,6 @@ export function PublicHeader({
           </div>
         </nav>
       ) : null}
-    </>
+    </div>
   )
 }

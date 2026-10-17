@@ -16,6 +16,8 @@ const AdCampaign = model
     target_value: model.text().nullable(),
     markets: model.json().default([]),
     image_url: model.text().nullable(),
+    logo_url: model.text().nullable(),
+    banner_presentation: model.json().nullable(),
     destination_url: model.text(),
     headline: model.text().nullable(),
     subline: model.text().nullable(),
