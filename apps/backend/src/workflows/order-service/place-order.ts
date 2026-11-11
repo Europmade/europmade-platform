@@ -23,6 +23,7 @@ import {
   normalizeCountryCode,
   parseOrderAddress,
   resolveDestinationVatRate,
+  testCatalogDemoCheckoutAllowed,
 } from "@europmade/utils"
 import { offerReachesDestination } from "../../modules/commerce-cloud/offer-destination"
 import { isOfferActiveForSale } from "../../modules/commerce-cloud/offer-sellability"
@@ -184,7 +185,15 @@ export async function revalidateCheckoutLines(
       },
       { take: 1 }
     )
-    if (published.length === 0) {
+    const demoCheckout =
+      published.length === 0 &&
+      testCatalogDemoCheckoutAllowed({
+        gtin: String(
+          (identifier as { identifier_value?: string | null }).identifier_value ?? ""
+        ),
+        sellerId: String(offer.seller_id ?? ""),
+      })
+    if (published.length === 0 && !demoCheckout) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,
         "Dit product is niet gepubliceerd."

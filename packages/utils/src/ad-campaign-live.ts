@@ -287,6 +287,22 @@ function targetKey(value: string | null | undefined): string {
   return String(value ?? "").trim().toLowerCase()
 }
 
+/**
+ * Keep campaigns for the requested category targets.
+ * One slug stays an exact match. A comma-separated list also keeps campaigns
+ * aimed at a subcategory of that page. An empty target leaves the list unchanged.
+ * Ranking stays in selectLiveAdCampaigns.
+ */
+export function filterAdCampaignsByTarget<T extends { targetValue?: string | null }>(
+  campaigns: readonly T[],
+  target: string | null | undefined
+): T[] {
+  const key = targetKey(target)
+  if (!key) return [...campaigns]
+  const allowed = new Set(key.split(",").map((part) => part.trim()).filter(Boolean))
+  return campaigns.filter((row) => allowed.has(targetKey(row.targetValue)))
+}
+
 export function selectLiveAdCampaigns<T extends AdCampaignCandidate>(
   campaigns: T[],
   options: {

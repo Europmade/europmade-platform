@@ -257,6 +257,17 @@ export function ComplianceEvidenceSection(props: {
               </p>
               <p className="text-wf-500">{e.document_type}</p>
               <p className={stItem.className}>{stItem.label}</p>
+              {e.verification_notes ? (
+                <p className="text-wf-700">{e.verification_notes}</p>
+              ) : null}
+              {e.verified_at || e.verified_by ? (
+                <p className="text-wf-500">
+                  {e.verified_at
+                    ? new Date(e.verified_at).toLocaleString("nl-NL")
+                    : "—"}
+                  {e.verified_by ? ` · ${e.verified_by}` : ""}
+                </p>
+              ) : null}
               <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
                 <a
                   href={resolveSellerMediaUrl(e.storage_reference)}

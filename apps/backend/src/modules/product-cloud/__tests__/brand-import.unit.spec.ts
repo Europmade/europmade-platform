@@ -4,6 +4,7 @@ import {
   collectBrandImageSlots,
   headerSignature,
   planBrandCommit,
+  normalizeProductionCountry,
   previewBrandImport,
   profileCanAutoApply,
   undoCreatedCategoryIds,
@@ -13,7 +14,13 @@ import { readFileSync } from "node:fs"
 import { join } from "node:path"
 import { catalogOfferStats, offerCountLabel, offerListRows, offerPresence } from "../catalog-offer-summary"
 import { buildBrandImportWorkbook } from "../brand-import-template"
-import { parseXlsxProductGrid, parseXlsxWorkbook } from "../import-xlsx"
+import {
+  buildProductImportTemplate,
+  buildXlsxWorkbook,
+  parseXlsxProductGrid,
+  parseXlsxWorkbook,
+} from "../import-xlsx"
+import { inflateRawSync, inflateSync } from "node:zlib"
 
 const BOSCH = "4242005482320"
 
@@ -241,7 +248,7 @@ describe("admin brand import", () => {
     ])
   })
 
-  it("blocks the whole file when one EAN is invalid", () => {
+  it("stores an invalid EAN as a concept and still commits the other row", () => {
     const headers = ["EAN", "Productnaam", "Merk", "Categorie"]
     const rows = [
       [BOSCH, "Goed product", "Bosch", "Huishouden"],
@@ -256,11 +263,15 @@ describe("admin brand import", () => {
       known_brands: [{ id: "b", name: "Bosch" }],
       categories: [{ id: "c", name: "Huishouden", slug: "huishouden" }],
     })
-    expect(preview.summary.error_rows).toBe(1)
-    expect(preview.commit_allowed).toBe(false)
+    expect(preview.summary.error_rows).toBe(0)
+    expect(preview.commit_allowed).toBe(true)
+    expect(preview.preview[1]?.issues.some((issue) => issue.field === "ean" && !issue.blocking)).toBe(true)
     const plan = planBrandCommit(preview, { headers, rows, mapping_confirmed: true })
-    expect(plan.blocked).toBe(true)
-    expect(plan.actions).toEqual([])
+    expect(plan.blocked).toBe(false)
+    const creates = plan.actions.filter((action) => action.type === "create")
+    expect(creates).toHaveLength(2)
+    expect(creates[1] && creates[1].type === "create" ? creates[1].ean : "x").toBe("")
+    expect(creates[1] && creates[1].type === "create" ? creates[1].import_ref : "").toMatch(/^DRAFT-/)
   })
 
   it("refuses a saved profile when the columns changed", () => {
@@ -441,10 +452,65 @@ describe("brand names, categories and the import template", () => {
     expect(image?.field).toBe("extra_image_urls")
   })
 
-  it("builds one workbook with two sheets and one text column per field", () => {
-    const workbook = buildBrandImportWorkbook()
+  it("builds one workbook with Lijsten dropdowns and one text column per field", () => {
+    const workbook = buildBrandImportWorkbook({
+      categories: [
+        { id: "cat_kleding", name: "Kleding", slug: "kleding", parent_id: null },
+        {
+          id: "cat_heren",
+          name: "Heren",
+          slug: "heren",
+          parent_category_id: "cat_kleding",
+        },
+      ],
+    })
     const parsed = parseXlsxWorkbook(workbook)
-    expect([...parsed.sheets.keys()].sort()).toEqual(["Importtemplate", "Uitleg"])
+    expect([...parsed.sheets.keys()].sort()).toEqual([
+      "CatDeps",
+      "CatDepsL3",
+      "Importtemplate",
+      "Kenmerken",
+      "Lijsten",
+      "SpecDeps",
+      "Uitleg",
+    ])
+    const listHeader = (parsed.sheets.get("Lijsten") || [])[0] || []
+    expect(listHeader).toEqual(
+      expect.arrayContaining([
+        "niveau1",
+        "niveau2_flat",
+        "landcodes",
+        "niveau1_naam",
+        "niveau2_lijst_sleutel",
+      ])
+    )
+    const kenmerken = parsed.sheets.get("Kenmerken") || []
+    expect(kenmerken.some((row) => row[1] === "maat")).toBe(true)
+    expect(kenmerken.some((row) => row[1] === "kleur")).toBe(true)
+    const sellerMirror = buildProductImportTemplate([], {
+      categories: [
+        { id: "cat_kleding", name: "Kleding", slug: "kleding", parent_id: null },
+        {
+          id: "cat_heren",
+          name: "Heren",
+          slug: "heren",
+          parent_category_id: "cat_kleding",
+        },
+      ],
+    })
+    expect(
+      sellerMirror.sheets
+        .find((s) => s.name === "Producten")
+        ?.validations?.some((v) => /INDIRECT\(VLOOKUP\(/.test(v.formula))
+    ).toBe(true)
+    const packed = buildXlsxWorkbook(sellerMirror.sheets, {
+      definedNames: sellerMirror.definedNames,
+    })
+    const parts = inflateXlsxParts(packed)
+    expect(parts.get("xl/workbook.xml") || "").toMatch(/definedName name="cat_/)
+    expect(
+      [...parts.values()].some((xml) => /INDIRECT\(VLOOKUP\(/.test(xml))
+    ).toBe(true)
     const grid = parseXlsxProductGrid(workbook)
     expect(grid.headers.filter((header) => header === "Productnaam")).toHaveLength(1)
     expect(grid.headers.some((header) => /\((nl|de|en|fr)\)/i.test(header))).toBe(false)
@@ -456,19 +522,27 @@ describe("brand names, categories and the import template", () => {
         "Uitgebreide beschrijving",
         "Fabrikant",
         "EuropMade-bewijs / bewijs van EU-productie",
-        "Subcategorie",
+        "Niveau 2",
       ])
     )
-    expect(grid.headers.filter((header) => /fabrikant/i.test(header) && !/nummer|adres|postcode|land|e-mail/i.test(header))).toEqual([
-      "Fabrikant",
-    ])
-    expect(grid.headers).not.toEqual(expect.arrayContaining(["Varianttype", "Variantwaarde", "GPSR-fabrikantnaam", "Fabrikantnaam"]))
+    expect(
+      grid.headers.filter(
+        (header) =>
+          /fabrikant/i.test(header) &&
+          !/nummer|adres|postcode|land|e-mail|gpsr/i.test(header)
+      )
+    ).toEqual(["Fabrikant"])
+    expect(grid.headers).toEqual(
+      expect.arrayContaining(["GPSR-fabrikantnaam (etiket)"])
+    )
+    expect(grid.headers).not.toEqual(
+      expect.arrayContaining(["Varianttype", "Variantwaarde", "Fabrikantnaam"])
+    )
     expect(grid.headers.join(" ")).not.toMatch(/prijs|voorraad|seller-sku|verzendkosten/i)
     const guideText = (parsed.sheets.get("Uitleg") || []).flat().join(" ")
     expect(guideText).toMatch(/niet wordt geïmporteerd/i)
     expect(guideText).toMatch(/niet automatisch goedgekeurd/i)
     expect(guideText).toMatch(/Varianttype en variantwaarde horen niet in dit bestand/)
-    expect(guideText).not.toMatch(/GPSR-fabrikantnaam en de EU-verantwoordelijke/)
     const ean = grid.headers.indexOf("EAN / GTIN")
     const title = grid.headers.indexOf("Productnaam")
     const brand = grid.headers.indexOf("Merk")
@@ -565,7 +639,7 @@ describe("brand names, categories and the import template", () => {
     expect(created && created.type === "create" ? created.attributes.variant_value : undefined).toBeUndefined()
   })
 
-  it("keeps one manufacturer field and ignores a duplicate manufacturer name", () => {
+  it("keeps catalog Fabrikant separate from GPSR-fabrikantnaam (etiket)", () => {
     const legacy = previewBrandImport({
       headers: ["EAN", "Productnaam", "Merk", "Fabrikant", "Fabrikantnaam"],
       rows: [[BOSCH, "Pan", "Bosch", "Bosch NV", "Wettelijke BV"]],
@@ -576,32 +650,36 @@ describe("brand names, categories and the import template", () => {
     })
     expect(legacy.links.find((link) => link.source === "Fabrikant")?.field).toBe("manufacturer")
     const legacyName = legacy.links.find((link) => link.source === "Fabrikantnaam")
-    expect(legacyName?.imported).toBe(false)
-    expect(legacyName?.field).toBeNull()
-    expect(legacyName?.message).toMatch(/fabrikantnaam/i)
+    expect(legacyName?.imported).toBe(true)
+    expect(legacyName?.field).toBe("gpsr_manufacturer_name")
     const current = previewBrandImport({
-      headers: ["EAN", "Productnaam", "Merk", "Fabrikant", "GPSR-fabrikantnaam"],
+      headers: ["EAN", "Productnaam", "Merk", "Fabrikant", "GPSR-fabrikantnaam (etiket)"],
       rows: [[BOSCH, "Pan", "Bosch", "Bosch NV", "EU BV"]],
       source_language_code: "nl",
       language_confirmed: true,
       mapping_confirmed: true,
       known_brands: [{ id: "b", name: "Bosch" }],
     })
-    const gpsrName = current.links.find((link) => link.source === "GPSR-fabrikantnaam")
-    expect(gpsrName?.imported).toBe(false)
-    expect(gpsrName?.field).toBeNull()
+    const gpsrName = current.links.find(
+      (link) => link.source === "GPSR-fabrikantnaam (etiket)"
+    )
+    expect(gpsrName?.imported).toBe(true)
+    expect(gpsrName?.field).toBe("gpsr_manufacturer_name")
     const labels = current.target_fields.map((field) => field.label)
     expect(labels.filter((label) => label === "Fabrikant")).toHaveLength(1)
-    expect(labels).not.toContain("Fabrikantnaam")
-    expect(labels).not.toContain("GPSR-fabrikantnaam")
+    expect(labels).toContain("GPSR-fabrikantnaam (etiket)")
     const plan = planBrandCommit(current, {
-      headers: ["EAN", "Productnaam", "Merk", "Fabrikant", "GPSR-fabrikantnaam"],
+      headers: ["EAN", "Productnaam", "Merk", "Fabrikant", "GPSR-fabrikantnaam (etiket)"],
       rows: [[BOSCH, "Pan", "Bosch", "Bosch NV", "EU BV"]],
       mapping_confirmed: true,
     })
     const created = plan.actions.find((action) => action.type === "create")
     expect(created && created.type === "create" ? created.manufacturer : "").toBe("Bosch NV")
-    expect(created && created.type === "create" ? created.attributes.gpsr_manufacturer_name : undefined).toBeUndefined()
+    expect(
+      created && created.type === "create"
+        ? created.attributes.gpsr_manufacturer_name
+        : undefined
+    ).toBe("EU BV")
   })
 
   it("stores EU production evidence as a pending document slot, not an offer", () => {
@@ -793,6 +871,132 @@ describe("brand image columns", () => {
     )
     expect(wizard).toContain("SectionReviewAside")
     expect(wizard).not.toContain('sectionKey="claims"')
+  })
+
+  it("exposes category kenmerken and plans gap-fill attributes without offers", () => {
+    const headers = [
+      "EAN / GTIN",
+      "Productnaam",
+      "Merk",
+      "Productcategorie",
+      "Subcategorie",
+    ]
+    const row = [BOSCH, "Shirt", "Bosch", "Kleding", "Heren"]
+    const preview = previewBrandImport({
+      headers,
+      rows: [row],
+      source_language_code: "nl",
+      language_confirmed: true,
+      mapping_confirmed: true,
+      known_brands: [{ id: "b", name: "Bosch" }],
+      categories: [
+        { id: "cat_kleding", name: "Kleding", slug: "kleding", parent_id: null },
+        {
+          id: "cat_heren",
+          name: "Heren",
+          slug: "heren",
+          parent_category_id: "cat_kleding",
+        },
+      ],
+      existing: [
+        {
+          product_id: "prod_existing",
+          publication_status: "Gepubliceerd",
+          title: "Shirt",
+          description: "Shirt",
+          gtin: BOSCH,
+          mpn: null,
+          translations: [],
+        },
+      ],
+    })
+    expect(preview.creates_offers).toBe(false)
+    expect(preview.category_fields.map((f) => f.code)).toEqual(
+      expect.arrayContaining(["maat", "kleur", "materiaal", "pasvorm"])
+    )
+    const plan = planBrandCommit(preview, {
+      headers,
+      rows: [row],
+      mapping_confirmed: true,
+      existing: [
+        {
+          product_id: "prod_existing",
+          publication_status: "Gepubliceerd",
+          title: "Shirt",
+          description: "Shirt",
+          gtin: BOSCH,
+          mpn: null,
+          translations: [],
+        },
+      ],
+      attribute_overrides: {
+        "2": { maat: "M", kleur: "Blauw", materiaal: "Katoen", pasvorm: "Regular" },
+      },
+    })
+    expect(preview.preview[0]?.issues).toEqual([])
+    expect(preview.commit_allowed).toBe(true)
+    expect(plan.blocked).toBe(false)
+    expect(preview.preview[0]?.status).toBe("existing")
+    expect(plan.actions.map((a) => a.type)).toContain("fill_attributes")
+    const fill = plan.actions.find((a) => a.type === "fill_attributes")
+    expect(fill && fill.type === "fill_attributes" ? fill.attributes : null).toEqual({
+      maat: "M",
+      kleur: "Blauw",
+      materiaal: "Katoen",
+      pasvorm: "Regular",
+    })
+    expect(() => assertBrandPlanHasNoOffers(plan.actions)).not.toThrow()
+  })
+})
+
+function inflateXlsxParts(buf: Buffer): Map<string, string> {
+  const out = new Map<string, string>()
+  let eocd = -1
+  for (let i = buf.length - 22; i >= Math.max(0, buf.length - 65557); i--) {
+    if (buf.readUInt32LE(i) === 0x06054b50) {
+      eocd = i
+      break
+    }
+  }
+  if (eocd < 0) return out
+  const cdOffset = buf.readUInt32LE(eocd + 16)
+  const cdSize = buf.readUInt32LE(eocd + 12)
+  let i = cdOffset
+  const end = cdOffset + cdSize
+  while (i + 46 <= end && buf.readUInt32LE(i) === 0x02014b50) {
+    const method = buf.readUInt16LE(i + 10)
+    const compSize = buf.readUInt32LE(i + 20)
+    const nameLen = buf.readUInt16LE(i + 28)
+    const extraLen = buf.readUInt16LE(i + 30)
+    const commentLen = buf.readUInt16LE(i + 32)
+    const localOffset = buf.readUInt32LE(i + 42)
+    const name = buf.slice(i + 46, i + 46 + nameLen).toString("utf8")
+    const lh = localOffset
+    const nameLen2 = buf.readUInt16LE(lh + 26)
+    const extraLen2 = buf.readUInt16LE(lh + 28)
+    const start = lh + 30 + nameLen2 + extraLen2
+    const compressed = buf.slice(start, start + compSize)
+    let data = compressed
+    if (method === 8) {
+      try {
+        data = inflateRawSync(compressed)
+      } catch {
+        data = inflateSync(compressed)
+      }
+    }
+    out.set(name, data.toString("utf8"))
+    i += 46 + nameLen + extraLen + commentLen
+  }
+  return out
+}
+
+describe("production country mapping", () => {
+  it("stores NL and BE from codes and country names", () => {
+    expect(normalizeProductionCountry("NL")).toBe("NL")
+    expect(normalizeProductionCountry("be")).toBe("BE")
+    expect(normalizeProductionCountry("Nederland")).toBe("NL")
+    expect(normalizeProductionCountry("België")).toBe("BE")
+    expect(normalizeProductionCountry("Belgium")).toBe("BE")
   })
 })
 

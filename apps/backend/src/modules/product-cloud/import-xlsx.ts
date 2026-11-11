@@ -11,20 +11,54 @@ import {
 import {
   EU_ISO2,
   IMPORT_FIELDS,
-  VARIANT_TYPES,
+  IGNORED_IMPORT_FIELDS,
+  PRODUCT_SPEC_SLOT_COUNT,
+  EXTRA_IMAGE_SLOT_LABELS,
+  SELLER_TAIL_DOCUMENT_FIELDS,
+  SELLER_TEMPLATE_HIDDEN_COLUMNS,
+  SELLER_TEMPLATE_ONLY_GARANTIEPERIODE,
+  SELLER_MASTER_VIB_HEADER,
   exampleRowForHeaders,
   fieldRequirementStyle,
   importDisplayHeader,
   type ImportFieldDef,
 } from "./import-columns"
 import type { AttributeCatalogItem } from "./category-attributes"
-import { uniqueImportCategoryCatalog } from "./import-category"
+import {
+  partitionImportCategories,
+  uniqueImportCategoryCatalog,
+  type ImportCategoryCatalogEntry,
+} from "./import-category"
+import {
+  buildCategoryExcelLists,
+  dependentSubcategoryFormula,
+} from "./import-category-excel"
 import { parseImportGrid, type ParsedImportGrid } from "./import-table"
+import {
+  CATEGORY_ATTRIBUTE_CATALOGS,
+  MANUAL_LANGUAGE_OPTIONS,
+  resolveCatalogKey,
+  slugifyCategoryName,
+} from "./category-attributes"
+import {
+  ASSEMBLY_EU_BAND_LABELS,
+  MATERIALS_EU_LEVEL_LABELS,
+  PARTS_EU_LEVEL_LABELS,
+} from "../verification/made-in-europe"
+import { EUROPEAN_OWNERSHIP_BAND_LABELS } from "../verification/european-ownership"
+import { buildSpecDepsColumns } from "./product-specifications"
+import {
+  templateFieldLabel,
+  templateRequirementSuffix,
+  templateSheetTabLabel,
+  type TemplateLocale,
+} from "./import-template-i18n"
+import { buildDisplayReplacementPairs } from "./import-template-display-i18n"
 
-function uniqueImportCategoryNames(
-  rows: Array<{ id: string; name: string; slug?: string | null }>
-): string[] {
-  return uniqueImportCategoryCatalog(rows).map((row) => row.name)
+export function importCategoryListEntries(
+  rows: ImportCategoryCatalogEntry[]
+): { roots: ImportCategoryCatalogEntry[]; children: ImportCategoryCatalogEntry[] } {
+  return partitionImportCategories(uniqueImportCategoryCatalog(rows))
 }
 function crc32(buf: Buffer): number {
   let crc = ~0
@@ -115,6 +149,8 @@ function zipFiles(files: Array<{ name: string; data: Buffer }>): Buffer {
 
 type SheetValidation = { sqref: string; formula: string }
 
+type DefinedName = { name: string; refersTo: string }
+
 type SheetInput = {
   name: string
   rows: string[][]
@@ -157,17 +193,31 @@ function sheetXml(rows: string[][], headerStyles?: number[], validations?: Sheet
       const tds = row
         .map((value, c) => {
           const ref = `${colName(c)}${r + 1}`
-          const v = xmlEscape(value ?? "")
+          const raw = value ?? ""
           const kind = headerStyles?.[c]
           let style = ""
+          // Header cell styles + optional-column body tint (legacy).
+          // Column styles below remain the primary requirement-color signal.
           if (r === 0 && kind != null) style = ` s="${kind}"`
           else if (r > 0 && kind === 2) style = ` s="2"`
+          // Formula cells (no cached <v>): stay empty for our parser until Excel calculates.
+          if (raw.startsWith("=")) {
+            return `<c r="${ref}"${style}><f>${xmlEscape(raw.slice(1))}</f></c>`
+          }
+          const v = xmlEscape(raw)
           return `<c r="${ref}"${style} t="inlineStr"><is><t xml:space="preserve">${v}</t></is></c>`
         })
         .join("")
       return `<row r="${r + 1}">${tds}</row>`
     })
     .join("")
+  const colCount = Math.max(
+    headerStyles?.length || 0,
+    ...(rows.map((row) => row.length) as number[]),
+    1
+  )
+  // Requirement colors: style on <col> (same as last known-good Seller templates).
+  // Cell s= alone is stripped more readily when Excel repairs the workbook.
   const cols =
     headerStyles && headerStyles.length
       ? `<cols>${headerStyles
@@ -176,7 +226,11 @@ function sheetXml(rows: string[][], headerStyles?: number[], validations?: Sheet
               `<col min="${i + 1}" max="${i + 1}" width="28" style="${s}" customWidth="1"/>`
           )
           .join("")}</cols>`
-      : ""
+      : colCount > 0
+        ? `<cols>${Array.from({ length: colCount }, (_, i) => {
+            return `<col min="${i + 1}" max="${i + 1}" width="28" customWidth="1"/>`
+          }).join("")}</cols>`
+        : ""
   const dv =
     validations && validations.length
       ? `<dataValidations count="${validations.length}">${validations
@@ -186,17 +240,24 @@ function sheetXml(rows: string[][], headerStyles?: number[], validations?: Sheet
           )
           .join("")}</dataValidations>`
       : ""
+  // No <dimension>: last known-good templates omitted it; keep sheetViews+bookViews aligned.
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>${cols}<sheetData>${cells}</sheetData>${dv}</worksheet>`
 }
 
-export function buildXlsxWorkbook(sheets: SheetInput[]): Buffer {
+export function buildXlsxWorkbook(
+  sheets: SheetInput[],
+  options: { definedNames?: DefinedName[] } = {}
+): Buffer {
+  const stylesRid = `rId${sheets.length + 1}`
   const contentTypes = `<?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
 <Default Extension="xml" ContentType="application/xml"/>
 <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
 <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
 ${sheets
   .map(
     (_, i) =>
@@ -207,7 +268,11 @@ ${sheets
   const rels = `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
 </Relationships>`
+  // OPC requires package/2006 for ALL .rels parts. Using officeDocument/2006 here
+  // makes desktop Excel report file-level "unreadable content" and open as Hersteld.
   const wbRels = `<?xml version="1.0" encoding="UTF-8"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 ${sheets
@@ -216,10 +281,23 @@ ${sheets
       `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`
   )
   .join("")}
-<Relationship Id="rIdStyles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+<Relationship Id="${stylesRid}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
 </Relationships>`
+  const defined =
+    options.definedNames && options.definedNames.length
+      ? `<definedNames>${options.definedNames
+          .map(
+            (d) =>
+              `<definedName name="${xmlEscape(d.name)}">${xmlEscape(d.refersTo)}</definedName>`
+          )
+          .join("")}</definedNames>`
+      : ""
+  // bookViews required: sheets use workbookViewId="0". Avoid fileVersion/calcId=0/dimension —
+  // those extras still triggered Excel repair after the first OB-01 pass.
   const workbook = `<?xml version="1.0" encoding="UTF-8"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<workbookPr/>
+<bookViews><workbookView xWindow="0" yWindow="0" windowWidth="24000" windowHeight="12000"/></bookViews>
 <sheets>
 ${sheets
   .map(
@@ -227,10 +305,35 @@ ${sheets
       `<sheet name="${xmlEscape(s.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`
   )
   .join("")}
-</sheets></workbook>`
+</sheets>${defined}<calcPr fullCalcOnLoad="1"/></workbook>`
+  const created = new Date().toISOString().replace(/\.\d{3}Z$/, "Z")
+  const core = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<dc:creator>EuropMade</dc:creator>
+<cp:lastModifiedBy>EuropMade</cp:lastModifiedBy>
+<dcterms:created xsi:type="dcterms:W3CDTF">${created}</dcterms:created>
+<dcterms:modified xsi:type="dcterms:W3CDTF">${created}</dcterms:modified>
+</cp:coreProperties>`
+  const app = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+<Application>EuropMade</Application>
+<HeadingPairs>
+<vt:vector size="2" baseType="variant">
+<vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant>
+<vt:variant><vt:i4>${sheets.length}</vt:i4></vt:variant>
+</vt:vector>
+</HeadingPairs>
+<TitlesOfParts>
+<vt:vector size="${sheets.length}" baseType="lpstr">
+${sheets.map((s) => `<vt:lpstr>${xmlEscape(s.name)}</vt:lpstr>`).join("")}
+</vt:vector>
+</TitlesOfParts>
+</Properties>`
   const files = [
     { name: "[Content_Types].xml", data: Buffer.from(contentTypes, "utf8") },
     { name: "_rels/.rels", data: Buffer.from(rels, "utf8") },
+    { name: "docProps/core.xml", data: Buffer.from(core, "utf8") },
+    { name: "docProps/app.xml", data: Buffer.from(app, "utf8") },
     { name: "xl/workbook.xml", data: Buffer.from(workbook, "utf8") },
     { name: "xl/_rels/workbook.xml.rels", data: Buffer.from(wbRels, "utf8") },
     { name: "xl/styles.xml", data: Buffer.from(stylesXml(), "utf8") },
@@ -243,6 +346,149 @@ ${sheets
     })),
   ]
   return zipFiles(files)
+}
+
+/**
+ * Rewrite the approved Seller XLSX for the seller account language:
+ * - Producten headers + sheet tabs
+ * - Category / spec / list display labels (central display-i18n catalog)
+ * Named-range keys (cat_…) stay NL-slug based; VLOOKUP maps are rewritten
+ * together with dropdown values so dependent lists keep working.
+ * Import mapping stays locale-independent via aliases + resolveNlDisplayName.
+ */
+export function localizeApprovedSellerTemplateXlsx(
+  buf: Buffer,
+  locale: TemplateLocale
+): Buffer {
+  if (locale === "nl") return buf
+
+  const reqLabel = (kind: "required" | "optional" | "conditional" | "automatic") =>
+    templateRequirementSuffix(kind, locale)
+
+  const replacements = new Map<string, string>()
+  const add = (from: string, to: string) => {
+    if (from && to && from !== to) replacements.set(from, to)
+  }
+
+  const localizeFieldHeader = (f: ImportFieldDef) => {
+    const base = templateFieldLabel(f.column, locale, f.nl_name)
+    const kind = fieldRequirementStyle(f.required)
+    const suffix =
+      kind === "required" ||
+      kind === "optional" ||
+      kind === "conditional" ||
+      kind === "automatic"
+        ? reqLabel(kind)
+        : f.required
+    add(importDisplayHeader(f), `${base} (${suffix})`)
+    add(f.nl_name, base)
+  }
+
+  for (const f of IMPORT_FIELDS) {
+    if (SELLER_TEMPLATE_HIDDEN_COLUMNS.has(f.column)) continue
+    localizeFieldHeader(f)
+  }
+  for (const f of SELLER_TAIL_DOCUMENT_FIELDS) localizeFieldHeader(f)
+  localizeFieldHeader({
+    column: "warranty_period",
+    nl_name: SELLER_TEMPLATE_ONLY_GARANTIEPERIODE.nl_name,
+    meaning: "",
+    required: SELLER_TEMPLATE_ONLY_GARANTIEPERIODE.required,
+    example: "",
+    allowed: "",
+    help: "",
+    aliases: [],
+  })
+  add(
+    SELLER_TEMPLATE_ONLY_GARANTIEPERIODE.displayHeader,
+    `${templateFieldLabel("warranty_period", locale, "Garantieperiode")} (${reqLabel("conditional")})`
+  )
+  add(
+    SELLER_MASTER_VIB_HEADER,
+    `${templateFieldLabel("safety_sheet_url", locale, "Veiligheidsinformatieblad")} (${locale === "fr" ? "facultatif" : locale === "de" ? "optional" : "optional"})`
+  )
+
+  for (let i = 0; i < EXTRA_IMAGE_SLOT_LABELS.length; i++) {
+    const n = i + 2
+    const nl = `${EXTRA_IMAGE_SLOT_LABELS[i]} (Optioneel)`
+    const localized =
+      locale === "de"
+        ? `Bild ${n} (Optional)`
+        : locale === "fr"
+          ? `Image ${n} (Facultatif)`
+          : `Image ${n} (Optional)`
+    add(nl, localized)
+  }
+
+  add(
+    "Categoriepad (actief)",
+    locale === "de"
+      ? "Kategoriepfad (aktiv)"
+      : locale === "fr"
+        ? "Chemin de catégorie (actif)"
+        : "Category path (active)"
+  )
+  add(
+    "Waarde-controle (automatisch)",
+    `${locale === "de" ? "Wertprüfung" : locale === "fr" ? "Contrôle de valeur" : "Value check"} (${reqLabel("automatic")})`
+  )
+  for (let i = 1; i <= PRODUCT_SPEC_SLOT_COUNT; i++) {
+    add(
+      `Eenheid ${i} (automatisch)`,
+      `${templateFieldLabel(`unit_${i}`, locale, `Eenheid ${i}`)} (${reqLabel("automatic")})`
+    )
+  }
+
+  for (const [from, to] of buildDisplayReplacementPairs(locale)) {
+    add(from, to)
+  }
+
+  // Longest keys first so nested replacements stay stable.
+  const ordered = [...replacements.entries()].sort(
+    (a, b) => b[0].length - a[0].length
+  )
+
+  const applyTextReplacements = (xml: string): string => {
+    let next = xml
+    for (const [from, to] of ordered) {
+      const needle = xmlEscape(from)
+      const repl = xmlEscape(to)
+      if (needle && next.includes(needle)) {
+        next = next.split(needle).join(repl)
+      }
+    }
+    return next
+  }
+
+  const files = readZipEntries(buf)
+  for (const [name, data] of files) {
+    if (!/xl\/worksheets\/sheet\d+\.xml$/i.test(name)) continue
+    const xml = data.toString("utf8")
+    const localizedXml = applyTextReplacements(xml)
+    if (localizedXml !== xml) {
+      files.set(name, Buffer.from(localizedXml, "utf8"))
+    }
+  }
+
+  const wbPath = "xl/workbook.xml"
+  const wbXml = files.get(wbPath)?.toString("utf8")
+  if (wbXml) {
+    let next = wbXml
+    for (const nlName of ["Producten", "Uitleg velden", "Kenmerken", "Legenda"]) {
+      const localized = templateSheetTabLabel(nlName, locale)
+      if (localized === nlName) continue
+      next = next.replace(
+        new RegExp(
+          `name="${nlName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`,
+          "g"
+        ),
+        `name="${xmlEscape(localized)}"`
+      )
+    }
+    files.set(wbPath, Buffer.from(next, "utf8"))
+  }
+
+  return zipFiles([...files.entries()].map(([name, data]) => ({ name, data })))
 }
 
 function inflateZipPayload(method: number, compressed: Buffer): Buffer {
@@ -427,7 +673,8 @@ export function parseXlsxSheetXml(
   return parseSheetCells(xml, shared)
 }
 
-const NON_PRODUCT_SHEET = /^(uitleg|lijsten|legenda|lists|legend|readme)/i
+const NON_PRODUCT_SHEET =
+  /^(uitleg|lijsten|legenda|lists|legend|readme|catdeps|catdepsl3|specdeps|specmeta|kenmerken)/i
 
 export function parseXlsxFirstSheet(buf: Buffer): { headers: string[]; rows: string[][] } {
   const grid = parseXlsxProductGrid(buf)
@@ -562,42 +809,248 @@ export function toCsv(rows: string[][]): string {
 export function buildProductImportTemplate(
   _extraFields: AttributeCatalogItem[] = [],
   options: {
-    categories?: Array<{ id: string; name: string; slug?: string | null }>
+    categories?: Array<{
+      id: string
+      name: string
+      slug?: string | null
+      parent_id?: string | null
+      parent_category_id?: string | null
+    }>
+    /** When true, do not hide Mode/Duurzaam/Algemeen/E2E (used for exact bronboom templates). */
+    skipCategoryVisibilityFilter?: boolean
+    /** Visible CSV/XLSX header language; technical columns stay English. */
+    headerLocale?: TemplateLocale
   } = {}
 ): {
   sheets: SheetInput[]
   csv: string
+  definedNames: DefinedName[]
 } {
-  const productHeaders = IMPORT_FIELDS.map(importDisplayHeader)
-  const example = exampleRowForHeaders(CANONICAL_COLUMNS)
-  const headerStyles = IMPORT_FIELDS.map((f) => {
+  const headerLocale: TemplateLocale = options.headerLocale || "nl"
+  const visibleHeader = (f: ImportFieldDef) => {
+    if (headerLocale === "nl") return importDisplayHeader(f)
+    const base = templateFieldLabel(f.column, headerLocale, f.nl_name)
+    const kind = fieldRequirementStyle(f.required)
+    if (
+      kind === "required" ||
+      kind === "optional" ||
+      kind === "conditional" ||
+      kind === "automatic"
+    ) {
+      return `${base} (${templateRequirementSuffix(kind, headerLocale)})`
+    }
+    return base
+  }
+  type SellerCol = {
+    header: string
+    style: number
+    /** Index in IMPORT_FIELDS, or -1 for inserted Afbeelding 2–10 slots. */
+    fieldIndex: number
+  }
+  const styleForField = (f: ImportFieldDef): number => {
     const kind = fieldRequirementStyle(f.required)
     if (kind === "required") return 1
     if (kind === "optional") return 2
     if (kind === "conditional") return 3
     if (kind === "automatic") return 4
     return 2
+  }
+  const sellerCols: SellerCol[] = []
+  IMPORT_FIELDS.forEach((f, idx) => {
+    // Master V2: Veiligheidswaarschuwingen is not a Seller template column
+    // (distinct from Veiligheidsinformatieblad). Still importable from older files.
+    if (SELLER_TEMPLATE_HIDDEN_COLUMNS.has(f.column)) return
+    sellerCols.push({
+      header: visibleHeader(f),
+      style: styleForField(f),
+      fieldIndex: idx,
+    })
+    if (f.column === "primary_image_url") {
+      for (let i = 0; i < EXTRA_IMAGE_SLOT_LABELS.length; i++) {
+        const n = i + 2
+        const header =
+          headerLocale === "nl"
+            ? `${EXTRA_IMAGE_SLOT_LABELS[i]} (Optioneel)`
+            : headerLocale === "de"
+              ? `Bild ${n} (Optional)`
+              : headerLocale === "fr"
+                ? `Image ${n} (Facultatif)`
+                : `Image ${n} (Optional)`
+        sellerCols.push({
+          header,
+          style: 2,
+          fieldIndex: -1,
+        })
+      }
+    }
   })
+  // Master V2 tail order: evidence → CE → Garantieperiode → SDS → Handleiding → Garantiebewijs.
+  // CE covers Conformiteitsverklaring (no separate column). Document URL import/storage deferred.
+  const pushTailField = (f: ImportFieldDef, headerOverride?: string) => {
+    sellerCols.push({
+      header: headerOverride || visibleHeader(f),
+      style: styleForField(f),
+      fieldIndex: -1,
+    })
+  }
+  pushTailField(SELLER_TAIL_DOCUMENT_FIELDS[0]) // eu_production_evidence_url
+  pushTailField(SELLER_TAIL_DOCUMENT_FIELDS[1]) // ce_certificate_url
+  sellerCols.push({
+    header: SELLER_TEMPLATE_ONLY_GARANTIEPERIODE.displayHeader,
+    style: 3,
+    fieldIndex: -1,
+  })
+  pushTailField(SELLER_TAIL_DOCUMENT_FIELDS[2], SELLER_MASTER_VIB_HEADER)
+  pushTailField(SELLER_TAIL_DOCUMENT_FIELDS[3]) // manual_url
+  pushTailField(SELLER_TAIL_DOCUMENT_FIELDS[4]) // warranty_url
+  const productHeaders = sellerCols.map((c) => c.header)
+  const headerStyles = sellerCols.map((c) => c.style)
+  const exampleCanonical = exampleRowForHeaders(CANONICAL_COLUMNS)
+  const example = sellerCols.map((c) =>
+    c.fieldIndex >= 0 ? exampleCanonical[c.fieldIndex] || "" : ""
+  )
 
-  const categoryNames = uniqueImportCategoryNames(options.categories || [])
-  const categoryLast = Math.max(categoryNames.length, 1) + 1
-  const listCols: Record<NonNullable<ImportFieldDef["list"]>, string> = {
+  const lists = buildCategoryExcelLists(options.categories || [], {
+    skipVisibilityFilter: Boolean(options.skipCategoryVisibilityFilter),
+  })
+  const rootNames = lists.roots.map((r) => r.name)
+  const childNames = lists.children.map((c) => c.name)
+  const l3Names = lists.grandchildren.map((c) => c.name)
+  const categoryLast = Math.max(rootNames.length, 1) + 1
+  const mapLast = Math.max(rootNames.length, 1) + 1
+  const l2MapLast = Math.max(childNames.length, 1) + 1
+  const hasDependent = lists.childrenByRootName.size > 0
+  const hasL3Dependent = [...lists.l3ByL2Name.values()].some((v) => v.length > 0)
+
+  const categoryFieldIdx = IMPORT_FIELDS.findIndex((f) => f.column === "category")
+  const subcategoryFieldIdx = IMPORT_FIELDS.findIndex(
+    (f) => f.column === "subcategory"
+  )
+  const subcategoryL3FieldIdx = IMPORT_FIELDS.findIndex(
+    (f) => f.column === "subcategory_l3"
+  )
+  const categoryColIdx = sellerCols.findIndex((c) => c.fieldIndex === categoryFieldIdx)
+  const subcategoryColIdx = sellerCols.findIndex(
+    (c) => c.fieldIndex === subcategoryFieldIdx
+  )
+  const subcategoryL3ColIdx = sellerCols.findIndex(
+    (c) => c.fieldIndex === subcategoryL3FieldIdx
+  )
+  const categoryCol = colName(Math.max(categoryColIdx, 0))
+  const subcategoryColLetter = colName(Math.max(subcategoryColIdx, 0))
+
+  const assemblyLabels = Object.values(ASSEMBLY_EU_BAND_LABELS)
+  const partsLabels = Object.values(PARTS_EU_LEVEL_LABELS)
+  const materialsLabels = Object.values(MATERIALS_EU_LEVEL_LABELS)
+  const eoLabels = Object.values(EUROPEAN_OWNERSHIP_BAND_LABELS)
+
+  const listCols: Record<
+    Exclude<NonNullable<ImportFieldDef["list"]>, "variant_type">,
+    string
+  > = {
     land: "'Lijsten'!$A$2:$A$32",
     sales_status: "'Lijsten'!$B$2:$B$3",
     ce_marking: "'Lijsten'!$C$2:$C$3",
     ja_nee: "'Lijsten'!$D$2:$D$3",
-    variant_type: "'Lijsten'!$E$2:$E$9",
-    category: `'Lijsten'!$F$2:$F$${categoryLast}`,
+    category: `'Lijsten'!$E$2:$E$${categoryLast}`,
+    subcategory: hasDependent
+      ? dependentSubcategoryFormula(
+          `${categoryCol}2`,
+          "Lijsten",
+          2,
+          mapLast,
+          "G",
+          "H"
+        )
+      : `'Lijsten'!$F$2:$F$${Math.max(childNames.length, 1) + 1}`,
+    subcategory_l3: hasL3Dependent
+      ? dependentSubcategoryFormula(
+          `${subcategoryColLetter}2`,
+          "Lijsten",
+          2,
+          l2MapLast,
+          "P",
+          "Q"
+        )
+      : `'Lijsten'!$R$2:$R$${Math.max(l3Names.length, 1) + 1}`,
+    mie_assembly: `'Lijsten'!$J$2:$J$${assemblyLabels.length + 1}`,
+    mie_parts: `'Lijsten'!$K$2:$K$${partsLabels.length + 1}`,
+    mie_materials: `'Lijsten'!$L$2:$L$${materialsLabels.length + 1}`,
+    european_ownership: `'Lijsten'!$M$2:$M$${eoLabels.length + 1}`,
   }
   const validations: SheetValidation[] = []
-  IMPORT_FIELDS.forEach((f, idx) => {
-    if (!f.list) return
+  sellerCols.forEach((colDef, idx) => {
+    if (colDef.fieldIndex < 0) return
+    const f = IMPORT_FIELDS[colDef.fieldIndex]
+    if (!f?.list) return
+    if (f.list === "subcategory" && !hasDependent && childNames.length === 0) {
+      return
+    }
+    if (f.list === "subcategory_l3" && !hasL3Dependent && l3Names.length === 0) {
+      return
+    }
     const col = colName(idx)
+    let formula = listCols[f.list]
+    if (f.list === "subcategory" && hasDependent && subcategoryColIdx >= 0) {
+      // Per-row relative reference: Excel expands sqref using top-left formula.
+      formula = dependentSubcategoryFormula(
+        `${categoryCol}2`,
+        "Lijsten",
+        2,
+        mapLast,
+        "G",
+        "H"
+      )
+    }
+    if (f.list === "subcategory_l3" && hasL3Dependent && subcategoryL3ColIdx >= 0) {
+      formula = dependentSubcategoryFormula(
+        `${subcategoryColLetter}2`,
+        "Lijsten",
+        2,
+        l2MapLast,
+        "P",
+        "Q"
+      )
+    }
     validations.push({
       sqref: `${col}2:${col}200`,
-      formula: listCols[f.list],
+      formula,
     })
   })
+
+  const specDepsColumns = buildSpecDepsColumns(
+    (options.categories || []).map((c) => ({
+      name: c.name,
+      slug: c.slug,
+      parent_id: c.parent_id ?? c.parent_category_id ?? null,
+    }))
+  )
+  const subcategoryCol = colName(Math.max(subcategoryColIdx, 0))
+  const specMapLast = Math.max(specDepsColumns.length, 1) + 1
+
+  const specLabelFormulaForRow = (excelRow: number, slot: number) => {
+    if (!specDepsColumns.length) return ""
+    // VLOOKUP subcategory display → SpecDeps named range, INDEX slot row.
+    return `=IFERROR(INDEX(INDIRECT(VLOOKUP(${subcategoryCol}${excelRow},Lijsten!$N$2:$O$${specMapLast},2,FALSE)),${slot}),"")`
+  }
+
+  const productDataRows: string[][] = []
+  const TEMPLATE_DATA_ROWS = 200
+  for (let excelRow = 2; excelRow <= TEMPLATE_DATA_ROWS; excelRow++) {
+    const base =
+      excelRow === 2 ? [...example] : sellerCols.map(() => "")
+    while (base.length < sellerCols.length) base.push("")
+    for (let slot = 1; slot <= PRODUCT_SPEC_SLOT_COUNT; slot++) {
+      const fieldIdx = IMPORT_FIELDS.findIndex(
+        (f) => f.column === `spec_label_${slot}`
+      )
+      if (fieldIdx < 0) continue
+      const colIdx = sellerCols.findIndex((c) => c.fieldIndex === fieldIdx)
+      if (colIdx < 0) continue
+      base[colIdx] = specLabelFormulaForRow(excelRow, slot)
+    }
+    productDataRows.push(base)
+  }
 
   const guideHeader = [
     "kolomnaam",
@@ -656,22 +1109,40 @@ export function buildProductImportTemplate(
       "Volgt de gekozen markt/regio. Niet als kolom invullen.",
     ],
     [
+      "(variantkolommen)",
+      "Varianttype / Variantwaarde",
+      "Niet in dit bestand",
+      "Automatisch",
+      "—",
+      "—",
+      "Deze kolommen horen niet in het importbestand. Staan ze in een ouder bestand, dan worden ze genegeerd. Nieuwe producten krijgen standaard Uitvoering / Standaard.",
+    ],
+    [
       "(mie_score)",
       "Made in Europe-score",
       "Berekende herkomstscore",
       "Automatisch",
       "—",
       "—",
-      "Berekend uit productieland/faciliteit. Bewijs keurt de admin goed.",
+      "Score volgt uit kolommen Assemblage, Onderdelen en Materialen (zelfde keuzes als de UI). Bewijs upload je via de seller-wizard; admin keurt goed.",
     ],
+    ...IGNORED_IMPORT_FIELDS.map((field) => [
+      field.column,
+      field.nl_name,
+      field.meaning,
+      "Genegeerd",
+      field.example,
+      field.allowed,
+      field.help,
+    ]),
     [
       "(admin_evidence)",
       "Bewijsstukken CE / MiE / GPSR / handleiding",
-      "Bestanden in de productwizard",
-      "Via seller-wizard",
+      "URL-kolommen in dit bestand + wizard-upload",
+      "Voorwaardelijk verplicht / Optioneel",
       "—",
-      "—",
-      "CE-bewijs: via seller-wizard uploaden. Made in Europe-bewijs: via seller-wizard uploaden. GPSR-documenten: via seller-wizard uploaden. Handleiding/documentatie: via seller-wizard uploaden. Excel heeft hiervoor geen bestandskolommen.",
+      "https-URL",
+      "Master V2: EuropMade-bewijs, CE-certificaat (tevens Conformiteitsverklaring), Veiligheidsinformatieblad, Handleiding en Garantiebewijs staan als URL-kolommen in de template. Seller-importmapping en -opslag voor deze URL's zijn nog niet uitgebreid (latere fase). Garantieperiode staat in de template zonder opslagmapping. Veiligheidswaarschuwingen (tekst) staat niet in deze template; oude imports blijven herkend. Wizard-upload blijft beschikbaar.",
     ],
     [
       "(vertalingen)",
@@ -695,8 +1166,15 @@ export function buildProductImportTemplate(
 
   const maxLand = Math.max(
     EU_ISO2.length,
-    VARIANT_TYPES.length,
-    categoryNames.length,
+    rootNames.length,
+    childNames.length,
+    l3Names.length,
+    MANUAL_LANGUAGE_OPTIONS.length,
+    assemblyLabels.length,
+    partsLabels.length,
+    materialsLabels.length,
+    eoLabels.length,
+    specDepsColumns.length,
     2
   )
   const listRows: string[][] = [
@@ -705,19 +1183,148 @@ export function buildProductImportTemplate(
       "sales_status",
       "ce_marking",
       "ja_nee",
-      "variant_type",
-      "categorieen",
+      "niveau1",
+      "niveau2_flat",
+      "niveau1_naam",
+      "niveau2_lijst_sleutel",
+      "talen",
+      "mie_assemblage",
+      "mie_onderdelen",
+      "mie_materialen",
+      "europees_eigendom",
+      "spec_subcategorie_naam",
+      "spec_lijst_sleutel",
+      "niveau2_naam",
+      "niveau3_lijst_sleutel",
+      "niveau3_flat",
     ],
   ]
   for (let i = 0; i < maxLand; i++) {
+    const rootName = rootNames[i] || ""
+    const l2Name = childNames[i] || ""
+    const specCol = specDepsColumns[i]
     listRows.push([
       EU_ISO2[i] || "",
       i === 0 ? "active" : i === 1 ? "paused" : "",
       i === 0 ? "Zichtbaar" : i === 1 ? "Niet van toepassing" : "",
       i === 0 ? "Ja" : i === 1 ? "Nee" : "",
-      VARIANT_TYPES[i] || "",
-      categoryNames[i] || "",
+      rootName,
+      childNames[i] || "",
+      rootName,
+      rootName ? lists.keyByRootName.get(rootName) || "" : "",
+      MANUAL_LANGUAGE_OPTIONS[i] || "",
+      assemblyLabels[i] || "",
+      partsLabels[i] || "",
+      materialsLabels[i] || "",
+      eoLabels[i] || "",
+      specCol?.displayName || "",
+      specCol?.key || "",
+      l2Name,
+      l2Name ? lists.keyByL2Name.get(l2Name) || "" : "",
+      l3Names[i] || "",
     ])
+  }
+
+  const rootOrder = rootNames
+  const maxChildren = Math.max(
+    1,
+    ...[...lists.childrenByRootName.values()].map((c) => c.length),
+    1
+  )
+  const catDepHeader = rootOrder.map(
+    (name) => lists.keyByRootName.get(name) || excelKeyFallback(name)
+  )
+  const catDepRows: string[][] = [catDepHeader]
+  for (let r = 0; r < maxChildren; r++) {
+    catDepRows.push(
+      rootOrder.map((name) => lists.childrenByRootName.get(name)?.[r] || "")
+    )
+  }
+
+  const l2Order = childNames
+  const maxL3 = Math.max(
+    1,
+    ...[...lists.l3ByL2Name.values()].map((c) => c.length),
+    1
+  )
+  const catDepL3Header = l2Order.map(
+    (name) => lists.keyByL2Name.get(name) || excelKeyFallback(`2_${name}`)
+  )
+  const catDepL3Rows: string[][] = [catDepL3Header]
+  for (let r = 0; r < maxL3; r++) {
+    catDepL3Rows.push(
+      l2Order.map((name) => lists.l3ByL2Name.get(name)?.[r] || "")
+    )
+  }
+
+  const definedNames: DefinedName[] = []
+  if (hasDependent) {
+    rootOrder.forEach((name, colIdx) => {
+      const key = lists.keyByRootName.get(name)
+      if (!key) return
+      const col = colName(colIdx)
+      const last = Math.max(
+        (lists.childrenByRootName.get(name) || []).length,
+        1
+      )
+      definedNames.push({
+        name: key,
+        refersTo: `'CatDeps'!$${col}$2:$${col}$${last + 1}`,
+      })
+    })
+  }
+  if (hasL3Dependent) {
+    l2Order.forEach((name, colIdx) => {
+      const key = lists.keyByL2Name.get(name)
+      if (!key) return
+      const col = colName(colIdx)
+      const last = Math.max((lists.l3ByL2Name.get(name) || []).length, 1)
+      definedNames.push({
+        name: key,
+        refersTo: `'CatDepsL3'!$${col}$2:$${col}$${last + 1}`,
+      })
+    })
+  }
+
+  const specDepHeader = specDepsColumns.map((c) => c.key)
+  const specDepRows: string[][] = [
+    specDepHeader.length ? specDepHeader : ["(geen specificaties)"],
+  ]
+  for (let slot = 0; slot < PRODUCT_SPEC_SLOT_COUNT; slot++) {
+    specDepRows.push(
+      specDepsColumns.map((c) => c.labels[slot] || "")
+    )
+  }
+  specDepsColumns.forEach((col, colIdx) => {
+    const letter = colName(colIdx)
+    const last = Math.max(col.labels.length, 1)
+    definedNames.push({
+      name: col.key,
+      refersTo: `'SpecDeps'!$${letter}$2:$${letter}$${last + 1}`,
+    })
+  })
+
+  // SpecValDeps + INDIRECT(...&"_sN") value DVs removed: Excel treated those
+  // concatenated list validations as unreadable content (Hersteld). Keuzelijst
+  // value dropdowns stay deferred; SpecDeps name formulas remain.
+
+  const kenmerkRows: string[][] = [
+    ["categorie", "kenmerkcode", "kenmerknaam", "toegestane_waarden", "verplicht"],
+  ]
+  for (const root of rootOrder) {
+    const key = resolveCatalogKey(slugifyCategoryName(root), [root])
+    const items = CATEGORY_ATTRIBUTE_CATALOGS[key] || []
+    for (const item of items) {
+      kenmerkRows.push([
+        root,
+        item.code,
+        item.name,
+        (item.option_values || []).join(" | "),
+        item.requirement_tier === "category_required" || item.is_required
+          ? "voorwaardelijk verplicht"
+          : "optioneel",
+      ])
+    }
   }
 
   const legendRows = [
@@ -755,21 +1362,67 @@ export function buildProductImportTemplate(
     [
       "Hoofdafbeelding",
       "Vrijstaand",
-      "De hoofdfoto moet vrijstaand / achtergrondvrij zijn. Overige sfeerfoto's mogen een achtergrond hebben.",
+      "De hoofdfoto moet vrijstaand / achtergrondvrij zijn. Vul daarna optioneel Afbeelding 2–10 (volgorde). Overige afbeeldingen blijft legacy (| of ;). Samen max. 10 unieke URL's.",
+    ],
+    [
+      "Niveau 2 / Niveau 3",
+      "Afhankelijk",
+      "Niveau 2 toont kinderen van niveau 1; niveau 3 toont kinderen van niveau 2 (Excel INDIRECT via CatDeps / CatDepsL3).",
+    ],
+    [
+      "Specificatie 1–10",
+      "Automatisch",
+      "Namen volgen uit SpecDeps via de gekozen niveau-2-categorie (INDEX/INDIRECT). Vul alleen Waarde 1–10 in. Geen apart Specificaties-blad.",
     ],
   ]
 
   const sheets: SheetInput[] = [
     {
       name: "Producten",
-      rows: [productHeaders, example],
+      rows: [productHeaders, ...productDataRows],
       headerStyles,
       validations,
     },
     { name: "Uitleg velden", rows: guideRows, headerStyles: [1, 1, 1, 1, 1, 1, 1] },
     { name: "Lijsten", rows: listRows },
+    { name: "CatDeps", rows: hasDependent ? catDepRows : [["(geen hiërarchie)"]] },
+    {
+      name: "CatDepsL3",
+      rows: hasL3Dependent ? catDepL3Rows : [["(geen niveau-3-hiërarchie)"]],
+    },
+    {
+      name: "SpecDeps",
+      rows:
+        specDepsColumns.length > 0
+          ? specDepRows
+          : [["(geen subcategorie-specificaties)"]],
+    },
+    {
+      name: "Kenmerken",
+      rows:
+        kenmerkRows.length > 1
+          ? kenmerkRows
+          : [
+              [
+                "categorie",
+                "kenmerkcode",
+                "kenmerknaam",
+                "toegestane_waarden",
+                "verplicht",
+              ],
+              ["—", "—", "Geen categoriegebonden kenmerken in catalogus", "", ""],
+            ],
+    },
     { name: "Legenda", rows: legendRows, headerStyles: [1, 1, 1] },
   ]
-  return { sheets, csv: toCsv([productHeaders, example]) }
+  return {
+    sheets,
+    csv: toCsv([productHeaders, example]),
+    definedNames,
+  }
+}
+
+function excelKeyFallback(name: string): string {
+  return `cat_${slugifyCategoryName(name).replace(/-/g, "_") || "x"}`
 }
 

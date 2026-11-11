@@ -10,10 +10,16 @@ import { sellerCanDirectEditCatalog } from "../../catalog-edit-guard"
 import { catalogGapsFromCurrent } from "../../../../../modules/product-cloud/catalog-gap-fill"
 import type { StorePatchProductCategoriesBodyInput } from "../../validators"
 import { resolveImportCategory, uniqueImportCategoryCatalog } from "../../../../../modules/product-cloud/import-category"
+import { normalizeCategoryAssignment } from "@europmade/utils"
 
 type RouteParams = { id: string }
-type ProductCategoryLink = { product_id: string; category_id: string }
-type CategoryRow = { id: string; name: string; slug?: string | null }
+type ProductCategoryLink = { id?: string; product_id: string; category_id: string }
+type CategoryRow = {
+  id: string
+  name: string
+  slug?: string | null
+  parent_category_id?: string | null
+}
 
 export async function GET(
   req: AuthenticatedMedusaRequest,
@@ -167,41 +173,83 @@ export async function PATCH(
   const product = await productCloud.retrieveProduct(id)
   await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
-  const uniqueNames = req.validatedBody.category_names
-    .map((name) => name.trim())
-    .filter(Boolean)
-    .filter((name, index, arr) => arr.indexOf(name) === index)
+  const allCategories = (await productCloud.listCategories(
+    {},
+    { take: 500 }
+  )) as CategoryRow[]
+
+  let nextIds: string[] = []
+  if (req.validatedBody.category_ids?.length) {
+    const normalized = normalizeCategoryAssignment(
+      allCategories.map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        parent_id: row.parent_category_id ?? null,
+      })),
+      { categoryIds: req.validatedBody.category_ids }
+    )
+    if (!normalized.ok) {
+      res.status(400).json({ message: normalized.message })
+      return
+    }
+    nextIds = normalized.categoryIds
+  } else {
+    const uniqueNames = (req.validatedBody.category_names || [])
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .filter((name, index, arr) => arr.indexOf(name) === index)
+    const catalog = uniqueImportCategoryCatalog(allCategories)
+    const resolvedIds: string[] = []
+    for (const categoryName of uniqueNames) {
+      const resolved = resolveImportCategory(categoryName, catalog)
+      if (!resolved.matched) {
+        res.status(400).json({
+          message: `Categorie niet herkend — kies een EuropMade-categorie.`,
+        })
+        return
+      }
+      resolvedIds.push(resolved.matched.id)
+    }
+    const normalized = normalizeCategoryAssignment(
+      allCategories.map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        parent_id: row.parent_category_id ?? null,
+      })),
+      { categoryIds: resolvedIds }
+    )
+    if (!normalized.ok) {
+      res.status(400).json({ message: normalized.message })
+      return
+    }
+    nextIds = normalized.categoryIds
+  }
 
   const existingLinks = (await productCloud.listProductCategories({
     product_id: id,
   })) as ProductCategoryLink[]
-  const existingCategoryIds = new Set(existingLinks.map((link) => link.category_id))
-
-  const catalog = uniqueImportCategoryCatalog(
-    (await productCloud.listCategories(
-      {},
-      { take: 500 }
-    )) as Array<{ id: string; name: string; slug?: string | null }>
-  )
-
-  for (const categoryName of uniqueNames) {
-    const resolved = resolveImportCategory(categoryName, catalog)
-    const category = resolved.matched
-    if (!category) {
-      res.status(400).json({
-        message: `Categorie niet herkend — kies een EuropMade-categorie.`,
-      })
-      return
-    }
-
-    if (!existingCategoryIds.has(category.id)) {
-      await productCloud.createProductCategories({
-        product_id: id,
-        category_id: category.id,
-      })
-      existingCategoryIds.add(category.id)
+  const nextSet = new Set(nextIds)
+  for (const link of existingLinks) {
+    if (!nextSet.has(link.category_id) && link.id) {
+      await productCloud.deleteProductCategories(link.id)
     }
   }
+  const linked = new Set(existingLinks.map((link) => link.category_id))
+  for (const categoryId of nextIds) {
+    if (!linked.has(categoryId)) {
+      await productCloud.createProductCategories({
+        product_id: id,
+        category_id: categoryId,
+      })
+    }
+  }
+
+  const { emitCategoryFactsChanged } = await import(
+    "../../../../../modules/cms/category-cms-proposal-events"
+  )
+  await emitCategoryFactsChanged(req.scope, { product_id: id })
 
   const previewCategories = (await productCloud.listProductCategories({
     product_id: id,
@@ -214,6 +262,7 @@ export async function PATCH(
 
   res.json({
     product_id: id,
+    category_ids: categories.map((c) => c.id),
     category_names: categories.map((c) => c.name),
     category_count: categories.length,
   })

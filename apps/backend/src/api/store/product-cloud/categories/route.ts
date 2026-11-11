@@ -32,8 +32,8 @@ export async function GET(
   const locale = localeRaw ? normalizeLanguageCode(localeRaw) : null
 
   const categories = slug
-    ? await productCloud.listCategories({ slug })
-    : await productCloud.listCategories({}, { order: { name: "ASC" } })
+    ? await productCloud.listCategories({ slug }, { take: 2000 })
+    : await productCloud.listCategories({}, { take: 2000, order: { name: "ASC" } })
 
   const enriched: Array<{
     id: string

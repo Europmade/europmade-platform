@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto"
+import { createHash, randomBytes } from "node:crypto"
 import type { ProductCloudIdentifierType } from "./identifier-types"
 import { isValidGtin, normalizeGtinDigits } from "./gtin-validation"
 
@@ -13,6 +13,34 @@ export function isConceptDraftIdentifier(
   if (identifier_type !== "IMPORT_REF") return false
   if (country_scope === CONCEPT_DRAFT_COUNTRY_SCOPE) return true
   return (identifier_value || "").startsWith("DRAFT-")
+}
+
+export function stableConceptDraftIdentifier(seed: string): {
+  identifier_type: ProductCloudIdentifierType
+  identifier_value: string
+  country_scope: string
+} {
+  const digest = createHash("sha256")
+    .update(seed.trim().toLowerCase())
+    .digest("hex")
+    .slice(0, 12)
+    .toUpperCase()
+  return {
+    identifier_type: "IMPORT_REF",
+    identifier_value: `DRAFT-${digest}`,
+    country_scope: CONCEPT_DRAFT_COUNTRY_SCOPE,
+  }
+}
+
+export function importDraftSeed(input: {
+  sellerId: string
+  eanRaw: string
+  mpn: string
+  sku: string
+}): string {
+  return [input.sellerId, input.eanRaw, input.mpn, input.sku]
+    .map((part) => part.trim().toLowerCase())
+    .join("|")
 }
 
 export function generateConceptDraftIdentifier(): {

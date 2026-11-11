@@ -4,6 +4,14 @@
  */
 
 import { GPSR_COMPLIANCE_ATTRIBUTES } from "./category-attributes"
+import {
+  ASSEMBLY_EU_BAND_LABELS,
+  MATERIALS_EU_LEVEL_LABELS,
+  PARTS_EU_LEVEL_LABELS,
+} from "../verification/made-in-europe"
+import { EUROPEAN_OWNERSHIP_BAND_LABELS } from "../verification/european-ownership"
+import { USP_COLUMN_COUNT, uspFieldNlName } from "./import-usps"
+import { localizedHeaderAliases } from "./import-template-i18n"
 
 export type FieldRequirement =
   | "Verplicht"
@@ -23,7 +31,175 @@ export type ImportFieldDef = {
   help: string
   aliases: string[]
   /** Excel list validation key from the Lijsten sheet, if any. */
-  list?: "land" | "sales_status" | "ce_marking" | "ja_nee" | "variant_type" | "category"
+  list?:
+    | "land"
+    | "sales_status"
+    | "ce_marking"
+    | "ja_nee"
+    | "variant_type"
+    | "category"
+    | "subcategory"
+    | "subcategory_l3"
+    | "mie_assembly"
+    | "mie_parts"
+    | "mie_materials"
+    | "european_ownership"
+}
+
+export const PRODUCT_SPEC_SLOT_COUNT = 10
+
+/** Optional gallery slots after Hoofdafbeelding; map to extra_image_urls (order 2–10). */
+export const EXTRA_IMAGE_SLOT_LABELS = [
+  "Afbeelding 2",
+  "Afbeelding 3",
+  "Afbeelding 4",
+  "Afbeelding 5",
+  "Afbeelding 6",
+  "Afbeelding 7",
+  "Afbeelding 8",
+  "Afbeelding 9",
+  "Afbeelding 10",
+] as const
+
+export const EXTRA_IMAGE_SLOT_COUNT = EXTRA_IMAGE_SLOT_LABELS.length
+
+/**
+ * Master V2 Seller tail: document/evidence URL columns (existing brand mappings).
+ * Kept outside IMPORT_FIELDS so Admin header order is unchanged until Phase 3.
+ * Conformiteitsverklaring is intentionally omitted — Master V2 treats CE-certificaat as equivalent.
+ */
+export const SELLER_TAIL_DOCUMENT_FIELDS: ImportFieldDef[] = [
+  {
+    column: "eu_production_evidence_url",
+    nl_name: "EuropMade-bewijs / bewijs van EU-productie",
+    meaning: "URL naar bewijs van EU-productie / EuropMade-bewijs",
+    required: "Voorwaardelijk verplicht",
+    example: "",
+    allowed: "https-URL",
+    help: "Voorwaardelijk verplicht. Bestaande opslag: eu_production_evidence_url (evidence). Wordt niet automatisch goedgekeurd.",
+    aliases: [
+      "eu_production_evidence_url",
+      "europmade-bewijs / bewijs van eu-productie",
+      "europmade bewijs",
+      "bewijs van eu-productie",
+    ],
+  },
+  {
+    column: "ce_certificate_url",
+    nl_name: "CE-certificaat",
+    meaning: "URL naar CE-certificaat (tevens bedoeld als Conformiteitsverklaring per Master V2)",
+    required: "Voorwaardelijk verplicht",
+    example: "",
+    allowed: "https-URL",
+    help: "Voorwaardelijk verplicht. Bestaande opslag: ce_certificate_url / document_type CE-certificaat. Conformiteitsverklaring staat niet apart in de Master V2-lijst.",
+    aliases: [
+      "ce_certificate_url",
+      "ce-certificaat",
+      "ce certificaat",
+      "conformiteitsverklaring",
+    ],
+  },
+  {
+    column: "safety_sheet_url",
+    nl_name: "Veiligheidsinformatieblad",
+    meaning: "URL naar veiligheidsinformatieblad (SDS) — niet hetzelfde als Veiligheidswaarschuwingen",
+    required: "Optioneel",
+    example: "",
+    allowed: "https-URL",
+    help: "Optioneel. Bestaande opslag: safety_sheet_url / document_type Veiligheidsinformatieblad. Niet verwisselen met gpsr_safety_warnings (Veiligheidswaarschuwingen).",
+    aliases: [
+      "safety_sheet_url",
+      "veiligheidsinformatieblad",
+      "safety data sheet",
+      "sds",
+    ],
+  },
+  {
+    column: "manual_url",
+    nl_name: "Handleiding",
+    meaning: "URL naar producthandleiding",
+    required: "Optioneel",
+    example: "",
+    allowed: "https-URL",
+    help: "Optioneel. Bestaande opslag: manual_url / document_type Handleiding.",
+    aliases: ["manual_url", "handleiding", "manual", "handleiding url"],
+  },
+  {
+    column: "warranty_url",
+    nl_name: "Garantiebewijs",
+    meaning: "URL naar garantiebewijs",
+    required: "Optioneel",
+    example: "",
+    allowed: "https-URL",
+    help: "Optioneel. Bestaande opslag: warranty_url / document_type Garantiebewijs.",
+    aliases: ["warranty_url", "garantiebewijs", "warranty"],
+  },
+]
+
+/**
+ * Master V2 has Garantieperiode between CE-certificaat and Veiligheidsinformatieblad.
+ * Template column only — no import mapping/storage until explicitly approved.
+ * Existing candidates investigated separately (see phase-1 report); none are a safe fit without akkoord.
+ */
+export const SELLER_TEMPLATE_ONLY_GARANTIEPERIODE = {
+  nl_name: "Garantieperiode",
+  required: "Voorwaardelijk verplicht" as FieldRequirement,
+  /** Exact Master V2 header including requirement suffix casing. */
+  displayHeader: "Garantieperiode (Voorwaardelijk verplicht)",
+  help: "Kolom uit Master V2. Geen goedgekeurde opslagmapping; niet importeren zonder akkoord.",
+}
+
+/** Exact Master V2 header for SDS (lowercase requirement label in the leading file). */
+export const SELLER_MASTER_VIB_HEADER = "Veiligheidsinformatieblad (optioneel)"
+
+/** In Master V2 Seller template these GPSR attributes are not columns (kept for older file import). */
+export const SELLER_TEMPLATE_HIDDEN_COLUMNS = new Set<string>([
+  "gpsr_safety_warnings",
+])
+
+function productSpecImportFields(): ImportFieldDef[] {
+  const fields: ImportFieldDef[] = []
+  for (let i = 1; i <= PRODUCT_SPEC_SLOT_COUNT; i++) {
+    fields.push({
+      column: `spec_label_${i}`,
+      nl_name: `Specificatie ${i} (automatisch)`,
+      meaning: `Automatische specificatienaam ${i} op basis van subcategorie`,
+      required: "Automatisch",
+      example: "",
+      allowed: "Automatisch via subcategorie (niet handmatig kiezen)",
+      help:
+        i === 1
+          ? "Naam volgt automatisch uit de gekozen subcategorie (Excel-formule / SpecDeps). Niet zelf een willekeurige naam invullen. Server valideert altijd tegen de catalogus. Maximaal 10 optionele productspecificaties; los van USP's en van variantkenmerken (maat/kleur)."
+          : "Automatische specificatienaam voor slot " + i + ".",
+      aliases: [
+        `spec_label_${i}`,
+        `specificatie ${i}`,
+        `specificatie ${i} (automatisch)`,
+        `spec ${i} name`,
+        `specification ${i}`,
+        `specification ${i} (automatic)`,
+        `specification ${i} (automatic) (automatic)`,
+      ],
+    })
+    fields.push({
+      column: `spec_value_${i}`,
+      nl_name: `Waarde ${i}`,
+      meaning: `Waarde voor specificatie ${i}`,
+      required: "Optioneel",
+      example: "",
+      allowed: "Vrije tekst, getal of keuzelijstwaarde volgens de specificatie",
+      help:
+        "Optioneel. Lege waarden worden niet opgeslagen en wissen bestaande data niet. Ongeldige waarden voor de subcategorie worden geweigerd.",
+      aliases: [
+        `spec_value_${i}`,
+        `waarde ${i}`,
+        `value ${i}`,
+        `spec ${i} value`,
+        `specification value ${i}`,
+      ],
+    })
+  }
+  return fields
 }
 
 const GPSR_FIELDS: ImportFieldDef[] = GPSR_COMPLIANCE_ATTRIBUTES.map((item) => ({
@@ -35,19 +211,29 @@ const GPSR_FIELDS: ImportFieldDef[] = GPSR_COMPLIANCE_ATTRIBUTES.map((item) => (
       ? "Voorwaardelijk verplicht"
       : "Optioneel",
   example: "",
-  allowed: "Vrije tekst",
+  allowed: item.code.endsWith("_country") ? "ISO-2 landcode" : "Vrije tekst",
   help:
-    item.requirement_tier === "compliance_required"
-      ? "Verplicht vóór indienen, goedkeuring, publicatie en verkoop. Mag leeg bij een Concept."
-      : "Optioneel. Veiligheidswaarschuwingen helpen de klant; blokkeren publicatie niet.",
-  aliases: [item.code, item.name, item.code.replace(/_/g, " ")],
+    item.code === "gpsr_manufacturer_name"
+      ? "GPSR-etiketnaam van de fabrikant. Verschilt van kolom Fabrikant (catalogusentiteit). Oudere bestanden met 'Fabrikantnaam' blijven werken."
+      : item.requirement_tier === "compliance_required"
+        ? "Verplicht vóór indienen, goedkeuring, publicatie en verkoop. Mag leeg bij een Concept."
+        : "Optioneel. Veiligheidswaarschuwingen helpen de klant; blokkeren publicatie niet.",
+  aliases: [
+    item.code,
+    item.name,
+    item.code.replace(/_/g, " "),
+    ...(item.code === "gpsr_manufacturer_name"
+      ? ["Fabrikantnaam", "fabrikantnaam", "GPSR-fabrikantnaam"]
+      : []),
+  ],
+  list: item.code.endsWith("_country") ? "land" : undefined,
 }))
 
 const CORE_FIELDS: ImportFieldDef[] = [
   {
     column: "ean",
     nl_name: "EAN / GTIN",
-    meaning: "EAN/GTIN van de variant (primaire matching)",
+    meaning: "EAN/GTIN van dit zelfstandige product (primaire matching)",
     required: "Voorwaardelijk verplicht",
     example: "4242005482320",
     allowed: "Cijfers, 8 of 12–14 tekens met geldig checksum",
@@ -104,16 +290,36 @@ const CORE_FIELDS: ImportFieldDef[] = [
     help: "Optioneel bij Concept. Aanbevolen vóór publicatie. Zelfde brontaal als de productnaam. Vertalingen maakt het systeem daarna.",
     aliases: ["description", "beschrijving", "omschrijving", "lange beschrijving", "uitgebreide omschrijving", "uitgebreide beschrijving"],
   },
-  {
-    column: "usps",
-    nl_name: "Belangrijkste kenmerken / USP's",
-    meaning: "Korte USP-lijst",
-    required: "Optioneel",
-    example: "",
-    allowed: "Vrije tekst, één kenmerk per regel",
-    help: "Wordt aan de beschrijving toegevoegd. Geen apart databasemodel.",
-    aliases: ["usps", "usp", "kenmerken", "usp's"],
-  },
+  ...Array.from({ length: USP_COLUMN_COUNT }, (_, i) => {
+    const n = i + 1
+    const column = `usp_${n}`
+    const nl = uspFieldNlName(n)
+    return {
+      column,
+      nl_name: nl,
+      meaning: `Afzonderlijk productkenmerk / USP ${n}`,
+      required: "Optioneel" as const,
+      example: n === 1 ? "Duurzaam Europees leer" : "",
+      allowed: "Vrije tekst (één kenmerk)",
+      help:
+        n === 1
+          ? "Vul elk kenmerk in een aparte kolom. Oudere bestanden met één kolom 'Belangrijkste kenmerken / USP's' blijven werken (regels worden gesplitst). Dit zijn geen categoriekenmerken (maat/kleur); die staan op blad Kenmerken."
+          : "Optioneel apart kenmerk. Lege kolommen laten bestaande USP's bij gap-fill onaangeroerd.",
+      aliases:
+        n === 1
+          ? [
+              column,
+              nl,
+              "usps",
+              "usp",
+              "kenmerken",
+              "usp's",
+              "Belangrijkste kenmerken / USP's",
+              "Belangrijkste kenmerken / USP's (Optioneel)",
+            ]
+          : [column, nl, `usp ${n}`, `kenmerk ${n}`],
+    }
+  }),
   {
     column: "specifications",
     nl_name: "Productspecificaties",
@@ -121,7 +327,7 @@ const CORE_FIELDS: ImportFieldDef[] = [
     required: "Optioneel",
     example: "",
     allowed: "Vrije tekst",
-    help: "Wordt aan de beschrijving toegevoegd. Categoriekenmerken (zuigkracht, maat, …) map je extra ná categorie-matching.",
+    help: "Vrije tekst voor de beschrijving. Gestructureerde specificaties per subcategorie staan in Specificatie 1–10 / Waarde 1–10 (na Subcategorie).",
     aliases: ["specifications", "specificaties", "specs"],
   },
   {
@@ -146,36 +352,63 @@ const CORE_FIELDS: ImportFieldDef[] = [
   },
   {
     column: "category",
-    nl_name: "Productcategorie",
-    meaning: "Bestaande Product Cloud-categorie",
+    nl_name: "Niveau 1",
+    meaning: "Bestaande Product Cloud-hoofdcategorie (niveau 1)",
     required: "Verplicht",
     example: "Huishouden",
-    allowed: "Bestaande EuropMade-categorie (dropdown in XLSX)",
-    help: "Kies een EuropMade-categorie uit de lijst. Onbekende namen uit externe bestanden blokkeren de import niet: het product wordt Concept met status ‘Categorie moet nog worden toegewezen’. Indienen/publiceren kan pas na toewijzing.",
-    aliases: ["category", "categorie", "productgroep", "category_name"],
+    allowed: "Bestaande EuropMade-hoofdcategorie (dropdown in XLSX)",
+    help: "Kies niveau 1. Daarna niveau 2 en 3. Onbekende namen blokkeren de import niet: het product wordt Concept tot toewijzing.",
+    aliases: [
+      "category",
+      "categorie",
+      "productcategorie",
+      "product categorie",
+      "productgroep",
+      "category_name",
+      "hoofdcategorie",
+      "niveau 1",
+      "niveau1",
+    ],
     list: "category",
   },
   {
-    column: "variant_type",
-    nl_name: "Varianttype",
-    meaning: "Soort variant",
+    column: "subcategory",
+    nl_name: "Niveau 2",
+    meaning: "Bestaande Product Cloud-categorie op niveau 2",
     required: "Optioneel",
-    example: "Uitvoering",
-    allowed: "Kleur, Maat, Inhoud, Vermogen, Spanning, Materiaal, Uitvoering, Bundel",
-    help: "Standaard Uitvoering als leeg.",
-    aliases: ["variant_type", "varianttype", "variant soort"],
-    list: "variant_type",
+    example: "",
+    allowed: "Bestaande EuropMade-categorie niveau 2 (dropdown in XLSX)",
+    help: "Moet bij het gekozen niveau 1 horen. Zelfde bron als Seller- en Admin-UI.",
+    aliases: [
+      "subcategory",
+      "subcategorie",
+      "ondercategorie",
+      "sub category",
+      "sub_categorie",
+      "niveau 2",
+      "niveau2",
+    ],
+    list: "subcategory",
   },
   {
-    column: "variant_value",
-    nl_name: "Variantwaarde",
-    meaning: "Waarde van de variant",
+    column: "subcategory_l3",
+    nl_name: "Niveau 3",
+    meaning: "Bestaande Product Cloud-categorie op niveau 3",
     required: "Optioneel",
-    example: "Standaard",
-    allowed: "Vrije tekst",
-    help: "Bijv. Zwart, 60 cm, Standaard. Standaard 'Standaard' als leeg.",
-    aliases: ["variant_value", "variantwaarde", "variant"],
+    example: "",
+    allowed: "Bestaande EuropMade-categorie niveau 3 (dropdown in XLSX)",
+    help: "Moet bij het gekozen niveau 2 horen. Inclusief expliciete 'Alles in …'-categorieën uit de bronboom.",
+    aliases: [
+      "subcategory_l3",
+      "niveau 3",
+      "niveau3",
+      "l3",
+      "derde laag",
+      "categorie niveau 3",
+    ],
+    list: "subcategory_l3",
   },
+  ...productSpecImportFields(),
   {
     column: "regular_price",
     nl_name: "Reguliere verkoopprijs",
@@ -262,10 +495,10 @@ const CORE_FIELDS: ImportFieldDef[] = [
     column: "shipping_profile_id",
     nl_name: "Verzendprofiel",
     meaning: "ID van jouw verzendprofiel",
-    required: "Voorwaardelijk verplicht",
+    required: "Optioneel",
     example: "",
     allowed: "cshp_… of leeg",
-    help: "Koppel het profiel uit Seller → Verzending. Verplicht om verkoopbaar te zijn. Admin keurt dit niet inhoudelijk in de template.",
+    help: "Geen productgegeven. Concept, indiening, goedkeuring en publicatie gaan door. Zonder geldig profiel blijft het aanbod niet verkoopbaar.",
     aliases: ["shipping_profile_id", "verzendprofiel", "shipping profile"],
   },
   {
@@ -286,9 +519,10 @@ const CORE_FIELDS: ImportFieldDef[] = [
     required: "Optioneel",
     example: "",
     allowed: "Meerdere URL's",
-    help: "Sfeerafbeeldingen mogen een achtergrond hebben. Geen PDF's in deze kolom.",
+    help: "Legacy/gecombineerde kolom: URL's gescheiden door | of ;. Bij voorkeur Afbeelding 2–10 gebruiken (vaste volgorde). Samen met hoofdafbeelding maximaal 10 unieke URL's. Sfeerafbeeldingen mogen een achtergrond hebben. Geen PDF's.",
     aliases: ["extra_image_urls", "overige afbeeldingen", "gallery"],
   },
+
   {
     column: "video_url",
     nl_name: "Video-URL",
@@ -312,6 +546,11 @@ const CORE_FIELDS: ImportFieldDef[] = [
       "land van productie",
       "productieland",
       "country_of_production",
+      "country of origin",
+      "country of production",
+      "production country",
+      "made in",
+      "herkomstland",
       "oorsprongsland",
     ],
     list: "land",
@@ -325,6 +564,72 @@ const CORE_FIELDS: ImportFieldDef[] = [
     allowed: "Vrije tekst",
     help: "Optioneel, naast productieland.",
     aliases: ["production_location", "productieplaats", "fabriek"],
+  },
+  {
+    column: "assembly_eu_band",
+    nl_name: "Assemblage",
+    meaning: "Made in Europe — aandeel assemblage in de EU",
+    required: "Optioneel",
+    example: ASSEMBLY_EU_BAND_LABELS.eu_100,
+    allowed: Object.values(ASSEMBLY_EU_BAND_LABELS).join(" | "),
+    help: "Zelfde keuzes als Seller/Admin-compliance. Samen met Onderdelen en Materialen berekent EuropMade de Made in Europe-score. Geen bewijs-upload via Excel.",
+    aliases: [
+      "assembly_eu_band",
+      "assemblage",
+      "made in europe assemblage",
+      "mie assemblage",
+    ],
+    list: "mie_assembly",
+  },
+  {
+    column: "parts_eu_level",
+    nl_name: "Onderdelen",
+    meaning: "Made in Europe — herkomst onderdelen",
+    required: "Optioneel",
+    example: PARTS_EU_LEVEL_LABELS.eu_majority,
+    allowed: Object.values(PARTS_EU_LEVEL_LABELS).join(" | "),
+    help: "Zelfde keuzes als Seller/Admin-compliance. Vereist samen met Assemblage en Materialen voor een berekende score.",
+    aliases: [
+      "parts_eu_level",
+      "onderdelen",
+      "made in europe onderdelen",
+      "mie onderdelen",
+    ],
+    list: "mie_parts",
+  },
+  {
+    column: "materials_eu_level",
+    nl_name: "Materialen",
+    meaning: "Made in Europe — herkomst materialen",
+    required: "Optioneel",
+    example: MATERIALS_EU_LEVEL_LABELS.eu_partial,
+    allowed: Object.values(MATERIALS_EU_LEVEL_LABELS).join(" | "),
+    help: "Zelfde keuzes als Seller/Admin-compliance. Vereist samen met Assemblage en Onderdelen voor een berekende score.",
+    aliases: [
+      "materials_eu_level",
+      "materialen",
+      "made in europe materialen",
+      "mie materialen",
+    ],
+    list: "mie_materials",
+  },
+  {
+    column: "european_ownership_band",
+    nl_name: "Europees eigendom van het merk",
+    meaning: "EU-eigendomsband van het merk (niet de productiescore)",
+    required: "Optioneel",
+    example: EUROPEAN_OWNERSHIP_BAND_LABELS.eu_100,
+    allowed: Object.values(EUROPEAN_OWNERSHIP_BAND_LABELS).join(" | "),
+    help: "Geldt op merkniveau voor alle producten van dit merk. Los van Made in Europe-score en van bewijsdocumenten. Gebruik de dropdownwaarden (0% … 100% / Niet bekend).",
+    aliases: [
+      "european_ownership_band",
+      "europees eigendom",
+      "europees eigendom van het merk",
+      "eu eigendom",
+      "european ownership",
+      "ownership_band",
+    ],
+    list: "european_ownership",
   },
   {
     column: "ce_marking",
@@ -365,18 +670,18 @@ const CORE_FIELDS: ImportFieldDef[] = [
     meaning: "Talen op het product / display",
     required: "Optioneel",
     example: "Nederlands,Engels,Duits,Frans",
-    allowed: "Komma-gescheiden talen",
-    help: "Aanbevolen. Meerdere waarden scheiden met komma.",
+    allowed: "Komma-gescheiden waarden uit Lijsten!talen (zelfde bron als UI)",
+    help: "Aanbevolen. Meerdere waarden scheiden met komma. Gebruik alleen talen uit tabblad Lijsten → talen (zelfde keuzes als Seller/Admin).",
     aliases: ["product_languages", "producttaal"],
   },
   {
     column: "manual_languages",
     nl_name: "Taal handleiding",
     meaning: "Talen van de handleiding",
-    required: "Voorwaardelijk verplicht",
+    required: "Optioneel",
     example: "Nederlands,Duits,Engels,Frans",
-    allowed: "Komma-gescheiden talen",
-    help: "Verplicht in elektronica-categorieën.",
+    allowed: "Komma-gescheiden waarden uit Lijsten!talen (zelfde bron als UI)",
+    help: "Niet verplicht. Leeg laten blokkeert concept, indiening, goedkeuring en publicatie niet. Meerdere waarden met komma; bron = Lijsten → talen.",
     aliases: ["manual_languages", "taal handleiding"],
   },
 ]
@@ -386,6 +691,88 @@ export const IMPORT_FIELDS: ImportFieldDef[] = [
   ...GPSR_FIELDS,
 ]
 
+/** Present in older files only. Not in templates; import ignores these columns. */
+export const IGNORED_IMPORT_FIELDS: ImportFieldDef[] = [
+  {
+    column: "variant_type",
+    nl_name: "Varianttype",
+    meaning: "Niet meer in het importbestand",
+    required: "Optioneel",
+    example: "",
+    allowed: "—",
+    help: "Kolom wordt genegeerd. Een artikel is een zelfstandig product. De interne technische variant voor EAN en offers wordt niet via deze kolom bepaald.",
+    aliases: [
+      "variant_type",
+      "varianttype",
+      "variant soort",
+      "Varianttype (Optioneel)",
+    ],
+  },
+  {
+    column: "variant_value",
+    nl_name: "Variantwaarde",
+    meaning: "Niet meer in het importbestand",
+    required: "Optioneel",
+    example: "",
+    allowed: "—",
+    help: "Kolom wordt genegeerd. Kleur, maat en uitvoering horen bij de productspecificaties of bij een eigen productregel met een eigen EAN.",
+    aliases: [
+      "variant_value",
+      "variantwaarde",
+      "variant",
+      "Variantwaarde (Optioneel)",
+    ],
+  },
+  {
+    column: "category_path_active",
+    nl_name: "Categoriepad (actief)",
+    meaning: "Excel-hulpkolom (formule)",
+    required: "Automatisch",
+    example: "",
+    allowed: "—",
+    help: "Alleen ter controle in Excel. Wordt niet geïmporteerd.",
+    aliases: [
+      "categoriepad (actief)",
+      "categoriepad",
+      "category path",
+      "category_path_active",
+    ],
+  },
+  {
+    column: "value_check_warning",
+    nl_name: "Waarde-controle (automatisch)",
+    meaning: "Excel-waarschuwing na categorie-wijziging",
+    required: "Automatisch",
+    example: "",
+    allowed: "—",
+    help: "Alleen ter waarschuwing in Excel. Wordt niet geïmporteerd.",
+    aliases: [
+      "waarde-controle (automatisch)",
+      "waarde-controle",
+      "waarde controle",
+      "value_check_warning",
+    ],
+  },
+  ...Array.from({ length: PRODUCT_SPEC_SLOT_COUNT }, (_, i) => {
+    const n = i + 1
+    return {
+      column: `spec_unit_${n}`,
+      nl_name: `Eenheid ${n} (automatisch)`,
+      meaning: `Automatische eenheid voor specificatie ${n}`,
+      required: "Automatisch" as const,
+      example: "",
+      allowed: "—",
+      help: "Alleen ter weergave in Excel. Wordt niet geïmporteerd; eenheid volgt uit de specificatiecatalogus.",
+      aliases: [
+        `spec_unit_${n}`,
+        `eenheid ${n}`,
+        `eenheid ${n} (automatisch)`,
+        `unit ${n}`,
+      ],
+    }
+  }),
+]
+
 export function importDisplayHeader(field: ImportFieldDef): string {
   return `${field.nl_name} (${field.required})`
 }
@@ -393,10 +780,22 @@ export function importDisplayHeader(field: ImportFieldDef): string {
 export const CANONICAL_COLUMNS = IMPORT_FIELDS.map((f) => f.column)
 
 export const COLUMN_ALIASES: Record<string, string[]> = Object.fromEntries(
-  IMPORT_FIELDS.map((f) => [
+  [...IMPORT_FIELDS, ...IGNORED_IMPORT_FIELDS].map((f) => [
     f.column,
-    [...new Set([...f.aliases, f.nl_name, importDisplayHeader(f), f.column])],
+    [
+      ...new Set([
+        ...f.aliases,
+        f.nl_name,
+        importDisplayHeader(f),
+        f.column,
+        ...localizedHeaderAliases(f.column, f.nl_name),
+      ]),
+    ],
   ])
+)
+
+export const IGNORED_IMPORT_COLUMNS = new Set(
+  IGNORED_IMPORT_FIELDS.map((field) => field.column)
 )
 
 /** Columns that are Product Cloud attribute codes (not identity/commerce). */
@@ -463,11 +862,18 @@ export const BOSCH_EXAMPLE: Record<string, string> = {
   short_description: "",
   description:
     "De Bosch series 8 SMD8TCX04E inbouwvaatwasser is een volledig geïntegreerde vaatwasser van 60cm breed en biedt de perfecte opties om al je vaat efficiënt te reinigen. Zo heb je met PerfectDry de beste droogresultaten met een laag energiever",
+  usp_1: "",
+  usp_2: "",
+  usp_3: "",
+  usp_4: "",
+  usp_5: "",
   usps: "",
   specifications: "",
   brand: "Bosch",
   manufacturer: "Bosch",
   category: "Huishouden",
+  subcategory: "",
+  subcategory_l3: "",
   variant_type: "Uitvoering",
   variant_value: "Standaard",
   regular_price: "1749",
@@ -489,6 +895,10 @@ export const BOSCH_EXAMPLE: Record<string, string> = {
   video_url: "https://www.youtube.com/embed/ReGvfmYkrEw",
   production_country: "DE",
   production_location: "BSH Hausgeräte GmbH",
+  assembly_eu_band: "",
+  parts_eu_level: "",
+  materials_eu_level: "",
+  european_ownership_band: "",
   gpsr_manufacturer_name: "Bosch",
   gpsr_manufacturer_address: "Achtseweg Zuid 173",
   gpsr_manufacturer_postal_city: "5651GW Eindhoven",

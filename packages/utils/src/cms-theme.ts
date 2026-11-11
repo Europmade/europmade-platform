@@ -3,6 +3,8 @@
  * No free-form CSS — only safe, enumerated settings.
  */
 
+import type { CategoryPreviewConceptProduct } from "./category-preview-concepts.ts"
+
 export type CmsThemePreset = "standard" | "compact" | "modern" | "soft"
 
 export type CmsButtonShape = "square" | "rounded" | "pill"
@@ -552,6 +554,8 @@ export type CmsPreviewDraftMessage = {
   banners?: unknown[]
   paidSlots?: unknown[]
   slug?: string
+  /** Present only on the admin draft preview message. Never a public catalog. */
+  previewProducts?: CategoryPreviewConceptProduct[]
 }
 
 export type CmsPreviewSelectMessage = {

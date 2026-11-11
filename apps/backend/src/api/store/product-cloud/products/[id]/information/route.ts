@@ -263,6 +263,8 @@ export async function PATCH(
     })
   }
 
+  let categoryFactsChanged = false
+
   if (body.brand_id && body.brand_id !== product.brand_id) {
     assertPermission(seller, "products.manage")
     const partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
@@ -298,6 +300,7 @@ export async function PATCH(
       product_id: id,
       brand_id: body.brand_id,
     })
+    categoryFactsChanged = true
   }
 
   if (body.brand_is_manufacturer === true) {
@@ -402,6 +405,14 @@ export async function PATCH(
       product_version_id: working.id,
       values: body.attributes,
     })
+    categoryFactsChanged = true
+  }
+
+  if (categoryFactsChanged) {
+    const { emitCategoryFactsChanged } = await import(
+      "../../../../../../modules/cms/category-cms-proposal-events"
+    )
+    await emitCategoryFactsChanged(req.scope, { product_id: id })
   }
 
   let commerce: CommerceCloudModuleService | null = null

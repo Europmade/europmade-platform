@@ -16,7 +16,9 @@ type MulterRequest = AuthenticatedMedusaRequest & {
 
 /**
  * POST /store/product-cloud/import
- * Commits only when preview has zero error rows. Never silent partial import.
+ * Imports each product row on its own. Incomplete rows become Concept drafts.
+ * A technically unusable row is reported and does not roll back the others.
+ * Nothing is published or approved.
  */
 export async function POST(req: MulterRequest, res: MedusaResponse) {
   const seller = await resolveApprovedSeller(
@@ -30,6 +32,7 @@ export async function POST(req: MulterRequest, res: MedusaResponse) {
     mapping?: Record<string, string | null>
     source_language_code?: string
     row_overrides?: Record<string, Record<string, string>>
+    reuse_existing_confirmed?: boolean | string
   }
   const parsed = parseImportPayload({
     file: req.file,
@@ -68,6 +71,10 @@ export async function POST(req: MulterRequest, res: MedusaResponse) {
       skipped_empty: parsed.skipped_empty,
       skipped_header_rows: parsed.skipped_header_rows,
       transposed: parsed.transposed,
+      reuse_existing_confirmed:
+        body.reuse_existing_confirmed === true ||
+        body.reuse_existing_confirmed === "true" ||
+        body.reuse_existing_confirmed === "1",
     })
     res.status(200).json(result)
   } catch (err) {

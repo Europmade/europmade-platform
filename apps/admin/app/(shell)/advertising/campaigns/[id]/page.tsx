@@ -281,6 +281,11 @@ export default function AdminAdvertisingCampaignDetailPage() {
         <p className="mb-3 text-xs text-amber-800">
           Preview hierboven wijzigt de boeking, de periode en de betaling niet.
           Publieke zichtbaarheid volgt alleen een goedgekeurde campagne binnen de geboekte weken.
+          {campaign.visibility?.placement === "category"
+            ? campaign.visibility.publicNow
+              ? " Deze campagne vervangt op die categorie de automatische merkbanner. Er staat daar één banner."
+              : " Zolang deze campagne niet publiek is, toont de categorie de automatische merkbanner. Die banner wordt niet handmatig aangemaakt."
+            : ""}
         </p>
         {campaign.visibility ? (
           <dl className="grid gap-3 sm:grid-cols-2">

@@ -42,6 +42,9 @@ export function brandImportRequest(req: UploadRequest): BrandImportRequest {
       Record<string, { action: "use"; id: string } | { action: "create"; name: string }>
     >(body.brand_choices),
     category_decisions: jsonField<BrandCategoryChoice[]>(body.category_decisions),
+    attribute_overrides:
+      jsonField<Record<string, Record<string, string>>>(body.attribute_overrides) ||
+      undefined,
     enqueue_translations: flag(body.enqueue_translations),
     save_profile: body.save_profile === undefined ? true : flag(body.save_profile),
     actor_id: req.auth_context?.actor_id || "admin",

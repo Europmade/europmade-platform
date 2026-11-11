@@ -23,7 +23,7 @@ Drie architecturale consequenties die dit document overal terugkomen:
 
 | Bevroren document | Wat het al vastlegde | Wat dit document toevoegt |
 |---|---|---|
-| `product-cloud-commerce-cloud-buy-box/spec.md` §1.1 | Product/Variant/EAN-GTIN-MPN/Offer-hiërarchie | Volledig datamodel op veldniveau, plus het nieuwe concept **Productfamilie** boven Product |
+| `product-cloud-commerce-cloud-buy-box/spec.md` §1.1 | Product / technische variant / EAN-GTIN-MPN / Offer. Commerciële variantassen zijn vervangen door ADR-0050. | Volledig datamodel op veldniveau, plus het concept **Productfamilie** boven Product |
 | §1.6 Productclaims | Basisproces (trigger → claim → verificatie → overdracht) | Bewijsvereisten, beoordelingscriteria, conflictafhandeling bij gelijktijdige claims, herbeoordeling/beroep |
 | §1.7 Producteigenaarschap | Eigendomsmatrix (wie beheert welk veld) | Eigendomsoverdracht buiten claims om (bijv. bedrijfsovername), meerdere gelijktijdige eigenaren, geschillenmodel |
 | §1.9 Productversies | Nieuwe-versie-vs-nieuw-product-onderscheid | Volledig versiebeheer: wie mag wijzigen, reviewproces, rollback, audit trail |
@@ -43,10 +43,10 @@ Drie architecturale consequenties die dit document overal terugkomen:
 | `product_family_id` | Verwijzing naar Productfamilie | Nee | Zie 2.2 — nieuw concept. |
 | `brand` (merk) | Tekst + verwijzing naar geverifieerde merkentiteit indien beschikbaar | Ja | Losstaand van `manufacturer` — een merk en een fabrikant zijn vaak, maar niet altijd, dezelfde partij (contractproductie). |
 | `manufacturer` (fabrikant) | Tekst + verwijzing naar geverifieerde fabrikant-entiteit indien beschikbaar | Ja | Zie sectie 6 — kan een andere entiteit zijn dan de merkhouder. |
-| `title`, `description` | Tekst | Ja | Gedeeld over alle varianten. |
+| `title`, `description` | Tekst | Ja | Van dit ene product. Een andere kleur, maat of uitvoering is een ander product (ADR-0050). |
 | `category_ids` | Eén of meer verwijzingen naar Categorie | Ja | Een product kan in meerdere categorieën tegelijk staan (bijv. hoofdcategorie + een cross-cutting categorie als "Duurzaam"). |
 | `attributes` | Sleutel/waarde-set, categorie-afhankelijk | Deels | Zie 2.4 — attributen zijn niet vrij tekstveld, maar gebonden aan een per-categorie attributendefinitie. |
-| `media` | Eén of meer afbeeldingen/video's | Ja (min. 1 afbeelding) | Op Product- of Variant-niveau, zie 2.3. |
+| `media` | Eén of meer afbeeldingen/video's | Ja (min. 1 afbeelding) | Op dit product. De technische variant draagt geen aparte commerciële media (ADR-0050). |
 | `documents` | Eén of meer documenten (handleiding, certificaat, veiligheidsblad) | Nee, tenzij compliance-verplicht per categorie | Zelfde documenttype-mechanisme als Partner Onboarding-bewijsstukken (hergebruikt patroon, niet hetzelfde datamodel — productdocumenten zijn publiek, onboarding-bewijsstukken zijn dat nooit). |
 | `product_lifecycle_status` | Enum | Ja | De **al bestaande** productlevenscyclus (`product-cloud-commerce-cloud-buy-box/spec.md` §1.10): Retailer Created → Concept gecontroleerd → Actief → Verified™ → Uitlopend → Niet meer leverbaar → Gearchiveerd. **Ongewijzigd**, zie Deel 8 voor het onderscheid met het nieuwe publicatiestatusmodel. |
 | `created_at`, `owner_since` | Tijdstempels | Ja | |
@@ -58,17 +58,20 @@ Drie architecturale consequenties die dit document overal terugkomen:
 - **Productfamilie** groepeert meerdere, zelfstandige Producten (elk met een eigen `product_id`) die eenzelfde onderliggende productlijn vormen.
 - **Geen eigendoms- of verkoopimplicaties** — een familie is uitsluitend een navigatie-/samenhangconcept, geen commerciële of juridische eenheid. Eigendom, claims en Verified™-status blijven per individueel Product bepaald.
 - **Optioneel veld** op Product — een Product zonder familie is volledig geldig en functioneert identiek.
+- Een familie maakt geen varianten. Kleur, maat en uitvoering binnen een familie blijven zelfstandige producten (ADR-0050).
 
-## 2.3 Variant
+## 2.3 Technische variant
 
-Ongewijzigd t.o.v. de bevroren spec (`variant_type`: kleur, maat, inhoud, vermogen, spanning, materiaal, uitvoering, bundel), hier expliciet herbevestigd als basis: een Variant deelt alle Product-niveau-velden en voegt uitsluitend de afwijkende gegevens toe (bijv. een kleurfoto, een maatlabel).
+**Vervangen door ADR-0050.** De eerdere basis — kleur, maat, inhoud, vermogen, spanning, materiaal, uitvoering en bundel als varianten die productvelden delen — geldt niet meer.
+
+Een verkoopbaar artikel is één product. `pc_product_variant` blijft de interne rij waaraan identifiers en offers hangen (ADR-0040). Per product is dat precies één technische variant. Die rij is geen commercieel product, heeft geen variantassen en wordt niet door Seller of Admin beheerd. Bestaande variantrecords en offerrelaties blijven bestaan.
 
 ## 2.4 Identifiers — EAN/GTIN/MPN, expliciet onderscheiden
 
 - **GTIN (Global Trade Item Number)** is de wereldwijde standaard-familie van productidentificatienummers (GTIN-8/12/13/14).
 - **EAN-13** is, architecturaal, **een specifieke, in Europa gangbare implementatie van GTIN-13** — geen apart, los systeem. Dit document behandelt EAN daarom als een GTIN-subtype, niet als een derde, onafhankelijk identifier-systeem naast GTIN.
 - **MPN (Manufacturer Part Number)** is geen internationale standaard maar een fabrikant-intern nummer — gebruikt wanneer geen geldig GTIN/EAN beschikbaar is (met name bij kleinere Europese producenten, een reëel scenario dat dit platform expliciet moet ondersteunen, niet alleen als edge case behandelen).
-- **Eén Variant kan meerdere Identifiers hebben** (bijv. verschillende EAN's per land, `country_scope`-veld, al vastgelegd) — allemaal wijzend naar dezelfde centrale Product/Variant-informatie.
+- **De ene technische variant van een product kan meerdere Identifiers hebben** (bijv. verschillende EAN's per land, `country_scope`-veld, al vastgelegd) wanneer het hetzelfde verkoopbare artikel is. Een ander verkoopbaar artikel krijgt een eigen product (ADR-0050).
 - **Identifier-uniciteit is de basis van Product Matching** (Deel 4/sectie 5) — een geldig GTIN/EAN is de sterkste, eerste-keus matchsleutel.
 
 ## 2.5 Attributen
@@ -83,7 +86,7 @@ Hiërarchisch (hoofdcategorie → subcategorie → sub-subcategorie), beheerd do
 
 ## 2.7 Media en documenten
 
-- **Media** (afbeeldingen, video's) op Product- of Variant-niveau, met een verplicht minimum (minimaal één hoofdafbeelding op Productniveau) vóórdat een product de status "Actief" kan bereiken (koppelt aan sectie 8, publicatiestatussen).
+- **Media** (afbeeldingen, video's) op productniveau, met een verplicht minimum (minimaal één hoofdafbeelding) vóórdat een product de status "Actief" kan bereiken (koppelt aan sectie 8, publicatiestatussen).
 - **Documenten** zijn getypeerd (handleiding, veiligheidsinformatieblad, CE-certificaat, garantiebewijs, conformiteitsverklaring) — het documenttype bepaalt of het **verplicht** is per categorie (bijv. een CE-certificaat is verplicht voor categorieën die onder GPSR-compliance vallen, optioneel voor andere).
 
 ---
@@ -95,7 +98,7 @@ Hiërarchisch (hoofdcategorie → subcategorie → sub-subcategorie), beheerd do
 ```
 ProductFamily (optioneel, 0..n Producten)
   └─ Product (uniek, onveranderlijke product_id)
-       ├─ Variant (1..n)
+       ├─ Technische variant (precies 1 per verkoopbaar product, ADR-0050)
        │    └─ Identifier — GTIN/EAN/MPN (1..n, met country_scope)
        ├─ Attribute-waarden (gebonden aan categorie-attributendefinities)
        ├─ Media (1..n)
@@ -188,7 +191,7 @@ Niet eerder gearchitecteerd — noodzakelijk zodra meerdere retailers onafhankel
 
 - **Wie mag mergen:** uitsluitend de Beheerder — nooit een producent of retailer zelf, ook niet op hun eigen producten, omdat een merge per definitie **twee eigendomshistories** samenvoegt en dus altijd een platformbrede beslissing is.
 - **Wat gebeurt er:** één van de twee Product-ID's wordt **primair** (blijft bestaan), het andere wordt **secundair** (blijft bestaan als omgeleide verwijzing, nooit hard verwijderd — Deel 8 Verwijderd-status is iets anders, zie daar).
-- **Verduidelijking naar aanleiding van de architectuurreview (B1) — merge raakt uitsluitend Identifiers, nooit Offers direct:** een merge verplaatst de **Identifiers (EAN/GTIN/MPN)** van het secundaire Product naar het primaire Product (als extra Identifiers onder een bestaande of nieuw aangemaakte Variant van het primaire Product) — **niet** de Offers zelf. Een Offer blijft ongewijzigd gekoppeld aan zijn eigen EAN + Region (bevroren Commerce Cloud-regel, Deel 6, op geen enkel punt gewijzigd door dit document); omdat die EAN na de merge onder het primaire Product valt, verschijnt de bijbehorende Offer daardoor automatisch, zonder dat het Offer-record zelf ooit wordt aangeraakt, in de aanbiederslijst van het primaire product. Dit lost de eerder geconstateerde inconsistentie tussen Deel 5.3 en Deel 6 op: de Product/Offer-grens blijft daadwerkelijk op geen enkel punt doorbroken.
+- **Verduidelijking naar aanleiding van de architectuurreview (B1) — merge raakt uitsluitend Identifiers, nooit Offers direct:** een merge verplaatst de **Identifiers (EAN/GTIN/MPN)** van het secundaire Product naar het primaire Product (als extra Identifiers op de technische variant van het primaire Product, ADR-0050) — **niet** de Offers zelf. Een Offer blijft ongewijzigd gekoppeld aan zijn eigen EAN + Region (bevroren Commerce Cloud-regel, Deel 6, op geen enkel punt gewijzigd door dit document); omdat die EAN na de merge onder het primaire Product valt, verschijnt de bijbehorende Offer daardoor automatisch, zonder dat het Offer-record zelf ooit wordt aangeraakt, in de aanbiederslijst van het primaire product. Dit lost de eerder geconstateerde inconsistentie tussen Deel 5.3 en Deel 6 op: de Product/Offer-grens blijft daadwerkelijk op geen enkel punt doorbroken.
 - **Kettingsamenvoegingen (B3, nieuw expliciet vastgelegd):** een eerder samengevoegd (secundair) Product-ID kan zelf later opnieuw in een volgende merge betrokken raken. Elke verwijzing naar een secundair Product-ID **resolveert altijd transitief tot de uiteindelijke, actief primaire Product-ID** — nooit slechts één stap in de keten. Een MergeRecord houdt daarom niet alleen zijn eigen twee betrokken Product-ID's bij, maar ook de volledige keten van eerdere merges die eraan voorafgingen, zodat een opvraging van een oud, meermaals samengevoegd Product-ID altijd correct bij het huidige, actieve product uitkomt.
 - **Lot van Verified Made in Europe bij een merge (B8, nieuw expliciet vastgelegd):** een merge **trekt de productniveau-Verified-status van beide betrokken Producten in**, ongeacht of één, beide, of geen van beide vóór de merge geverifieerd was. Het samengevoegde (primaire) Product start na de merge met verificatiestatus "Niet aangevraagd" en vereist een nieuwe aanvraag (Deel 7.3) — een geverifieerde status wordt nooit stilzwijgend "geërfd" door een merge, omdat de samengevoegde content per definitie nog niet als geheel is beoordeeld.
 - Alle historische ProductVersions en OwnershipRecords van beide Producten blijven bewaard, gemarkeerd met welk Product-ID ze oorspronkelijk hadden.
@@ -415,7 +418,7 @@ Verified-status (As 3) beïnvloedt Visibility niet — uitsluitend het badge zel
 Genummerd vanaf ADR-0006, doorlopend op de al bevroren ADR 0001–0005. **Nog niet vastgesteld** — dit document is zelf nog niet bevroren, deze ADR's worden pas definitief bij akkoord.
 
 **ADR-0006 — Productfamilie als optioneel, niet-commercieel groeperingsconcept.**
-Context: geen bestaand niveau boven Product/Variant. Beslissing: Productfamilie toevoegen als zuiver navigatie-/samenhangconcept, zonder eigendoms- of verkoopimplicaties. Consequentie: geen enkel bestaand claim-, matching- of Offer-mechanisme hoeft rekening te houden met families — ze blijven volledig product-per-product werken.
+Context: geen bestaand niveau boven Product. Beslissing: Productfamilie toevoegen als zuiver navigatie-/samenhangconcept, zonder eigendoms- of verkoopimplicaties. Consequentie: geen enkel bestaand claim-, matching- of Offer-mechanisme hoeft rekening te houden met families — ze blijven volledig product-per-product werken. ADR-0050 bevestigt dat een familie geen variantgroep is.
 
 **ADR-0007 — EAN als GTIN-subtype, niet als los identifier-systeem.**
 Context: risico op twee parallelle, inconsistente identifier-modellen. Beslissing: EAN-13 architecturaal behandelen als de Europese GTIN-13-implementatie. Consequentie: één matchingslogica (5.1) volstaat voor beide, geen dubbele code-paden.
@@ -468,8 +471,8 @@ Bewust niet in dit document beslist — vereisen ofwel een productbeslissing (ge
 
 # Deel 14 — Architectuurcontrole
 
-- ✓ **Blueprint-consistent** — Product/Variant/EAN-hiërarchie (H6.6/H7.3–7.6), producent-voorrangsprincipe (H9.8), AI-ondersteunt-mens-beslist (H9.7), transparantie-uitgangspunt (H9.2) — allemaal herleidbaar en op geen enkel punt tegengesproken.
-- ✓ **Product Cloud-consistent** — dit document wijzigt geen enkel bevroren veld, geen enkele bevroren regel uit `product-cloud-commerce-cloud-buy-box/spec.md` §1; het diept uitsluitend uit en voegt nieuwe, niet eerder bestaande onderdelen toe (Productfamilie, Matching, Publicatiestatussen, Visibility, Dispute, AuditLogEntry).
+- ✓ **Blueprint-consistent** — producent-voorrangsprincipe (H9.8), AI-ondersteunt-mens-beslist (H9.7), transparantie-uitgangspunt (H9.2). De oude Product/Variant/EAN-hiërarchie (H6.6/H7.3–7.6) blijft technisch de offerketen; de commerciële variantassen zijn vervangen door ADR-0050.
+- ✓ **Product Cloud-consistent** — ADR-0050 vervangt §2.3. De offerketen uit ADR-0040 en de bevroren Product/Offer-grens blijven staan. Dit document voegt Productfamilie, Matching, Publicatiestatussen, Visibility, Dispute en AuditLogEntry toe.
 - ✓ **Commerce Cloud-consistent** — Offer-model, Buy Box-logica, en de Product/Offer-grens (Deel 6) volledig ongewijzigd; de eerder geconstateerde inconsistentie (B1: merge leek Offers te "omzetten") is opgelost door expliciet vast te leggen dat een merge uitsluitend Identifiers herwijst, nooit Offer-records — de grens is nu ook daadwerkelijk, niet alleen op papier, op geen enkel punt doorbroken.
 - ✓ **RBAC-consistent** — alle rolrechten (Producent/Merkhouder/Retailer/Distributeur/Beheerder) hergebruikt zoals al vastgelegd (Authenticatie-spec, Product Cloud §4); nieuwe bevoegdheden (merge/split, eigendomsoverdracht buiten claims, geschillenbeslechting via de nu formele Dispute-entiteit) zijn expliciet en uitsluitend aan de Beheerder toegekend, geen nieuwe rol geïntroduceerd.
 - ✓ **Authenticatie-consistent** — geen enkele wijziging aan sessiebeheer, 2FA, of het onderscheid tussen Consument/Retailer/Producent/Beheerder; verificatie-koppelingen (Deel 7) verwijzen naar, maar wijzigen niet, de bevroren Authenticatie-architectuur.

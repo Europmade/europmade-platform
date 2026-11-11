@@ -22,14 +22,14 @@ import {
   type BuyBoxWeights,
 } from "./buy-box-engine"
 import {
-  isOfferActiveForSale,
+  evaluateOfferSellability,
+  shippingProfileFacts,
   normalizeSellerSku,
   generateSellerSku,
   inheritedSellerSku,
   sellerSkuUsedByOtherProduct,
 } from "./offer-sellability"
 import { buildEffectivePriceView } from "./offer-pricing"
-import { offerReachesDestination } from "./offer-destination"
 
 function resolvePromoFields(
   input: {
@@ -92,6 +92,7 @@ export type UpsertOfferGraphInput = {
   promo_starts_at?: string | Date | null
   promo_ends_at?: string | Date | null
   clear_promo?: boolean
+  shipping_profile_id?: string | null
 }
 
 export type UpsertOfferGraphResult = {
@@ -232,6 +233,17 @@ class CommerceCloudModuleService extends MedusaService({
             : Number(input.delivery_days_max)
         if (nextDelivery !== previous_delivery_days_max) {
           offerUpdate.delivery_days_max = nextDelivery
+          offer_meta_changed = true
+        }
+      }
+      if (input.shipping_profile_id !== undefined) {
+        const nextProfile = input.shipping_profile_id?.trim() || null
+        const prevProfile =
+          offer.shipping_profile_id != null
+            ? String(offer.shipping_profile_id)
+            : null
+        if (nextProfile !== prevProfile) {
+          offerUpdate.shipping_profile_id = nextProfile
           offer_meta_changed = true
         }
       }
@@ -413,6 +425,10 @@ class CommerceCloudModuleService extends MedusaService({
           input.delivery_days_max === undefined
             ? null
             : input.delivery_days_max,
+        shipping_profile_id:
+          input.shipping_profile_id === undefined
+            ? null
+            : input.shipping_profile_id?.trim() || null,
       },
       sharedContext
     )
@@ -661,6 +677,7 @@ class CommerceCloudModuleService extends MedusaService({
     region_code: string,
     sellerTenureById: Record<string, number | null>,
     sellerReviewScoreById: Record<string, number | null> = {},
+    publication_status: string | null = null,
     @MedusaContext() sharedContext: Context = {}
   ): Promise<BuyBoxOfferInput[]> {
     const offers = await this.listOffers(
@@ -668,27 +685,8 @@ class CommerceCloudModuleService extends MedusaService({
       {},
       sharedContext
     )
-    const profileCache = new Map<
-      string,
-      { status: string; countryActive: boolean } | null
-    >()
     const inputs: BuyBoxOfferInput[] = []
     for (const offer of offers) {
-      if (!isOfferActiveForSale(offer.sales_status)) continue
-      const reaches = await offerReachesDestination(
-        offer,
-        region_code,
-        async (profileId) => {
-          const [profile] = await this.listSellerShippingProfiles(
-            { id: profileId },
-            {},
-            sharedContext
-          )
-          return profile ?? null
-        },
-        profileCache
-      )
-      if (!reaches) continue
       const [inventory] = await this.listOfferInventories(
         { offer_id: offer.id },
         {},
@@ -699,19 +697,50 @@ class CommerceCloudModuleService extends MedusaService({
         {},
         sharedContext
       )
-      if (!inventory || !price) continue
-      const view = buildEffectivePriceView({
-        base_price: Number(price.base_price),
-        shipping_cost: Number(price.shipping_cost),
-        extra_delivery_cost:
-          price.extra_delivery_cost != null
-            ? Number(price.extra_delivery_cost)
-            : null,
-        promo_price:
-          price.promo_price != null ? Number(price.promo_price) : null,
-        promo_starts_at: price.promo_starts_at ?? null,
-        promo_ends_at: price.promo_ends_at ?? null,
+      let profile: { status?: string | null; country_rates?: unknown } | null = null
+      if (offer.shipping_profile_id) {
+        const [row] = await this.listSellerShippingProfiles(
+          { id: offer.shipping_profile_id },
+          {},
+          sharedContext
+        )
+        profile = row ?? null
+      }
+      const profileFacts = shippingProfileFacts({
+        shipping_profile_id: offer.shipping_profile_id,
+        region_code: offer.region_code,
+        profile,
       })
+      const view =
+        price != null
+          ? buildEffectivePriceView({
+              base_price: Number(price.base_price),
+              shipping_cost: Number(price.shipping_cost),
+              extra_delivery_cost:
+                price.extra_delivery_cost != null
+                  ? Number(price.extra_delivery_cost)
+                  : null,
+              promo_price:
+                price.promo_price != null ? Number(price.promo_price) : null,
+              promo_starts_at: price.promo_starts_at ?? null,
+              promo_ends_at: price.promo_ends_at ?? null,
+            })
+          : null
+      const decision = evaluateOfferSellability({
+        has_offer: true,
+        sales_status: offer.sales_status,
+        base_price: view?.unit_price ?? null,
+        has_inventory: inventory != null,
+        quantity_available:
+          inventory != null ? Number(inventory.quantity_available) : null,
+        delivery_days_max:
+          offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
+        shipping_profile_id: offer.shipping_profile_id,
+        shipping_profile_status: profileFacts.shipping_profile_status,
+        shipping_profile_serves_region: profileFacts.shipping_profile_serves_region,
+        publication_status,
+      })
+      if (!decision.sellable || !view || !inventory) continue
       inputs.push({
         offer_id: offer.id,
         seller_id: offer.seller_id,

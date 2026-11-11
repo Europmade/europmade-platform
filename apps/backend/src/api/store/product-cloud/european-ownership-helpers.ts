@@ -9,8 +9,6 @@ import {
   statusAfterAdminDecision,
   statusAfterSellerSubmit,
 } from "../../../modules/verification/european-ownership"
-import { isRealBrandId } from "../../../modules/product-cloud/catalog-edit-auth"
-
 export type EuropeanOwnershipClaimRow = {
   id: string
   brand_id?: string | null
@@ -84,9 +82,11 @@ export async function findClaimByBrand(
   verification: VerificationModuleService,
   brandId: string
 ): Promise<EuropeanOwnershipClaimRow | null> {
-  if (!isRealBrandId(brandId)) return null
+  const id = String(brandId || "").trim()
+  // Accept any stored brand PK (incl. legacy ids without brand_ prefix).
+  if (!id) return null
   const rows = (await verification.listEuropeanOwnershipClaims(
-    { brand_id: brandId },
+    { brand_id: id },
     { take: 1 }
   )) as EuropeanOwnershipClaimRow[]
   return rows[0] ?? null

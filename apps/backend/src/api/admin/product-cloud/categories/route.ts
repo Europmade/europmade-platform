@@ -2,6 +2,7 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
+import { ensureCategoryStructureDraftForId } from "../../../../modules/cms/ensure-category-structure-draft"
 import { PRODUCT_CLOUD_MODULE } from "../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../modules/product-cloud/service"
 import { parentIdOf } from "../../../../modules/product-cloud/category-admin"
@@ -96,10 +97,13 @@ export async function POST(
     { order: { sort_order: "ASC" } }
   )
 
+  const cmsDraft = await ensureCategoryStructureDraftForId(req.scope, category.id)
+
   res.status(created ? 201 : 200).json({
     category,
     attributes_seed: attributes,
     attribute_definitions: definitions,
     catalog_keys: Object.keys(CATEGORY_ATTRIBUTE_CATALOGS),
+    cms_draft: cmsDraft,
   })
 }

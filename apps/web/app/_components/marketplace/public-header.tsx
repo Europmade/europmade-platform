@@ -122,7 +122,9 @@ export function PublicHeader({
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2.5 tablet:gap-4">
-          <LocaleCurrencySwitcher />
+          <div className="hidden tablet:block">
+            <LocaleCurrencySwitcher />
+          </div>
           <AccountMenu locale={locale} />
           <CartLink locale={locale} />
           <button

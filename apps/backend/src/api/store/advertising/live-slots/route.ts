@@ -1,6 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import {
   explainAdCampaign,
+  filterAdCampaignsByTarget,
   parseSellerBannerPresentation,
   resolveMediaUrl,
   selectLiveAdCampaigns,
@@ -160,7 +161,9 @@ export async function visibilityForCampaign(
 
 /**
  * GET /store/advertising/live-slots?placement=homepage&market=NL
+ * GET /store/advertising/live-slots?placement=category&market=NL&target=slug
  * GET /store/advertising/live-slots?preview=adcmp_...  — read-only preview.
+ * `target` limits candidates with the existing target key before winner selection.
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
@@ -217,8 +220,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   }
 
   const { campaigns, weeksByCampaign } = await loadPlacement(cms, placement)
-  const candidates = campaigns.map((campaign) =>
-    asCandidate(campaign, weeksByCampaign.get(String(campaign.id)) ?? [])
+  const target = typeof req.query.target === "string" ? req.query.target : ""
+  const candidates = filterAdCampaignsByTarget(
+    campaigns.map((campaign) =>
+      asCandidate(campaign, weeksByCampaign.get(String(campaign.id)) ?? [])
+    ),
+    target
   )
   const selected = selectLiveAdCampaigns(candidates, {
     now,

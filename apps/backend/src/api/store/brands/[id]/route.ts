@@ -244,6 +244,12 @@ export async function PATCH(req: RequestWithBody, res: MedusaResponse) {
   delete extra.website_url
   const partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
   const updated = await persistBrandRecord(partner, brand, extra)
+  if (wantsNameEdit || body.logo_url !== undefined) {
+    const { emitCategoryFactsChanged } = await import(
+      "../../../../modules/cms/category-cms-proposal-events"
+    )
+    await emitCategoryFactsChanged(req.scope, { brand_id: id })
+  }
 
   res.status(200).json({ brand: updated })
 }

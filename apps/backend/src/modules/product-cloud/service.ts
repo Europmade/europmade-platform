@@ -35,10 +35,12 @@ import {
   ImportMappingProfile,
 } from "./models"
 import type { ProductCloudIdentifierType } from "./identifier-types"
+import { normalizeCategoryAssignment } from "@europmade/utils"
 import {
   catalogForCategorySlug,
   categoryLookupSlugs,
   resolveRequirementTier,
+  sanitizeAttributeUnit,
   type AttributeCatalogItem,
 } from "./category-attributes"
 import {
@@ -81,6 +83,8 @@ export type CreateProductGraphInput = {
   description: string
   category_name: string
   category_names?: string[]
+  /** Preferred over names when set (parent + optional child). */
+  category_ids?: string[]
   identifier_type: ProductCloudIdentifierType
   identifier_value: string
   country_scope?: string | null
@@ -263,44 +267,71 @@ class ProductCloudModuleService extends MedusaService({
       )
     }
 
-    const categoryNames = [
-      ...(input.category_names ?? []),
-      input.category_name,
-    ]
-      .map((name) => name.trim())
-      .filter(Boolean)
-      .filter((name, index, arr) => arr.indexOf(name) === index)
-
-    for (const categoryName of categoryNames) {
-      let category: Category | undefined
-      for (const slug of categoryLookupSlugs(categoryName)) {
-        category = (
-          await this.listCategories({ slug }, {}, sharedContext)
-        )[0]
-        if (category) break
+    const explicitIds = [...new Set((input.category_ids || []).map((id) => id.trim()).filter(Boolean))]
+    if (explicitIds.length) {
+      const catalog = (await this.listCategories(
+        {},
+        { take: 2000 },
+        sharedContext
+      )) as Array<Category & { parent_category_id?: string | null }>
+      const normalized = normalizeCategoryAssignment(
+        catalog.map((row) => ({
+          id: row.id,
+          name: row.name,
+          slug: (row as { slug?: string | null }).slug,
+          parent_id: row.parent_category_id ?? null,
+        })),
+        { categoryIds: explicitIds }
+      )
+      if (!normalized.ok) {
+        throw new MedusaError(MedusaError.Types.INVALID_DATA, normalized.message)
       }
-      if (!category) {
-        category = (
-          await this.listCategories(
-            { name: categoryName },
-            {},
-            sharedContext
-          )
-        )[0]
-      }
-      if (!category) {
-        throw new MedusaError(
-          MedusaError.Types.INVALID_DATA,
-          `Categorie bestaat niet: ${categoryName}. Kies een bestaande categorie of stel er een voor.`
+      for (const categoryId of normalized.categoryIds) {
+        await this.createProductCategories(
+          { product_id: product.id, category_id: categoryId },
+          sharedContext
         )
       }
-      await this.createProductCategories(
-        {
-          product_id: product.id,
-          category_id: category.id,
-        },
-        sharedContext
-      )
+    } else {
+      const categoryNames = [
+        ...(input.category_names ?? []),
+        input.category_name,
+      ]
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .filter((name, index, arr) => arr.indexOf(name) === index)
+
+      for (const categoryName of categoryNames) {
+        let category: Category | undefined
+        for (const slug of categoryLookupSlugs(categoryName)) {
+          category = (
+            await this.listCategories({ slug }, {}, sharedContext)
+          )[0]
+          if (category) break
+        }
+        if (!category) {
+          category = (
+            await this.listCategories(
+              { name: categoryName },
+              {},
+              sharedContext
+            )
+          )[0]
+        }
+        if (!category) {
+          throw new MedusaError(
+            MedusaError.Types.INVALID_DATA,
+            `Categorie bestaat niet: ${categoryName}. Kies een bestaande categorie of stel er een voor.`
+          )
+        }
+        await this.createProductCategories(
+          {
+            product_id: product.id,
+            category_id: category.id,
+          },
+          sharedContext
+        )
+      }
     }
 
     return {
@@ -556,6 +587,18 @@ class ProductCloudModuleService extends MedusaService({
     input: PublishVersionGraphInput,
     @MedusaContext() sharedContext: Context = {}
   ) {
+    const target = (await this.retrieveProductVersion(
+      input.version_id,
+      {},
+      sharedContext
+    )) as { id: string; publication_status?: string }
+    if (target?.publication_status === "Gepubliceerd") {
+      return {
+        version: target,
+        lifecycle_status: input.current_lifecycle_status,
+      }
+    }
+
     const published = await this.listProductVersions(
       {
         product_id: input.product_id,
@@ -667,8 +710,8 @@ class ProductCloudModuleService extends MedusaService({
               requirement_tier: tier,
               is_required: item.is_required,
               option_values: nextOptions,
-              unit: item.unit ?? found.unit ?? null,
-              help_text: item.help_text ?? found.help_text ?? null,
+          unit: sanitizeAttributeUnit(item.unit ?? found.unit),
+          help_text: item.help_text ?? found.help_text ?? null,
             },
             sharedContext
           )
@@ -683,7 +726,7 @@ class ProductCloudModuleService extends MedusaService({
           data_type: item.data_type,
           is_required: item.is_required,
           requirement_tier: resolveRequirementTier(item),
-          unit: item.unit ?? null,
+          unit: sanitizeAttributeUnit(item.unit),
           help_text: item.help_text ?? null,
           is_active: true,
           is_filterable: item.is_filterable ?? true,

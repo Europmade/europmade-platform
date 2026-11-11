@@ -18,9 +18,8 @@ describe("variant axes compose", () => {
     expect(r.variant_value).toBe("Zwart / M")
   })
 
-  it("suggests clothing axes", () => {
-    expect(suggestVariantAxesForCategory("Kleding")).toEqual(
-      expect.arrayContaining(["Kleur", "Maat"])
-    )
+  it("does not suggest commercial axes", () => {
+    expect(suggestVariantAxesForCategory("Kleding")).toEqual([])
+    expect(suggestVariantAxesForCategory("Damesschoenen")).toEqual([])
   })
 })

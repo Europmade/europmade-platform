@@ -149,6 +149,10 @@ export async function POST(req: AuthenticatedMedusaRequest, res: MedusaResponse)
       (req.body || {}) as Record<string, unknown>,
       req.auth_context?.actor_id || "admin"
     )
+    const { emitCategoryFactsChanged } = await import(
+      "../../../../../../modules/cms/category-cms-proposal-events"
+    )
+    await emitCategoryFactsChanged(req.scope, { product_id: id })
     res.json({ saved: true, ...result })
   } catch (err) {
     if (err instanceof CentralSectionError) {

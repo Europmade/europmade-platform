@@ -39,6 +39,7 @@ import {
   StoreCsvMadeInEuropeBody,
   StoreBulkBrandLocationBody,
   StoreBulkShippingProfileBody,
+  StoreBulkOfferCommerceBody,
   StoreProductShippingProfileBody,
 } from "./store/product-cloud/validators"
 import { StoreUpsertOfferBody, StorePatchOfferBody, StoreShippingProfileBody, StorePatchShippingProfileBody, StoreDuplicateShippingProfileBody } from "./store/commerce-cloud/validators"
@@ -298,6 +299,14 @@ export default defineMiddlewares({
       ],
     },
     {
+      matcher: "/store/product-cloud/products/bulk-offer-commerce",
+      methods: ["POST"],
+      middlewares: [
+        customerAuth,
+        validateAndTransformBody(StoreBulkOfferCommerceBody),
+      ],
+    },
+    {
       matcher: "/store/product-cloud/products/:id/shipping-profile",
       methods: ["PATCH"],
       middlewares: [
@@ -497,6 +506,16 @@ export default defineMiddlewares({
     },
     {
       matcher: "/store/catalog/products",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/catalog/test-products",
+      methods: ["GET"],
+      middlewares: [],
+    },
+    {
+      matcher: "/store/catalog/product-relations",
       methods: ["GET"],
       middlewares: [],
     },
@@ -1593,6 +1612,82 @@ export default defineMiddlewares({
       middlewares: [adminAuth],
     },
     {
+      matcher: "/admin/cms/categories/:slug/listing-products",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/preview-products",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/product-relations",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/draft",
+      methods: ["POST", "PATCH", "DELETE"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/draft/rebase",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/publish",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/revisions",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/revisions/:version",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/revisions/:version/restore-to-draft",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher:
+        "/admin/cms/categories/:slug/revisions/:version/restore-and-publish",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/proposals",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/proposals/generate",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/proposals/:id",
+      methods: ["PATCH"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/proposals/:id/accept",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/categories/:slug/proposals/:id/reject",
+      methods: ["POST"],
+      middlewares: [adminAuth],
+    },
+    {
       matcher: "/admin/cms/products",
       methods: ["GET"],
       middlewares: [adminAuth],
@@ -1609,8 +1704,18 @@ export default defineMiddlewares({
     },
     {
       matcher: "/admin/cms/media",
+      methods: ["GET"],
+      middlewares: [adminAuth],
+    },
+    {
+      matcher: "/admin/cms/media",
       methods: ["POST"],
       middlewares: [adminAuth, documentUpload.single("file")],
+    },
+    {
+      matcher: "/admin/cms/media/:id",
+      methods: ["PATCH"],
+      middlewares: [adminAuth],
     },
     {
       matcher: "/admin/cms/commercial-nav/icons",

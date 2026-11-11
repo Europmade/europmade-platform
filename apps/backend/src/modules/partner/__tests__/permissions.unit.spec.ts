@@ -19,14 +19,14 @@ describe("partner permissions (P2.6)", () => {
     expect(hasPermission(flags, "mie.manage")).toBe(false)
   })
 
-  it("lets a brand owner edit description and facilities, not offers", () => {
+  it("lets a brand owner edit description, facilities and Made in Europe, not offers", () => {
     const flags = { is_brand_owner: true }
     expect(rolesFromSeller(flags)).toEqual(["BRAND_OWNER"])
     expect(hasPermission(flags, "brands.edit_description")).toBe(true)
     expect(hasPermission(flags, "brands.manage")).toBe(true)
     expect(hasPermission(flags, "facilities.manage")).toBe(true)
+    expect(hasPermission(flags, "mie.manage")).toBe(true)
     expect(hasPermission(flags, "offers.manage")).toBe(false)
-    expect(hasPermission(flags, "mie.manage")).toBe(false)
   })
 
   it("lets a producer manage facilities and Made in Europe, not brand description", () => {

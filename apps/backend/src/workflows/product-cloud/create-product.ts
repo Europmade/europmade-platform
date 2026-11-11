@@ -29,6 +29,7 @@ export type CreateProductCloudInput = {
   description: string
   category_name: string
   category_names?: string[]
+  category_ids?: string[]
   identifier_type: ProductCloudIdentifierType
   identifier_value: string
   country_scope?: string | null
@@ -136,6 +137,7 @@ export const createProductCloudStep = createStep(
       description: input.description,
       category_name: input.category_name,
       category_names: input.category_names,
+      category_ids: input.category_ids,
       identifier_type: input.identifier_type,
       identifier_value: input.identifier_value,
       country_scope: input.country_scope,

@@ -13,6 +13,8 @@ import {
   sanitizeBrandPageDraft,
 } from "../../../../store/brands/brand-page-document"
 import { persistBrandRecord } from "../../../../store/brands/brand-helpers"
+import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
+import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { assertReviewNote } from "../../../../store/brands/ownership"
 
 type RouteParams = { brandId: string }
@@ -65,13 +67,73 @@ export async function POST(
   const { brandId } = req.params as RouteParams
   const partner = req.scope.resolve(PARTNER_MODULE) as PartnerModuleService
   const brand = await loadBrand(partner, brandId)
-  const body = (req.body ?? {}) as { action?: string; note?: string }
+  const body = (req.body ?? {}) as {
+    action?: string
+    note?: string
+    target_brand_id?: string
+  }
   const actor = req.auth_context.actor_id ?? "admin"
   const live = liveBrandPageDraft(brand)
   const draft = sanitizeBrandPageDraft(
     (brand as { page_draft?: unknown }).page_draft,
     live
   )
+
+  if (body.action === "merge") {
+    const targetId = body.target_brand_id?.trim()
+    if (!targetId || targetId === brandId) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Kies een ander bestaand merk om naartoe te koppelen."
+      )
+    }
+    const target = await loadBrand(partner, targetId)
+    const targetName =
+      (target as { name?: string }).name?.trim() || targetId
+    const productCloud = req.scope.resolve(
+      PRODUCT_CLOUD_MODULE
+    ) as ProductCloudModuleService
+    const products = (await productCloud.listProducts(
+      { brand_id: brandId },
+      { take: 200 }
+    )) as Array<{ id: string }>
+    for (const product of products) {
+      await productCloud.updateProducts({
+        id: product.id,
+        brand_id: targetId,
+      })
+      await productCloud.createProductFieldChanges({
+        product_id: product.id,
+        product_version_id: null,
+        seller_id: actor,
+        actor_customer_id: actor,
+        field_code: "brand_id",
+        field_label: "Merk",
+        old_value: brandId,
+        new_value: targetId,
+        status: "approved",
+        reason: `Merk samenvoegen naar ${targetName}. Het importmerk blijft bestaan en is niet geverifieerd.`,
+      })
+    }
+    const note =
+      body.note?.trim() ||
+      `Producten gekoppeld aan bestaand merk ${targetName}. Dit merkrecord is niet verwijderd en niet geverifieerd.`
+    const updated = await persistBrandRecord(partner, brand, {
+      page_review_status: "draft",
+      page_review_note: note,
+      public_page_status: "unpublished",
+    })
+    if (products.length) {
+      const { emitCategoryFactsChanged } = await import(
+        "../../../../../modules/cms/category-cms-proposal-events"
+      )
+      await emitCategoryFactsChanged(req.scope, {
+        product_ids: products.map((product) => product.id),
+      })
+    }
+    res.status(200).json({ brand: updated, moved_products: products.length })
+    return
+  }
 
   if (body.action === "approve") {
     const applied = applyDraftToLiveFields(draft)
@@ -95,6 +157,10 @@ export async function POST(
     } catch {
       /* optional */
     }
+    const { emitCategoryFactsChanged } = await import(
+      "../../../../../modules/cms/category-cms-proposal-events"
+    )
+    await emitCategoryFactsChanged(req.scope, { brand_id: brandId })
     res.status(200).json({ brand: updated })
     return
   }
@@ -150,6 +216,6 @@ export async function POST(
 
   throw new MedusaError(
     MedusaError.Types.INVALID_DATA,
-    "action moet approve, reject of request_info zijn."
+    "action moet approve, reject, request_info of merge zijn."
   )
 }

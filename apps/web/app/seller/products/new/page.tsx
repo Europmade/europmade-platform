@@ -3,9 +3,16 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button, Input, Notice } from "@europmade/ui"
+import {
+  normalizeCategoryAssignment,
+  sellerChildCategoryOptions,
+  sellerL3CategoryOptions,
+  sellerParentCategoryOptions,
+} from "@europmade/utils"
 import { SellerGate } from "../../_components/seller-gate"
 import {
   createProduct,
+  listProductCloudCategories,
   ProductCloudApiError,
   uploadProductMediaFile,
 } from "../../_lib/product-cloud-api"
@@ -16,40 +23,14 @@ import {
   type ManageableBrand,
 } from "../../_lib/brands-api"
 import { useStorefrontLocale } from "../../../_lib/i18n/use-storefront-locale"
-import { t, type StorefrontMessageKey } from "../../../_lib/i18n/messages"
+import { t } from "../../../_lib/i18n/messages"
 
-const CATEGORY_KEYS = [
-  { value: "Tuin", key: "catTuin" as StorefrontMessageKey },
-  { value: "Elektronica", key: "catElektronica" as StorefrontMessageKey },
-  { value: "Mode", key: "catMode" as StorefrontMessageKey },
-  { value: "Wonen", key: "catWonen" as StorefrontMessageKey },
-  { value: "Sport", key: "catSport" as StorefrontMessageKey },
-  { value: "Voeding", key: "catVoeding" as StorefrontMessageKey },
-  { value: "Keuken", key: "catKeuken" as StorefrontMessageKey },
-  { value: "Huishouden", key: "catHuishouden" as StorefrontMessageKey },
-  { value: "Beauty & Verzorging", key: "catBeautyVerzorging" as StorefrontMessageKey },
-  { value: "Baby & Kind", key: "catBabyKind" as StorefrontMessageKey },
-  { value: "Speelgoed", key: "catSpeelgoed" as StorefrontMessageKey },
-  { value: "Dieren", key: "catDieren" as StorefrontMessageKey },
-  { value: "Klus & Gereedschap", key: "catKlusGereedschap" as StorefrontMessageKey },
-  { value: "Auto & Motor", key: "catAutoMotor" as StorefrontMessageKey },
-  { value: "Kantoor", key: "catKantoor" as StorefrontMessageKey },
-  { value: "Boeken & Media", key: "catBoekenMedia" as StorefrontMessageKey },
-  { value: "Gezondheid", key: "catGezondheid" as StorefrontMessageKey },
-  { value: "Verlichting", key: "catVerlichting" as StorefrontMessageKey },
-  { value: "Badkamer", key: "catBadkamer" as StorefrontMessageKey },
-  { value: "Slaapkamer", key: "catSlaapkamer" as StorefrontMessageKey },
-  { value: "Outdoor", key: "catOutdoor" as StorefrontMessageKey },
-  { value: "Duurzaam", key: "catDuurzaam" as StorefrontMessageKey },
-  { value: "Cadeaus", key: "catCadeaus" as StorefrontMessageKey },
-  { value: "Juwelen & Horloges", key: "catJuwelenHorloges" as StorefrontMessageKey },
-  { value: "Tassen & Accessoires", key: "catTassenAccessoires" as StorefrontMessageKey },
-  { value: "Schoenen", key: "catSchoenen" as StorefrontMessageKey },
-  { value: "Plant & Bloem", key: "catPlantBloem" as StorefrontMessageKey },
-  { value: "Feest & Seizoen", key: "catFeestSeizoen" as StorefrontMessageKey },
-  { value: "Ambacht", key: "catAmbacht" as StorefrontMessageKey },
-  { value: "Algemeen", key: "catAlgemeen" as StorefrontMessageKey },
-] as const
+type PcCategory = {
+  id: string
+  name: string
+  slug: string | null
+  parent_category_id: string | null
+}
 
 /** GTIN: 8–14 digits; otherwise MPN (ADR-0016). */
 function resolveIdentifier(raw: string): {
@@ -75,7 +56,10 @@ export default function SellerProductNewPage() {
   const [newBrandName, setNewBrandName] = useState("")
   const [brandCreateBusy, setBrandCreateBusy] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
-  const [category, setCategory] = useState<string>("")
+  const [pcCategories, setPcCategories] = useState<PcCategory[]>([])
+  const [parentId, setParentId] = useState("")
+  const [childId, setChildId] = useState("")
+  const [l3Id, setL3Id] = useState("")
   const [identifier, setIdentifier] = useState("")
   const [fileName, setFileName] = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
@@ -86,7 +70,29 @@ export default function SellerProductNewPage() {
     void listSellerBrands()
       .then((res) => setBrands(res.brands || []))
       .catch(() => setBrands([]))
+    void listProductCloudCategories()
+      .then((res) => setPcCategories(res.categories || []))
+      .catch(() => setPcCategories([]))
   }, [])
+
+  const treeRows = pcCategories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    parent_id: c.parent_category_id,
+  }))
+  const selectedCategoryIds = [parentId, childId, l3Id]
+  const parents = sellerParentCategoryOptions(treeRows, selectedCategoryIds)
+  const children = sellerChildCategoryOptions(
+    treeRows,
+    parentId,
+    selectedCategoryIds
+  )
+  const l3Options = sellerL3CategoryOptions(
+    treeRows,
+    childId,
+    selectedCategoryIds
+  )
 
   async function onCreateBrand() {
     const name = newBrandName.trim()
@@ -139,73 +145,45 @@ export default function SellerProductNewPage() {
       setError(t("sellerProductNewBrandRequired", locale))
       return
     }
-    if (!category) {
-      setError(t("sellerProductNewCategoryRequired", locale))
+    const normalized = normalizeCategoryAssignment(treeRows, {
+      parentId,
+      childId,
+      l3Id,
+    })
+    if (!normalized.ok) {
+      setError(normalized.message)
       return
     }
-    if (!trimmedId) {
-      // EAN/GTIN optional at concept creation — seller can add it in the product flow.
-    } else {
-      const { identifier_type, identifier_value } = resolveIdentifier(trimmedId)
-      setBusy(true)
-      setError(null)
-      try {
-        const result = await createProduct({
-          brand_id: trimmedBrand,
-          manufacturer_id: trimmedBrand,
-          title: trimmedTitle,
-          description: trimmedTitle,
-          category_name: category,
-          identifier_type,
-          identifier_value,
-          create_as_retailer: true,
-        })
-
-        if (!result.created && result.exact_match_existing) {
-          if (result.product_id) {
-            router.push(`/seller/products/${result.product_id}?tab=offer`)
-            return
-          }
-          setError(result.message ?? t("sellerProductNewExists", locale))
-          return
-        }
-
-        if (!result.product_id) {
-          setError(t("sellerProductNewCreatedNoId", locale))
-          return
-        }
-
-        if (pendingFile) {
-          await uploadProductMediaFile(result.product_id, pendingFile, {
-            media_type: "Hoofdafbeelding",
-            version_id: result.version_id,
-          })
-        }
-
-        router.push(`/seller/products/${result.product_id}?tab=information`)
-      } catch (err: unknown) {
-        setError(
-          err instanceof ProductCloudApiError
-            ? err.message
-            : t("sellerProductNewCreateFailed", locale)
-        )
-      } finally {
-        setBusy(false)
-      }
-      return
-    }
+    const parentName =
+      pcCategories.find((c) => c.id === normalized.parentId)?.name || "Algemeen"
 
     setBusy(true)
     setError(null)
     try {
-      const result = await createProduct({
+      const base = {
         brand_id: trimmedBrand,
         manufacturer_id: trimmedBrand,
         title: trimmedTitle,
         description: trimmedTitle,
-        category_name: category,
-        create_as_retailer: true,
-      })
+        category_name: parentName,
+        category_ids: normalized.categoryIds,
+        create_as_retailer: true as const,
+      }
+      const result = trimmedId
+        ? await createProduct({
+            ...base,
+            ...resolveIdentifier(trimmedId),
+          })
+        : await createProduct(base)
+
+      if (!result.created && result.exact_match_existing) {
+        if (result.product_id) {
+          router.push(`/seller/products/${result.product_id}?tab=offer`)
+          return
+        }
+        setError(result.message ?? t("sellerProductNewExists", locale))
+        return
+      }
 
       if (!result.product_id) {
         setError(t("sellerProductNewCreatedNoId", locale))
@@ -305,22 +283,67 @@ export default function SellerProductNewPage() {
           ) : null}
         </div>
       </div>
-      <div className="mb-3.5 max-w-xl">
-        <label className="mb-1.5 block text-xs font-semibold text-wf-700">
-          {t("commonCategory", locale)}
-        </label>
-        <select
-          className="w-full rounded-wf border border-wf-400 bg-white px-3 py-2 text-sm text-wf-800"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        >
-          <option value="">{t("sellerProductNewChooseCategory", locale)}</option>
-          {CATEGORY_KEYS.map((c) => (
-            <option key={c.value} value={c.value}>
-              {t(c.key, locale)}
-            </option>
-          ))}
-        </select>
+      <div className="mb-3.5 grid max-w-xl gap-3 tablet:grid-cols-3">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-wf-700">
+            Niveau 1
+          </label>
+          <select
+            className="w-full rounded-wf border border-wf-400 bg-white px-3 py-2 text-sm text-wf-800"
+            value={parentId}
+            onChange={(e) => {
+              setParentId(e.target.value)
+              setChildId("")
+              setL3Id("")
+            }}
+          >
+            <option value="">{t("sellerProductNewChooseCategory", locale)}</option>
+            {parents.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-wf-700">
+            Niveau 2
+          </label>
+          <select
+            className="w-full rounded-wf border border-wf-400 bg-white px-3 py-2 text-sm text-wf-800 disabled:bg-wf-50"
+            value={childId}
+            disabled={!parentId || children.length === 0}
+            onChange={(e) => {
+              setChildId(e.target.value)
+              setL3Id("")
+            }}
+          >
+            <option value="">— kies —</option>
+            {children.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-wf-700">
+            Niveau 3
+          </label>
+          <select
+            className="w-full rounded-wf border border-wf-400 bg-white px-3 py-2 text-sm text-wf-800 disabled:bg-wf-50"
+            value={l3Id}
+            disabled={!childId || l3Options.length === 0}
+            onChange={(e) => setL3Id(e.target.value)}
+          >
+            <option value="">— kies —</option>
+            {l3Options.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="mb-3.5 max-w-xl">
         <label className="mb-1.5 block text-xs font-semibold text-wf-700">

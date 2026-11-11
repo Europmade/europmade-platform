@@ -30,12 +30,18 @@ type CatalogListProduct = {
   id: string
   title: string
   brand_name: string | null
+  brand_id?: string | null
+  brand_slug?: string | null
+  brand_logo_url?: string | null
+  brand_page_published?: boolean
   category_names: string[]
   country_code: string | null
   offer_count: number
   from_price: number | null
   average_review_score: number | null
   image_url?: string | null
+  published_at?: string | null
+  attributes?: Array<{ code: string | null; value: string }>
 }
 
 type CatalogOffer = {
@@ -96,7 +102,11 @@ function toListing(item: CatalogListProduct): ListingProduct {
   return {
     slug: item.id,
     title: item.title,
-    brand: item.brand_name ?? "Merk",
+    brand: item.brand_name?.trim() || "",
+    brandId: item.brand_id?.trim() || null,
+    brandSlug: item.brand_slug?.trim() || null,
+    brandLogoUrl: resolveMediaUrl(item.brand_logo_url ?? null, medusaBackendUrl()),
+    brandPagePublished: item.brand_page_published === true,
     seller:
       item.offer_count > 0
         ? `${item.offer_count} aanbieder${item.offer_count === 1 ? "" : "s"}`
@@ -113,6 +123,13 @@ function toListing(item: CatalogListProduct): ListingProduct {
     features: item.category_names.slice(0, 2),
     keywords: [item.title, item.brand_name ?? ""].filter(Boolean),
     imageUrl: resolveMediaUrl(item.image_url ?? null, medusaBackendUrl()),
+    specs: (item.attributes ?? []).flatMap((row) => {
+      const code = row.code?.trim()
+      const value = row.value?.trim()
+      if (!code || !value) return []
+      return [{ code, value }]
+    }),
+    publishedAt: item.published_at ?? null,
   }
 }
 

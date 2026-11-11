@@ -15,7 +15,15 @@ import {
   isActiveProductCloudLanguage,
   normalizeLanguageCode,
 } from "./languages"
-import { type ImportCategoryCatalogEntry } from "./import-category"
+import {
+  applyCategoryHierarchyResolution,
+  uniqueImportCategoryCatalog,
+  type ImportCategoryCatalogEntry,
+} from "./import-category"
+import { categorySpecificFieldsForNames } from "./category-attributes"
+import { mergeProductSpecSlotsIntoValues } from "./product-specifications"
+import { resolveNlFromSellerTemplateLabel } from "./seller-template-en-catalog"
+import { importDraftSeed, stableConceptDraftIdentifier } from "./concept-identifier"
 
 export const BRAND_COMMERCIAL_FIELDS = [
   "regular_price",
@@ -33,7 +41,7 @@ export const BRAND_COMMERCIAL_FIELDS = [
 const COMMERCIAL = new Set<string>(BRAND_COMMERCIAL_FIELDS)
 
 /** Brand import does not map, validate, or store these columns. */
-const BRAND_EXCLUDED = new Set(["variant_type", "variant_value", "gpsr_manufacturer_name"])
+const BRAND_EXCLUDED = new Set(["variant_type", "variant_value"])
 
 function excludedColumnMessage(field: string): string {
   if (field === "variant_type" || field === "variant_value") {
@@ -60,6 +68,11 @@ const MULTILINGUAL = new Set([
   "short_description",
   "description",
   "usps",
+  "usp_1",
+  "usp_2",
+  "usp_3",
+  "usp_4",
+  "usp_5",
   "specifications",
 ])
 
@@ -180,6 +193,7 @@ export type ExistingProductHit = {
   description: string | null
   gtin: string | null
   mpn: string | null
+  import_ref?: string | null
   translations: Array<{ field_name: string; language_code: string; value: string }>
 }
 
@@ -226,6 +240,15 @@ export type BrandPreview = {
   commit_allowed: boolean
   creates_offers: false
   target_fields: BrandImportTarget[]
+  category_fields: Array<{
+    code: string
+    name: string
+    requirement_tier?: string
+    unit?: string | null
+    option_values?: string[] | null
+    data_type?: string | null
+  }>
+  detected_categories: string[]
   brand_proposals: BrandNameProposal[]
   category_proposals: BrandCategoryProposal[]
 }
@@ -360,6 +383,34 @@ function classifyHeader(
       message: n <= 1 ? null : "Extra afbeelding. Meerdere extra's worden samengevoegd.",
     }
   }
+  const keyEarly = headerMatchKey(text)
+  if (
+    keyEarly === "varianttype" ||
+    keyEarly === "variant type" ||
+    keyEarly === "variant_type" ||
+    keyEarly.startsWith("varianttype ")
+  ) {
+    return {
+      field: "variant_type",
+      language: null,
+      confidence: "certain",
+      message: null,
+    }
+  }
+  if (
+    keyEarly === "variantwaarde" ||
+    keyEarly === "variant value" ||
+    keyEarly === "variant_value" ||
+    keyEarly.startsWith("variantwaarde ")
+  ) {
+    return {
+      field: "variant_value",
+      language: null,
+      confidence: "certain",
+      message: null,
+    }
+  }
+
   const strict = canonicalFieldFromHeader(text, "strict")
   const loose = strict ? null : canonicalFieldFromHeader(text, "loose")
   let field = strict || loose
@@ -692,6 +743,48 @@ export function buildBrandLinks(input: {
   }
 }
 
+function sellerSkuFromRow(headers: string[], row: string[]): string {
+  const index = headers.findIndex((header) => {
+    const name = header.trim().toLowerCase()
+    return (
+      name === "sku" ||
+      name.includes("seller sku") ||
+      name.includes("artikelnummer") ||
+      name.includes("article number")
+    )
+  })
+  if (index < 0) return ""
+  return String(row[index] ?? "").trim()
+}
+
+export function adminStoredIdentity(
+  headers: string[],
+  row: string[],
+  links: BrandColumnLink[]
+): {
+  validEan: string
+  mpn: string
+  draftKey: string
+} {
+  const eanRaw = readValue(headers, row, links, "ean")
+  const ean = normalizeGtinDigits(eanRaw)
+  const validEan = ean && isValidGtin(ean) ? ean : ""
+  const mpn = readValue(headers, row, links, "mpn")
+  const sku = sellerSkuFromRow(headers, row)
+  const draftKey =
+    !validEan && !mpn && (eanRaw || sku)
+      ? stableConceptDraftIdentifier(
+          importDraftSeed({
+            sellerId: "admin",
+            eanRaw: validEan ? "" : eanRaw,
+            mpn: "",
+            sku,
+          })
+        ).identifier_value
+      : ""
+  return { validEan, mpn, draftKey }
+}
+
 function cell(headers: string[], row: string[], source: string): string {
   const idx = headers.indexOf(source)
   if (idx < 0) return ""
@@ -705,16 +798,29 @@ function readTexts(
   sourceLanguage: string
 ): BrandTextSlot[] {
   const slots: BrandTextSlot[] = []
+  const uspByLang = new Map<string, string[]>()
   for (const link of links) {
     if (!link.imported || !link.field || !MULTILINGUAL.has(link.field)) continue
     const value = cell(headers, row, link.source)
     if (!value) continue
     const language = link.language_code || sourceLanguage
+    if (/^usp_\d+$/.test(link.field) || link.field === "usps") {
+      const list = uspByLang.get(language) || []
+      list.push(value)
+      uspByLang.set(language, list)
+      continue
+    }
     slots.push({
       field: link.field as BrandTextSlot["field"],
       language_code: language,
       value,
     })
+  }
+  for (const [language_code, parts] of uspByLang) {
+    const value = parts.map((p) => p.trim()).filter(Boolean).join("\n")
+    if (value) {
+      slots.push({ field: "usps", language_code, value })
+    }
   }
   return slots
 }
@@ -810,6 +916,10 @@ const MEDIA_TARGETS = new Set([
 const COMPLIANCE_TARGETS = new Set([
   "production_country",
   "production_location",
+  "assembly_eu_band",
+  "parts_eu_level",
+  "materials_eu_level",
+  "european_ownership_band",
   "ce_marking",
   "app_required",
   "collects_data",
@@ -823,7 +933,7 @@ export function brandImportTargets(): BrandImportTarget[] {
   ).map(
     (f) => ({
       field: f.column,
-      label: f.column === "gpsr_manufacturer_name" ? "GPSR-fabrikantnaam" : f.nl_name,
+      label: f.nl_name,
       group: MEDIA_TARGETS.has(f.column)
         ? "Media"
         : f.column === "category" || COMPLIANCE_TARGETS.has(f.column) || f.column.startsWith("gpsr_")
@@ -870,9 +980,13 @@ export function planCategoryPlacement(
   const subcategory = subcategoryRaw.replace(/\s+/g, " ").trim()
   const hasHierarchy = catalog.some((row) => row.parent_id != null)
   const named = (raw: string, parentId?: string | null) => {
-    const key = normalizeBrandKey(raw)
+    const resolved =
+      resolveNlFromSellerTemplateLabel(raw) || raw
+    const keys = new Set(
+      [normalizeBrandKey(raw), normalizeBrandKey(resolved)].filter(Boolean)
+    )
     return catalog.filter((row) => {
-      if (normalizeBrandKey(row.name) !== key) return false
+      if (!keys.has(normalizeBrandKey(row.name))) return false
       if (!hasHierarchy || parentId === undefined) return true
       return (row.parent_id || null) === parentId
     })
@@ -1017,12 +1131,18 @@ export function previewBrandImport(input: {
   language_confirmed?: boolean
   mapping_confirmed?: boolean
   profile?: SavedBrandProfile | null
-  categories?: Array<ImportCategoryCatalogEntry & { parent_id?: string | null }>
+  categories?: Array<
+    ImportCategoryCatalogEntry & {
+      parent_id?: string | null
+      parent_category_id?: string | null
+    }
+  >
   known_brands?: Array<{ id: string; name: string }>
   brand_choices?: Record<string, { action: "use"; id: string } | { action: "create"; name: string }>
   category_choices?: BrandCategoryChoice[]
   existing?: ExistingProductHit[]
 }): BrandPreview {
+  const categories = uniqueImportCategoryCatalog(input.categories || [])
   const built = buildBrandLinks(input)
   const detected = scoreLanguage(input.headers, input.rows)
   const requested = normalizeLanguageCode(input.source_language_code || "")
@@ -1039,9 +1159,11 @@ export function previewBrandImport(input: {
 
   const byGtin = new Map<string, ExistingProductHit>()
   const byMpn = new Map<string, ExistingProductHit>()
+  const byDraft = new Map<string, ExistingProductHit>()
   for (const hit of input.existing || []) {
     if (hit.gtin) byGtin.set(normalizeGtinDigits(hit.gtin), hit)
     if (hit.mpn) byMpn.set(hit.mpn.trim().toLowerCase(), hit)
+    if (hit.import_ref) byDraft.set(hit.import_ref, hit)
   }
   const seenEan = new Set<string>()
   const brandProposals: BrandNameProposal[] = []
@@ -1066,12 +1188,27 @@ export function previewBrandImport(input: {
     const brand = readValue(input.headers, row, built.links, "brand")
     const category = readValue(input.headers, row, built.links, "category")
     const subcategory = readValue(input.headers, row, built.links, "subcategory")
+    if (categories.length && (category || subcategory)) {
+      const hierarchy = applyCategoryHierarchyResolution(
+        { category, subcategory },
+        categories
+      )
+      if (hierarchy.values.subcategory_error) {
+        issues.push({
+          row: excelRow,
+          field: "subcategory",
+          message: `${hierarchy.values.subcategory_error} Het Concept kan wel worden bewaard. Publicatie blijft geblokkeerd tot de categorie klopt.`,
+          blocking: false,
+        })
+      }
+    }
     if (ean && !isValidGtin(ean)) {
       issues.push({
         row: excelRow,
         field: "ean",
-        message: `Rij ${excelRow}, EAN/GTIN: ongeldig (lengte of checksum).`,
-        blocking: true,
+        message:
+          "EAN/GTIN is ongeldig (checksum of lengte). De aangeleverde waarde blijft bewaard. Het Concept wordt wel aangemaakt; indienen blijft geblokkeerd.",
+        blocking: false,
       })
     }
     if (ean && seenEan.has(ean)) {
@@ -1083,9 +1220,32 @@ export function previewBrandImport(input: {
       })
     }
     if (ean) seenEan.add(ean)
+    const sku = sellerSkuFromRow(input.headers, row)
+    if (!ean && (mpn || sku)) {
+      issues.push({
+        row: excelRow,
+        field: "ean",
+        message:
+          "EAN/GTIN ontbreekt. Het Concept wordt aangemaakt. Indienen, goedkeuring, publicatie en verkoop blijven geblokkeerd tot een geldige EAN/GTIN is ingevuld.",
+        blocking: false,
+      })
+    }
+    const validEan = ean && isValidGtin(ean) ? ean : ""
+    const draftKey =
+      !validEan && !mpn && (eanRaw || sku)
+        ? stableConceptDraftIdentifier(
+            importDraftSeed({
+              sellerId: "admin",
+              eanRaw: validEan ? "" : eanRaw,
+              mpn: "",
+              sku,
+            })
+          ).identifier_value
+        : ""
     const hit =
-      (ean && isValidGtin(ean) ? byGtin.get(ean) : undefined) ||
-      (!ean && mpn ? byMpn.get(mpn.toLowerCase()) : undefined) ||
+      (validEan ? byGtin.get(validEan) : undefined) ||
+      (!validEan && mpn ? byMpn.get(mpn.toLowerCase()) : undefined) ||
+      (draftKey ? byDraft.get(draftKey) : undefined) ||
       null
     if (!hit) {
       if (!title) {
@@ -1114,7 +1274,7 @@ export function previewBrandImport(input: {
           issues.push({
             row: excelRow,
             field: "brand",
-            message: `Rij ${excelRow}, merk '${createName}': nieuw merk wordt aangemaakt. Het is niet automatisch geverifieerd.`,
+            message: `Merk '${createName}' bestaat nog niet. Het wordt ter beoordeling aangemaakt en niet automatisch geverifieerd.`,
             blocking: false,
           })
           if (!seenBrand.has(key)) {
@@ -1138,11 +1298,11 @@ export function previewBrandImport(input: {
           }
         }
       }
-      if (input.categories) {
+      if (categories.length) {
         const placement = planCategoryPlacement(
           category,
           subcategory,
-          input.categories,
+          categories,
           input.category_choices
         )
         for (const issue of placement.issues) {
@@ -1155,12 +1315,56 @@ export function previewBrandImport(input: {
           categoryProposals.push(proposal)
         }
       }
-      if (!ean && !mpn) {
+      if (!ean && !mpn && !sku) {
         issues.push({
           row: excelRow,
           field: "identifier",
-          message: `Rij ${excelRow}: vul EAN/GTIN of MPN in. Seller-SKU telt niet als productidentiteit.`,
+          message: `Excel-regel ${excelRow}, veld identificatie (interne naam: identifier): vul minimaal één echte identificatie in (EAN/GTIN, MPN of Seller SKU). DRAFT- en IMPORT_REF tellen niet mee.`,
           blocking: true,
+        })
+      }
+    }
+    {
+      const subcategoryL3 = readValue(
+        input.headers,
+        row,
+        built.links,
+        "subcategory_l3"
+      )
+      const slotValues: Record<string, string> = {
+        category,
+        subcategory,
+        subcategory_l3: subcategoryL3,
+      }
+      for (const link of built.links) {
+        if (!link.imported || !link.field) continue
+        if (
+          !link.field.startsWith("spec_label_") &&
+          !link.field.startsWith("spec_value_")
+        ) {
+          continue
+        }
+        const value = cell(input.headers, row, link.source)
+        if (value) slotValues[link.field] = value
+      }
+      const specCheck = mergeProductSpecSlotsIntoValues(slotValues)
+      for (const message of specCheck.errors) {
+        issues.push({
+          row: excelRow,
+          field: "specifications",
+          message: `Excel-regel ${excelRow}: ${message} De oorspronkelijke specificatie blijft op de regel staan en wordt niet verzonnen of goedgekeurd.`,
+          blocking: false,
+        })
+      }
+      const priceLink = built.links.find((link) => link.field === "regular_price")
+      const priceRaw = priceLink ? cell(input.headers, row, priceLink.source) : ""
+      if (priceRaw && Number.isNaN(Number(priceRaw.replace(",", ".")))) {
+        issues.push({
+          row: excelRow,
+          field: "regular_price",
+          message:
+            "Prijs is geen getal. De aangeleverde waarde blijft bewaard. Er wordt geen prijs 0 opgeslagen.",
+          blocking: false,
         })
       }
     }
@@ -1211,16 +1415,47 @@ export function previewBrandImport(input: {
   })
 
   const errorRows = preview.filter((p) => p.status === "error").length
+  const storableRows = preview.filter((p) => p.status !== "error").length
   const reviewOpen = built.links.some((l) => l.confidence === "review" && l.imported)
   const languageBlocks = needs && !confirmed
   const commitAllowed =
-    errorRows === 0 &&
+    storableRows > 0 &&
     built.conflicts.length === 0 &&
     !languageBlocks &&
     !built.profile_review_required &&
     preview.length > 0 &&
     Boolean(sourceLanguage) &&
     (!reviewOpen || Boolean(input.mapping_confirmed))
+
+  const detectedCategories = [
+    ...new Set(
+      input.rows.flatMap((row) => {
+        const category = readValue(input.headers, row, built.links, "category")
+        const subcategory = readValue(input.headers, row, built.links, "subcategory")
+        if (categories.length) {
+          const hierarchy = applyCategoryHierarchyResolution(
+            { category, subcategory },
+            categories
+          )
+          return [
+            hierarchy.resolution.matched?.name,
+            hierarchy.subcategory_resolution.matched?.name,
+          ].filter(Boolean) as string[]
+        }
+        return [category, subcategory].filter(Boolean)
+      })
+    ),
+  ]
+  const categoryFields = categorySpecificFieldsForNames(detectedCategories).map(
+    (f) => ({
+      code: f.code,
+      name: f.name,
+      requirement_tier: f.requirement_tier,
+      unit: f.unit ?? null,
+      option_values: f.option_values ?? null,
+      data_type: f.data_type ?? null,
+    })
+  )
 
   return {
     mode: "brand",
@@ -1243,6 +1478,8 @@ export function previewBrandImport(input: {
     profile_applied: built.profile_applied,
     profile_review_required: built.profile_review_required,
     profile_reason: built.profile_reason,
+    category_fields: categoryFields,
+    detected_categories: detectedCategories,
     preview,
     summary: {
       rows: preview.length,
@@ -1270,8 +1507,10 @@ export type BrandCommitAction =
       manufacturer: string
       category: string
       subcategory: string
+      subcategory_l3: string
       ean: string
       mpn: string
+      import_ref?: string
       texts: BrandTextSlot[]
       media: BrandMediaSlot[]
       attributes: Record<string, string>
@@ -1288,6 +1527,12 @@ export type BrandCommitAction =
       product_id: string
       texts: BrandTextSlot[]
     }
+  | {
+      type: "fill_attributes"
+      row: number
+      product_id: string
+      attributes: Record<string, string>
+    }
 
 export function planBrandCommit(
   preview: BrandPreview,
@@ -1296,6 +1541,8 @@ export function planBrandCommit(
     rows: string[][]
     existing?: ExistingProductHit[]
     mapping_confirmed?: boolean
+    /** Per Excel row number → attribute code → value (category kenmerken). */
+    attribute_overrides?: Record<string, Record<string, string>>
   }
 ): { blocked: boolean; reason: string | null; actions: BrandCommitAction[]; creates_offers: false } {
   if (!preview.commit_allowed || !input.mapping_confirmed) {
@@ -1308,10 +1555,10 @@ export function planBrandCommit(
       creates_offers: false,
     }
   }
-  if (preview.summary.error_rows > 0 || preview.conflicts.length) {
+  if (preview.conflicts.length) {
     return {
       blocked: true,
-      reason: "Import geblokkeerd door fouten in het bestand. Er is niets weggeschreven.",
+      reason: "Import geblokkeerd door een kolomconflict. Er is niets weggeschreven.",
       actions: [],
       creates_offers: false,
     }
@@ -1321,19 +1568,23 @@ export function planBrandCommit(
     : preview.language.suggested || ""
   const byGtin = new Map<string, ExistingProductHit>()
   const byMpn = new Map<string, ExistingProductHit>()
+  const byDraft = new Map<string, ExistingProductHit>()
   for (const hit of input.existing || []) {
     if (hit.gtin) byGtin.set(normalizeGtinDigits(hit.gtin), hit)
     if (hit.mpn) byMpn.set(hit.mpn.trim().toLowerCase(), hit)
+    if (hit.import_ref) byDraft.set(hit.import_ref, hit)
   }
   const actions: BrandCommitAction[] = []
   input.rows.forEach((row, index) => {
     const view = preview.preview[index]
     if (!view || view.status === "error") return
-    const ean = view.ean
-    const mpn = readValue(input.headers, row, preview.links, "mpn")
+    const identity = adminStoredIdentity(input.headers, row, preview.links)
+    const ean = identity.validEan
+    const mpn = identity.mpn
     const hit =
       (ean ? byGtin.get(ean) : undefined) ||
-      (!ean && mpn ? byMpn.get(mpn.toLowerCase()) : undefined)
+      (!ean && mpn ? byMpn.get(mpn.toLowerCase()) : undefined) ||
+      (!ean && !mpn && identity.draftKey ? byDraft.get(identity.draftKey) : undefined)
     const texts = view.texts
     if (!hit) {
       const description = composeSourceDescription(texts, sourceLanguage)
@@ -1351,13 +1602,38 @@ export function planBrandCommit(
         manufacturer: readValue(input.headers, row, preview.links, "manufacturer"),
         category: readValue(input.headers, row, preview.links, "category"),
         subcategory: readValue(input.headers, row, preview.links, "subcategory"),
+        subcategory_l3: readValue(
+          input.headers,
+          row,
+          preview.links,
+          "subcategory_l3"
+        ),
         ean,
         mpn,
+        import_ref: identity.draftKey || undefined,
         texts,
         media: mediaSlots(input.headers, row, preview.links),
-        attributes: attributeValues(input.headers, row, preview.links),
+        attributes: {
+          ...attributeValues(input.headers, row, preview.links),
+          ...(input.attribute_overrides?.[String(view.row)] || {}),
+        },
       })
       return
+    }
+    const attrOverlay = input.attribute_overrides?.[String(view.row)] || {}
+    const attrFromFile = attributeValues(input.headers, row, preview.links)
+    const fillAttrs = Object.fromEntries(
+      Object.entries({ ...attrFromFile, ...attrOverlay }).filter(
+        ([, value]) => String(value || "").trim()
+      )
+    )
+    if (Object.keys(fillAttrs).length) {
+      actions.push({
+        type: "fill_attributes",
+        row: view.row,
+        product_id: hit.product_id,
+        attributes: fillAttrs,
+      })
     }
     const existingKeys = new Set(
       hit.translations.map((t) => `${t.field_name}:${t.language_code}`)
@@ -1506,6 +1782,31 @@ export function normalizeProductionCountry(raw: string): string {
   return PRODUCTION_COUNTRY_NAMES[normalizeBrandKey(trimmed)] || trimmed
 }
 
+/**
+ * Map English Admin/Seller Excel dropdown labels to canonical stored values.
+ * Technical codes and NL labels stay unchanged when already canonical.
+ */
+export function normalizeImportAttributeDisplayValue(
+  field: string,
+  raw: string
+): string {
+  const value = String(raw || "").trim()
+  if (!value) return value
+  const key = value.toLowerCase()
+  if (field === "ce_marking") {
+    if (key === "visible") return "Zichtbaar"
+    if (key === "not applicable" || key === "n/a") return "Niet van toepassing"
+  }
+  if (field === "app_required" || field === "collects_data") {
+    if (key === "yes") return "Ja"
+    if (key === "no") return "Nee"
+  }
+  if (field === "european_ownership_band") {
+    if (key === "unknown" || key === "niet bekend") return "Niet bekend"
+  }
+  return value
+}
+
 function attributeValues(
   headers: string[],
   row: string[],
@@ -1521,7 +1822,6 @@ function attributeValues(
     "category",
     "variant_type",
     "variant_value",
-    "gpsr_manufacturer_name",
     "subcategory",
     "eu_production_evidence_url",
     "primary_image_url",
@@ -1535,10 +1835,21 @@ function attributeValues(
     const value = cell(headers, row, link.source)
     if (value) {
       out[link.field] =
-        link.field === "production_country" ? normalizeProductionCountry(value) : value
+        link.field === "production_country"
+          ? normalizeProductionCountry(value)
+          : normalizeImportAttributeDisplayValue(link.field, value)
     }
   }
-  return out
+  // Keep category path for spec-slot resolution, then strip identity helpers.
+  out.subcategory = readValue(headers, row, links, "subcategory")
+  out.subcategory_l3 = readValue(headers, row, links, "subcategory_l3")
+  out.category = readValue(headers, row, links, "category")
+  const merged = mergeProductSpecSlotsIntoValues(out)
+  const cleaned = { ...merged.values }
+  delete cleaned.subcategory
+  delete cleaned.subcategory_l3
+  delete cleaned.category
+  return cleaned
 }
 
 /** Removes category rows created in the current write, newest first. */

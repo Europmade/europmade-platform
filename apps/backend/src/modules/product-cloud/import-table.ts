@@ -3,10 +3,38 @@
  * row is exactly one product. Never treats columns as products.
  */
 
-import { COLUMN_ALIASES, CANONICAL_COLUMNS } from "./import-columns"
+import {
+  COLUMN_ALIASES,
+  CANONICAL_COLUMNS,
+  IGNORED_IMPORT_COLUMNS,
+  IGNORED_IMPORT_FIELDS,
+} from "./import-columns"
 
 const REQUIREMENT_LABEL =
-  "verplicht|optioneel|voorwaardelijk verplicht|automatisch|admincontrole|via seller-wizard"
+  [
+    "verplicht",
+    "optioneel",
+    "optionele?",
+    "voorwaardelijk verplicht",
+    "automatisch",
+    "admincontrole",
+    "via seller-wizard",
+    // EN / DE / FR suffixes used by localized Seller templates
+    "conditionally required",
+    "required",
+    "optional",
+    "conditional",
+    "automatic",
+    "pflicht",
+    "bedingt erforderlich",
+    "bedingt",
+    "automatisch",
+    "obligatoire sous condition",
+    "obligatoire",
+    "facultatif",
+    "conditionnel",
+    "automatique",
+  ].join("|")
 
 export function decodeImportText(value: string): string {
   return String(value || "")
@@ -239,6 +267,17 @@ export function parseImportGrid(rawRows: string[][]): ParsedImportGrid {
   const rows: string[][] = []
   const excel_row_numbers: number[] = []
   let skipped_header_rows = 0
+  let skippedEmptyTemplateRows = 0
+  const coreImportFields = new Set([
+    "title",
+    "brand",
+    "ean",
+    "mpn",
+    "sku",
+    "category",
+    "subcategory",
+    "subcategory_l3",
+  ])
   for (let i = headerIndex + 1; i < table.length; i++) {
     const row = table[i]
     if (headerMatchScore(row).score >= 3) {
@@ -252,6 +291,17 @@ export function parseImportGrid(rawRows: string[][]): ParsedImportGrid {
       skipped_header_rows += 1
       continue
     }
+    // Skip pre-filled Excel template rows that only have auto formulas/warnings
+    // (no product identity or category content yet).
+    const hasCoreContent = headerRow.some((header, colIdx) => {
+      const field = canonicalFieldFromHeader(header)
+      if (!field || !coreImportFields.has(field)) return false
+      return String(aligned[colIdx] || "").trim() !== ""
+    })
+    if (!hasCoreContent) {
+      skippedEmptyTemplateRows += 1
+      continue
+    }
     rows.push(aligned)
     excel_row_numbers.push(nonemptyMeta[i]?.excelRow ?? i + 1)
   }
@@ -261,11 +311,32 @@ export function parseImportGrid(rawRows: string[][]): ParsedImportGrid {
     rows,
     excel_row_numbers,
     header_excel_row: nonemptyMeta[headerIndex]?.excelRow ?? 1,
-    skipped_empty,
+    skipped_empty: skipped_empty + skippedEmptyTemplateRows,
     skipped_header_rows,
     structure_error: rows.length ? null : NO_DATA_ROWS_MESSAGE,
     transposed: false,
   }
+}
+
+function isIgnoredImportHeader(header: string): boolean {
+  const n = stripRequirementSuffix(normalizeHeader(header))
+  if (!n) return false
+  for (const field of IGNORED_IMPORT_FIELDS) {
+    const aliases = [
+      field.column,
+      field.nl_name,
+      ...(COLUMN_ALIASES[field.column] || field.aliases || []),
+    ].map((a) => stripRequirementSuffix(normalizeHeader(a)))
+    if (aliases.includes(n)) return true
+    if (
+      aliases.some(
+        (a) => a.length >= 5 && (n === a || n.startsWith(`${a} `) || a.startsWith(`${n} `))
+      )
+    ) {
+      return true
+    }
+  }
+  return IGNORED_IMPORT_COLUMNS.has(n.replace(/\s+/g, "_"))
 }
 
 export function unknownImportColumns(
@@ -275,7 +346,11 @@ export function unknownImportColumns(
   const used = new Set(
     Object.values(mapping).filter((v): v is string => Boolean(v))
   )
-  return headers.filter((h) => h.trim() && !used.has(h))
+  return headers.filter((h) => {
+    if (!h.trim() || used.has(h)) return false
+    if (isIgnoredImportHeader(h)) return false
+    return true
+  })
 }
 
 export function splitDelimitedText(text: string): string[][] {

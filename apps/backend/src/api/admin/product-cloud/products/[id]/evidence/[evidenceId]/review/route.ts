@@ -8,11 +8,15 @@ import { PRODUCT_CLOUD_MODULE } from "../../../../../../../../modules/product-cl
 import type ProductCloudModuleService from "../../../../../../../../modules/product-cloud/service"
 import { VERIFICATION_MODULE } from "../../../../../../../../modules/verification"
 import type VerificationModuleService from "../../../../../../../../modules/verification/service"
+import {
+  EvidenceReviewRejected,
+  planEvidenceReview,
+} from "../../../../../../../../modules/verification/evidence-review"
 
 type RouteParams = { id: string; evidenceId: string }
 
 const Body = z.object({
-  status: z.enum(["approved", "rejected"]),
+  status: z.enum(["approved", "rejected", "needs_info"]),
   reason: z.string().trim().max(2000).optional(),
 })
 
@@ -29,7 +33,7 @@ export async function POST(
   if (!parsed.success) {
     throw new MedusaError(
       MedusaError.Types.INVALID_DATA,
-      "status moet approved of rejected zijn."
+      "status moet approved, rejected of needs_info zijn."
     )
   }
 
@@ -50,28 +54,29 @@ export async function POST(
   }
 
   const actor =
-    (req.auth_context as { actor_id?: string } | undefined)?.actor_id ?? "admin"
-  if (
-    row.uploaded_by_customer_id &&
-    actor &&
-    row.uploaded_by_customer_id === actor
-  ) {
-    throw new MedusaError(
-      MedusaError.Types.NOT_ALLOWED,
-      "Een seller mag eigen bewijs niet goedkeuren."
-    )
+    (req.auth_context as { actor_id?: string } | undefined)?.actor_id || ""
+  let plan
+  try {
+    plan = planEvidenceReview({
+      status: parsed.data.status,
+      reason: parsed.data.reason,
+      actor_id: actor,
+      uploaded_by_customer_id: row.uploaded_by_customer_id,
+    })
+  } catch (err) {
+    if (err instanceof EvidenceReviewRejected) {
+      throw new MedusaError(MedusaError.Types.NOT_ALLOWED, err.message)
+    }
+    throw err
   }
+
   const updated = await verification.updateProductOriginEvidences({
     id: evidenceId,
-    verification_status: parsed.data.status,
-    verification_notes:
-      parsed.data.reason ??
-      (parsed.data.status === "approved"
-        ? "Goedgekeurd door EuropMade"
-        : "Afgekeurd door EuropMade"),
+    verification_status: plan.verification_status,
+    verification_notes: plan.verification_notes,
     verified_at: new Date(),
-    verified_by: actor,
-    verification_method: "human_review",
+    verified_by: plan.verified_by,
+    verification_method: plan.verification_method,
   })
 
   await productCloud.createProductFieldChanges({
@@ -79,27 +84,13 @@ export async function POST(
     product_version_id: row.product_version_id ?? null,
     seller_id: "admin",
     actor_customer_id: actor,
-    field_code:
-      parsed.data.status === "approved"
-        ? "compliance.approved"
-        : "compliance.rejected",
-    field_label:
-      parsed.data.status === "approved"
-        ? "Compliance goedgekeurd"
-        : "Compliance afgekeurd",
+    field_code: plan.field_code,
+    field_label: plan.field_label,
     old_value: row.verification_status,
-    new_value: parsed.data.reason || parsed.data.status,
-    status: parsed.data.status === "approved" ? "approved" : "rejected",
+    new_value: plan.new_value,
+    status: plan.field_status,
     reason: parsed.data.reason ?? null,
   })
-
-  if (row.product_origin_id && (row.evidence_kind || "made_in_europe") === "made_in_europe") {
-    await verification.updateProductOrigins({
-      id: row.product_origin_id,
-      status:
-        parsed.data.status === "approved" ? "Geverifieerd" : "Afgewezen",
-    })
-  }
 
   res.json({ evidence: updated })
 }

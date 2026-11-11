@@ -120,7 +120,15 @@ export function BulkApprovalDialog({ mode, productIds, onClose, onApplied }: Pro
     }
   }
 
-  const blocked = (report?.results || []).filter((row) => row.status !== "eligible" && row.status !== "approved")
+  const rows = report?.results || []
+  const warningCount =
+    report?.warning_count ??
+    rows.filter((row) => (row.findings || []).some((finding) => finding.severity === "warning")).length
+  const partial =
+    applied &&
+    (report?.partial ||
+      ((report?.approved_count || 0) > 0 &&
+        ((report?.skipped_count || 0) > 0 || (report?.failed_count || 0) > 0)))
 
   return (
     <div
@@ -142,10 +150,10 @@ export function BulkApprovalDialog({ mode, productIds, onClose, onApplied }: Pro
             : "Producten van een merk of fabrikant goedkeuren"}
         </h2>
         <p className="mt-1 text-[11px] text-wf-600">
-          Elk product wordt met dezelfde voorwaarden beoordeeld als individuele
-          goedkeuring. Goedkeuren zet de versie op Goedgekeurd en publiceert
-          niet. Offers en fabrikantgegevens blijven ongewijzigd. Er wordt geen
-          fabrikant aangemaakt.
+          Elk product wordt met dezelfde validatie beoordeeld als de individuele
+          productpagina. Goedkeuren publiceert die versie. Een aanbodprobleem
+          blokkeert de goedkeuring niet en trekt een publicatie niet terug.
+          Offers en fabrikantgegevens blijven ongewijzigd.
         </p>
         {mode === "selected" ? (
           <p className="mt-2 text-xs font-semibold text-wf-900">
@@ -211,8 +219,12 @@ export function BulkApprovalDialog({ mode, productIds, onClose, onApplied }: Pro
           <div className="mt-3 text-xs text-wf-800">
             <p className="font-semibold">
               {applied
-                ? `${report.approved_count} goedgekeurd, ${report.skipped_count} overgeslagen, ${report.failed_count} mislukt.`
-                : `${report.eligible_count} komen in aanmerking, ${report.skipped_count} niet, ${report.failed_count} kon niet worden gecontroleerd.`}
+                ? partial
+                  ? `Gedeeltelijk geslaagd: ${report.approved_count} goedgekeurd en gepubliceerd, ${report.skipped_count} niet goedgekeurd of overgeslagen, ${report.failed_count} technisch mislukt.`
+                  : report.approved_count > 0 && report.skipped_count === 0 && report.failed_count === 0
+                    ? `Volledig geslaagd: ${report.approved_count} goedgekeurd en gepubliceerd.`
+                    : `${report.approved_count} goedgekeurd en gepubliceerd, ${report.skipped_count} niet goedgekeurd of overgeslagen, ${report.failed_count} technisch mislukt.`
+                : `${report.selected_count ?? rows.length} geselecteerd, ${report.eligible_count} geschikt, ${report.skipped_count} niet geschikt, ${warningCount} met waarschuwingen.`}
             </p>
             {report.limit_reached ? (
               <p className="mt-1 text-[11px] text-amber-800">
@@ -220,17 +232,68 @@ export function BulkApprovalDialog({ mode, productIds, onClose, onApplied }: Pro
                 beoordeeld.
               </p>
             ) : null}
-            {blocked.length > 0 ? (
-              <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto rounded border border-wf-200 p-2 text-[11px]">
-                {blocked.map((row) => (
-                  <li key={`${row.product_id}-${row.status}`}>
-                    <span className="font-medium">{row.title || row.product_id}</span>
-                    {": "}
-                    {row.reason || row.status}
+            <ul className="mt-2 max-h-80 space-y-2 overflow-y-auto">
+              {rows.map((row) => {
+                const warnings = (row.findings || []).filter(
+                  (finding) => finding.severity === "warning" || finding.category === "warning"
+                )
+                const sales = (row.findings || []).filter((finding) => {
+                  const blocks = finding.blocks || []
+                  return finding.category === "sale" || (blocks.length > 0 && blocks.every((gate) => gate === "sale"))
+                })
+                const blockers = (row.findings || []).filter(
+                  (finding) => !warnings.includes(finding) && !sales.includes(finding) && finding.severity !== "warning"
+                )
+                return (
+                  <li key={`${row.product_id}-${row.status}`} className="rounded border border-wf-200 p-2 text-[11px]">
+                    <p className="font-semibold text-wf-900">
+                      {row.title || row.product_id}
+                      <span className="ml-2 font-normal text-wf-600">{row.outcome_label || row.status}</span>
+                    </p>
+                    <p className="mt-1 text-wf-600">
+                      Identificatie: {row.identifier || row.product_id}
+                      {" · "}Status: {row.lifecycle_status || "—"}
+                      {" · "}Publicatie: {row.publication_status || "—"}
+                      {" · "}Aanbod: {row.offer_status || "—"}
+                      {" · "}Verkoopbaarheid: {row.sellability || "—"}
+                    </p>
+                    {row.decided_by ? (
+                      <p className="text-wf-600">Beoordelaar: {row.decided_by}</p>
+                    ) : null}
+                    {blockers.length > 0 ? (
+                      <ul className="mt-1 list-disc pl-4 text-red-800">
+                        {blockers.map((finding) => (
+                          <li key={`${row.product_id}-b-${finding.code}`}>
+                            Blokkade · {finding.field}: {finding.message}. {finding.action}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {warnings.length > 0 ? (
+                      <ul className="mt-1 list-disc pl-4 text-amber-800">
+                        {warnings.map((finding) => (
+                          <li key={`${row.product_id}-w-${finding.code}`}>
+                            Waarschuwing · {finding.field}: {finding.message}. {finding.action}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {sales.length > 0 ? (
+                      <ul className="mt-1 list-disc pl-4 text-wf-700">
+                        {sales.map((finding) => (
+                          <li key={`${row.product_id}-s-${finding.code}`}>
+                            Aanbod, geen goedkeuringsblokkade · {finding.field}: {finding.message}. {finding.action}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    {blockers.length === 0 && row.reason && row.status !== "eligible" && row.status !== "approved" ? (
+                      <p className="mt-1 text-wf-700">{row.reason}</p>
+                    ) : null}
                   </li>
-                ))}
-              </ul>
-            ) : null}
+                )
+              })}
+            </ul>
           </div>
         ) : null}
         <div className="mt-4 flex flex-wrap gap-2">

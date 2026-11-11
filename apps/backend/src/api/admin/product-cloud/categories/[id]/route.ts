@@ -2,6 +2,7 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
+import { ensureCategoryStructureDraftForId } from "../../../../../modules/cms/ensure-category-structure-draft"
 import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { slugifyCategoryName } from "../../../../../modules/product-cloud/category-attributes"
@@ -174,5 +175,13 @@ export async function PATCH(
     })
   }
 
-  res.status(200).json({ category: serializeCategory(category) })
+  const cmsDraft =
+    body.parent_category_id !== undefined
+      ? await ensureCategoryStructureDraftForId(req.scope, id)
+      : null
+
+  res.status(200).json({
+    category: serializeCategory(category),
+    ...(cmsDraft ? { cms_draft: cmsDraft } : {}),
+  })
 }

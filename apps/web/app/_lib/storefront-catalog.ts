@@ -8,6 +8,8 @@ import {
   getCatalogManufacturer,
   getCatalogProduct,
   getCatalogSeller,
+  getTestCatalogProducts,
+  listCatalogProductRelations,
   listCatalogProducts,
   type CatalogBrandPage,
   type CatalogListProduct,
@@ -20,7 +22,12 @@ import { type ListingProduct } from "./listing-products"
 import { findMarketplaceCategory } from "./marketplace-categories"
 import { categorySlugFromName, localizeCategoryNames } from "./localize-category-names"
 import { type PdpDetail, type PdpGallerySlide, type PdpOffer, type PdpReview } from "./pdp-seed"
-import { resolveMediaUrl } from "@europmade/utils"
+import {
+  isTestCatalogEnabled,
+  mergeTestCatalogProducts,
+  resolveMediaUrl,
+  selectRelatedCategoryProducts,
+} from "@europmade/utils"
 import {
   buildImageSrcSet,
   resolveOptimizedImageUrl,
@@ -103,7 +110,12 @@ function mapListItem(
   return {
     slug: item.id,
     title: item.title,
-    brand: item.brand_name ?? t("brand", locale),
+    description: item.description?.trim() || null,
+    brand: item.brand_name?.trim() || "",
+    brandId: item.brand_id?.trim() || null,
+    brandSlug: item.brand_slug?.trim() || null,
+    brandLogoUrl: resolveMediaUrl(item.brand_logo_url ?? null, backendOrigin),
+    brandPagePublished: item.brand_page_published === true,
     manufacturer: manufacturerName || undefined,
     manufacturerSlug: manufacturerName
       ? slugifyForManufacturer(manufacturerName)
@@ -114,10 +126,13 @@ function mapListItem(
           ? t("sellersOne", locale)
           : tFormat("sellersMany", locale, { count: item.offer_count })
         : t("noSellersYet", locale),
-    categorySlugs: categorySlugsFromNames(item.category_names),
+    categorySlugs: item.category_slugs?.length
+      ? item.category_slugs
+      : categorySlugsFromNames(item.category_names),
     priceCents: eurosToCents(priceEuros),
     offerCount: item.offer_count,
-    rating: item.average_review_score ?? 0,
+    reviewCount: item.review_count ?? 0,
+    rating: item.review_count > 0 ? item.average_review_score ?? 0 : 0,
     countryCode,
     countryLabel: countryDisplayLabel(countryCode, locale),
     verified: item.lifecycle_status === "Verified™",
@@ -130,6 +145,13 @@ function mapListItem(
       item.identifier_value ?? "",
     ].filter(Boolean),
     imageUrl: resolveMediaUrl(item.image_url ?? null, backendOrigin),
+    specs: (item.attributes ?? []).flatMap((row) => {
+      const code = row.code?.trim()
+      const value = row.value?.trim()
+      if (!code || !value) return []
+      return [{ code, value }]
+    }),
+    publishedAt: item.published_at ?? null,
   }
 }
 
@@ -151,14 +173,36 @@ async function toStorefrontProducts(
         const candidates = detail.offers.filter(
           (o) => o.offer_id.startsWith("offr_") && Number(o.quantity_available) > 0
         )
-        let hasUsableOffer = false
+        let winner: (typeof candidates)[number] | null = null
         for (const offer of candidates) {
           if (await isCheckoutReadyOffer(offer.offer_id)) {
-            hasUsableOffer = true
+            winner = offer
             break
           }
         }
-        return hasUsableOffer ? mapListItem(item, locale, backendOrigin) : null
+        if (!winner) return null
+        const listing = mapListItem(item, locale, backendOrigin)
+        const regular = winner.regular_total_price
+        const current = winner.total_price
+        const onPromo =
+          winner.promo_active === true &&
+          regular != null &&
+          Number.isFinite(regular) &&
+          regular > current
+        const reviewCount = detail.reviews.length
+        return {
+          ...listing,
+          priceCents: Number.isFinite(current) && current > 0 ? eurosToCents(current) : listing.priceCents,
+          regularPriceCents: onPromo && regular != null ? eurosToCents(regular) : null,
+          reviewCount,
+          rating:
+            reviewCount > 0
+              ? detail.reviews.reduce((sum, review) => sum + Number(review.score), 0) / reviewCount
+              : 0,
+          buyBoxOfferId: winner.offer_id,
+          buyBoxSellerId: winner.seller_id,
+          buyBoxSellerName: winner.seller_name,
+        }
       } catch {
         return null
       }
@@ -169,7 +213,8 @@ async function toStorefrontProducts(
 
 /**
  * Listing: producten met geldige Commerce Cloud-offers (weergave).
- * Checkout-revalidate blijft op PDP/cart — niet op homepage-lijsten.
+ * De winnende, checkout-klare aanbieding wordt aan de kaart gekoppeld.
+ * De winkelwagen controleert bij toevoegen opnieuw.
  */
 export async function resolveListingProducts(opts?: {
   categorySlug?: string
@@ -184,6 +229,7 @@ export async function resolveListingProducts(opts?: {
   sort?: "popularity" | "price_asc" | "price_desc" | "rating_desc" | "name_asc" | "name_desc"
   offset?: number
   limit?: number
+  includeAttributes?: boolean
   locale?: StorefrontLocale
   market?: EuMarketCode
 }): Promise<{ products: ListingProduct[]; count: number; source: DataSource }> {
@@ -205,11 +251,17 @@ export async function resolveListingProducts(opts?: {
       sort: opts?.sort,
       offset: opts?.offset,
       limit: opts?.limit,
+      include_attributes: opts?.includeAttributes,
     })
+    const mapped = res.products
+      .filter(hasValidCommerceOffer)
+      .map((item) => mapListItem(item, locale, backendOrigin))
+    const offers = await resolveCategoryShelfOffers(
+      mapped.map((product) => product.slug),
+      market
+    )
     return {
-      products: res.products
-        .filter(hasValidCommerceOffer)
-        .map((item) => mapListItem(item, locale, backendOrigin)),
+      products: mapped.map((product) => withCheckoutOffer(product, offers.get(product.slug))),
       count: res.count,
       source: "api",
     }
@@ -219,6 +271,218 @@ export async function resolveListingProducts(opts?: {
     }
     return { products: [], count: 0, source: "api" }
   }
+}
+
+/**
+ * Products linked from this category by a stored Product Cloud relation.
+ * A product in the same category without that relation is not included.
+ */
+export async function resolveRelatedCategoryProducts(opts: {
+  sourceProducts: ListingProduct[]
+  locale?: StorefrontLocale
+  market?: EuMarketCode
+}): Promise<{ products: ListingProduct[]; relations: Array<{ from_product_id: string; to_product_id: string; relation_type: string }> }> {
+  const sourceIds = opts.sourceProducts.map((product) => product.slug.trim()).filter(Boolean)
+  if (sourceIds.length === 0) return { products: [], relations: [] }
+  try {
+    const { relations } = await listCatalogProductRelations(sourceIds)
+    const targetIds = selectRelatedCategoryProducts(
+      sourceIds,
+      relations,
+      relations.map((relation) => ({ id: relation.to_product_id })),
+      48
+    ).map((target) => target.id)
+    if (targetIds.length === 0) return { products: [], relations }
+    const listed = await resolveListingProducts({
+      ids: targetIds,
+      locale: opts.locale,
+      market: opts.market,
+      limit: targetIds.length,
+    })
+    return {
+      relations,
+      products: selectRelatedCategoryProducts(
+        sourceIds,
+        relations,
+        listed.products.map((product) => ({ ...product, id: product.slug })),
+        48
+      ),
+    }
+  } catch (err) {
+    if (!(err instanceof CatalogApiError) && !(err instanceof TypeError)) {
+      console.error("[storefront-catalog] related products failed", err)
+    }
+    return { products: [], relations: [] }
+  }
+}
+
+/** Alle verkoopbare producten van een categorie, zodat filters niet op één pagina blijven hangen. */
+export async function resolveAllCategoryProducts(opts: {
+  categorySlug: string
+  locale?: StorefrontLocale
+  market?: EuMarketCode
+}): Promise<{ products: ListingProduct[]; count: number; source: DataSource }> {
+  const pageSize = 48
+  const first = await resolveListingProducts({
+    ...opts,
+    sort: "popularity",
+    offset: 0,
+    limit: pageSize,
+    includeAttributes: true,
+  })
+  const products = [...first.products]
+  const seen = new Set(products.map((product) => product.slug))
+  let offset = pageSize
+  while (offset < first.count && offset < 2000) {
+    const next = await resolveListingProducts({
+      ...opts,
+      sort: "popularity",
+      offset,
+      limit: pageSize,
+      includeAttributes: true,
+    })
+    if (next.products.length === 0) break
+    for (const product of next.products) {
+      if (seen.has(product.slug)) continue
+      seen.add(product.slug)
+      products.push(product)
+    }
+    offset += pageSize
+  }
+  return { products, count: products.length, source: first.source }
+}
+
+/**
+ * Vaste testcatalogus voor categoriepagina's. Leeg zodra de modus uit staat.
+ * Prijzen en winkelwagen komen uit de lokale demo-aanbieding.
+ */
+export async function resolveTestCatalogProducts(
+  locale: StorefrontLocale = DEFAULT_STOREFRONT_LOCALE
+): Promise<ListingProduct[]> {
+  if (!isTestCatalogEnabled()) return []
+  try {
+    const body = await getTestCatalogProducts()
+    if (!body.enabled) return []
+    const backendOrigin = await getPageBackendOrigin()
+    return body.products.map((item) => {
+      const offerId = item.offer_id?.trim() || ""
+      const priceCents = eurosToCents(item.from_price ?? 0)
+      const hasOffer = offerId.startsWith("offr_") && priceCents > 0
+      return {
+      slug: item.id,
+      title: item.title,
+      brand: item.brand_name?.trim() || "",
+      brandId: item.brand_id,
+      brandSlug: item.brand_slug,
+      brandLogoUrl: resolveMediaUrl(item.brand_logo_url, backendOrigin),
+      brandPagePublished: false,
+      seller: hasOffer ? item.seller_name?.trim() || t("sellersOne", locale) : t("noSellersYet", locale),
+      categorySlugs: item.category_slugs,
+      priceCents: hasOffer ? priceCents : 0,
+      offerCount: hasOffer ? Math.max(1, item.offer_count) : 0,
+      buyBoxOfferId: hasOffer ? offerId : null,
+      buyBoxSellerId: hasOffer ? item.seller_id ?? null : null,
+      buyBoxSellerName: hasOffer ? item.seller_name ?? null : null,
+      rating: 0,
+      reviewCount: 0,
+      countryCode: "EU",
+      countryLabel: countryDisplayLabel("EU", locale),
+      verified: false,
+      features: [],
+      keywords: [item.title, item.brand_name ?? "", item.gtin].filter(Boolean),
+      imageUrl: resolveMediaUrl(item.image_url, backendOrigin),
+      imageUrls: (item.gallery_urls ?? []).flatMap((url) => {
+        const resolved = resolveMediaUrl(url, backendOrigin)
+        return resolved ? [resolved] : []
+      }),
+      specs: item.specs.flatMap((spec) => {
+        const code = spec.code.trim()
+        const value = spec.value.trim()
+        if (!code || !value) return []
+        return [{ code, value }]
+      }),
+      testCatalog: !hasOffer,
+    }
+    })
+  } catch (err) {
+    if (!(err instanceof CatalogApiError) && !(err instanceof TypeError)) {
+      console.error("[storefront-catalog] test catalog failed", err)
+    }
+    return []
+  }
+}
+
+export { mergeTestCatalogProducts }
+
+function withCheckoutOffer(
+  product: ListingProduct,
+  offer: CategoryShelfOffer | undefined
+): ListingProduct {
+  if (!offer) return product
+  return {
+    ...product,
+    priceCents: offer.priceCents > 0 ? offer.priceCents : product.priceCents,
+    regularPriceCents: offer.regularPriceCents,
+    reviewCount: offer.reviewCount,
+    rating: offer.rating ?? 0,
+    buyBoxOfferId: offer.offerId,
+    buyBoxSellerId: offer.sellerId,
+    buyBoxSellerName: offer.sellerName,
+  }
+}
+
+export type CategoryShelfOffer = {
+  offerId: string
+  sellerId: string
+  sellerName: string
+  priceCents: number
+  regularPriceCents: number | null
+  reviewCount: number
+  rating: number | null
+}
+
+/** Buy-box offer for the category shelf. Missing or not checkout-ready means no cart button. */
+export async function resolveCategoryShelfOffers(
+  productIds: string[],
+  market: EuMarketCode
+): Promise<Map<string, CategoryShelfOffer>> {
+  const found = new Map<string, CategoryShelfOffer>()
+  await Promise.all(
+    productIds.map(async (productId) => {
+      try {
+        const detail = await getCatalogProduct(productId, market, { cache: "no-store" })
+        if (detail.test_catalog) return
+        const offers = detail.offers.filter(
+          (offer) => offer.offer_id.startsWith("offr_") && Number(offer.quantity_available) > 0
+        )
+        const winner = offers.find((offer) => offer.is_winner) ?? offers[0]
+        if (!winner || !(await isCheckoutReadyOffer(winner.offer_id))) return
+        const reviewCount = detail.reviews.length
+        const regular = winner.regular_total_price
+        const current = winner.total_price
+        const onPromo =
+          winner.promo_active === true &&
+          regular != null &&
+          Number.isFinite(regular) &&
+          regular > current
+        found.set(productId, {
+          offerId: winner.offer_id,
+          sellerId: winner.seller_id,
+          sellerName: winner.seller_name,
+          priceCents: eurosToCents(current),
+          regularPriceCents: onPromo ? eurosToCents(regular) : null,
+          reviewCount,
+          rating:
+            reviewCount > 0
+              ? detail.reviews.reduce((sum, review) => sum + Number(review.score), 0) / reviewCount
+              : null,
+        })
+      } catch {
+        /* A product without a readable offer stays in the shelf without a cart button. */
+      }
+    })
+  )
+  return found
 }
 
 export async function resolveFeaturedProducts(
@@ -426,6 +690,7 @@ async function mapApiDetail(
 ): Promise<PdpDetail> {
   const p = detail.product
   const backendOrigin = await getPageBackendOrigin()
+  const testCatalog = detail.test_catalog === true && detail.offers.length === 0
   const listing = mapListItem(
     {
       id: p.id,
@@ -456,6 +721,19 @@ async function mapApiDetail(
     backendOrigin
   )
   listing.countryLabel = countryDisplayLabel(listing.countryCode, locale)
+  if (testCatalog) {
+    listing.testCatalog = true
+    listing.priceCents = 0
+    listing.offerCount = 0
+    listing.seller = t("noSellersYet", locale)
+    listing.imageUrl = resolveMediaUrl(p.image_url ?? null, backendOrigin)
+    listing.specs = (p.attributes ?? []).flatMap((row) => {
+      const code = row.code?.trim()
+      const value = row.value?.trim()
+      if (!code || !value) return []
+      return [{ code, value }]
+    })
+  }
 
   const mie = detail.made_in_europe ?? null
   const ownership = detail.european_ownership ?? null
@@ -471,17 +749,19 @@ async function mapApiDetail(
   const sellerReviews = mapReviews(detail.seller_reviews, locale)
 
   let related: ListingProduct[] = []
-  try {
-    const relatedList = await listCatalogProducts({
-      category: p.category_names[0],
-      region_code: market,
-      limit: 8,
-    })
-    related = (await toStorefrontProducts(relatedList.products, locale, market ?? "NL"))
-      .filter((x) => x.slug !== p.id && x.categorySlugs.includes(catSlug))
-      .slice(0, 5)
-  } catch {
-    related = []
+  if (!testCatalog) {
+    try {
+      const relatedList = await listCatalogProducts({
+        category: p.category_names[0],
+        region_code: market,
+        limit: 8,
+      })
+      related = (await toStorefrontProducts(relatedList.products, locale, market ?? "NL"))
+        .filter((x) => x.slug !== p.id && x.categorySlugs.includes(catSlug))
+        .slice(0, 5)
+    } catch {
+      related = []
+    }
   }
 
   const categoryDisplay = localizeCategoryNames(p.category_names, locale)
@@ -515,6 +795,9 @@ async function mapApiDetail(
       ? {
           is_made_in_europe: mie.is_made_in_europe,
           score: mie.score,
+          incomplete: mie.incomplete,
+          evidence_approved: mie.evidence_approved,
+          production_country_label: mie.production_country_label,
           assembly_points: mie.assembly_points,
           parts_points: mie.parts_points,
           materials_points: mie.materials_points,
@@ -542,10 +825,12 @@ async function mapApiDetail(
     descriptionParagraphs:
       paragraphs.length > 0
         ? paragraphs
-        : [
-            tFormat("descriptionAvailableVia", locale, { title: p.title }),
-            t("descriptionBuyBoxAuto", locale),
-          ],
+        : testCatalog
+          ? []
+          : [
+              tFormat("descriptionAvailableVia", locale, { title: p.title }),
+              t("descriptionBuyBoxAuto", locale),
+            ],
     specs: [
       { label: t("brand", locale), value: p.brand_name ?? "—" },
       {
@@ -559,6 +844,12 @@ async function mapApiDetail(
           ? `${p.identifier_type ?? "ID"} ${p.identifier_value}`
           : "—",
       },
+      ...((p.attributes || [])
+        .filter((row) => String(row.value || "").trim())
+        .map((row) => ({
+          label: row.name,
+          value: row.value,
+        })) || []),
     ],
     downloads: [],
     colorVariants: [],
@@ -576,14 +867,16 @@ async function mapApiDetail(
       : null,
     offers,
     availability: detail.availability ?? (offers.length > 0 ? "orderable" : "not_deliverable"),
-    alternatives: offers.length > 0 ? [] : related,
-    buyBoxNotice: t("buyBoxNotice", locale),
-    productReviews:
-      productReviews.length > 0
+    alternatives: testCatalog || offers.length > 0 ? [] : related,
+    buyBoxNotice: testCatalog ? t("testProductNotForSale", locale) : t("buyBoxNotice", locale),
+    productReviews: testCatalog
+      ? []
+      : productReviews.length > 0
         ? productReviews
         : [{ stars: 0, excerpt: t("noProductReviewsYet", locale), verified: false }],
-    sellerReviews:
-      sellerReviews.length > 0
+    sellerReviews: testCatalog
+      ? []
+      : sellerReviews.length > 0
         ? sellerReviews
         : [
             {
@@ -597,11 +890,13 @@ async function mapApiDetail(
     // Seller-owned FAQ only — no EuropMade platform FAQ seed on the PDP.
     faqs: [],
     sellerFaqs: [],
-    pairsWellWith: related.slice(0, 4).map((r) => ({
-      slug: r.slug,
-      title: r.title,
-      priceCents: r.priceCents,
-    })),
+    pairsWellWith: testCatalog
+      ? []
+      : related.slice(0, 4).map((r) => ({
+          slug: r.slug,
+          title: r.title,
+          priceCents: r.priceCents,
+        })),
     relatedSlugs: related.map((r) => r.slug),
     ...(() => {
       const gallerySlides = buildGallerySlides(detail, backendOrigin)

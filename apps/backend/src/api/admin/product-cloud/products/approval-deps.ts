@@ -5,11 +5,22 @@ import { COMMERCE_CLOUD_MODULE } from "../../../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../../../modules/commerce-cloud/service"
 import { PARTNER_MODULE } from "../../../../modules/partner"
 import type PartnerModuleService from "../../../../modules/partner/service"
-import { adminDecideVersionWorkflow } from "../../../../workflows/product-cloud"
+import {
+  adminDecideVersionWorkflow,
+  publishVersionWorkflow,
+} from "../../../../workflows/product-cloud"
+import {
+  productPublicationBlockers,
+  publishVersionAfterApproval,
+} from "../../../../modules/product-cloud/approval-publication"
 import { buildSellerProductManagerDetail } from "../../../store/product-cloud/product-manager"
 import { assertValidGtinForSubmission } from "../../../store/product-cloud/submit-gates"
 import { listSectionReviewsForProduct } from "../../../../modules/product-cloud/section-review-helpers"
-import type { ProductApprovalDeps } from "../../../../modules/product-cloud/product-approval-decision"
+import {
+  describeOfferStatus,
+  describeSellability,
+  type ProductApprovalDeps,
+} from "../../../../modules/product-cloud/product-approval-decision"
 
 const NOT_PUBLISHABLE =
   "Product is niet publiceerbaar — keur eerst verplichte documenten goed en controleer completeness."
@@ -51,10 +62,25 @@ export function buildAdminApprovalDeps(scope: MedusaContainer): ProductApprovalD
         partner,
         scope
       )
+      const productReasons = productPublicationBlockers(
+        detail?.completeness.publication_blocked_reasons || []
+      )
       return {
-        publishable: !!detail?.completeness.publishable,
-        reason:
-          detail?.completeness.publication_blocked_reasons?.[0] || NOT_PUBLISHABLE,
+        publishable: productReasons.length === 0,
+        reason: productReasons[0] || NOT_PUBLISHABLE,
+        findings: detail?.completeness.findings || [],
+        preview: detail
+          ? {
+              identifier: detail.identifier_value ?? null,
+              lifecycle_status: detail.lifecycle_status ?? null,
+              publication_status: detail.publication_status ?? null,
+              offer_status: describeOfferStatus({
+                offer_count: detail.offers?.offer_count,
+                sales_status: detail.offers?.sales_status,
+              }),
+              sellability: describeSellability(detail.completeness?.sale_presentation),
+            }
+          : null,
       }
     },
     assertGtin: (productId) => assertValidGtinForSubmission(productCloud, productId),
@@ -68,7 +94,48 @@ export function buildAdminApprovalDeps(scope: MedusaContainer): ProductApprovalD
           reason: input.reason,
         },
       })
-      return result as { version?: unknown; lifecycle_status?: string }
+      const decided = result as {
+        version?: { publication_status?: string }
+        lifecycle_status?: string
+      }
+      const product = await productCloud.retrieveProduct(input.product_id)
+      const published = await publishVersionAfterApproval({
+        statusAfterApproval: decided.version?.publication_status,
+        publish: async () => {
+          const { result: publishedResult } = await publishVersionWorkflow(scope).run({
+            input: {
+              product_id: input.product_id,
+              version_id: input.version_id,
+              seller_id: product.current_owner_seller_id,
+            },
+          })
+          return publishedResult as { version?: unknown; lifecycle_status?: string }
+        },
+        revertToReview: async () => {
+          await productCloud.updateProductVersions({
+            id: input.version_id,
+            publication_status: "In review",
+            admin_review_outcome: null,
+            approval_decided_at: null,
+            approval_decided_by: null,
+            approval_rejection_reason: null,
+          })
+          await productCloud.createProductFieldChanges({
+            product_id: input.product_id,
+            product_version_id: input.version_id,
+            seller_id: "admin",
+            actor_customer_id: input.actor_id,
+            field_code: "publication.approval",
+            field_label: "Productgoedkeuring",
+            old_value: "Goedgekeurd",
+            new_value: "In review",
+            status: "pending",
+            reason: "Publicatie mislukt. De versie blijft in beoordeling.",
+          })
+        },
+      })
+      if (!published.published || !published.result) return decided
+      return published.result
     },
     listProducts: (filter) =>
       productCloud.listProducts(filter, {

@@ -2,10 +2,21 @@
 
 import Link from "next/link"
 import { Badge, Button } from "@europmade/ui"
+import { useEffect, useState } from "react"
 import {
+  ProductApprovalAdminApiError,
+  saveAdminMadeInEurope,
   type AdminProductDetail,
   type SectionReviewKey,
 } from "../../lib/product-approval-admin-api"
+import {
+  EuropeanOwnershipAdminApiError,
+  updateEuropeanOwnershipBand,
+} from "../../lib/european-ownership-admin-api"
+import {
+  ComplianceAdminApiError,
+  reviewComplianceEvidence,
+} from "../../lib/compliance-admin-api"
 import {
   CentralComplianceForm,
   CentralDescriptionForm,
@@ -57,6 +68,56 @@ export const ADMIN_WIZARD_STEPS: Array<{
   { key: "translations", short: "Vertalingen", label: "Vertalingen" },
   { key: "publish", short: "Publiceren", label: "Publiceren" },
 ]
+
+function adminControlStrip(product: AdminProductDetail): Array<[string, string]> {
+  const status = product.publication_status
+  const outcome = product.admin_review_outcome
+  let approval = "Nog niet ingediend"
+  if (outcome === "rejected") approval = "Afgekeurd"
+  else if (outcome === "needs_info") approval = "Aanvulling gevraagd"
+  else if (
+    outcome === "approved" ||
+    status === "Gepubliceerd" ||
+    status === "Goedgekeurd"
+  ) {
+    approval = "Goedgekeurd"
+  } else if (status === "In review") {
+    approval = "Wacht op productgoedkeuring"
+  }
+
+  const offerCount = product.offers?.offer_count ?? product.offer_count ?? 0
+  const sales = product.offers?.sales_status
+  let offer = "Geen aanbod"
+  if (offerCount > 0 && sales === "paused") offer = "Gepauzeerd"
+  else if (offerCount > 0 && (sales === "active" || sales === "mixed")) offer = "Actief"
+  else if (offerCount > 0) offer = "Aanwezig"
+
+  const completeness = product.completeness as {
+    sale_presentation?: string
+    findings?: Array<{ category?: string; message?: string }>
+  } | null
+  const sale = completeness?.sale_presentation
+  const saleReason = completeness?.findings?.find((finding) => finding.category === "sale")?.message
+  const sellabilityBase =
+    sale === "for_sale"
+      ? "Te koop"
+      : sale === "paused"
+        ? "Gepauzeerd"
+        : sale === "no_offer"
+          ? "Geen aanbod"
+          : sale === "not_published"
+            ? "Niet in winkel"
+            : "Niet verkoopbaar"
+  const sellability =
+    sale !== "for_sale" && saleReason ? `${sellabilityBase} — ${saleReason}` : sellabilityBase
+
+  return [
+    ["Productgoedkeuring", approval],
+    ["Publicatiestatus", status || "—"],
+    ["Aanbodstatus", offer],
+    ["Verkoopbaarheid", sellability],
+  ]
+}
 
 export function AdminWizardShell(props: {
   id: string
@@ -218,17 +279,85 @@ export function AdminWizardShell(props: {
                 String(product.workflow_status || "")
               )}
             </Badge>
+            {adminControlStrip(product).map(([label, value]) => (
+              <Badge key={label} variant="outline">
+                {label}: {value}
+              </Badge>
+            ))}
           </div>
           <p className="mt-2 text-[11px] text-wf-600">
-            {completeness.publishable ? "Publiceerbaar" : "Niet publiceerbaar"}{" "}
+            {product.publication_status === "Gepubliceerd"
+              ? "Gepubliceerd"
+              : (completeness.findings || []).some(
+                    (finding) =>
+                      finding.severity === "blocker" &&
+                      finding.category !== "sale" &&
+                      finding.category !== "warning"
+                  )
+                ? "Productinformatie onvolledig"
+                : (completeness.findings || []).some((finding) => finding.category === "sale")
+                  ? "Alleen het aanbod blokkeert de verkoop"
+                  : completeness.publishable
+                    ? "Publiceerbaar"
+                    : "Niet publiceerbaar"}{" "}
             · Info: {completeness.percent ?? 0}% · Compliance:{" "}
             {adminLabel(
               ADMIN_EVIDENCE_STATUS_LABELS,
               String(completeness.compliance_review_status || "")
             )}
           </p>
-          {blocked[0] ? (
-            <p className="mt-1 text-[11px] text-red-800">{blocked[0]}</p>
+          {(completeness.findings || []).length > 0 ? (
+            <ul className="mt-2 space-y-1 rounded border border-wf-300 bg-white p-2 text-[11px] text-wf-800">
+              {(completeness.findings || []).map((finding) => (
+                <li key={finding.code}>
+                  <span className="font-semibold">
+                    {finding.severity === "warning" ? "Waarschuwing" : "Blokkade"}
+                    {" · "}
+                    {finding.category === "submission"
+                      ? "Indiening"
+                      : finding.category === "approval"
+                        ? "Goedkeuring"
+                        : finding.category === "publication"
+                          ? "Publicatie"
+                          : finding.category === "sale"
+                            ? "Verkoop"
+                            : "Waarschuwing"}
+                    {" · "}
+                    {finding.field}
+                  </span>
+                  {": "}
+                  {finding.message} {finding.action}
+                </li>
+              ))}
+            </ul>
+          ) : blocked.length > 0 ? (
+            <ul className="mt-1 space-y-1 text-[11px] text-red-800">
+              {blocked.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          ) : null}
+          {fieldChanges.some((change) =>
+            String(change.field_code || "").startsWith("import.issue.")
+          ) ? (
+            <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-950">
+              <p className="font-semibold">
+                Importgeschiedenis. Dit is de oorspronkelijke melding, geen
+                actuele blokkade.
+              </p>
+              <ul className="mt-1 list-disc pl-4">
+                {fieldChanges
+                  .filter((change) =>
+                    String(change.field_code || "").startsWith("import.issue.")
+                  )
+                  .map((change) => (
+                    <li key={String(change.id || change.field_code)}>
+                      {change.field_label || change.field_code}:{" "}
+                      {change.new_value || "leeg"} — {change.reason}
+                    </li>
+                  ))}
+              </ul>
+            </div>
           ) : null}
         </div>
       </div>
@@ -668,13 +797,30 @@ export function AdminWizardShell(props: {
                       : "—"
                   }
                 />
+                <MadeInEuropeBandsEditor
+                  key={`${id}:mie:${String(
+                    (mie.score as { score?: number | null } | null)?.score ??
+                      (mie.origin as { assembly_eu_band?: string } | null)
+                        ?.assembly_eu_band ??
+                      "empty"
+                  )}`}
+                  productId={id}
+                  madeInEurope={mie}
+                  onSaved={load}
+                />
+                <EuropeanOwnershipReadout
+                  claim={data.european_ownership}
+                  onSaved={load}
+                />
                 <p className="mt-3 text-[11px] font-semibold uppercase text-wf-500">
                   Evidence ({mieEvidence.length})
                 </p>
                 <EvidenceCards
+                  productId={id}
                   items={mieEvidence}
                   empty="Geen Made in Europe-evidence."
                   onOpen={openAsset}
+                  onSaved={load}
                 />
                 </SectionSplit>
               </Card>
@@ -774,9 +920,11 @@ export function AdminWizardShell(props: {
                   CE-evidence ({ceEvidence.length})
                 </p>
                 <EvidenceCards
+                  productId={id}
                   items={ceEvidence}
                   empty="Geen CE-evidence."
                   onOpen={openAsset}
+                  onSaved={load}
                 />
                 </SectionSplit>
               </Card>
@@ -974,6 +1122,285 @@ export function AdminWizardShell(props: {
   )
 }
 
+function MadeInEuropeBandsEditor({
+  productId,
+  madeInEurope,
+  onSaved,
+}: {
+  productId: string
+  madeInEurope: Record<string, unknown>
+  onSaved: () => Promise<void>
+}) {
+  const score = (madeInEurope.score || null) as {
+    is_made_in_europe?: boolean
+    score?: number | null
+    assembly_points?: number
+    parts_points?: number
+    materials_points?: number
+    max_assembly?: number
+    max_parts?: number
+    max_materials?: number
+    assembly_eu_band?: string
+    parts_eu_level?: string
+    materials_eu_level?: string
+    primary_assembly_country?: string | null
+  } | null
+  const origin = (madeInEurope.origin || null) as {
+    assembly_eu_band?: string | null
+    parts_eu_level?: string | null
+    materials_eu_level?: string | null
+    status?: string | null
+    primary_assembly_country?: string | null
+  } | null
+  const [assembly, setAssembly] = useState(
+    () => score?.assembly_eu_band || origin?.assembly_eu_band || ""
+  )
+  const [parts, setParts] = useState(
+    () => score?.parts_eu_level || origin?.parts_eu_level || ""
+  )
+  const [materials, setMaterials] = useState(
+    () => score?.materials_eu_level || origin?.materials_eu_level || ""
+  )
+  const [country, setCountry] = useState(
+    () =>
+      score?.primary_assembly_country || origin?.primary_assembly_country || ""
+  )
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const calculated = Boolean(score?.is_made_in_europe && score.score != null)
+  const bandsKnown = Boolean(score?.assembly_eu_band || origin?.assembly_eu_band)
+  const complete = Boolean(assembly && parts && materials)
+
+  return (
+    <div className="mt-3 space-y-2 rounded border border-wf-200 bg-wf-50 p-2">
+      <p className="text-[11px] font-semibold uppercase text-wf-500">Made in Europe-score</p>
+      <p className="text-xs text-wf-900">
+        {calculated
+          ? `${score?.score} / 100`
+          : bandsKnown && score
+            ? "Berekend, niet gekwalificeerd"
+            : "Niet berekend"}
+      </p>
+      {score ? (
+        <ul className="space-y-0.5 text-[11px] text-wf-700">
+          <li>
+            Assemblage: {score.assembly_points ?? 0} / {score.max_assembly ?? 75}
+          </li>
+          <li>
+            Onderdelen: {score.parts_points ?? 0} / {score.max_parts ?? 15}
+          </li>
+          <li>
+            Materialen: {score.materials_points ?? 0} / {score.max_materials ?? 10}
+          </li>
+        </ul>
+      ) : (
+        <p className="text-[11px] text-wf-600">
+          Vul assemblage, onderdelen en materialen in. De score wordt berekend; dit is geen vrij percentage en keurt niets goed.
+        </p>
+      )}
+      <div className="grid gap-2 tablet:grid-cols-3">
+        <label className="block text-[11px] font-semibold text-wf-700">
+          Assemblage
+          <select
+            className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal"
+            value={assembly}
+            onChange={(e) => setAssembly(e.target.value)}
+          >
+            <option value="">Kies…</option>
+            <option value="eu_100">100% assemblage in EU</option>
+            <option value="eu_75_99">75–99% assemblage in EU</option>
+            <option value="eu_50_74">50–74% assemblage in EU</option>
+            <option value="eu_below_50">Minder dan 50% assemblage in EU</option>
+          </select>
+        </label>
+        <label className="block text-[11px] font-semibold text-wf-700">
+          Onderdelen
+          <select
+            className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal"
+            value={parts}
+            onChange={(e) => setParts(e.target.value)}
+          >
+            <option value="">Kies…</option>
+            <option value="eu_majority">Overwegend EU</option>
+            <option value="eu_partial">Gedeeltelijk EU</option>
+            <option value="eu_none">Niet of nauwelijks EU</option>
+          </select>
+        </label>
+        <label className="block text-[11px] font-semibold text-wf-700">
+          Materialen
+          <select
+            className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal"
+            value={materials}
+            onChange={(e) => setMaterials(e.target.value)}
+          >
+            <option value="">Kies…</option>
+            <option value="eu_majority">Overwegend EU</option>
+            <option value="eu_partial">Gedeeltelijk EU</option>
+            <option value="eu_none">Niet of nauwelijks EU</option>
+          </select>
+        </label>
+      </div>
+      <label className="block text-[11px] font-semibold text-wf-700">
+        Assemblageland (EU-code, optioneel)
+        <input
+          className="mt-1 h-9 w-full max-w-[8rem] rounded border border-wf-400 bg-white px-2 text-xs font-normal uppercase"
+          value={country}
+          maxLength={2}
+          placeholder="bijv. DE"
+          onChange={(e) => setCountry(e.target.value.toUpperCase())}
+        />
+      </label>
+      {!complete ? (
+        <p className="text-[11px] text-wf-700">
+          Ontbreekt:{" "}
+          {[
+            !assembly ? "assemblage" : "",
+            !parts ? "onderdelen" : "",
+            !materials ? "materialen" : "",
+          ]
+            .filter(Boolean)
+            .join(", ")}
+          . Zonder die drie gegevens blijft de score Niet berekend.
+        </p>
+      ) : null}
+      {notice ? <p className="text-[11px] text-emerald-800">{notice}</p> : null}
+      {error ? <p className="text-[11px] text-amber-800">{error}</p> : null}
+      <Button
+        size="sm"
+        type="button"
+        disabled={busy || !complete}
+        onClick={() => {
+          setBusy(true)
+          setNotice(null)
+          setError(null)
+          void saveAdminMadeInEurope(productId, {
+            assembly_eu_band: assembly,
+            parts_eu_level: parts,
+            materials_eu_level: materials,
+            primary_assembly_country: country.trim() || null,
+          })
+            .then(async () => {
+              setNotice(
+                "Productiegegevens opgeslagen. Score berekend; bewijs en publicatie zijn niet gewijzigd."
+              )
+              await onSaved()
+            })
+            .catch((err: unknown) => {
+              setError(
+                err instanceof ProductApprovalAdminApiError
+                  ? err.message
+                  : "Opslaan mislukt."
+              )
+            })
+            .finally(() => setBusy(false))
+        }}
+      >
+        {busy ? "Bezig…" : "Gegevens voor de score opslaan"}
+      </Button>
+    </div>
+  )
+}
+
+function EuropeanOwnershipReadout({
+  claim,
+  onSaved,
+}: {
+  claim: {
+    id?: string
+    ownership_band?: string
+    ownership_band_label?: string
+    source?: string
+    status?: string
+    source_label?: string
+  } | null
+  onSaved?: () => Promise<void>
+}) {
+  const [band, setBand] = useState(claim?.ownership_band || "unknown")
+  const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setBand(claim?.ownership_band || "unknown")
+  }, [claim?.ownership_band, claim?.id])
+
+  return (
+    <div className="mt-3 rounded border border-wf-200 bg-white p-2">
+      <p className="text-[11px] font-semibold uppercase text-wf-500">
+        Europees eigendom van het merk
+      </p>
+      <p className="mt-1 text-[11px] text-wf-600">
+        Dit gaat over het eigendom van de onderneming, niet over het land waar
+        het product is gemaakt. Los van Made in Europe-score en bewijs.
+      </p>
+      {claim?.id ? (
+        <>
+          <label className="mt-2 block text-[11px] font-semibold text-wf-700">
+            Europees eigendom van het merk
+            <select
+              className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal"
+              value={band}
+              onChange={(e) => setBand(e.target.value)}
+            >
+              <option value="eu_0">0%</option>
+              <option value="eu_1_25">1–25%</option>
+              <option value="eu_26_50">26–50%</option>
+              <option value="eu_51_75">51–75%</option>
+              <option value="eu_76_99">76–99%</option>
+              <option value="eu_100">100%</option>
+              <option value="unknown">Niet bekend</option>
+            </select>
+          </label>
+          <p className="mt-1 text-[11px] text-wf-600">
+            Status: {claim.status || "—"}
+            {claim.source_label ? ` · Bron: ${claim.source_label}` : ""}
+          </p>
+          {notice ? (
+            <p className="mt-1 text-[11px] text-emerald-800">{notice}</p>
+          ) : null}
+          {error ? (
+            <p className="mt-1 text-[11px] text-amber-800">{error}</p>
+          ) : null}
+          <Button
+            size="sm"
+            type="button"
+            className="mt-2"
+            disabled={busy || band === claim.ownership_band}
+            onClick={() => {
+              setBusy(true)
+              setNotice(null)
+              setError(null)
+              void updateEuropeanOwnershipBand(claim.id!, {
+                ownership_band: band,
+              })
+                .then(async () => {
+                  setNotice("Eigendomsband opgeslagen.")
+                  await onSaved?.()
+                })
+                .catch((err: unknown) => {
+                  setError(
+                    err instanceof EuropeanOwnershipAdminApiError
+                      ? err.message
+                      : "Opslaan mislukt."
+                  )
+                })
+                .finally(() => setBusy(false))
+            }}
+          >
+            {busy ? "Bezig…" : "Eigendom opslaan"}
+          </Button>
+        </>
+      ) : (
+        <p className="mt-1 text-xs text-wf-900">
+          {claim?.ownership_band_label || "Niet vastgelegd"}
+          {claim?.status ? ` — ${claim.status}` : ""}
+        </p>
+      )}
+    </div>
+  )
+}
+
 function Card({ children }: { children: React.ReactNode }) {
   return (
     <div className="rounded border border-wf-300 bg-white p-3">{children}</div>
@@ -1090,10 +1517,13 @@ function Lightbox(props: {
 }
 
 function EvidenceCards({
+  productId,
   items,
   empty,
   onOpen,
+  onSaved,
 }: {
+  productId: string
   items: Array<Record<string, unknown>>
   empty: string
   onOpen: (
@@ -1101,6 +1531,7 @@ function EvidenceCards({
     kind: "image" | "pdf" | "other",
     title: string
   ) => void
+  onSaved: () => Promise<void>
 }) {
   if (!items.length) return <p className="text-xs text-wf-600">{empty}</p>
   return (
@@ -1115,6 +1546,8 @@ function EvidenceCards({
           mime_type?: string
           storage_reference?: string
           verification_notes?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         const url = displayMediaUrl(e.storage_reference)
         const pdf = isLikelyPdf({
@@ -1129,10 +1562,87 @@ function EvidenceCards({
             String(e.mime_type || "").startsWith("image/"))
         const title = e.file_name || e.document_type || "Evidence"
         return (
-          <li
+          <EvidenceReviewCard
             key={e.id || e.storage_reference || title}
-            className="rounded border border-wf-200 bg-wf-50 p-3 text-xs"
-          >
+            productId={productId}
+            row={e}
+            title={title}
+            url={url}
+            pdf={pdf}
+            isImage={isImage}
+            onOpen={onOpen}
+            onSaved={onSaved}
+          />
+        )
+      })}
+    </ul>
+  )
+}
+
+function EvidenceReviewCard({
+  productId,
+  row,
+  title,
+  url,
+  pdf,
+  isImage,
+  onOpen,
+  onSaved,
+}: {
+  productId: string
+  row: {
+    id?: string
+    evidence_kind?: string
+    document_type?: string
+    verification_status?: string
+    file_name?: string
+    storage_reference?: string
+    verification_notes?: string
+    verified_at?: string | null
+    verified_by?: string | null
+  }
+  title: string
+  url: string | null
+  pdf: boolean
+  isImage: boolean
+  onOpen: (url: string | null, kind: "image" | "pdf" | "other", title: string) => void
+  onSaved: () => Promise<void>
+}) {
+  const [note, setNote] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const e = row
+
+  async function decide(status: "approved" | "rejected" | "needs_info") {
+    if (!e.id) return
+    if (status === "rejected" && !note.trim()) {
+      setError("Bij afwijzen is een reden verplicht.")
+      return
+    }
+    if (status === "needs_info" && !note.trim()) {
+      setError("Bij aanvullend bewijs is een toelichting verplicht.")
+      return
+    }
+    setBusy(true)
+    setError(null)
+    try {
+      await reviewComplianceEvidence(productId, e.id, {
+        status,
+        reason: status === "approved" ? undefined : note.trim(),
+      })
+      setNote("")
+      await onSaved()
+    } catch (err) {
+      setError(
+        err instanceof ComplianceAdminApiError ? err.message : "Beoordelen mislukt."
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <li className="rounded border border-wf-200 bg-wf-50 p-3 text-xs">
             <div className="flex flex-wrap gap-3">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded border bg-white text-[10px] font-bold">
                 {isImage && url ? (
@@ -1160,10 +1670,10 @@ function EvidenceCards({
                   )}
                 />
                 <ReadField label="Bestand" value={e.file_name || e.id || "—"} />
+                <ReadField label="Beoordeeld" value={e.verified_at ? new Date(e.verified_at).toLocaleString("nl-NL") : "—"} />
+                <ReadField label="Beoordelaar" value={e.verified_by || "—"} />
                 {e.verification_notes ? (
-                  <p className="text-[11px] text-wf-600">
-                    {e.verification_notes}
-                  </p>
+                  <p className="text-[11px] text-wf-600">{e.verification_notes}</p>
                 ) : null}
                 {url ? (
                   <div className="flex gap-3 pt-1 font-semibold">
@@ -1194,11 +1704,28 @@ function EvidenceCards({
                     Geen storage_reference — niet te openen.
                   </p>
                 )}
+                <label className="mt-2 block text-[11px] font-semibold text-wf-700">
+                  Reden of toelichting
+                  <input
+                    className="mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs"
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                  />
+                </label>
+                {error ? <p className="text-[11px] text-red-800">{error}</p> : null}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button size="sm" disabled={busy || !e.id} onClick={() => void decide("approved")}>
+                    Goedkeuren
+                  </Button>
+                  <Button size="sm" variant="secondary" disabled={busy || !e.id} onClick={() => void decide("rejected")}>
+                    Afkeuren
+                  </Button>
+                  <Button size="sm" variant="secondary" disabled={busy || !e.id} onClick={() => void decide("needs_info")}>
+                    Aanvullend bewijs
+                  </Button>
+                </div>
               </div>
             </div>
-          </li>
-        )
-      })}
-    </ul>
+    </li>
   )
 }

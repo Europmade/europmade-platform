@@ -26,6 +26,7 @@ import {
 import { useCart } from "../cart/cart-provider"
 import { PublicStorefrontChrome } from "../marketplace/public-storefront-chrome"
 import { rememberRecentlyViewed } from "../../_lib/recently-viewed"
+import { isFavorite, toggleFavorite } from "../../_lib/favorites"
 import {
   recommendFrequentlyBoughtTogether,
   recommendOthersAlsoViewed,
@@ -56,7 +57,6 @@ import type { StoreCmsBanner } from "../../_lib/cms/fetch-store-cms"
 import { AdSlot } from "../homepage/ad-slot"
 import type { StorefrontAdCreative } from "../../_lib/storefront-ads"
 import { ProductLinkSelector } from "./product-link-selector"
-import { currentLinkMember } from "../../_lib/product-link-pdp"
 
 type TabId =
   | "description"
@@ -124,7 +124,17 @@ export function ProductDetailPage({
   const [descExpanded, setDescExpanded] = useState(false)
   const [cartNote, setCartNote] = useState<string | null>(null)
   const [cartBusy, setCartBusy] = useState(false)
-  const [wishlistNote, setWishlistNote] = useState<string | null>(null)
+  const [favorite, setFavorite] = useState(false)
+  useEffect(() => {
+    const sync = () => setFavorite(isFavorite(detail.slug))
+    sync()
+    window.addEventListener("em-favorites", sync)
+    window.addEventListener("storage", sync)
+    return () => {
+      window.removeEventListener("em-favorites", sync)
+      window.removeEventListener("storage", sync)
+    }
+  }, [detail.slug])
   const [recentProducts, setRecentProducts] = useState<ListingProduct[]>([])
   const [catalogPool, setCatalogPool] = useState<ListingProduct[]>([])
   const [railsReady, setRailsReady] = useState(false)
@@ -146,21 +156,22 @@ export function ProductDetailPage({
 
   const buybox = presentation?.buybox
   const sections = presentation?.sections
-  const showPrice = buybox?.showPrice !== false
-  const showReviews = buybox?.showReviews !== false
-  const showStock = buybox?.showStock !== false
-  const showDelivery = buybox?.showDelivery !== false
-  const showBadges = buybox?.showBadges !== false
-  const showSellers = buybox?.showSellers !== false
-  const sellersVisible = sections?.sellersVisible !== false
+  const testCatalog = detail.listing.testCatalog === true
+  const showPrice = !testCatalog && buybox?.showPrice !== false
+  const showReviews = !testCatalog && buybox?.showReviews !== false
+  const showStock = !testCatalog && buybox?.showStock !== false
+  const showDelivery = !testCatalog && buybox?.showDelivery !== false
+  const showBadges = !testCatalog && buybox?.showBadges !== false
+  const showSellers = !testCatalog && buybox?.showSellers !== false
+  const sellersVisible = !testCatalog && sections?.sellersVisible !== false
   const descriptionVisible = presentation
     ? presentation.descriptionVisible
     : true
   const uspsVisible = sections?.uspsVisible !== false
   const introVisible = presentation != null ? sections?.introVisible !== false : true
   const faqVisible = presentation != null ? sections?.faqVisible !== false : true
-  const relatedVisible = sections?.relatedVisible !== false
-  const frequentlyBoughtVisible = sections?.frequentlyBoughtVisible !== false
+  const relatedVisible = !testCatalog && sections?.relatedVisible !== false
+  const frequentlyBoughtVisible = !testCatalog && sections?.frequentlyBoughtVisible !== false
   const introText = presentation != null
     ? introVisible
       ? presentation.intro
@@ -314,6 +325,7 @@ export function ProductDetailPage({
   }, [catalogPool, detail.listing, railsReady, similar])
 
   async function addToCart() {
+    if (detail.listing.testCatalog) return
     if (!selected || !selected.id.startsWith("offr_")) {
       setCartNote(t("noActiveCommerceOffer", locale))
       return
@@ -321,12 +333,6 @@ export function ProductDetailPage({
     setCartBusy(true)
     setCartNote(null)
     try {
-      const linkValues = detail.productLinkGroup
-        ? currentLinkMember(detail.productLinkGroup, detail.slug)?.values
-        : undefined
-      const variant = linkValues
-        ? Object.values(linkValues).filter(Boolean).join(" / ") || undefined
-        : undefined
       await addLine(selected.id, 1, {
         offer_id: selected.id,
         product_id: detail.slug,
@@ -338,7 +344,6 @@ export function ProductDetailPage({
         delivery: selected.delivery || defaultDeliveryLabel(locale),
         stock: selected.stock || t("inStock", locale),
         returns: selected.returns || t("trust30DayReturn", locale),
-        variant,
       })
       setCartNote(null)
     } catch (err) {
@@ -388,6 +393,15 @@ export function ProductDetailPage({
       {/* Hero grid: gallery | info | buybox */}
       <div className="grid items-start gap-4 px-4 pt-4 pb-3 tablet:grid-cols-2 tablet:gap-4 tablet:px-8 tablet:pt-5 tablet:pb-3 desktop:grid-cols-[1fr_1fr_300px] desktop:gap-5">
         <div className="min-w-0 self-start" data-cms-section="gallery">
+          {testCatalog && (detail.gallerySlides?.length ?? 0) === 0 ? (
+            <div
+              className="flex h-48 items-center justify-center rounded-lg bg-slate-100 px-3 text-center text-sm text-slate-500"
+              role="img"
+              aria-label={t("conceptImageMissing", locale)}
+            >
+              {t("conceptImageMissing", locale)}
+            </div>
+          ) : (
           <ProductGallery
             title={detail.fullTitle}
             seed={detail.slug}
@@ -398,6 +412,7 @@ export function ProductDetailPage({
             thumbnailPosition={presentation?.thumbnailPosition ?? "left"}
             thumbnailCount={presentation?.thumbnailCount}
           />
+          )}
         </div>
 
         <div className="min-w-0 self-start" data-cms-section="intro">
@@ -408,15 +423,20 @@ export function ProductDetailPage({
             <button
               type="button"
               className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg text-wf-600 transition hover:bg-wf-100 hover:text-wf-900"
-              aria-label={t("favoritesLater", locale)}
-              title={t("favoritesLater", locale)}
-              onClick={() => setWishlistNote(t("favoritesLater", locale))}
+              aria-pressed={favorite}
+              aria-label={tFormat(favorite ? "removeFavorite" : "addFavorite", locale, {
+                title: detail.fullTitle,
+              })}
+              onClick={() => {
+                setFavorite(toggleFavorite(detail.slug))
+                window.dispatchEvent(new Event("em-favorites"))
+              }}
             >
-              ♡
+              <span aria-hidden>{favorite ? "♥" : "♡"}</span>
             </button>
           </div>
-          {wishlistNote ? (
-            <p className="mt-1 text-[11px] text-wf-600">{wishlistNote}</p>
+          {testCatalog ? (
+            <p className="mt-2 text-sm text-slate-500">{t("testProductNotForSale", locale)}</p>
           ) : null}
 
           {showReviews ? (
@@ -480,28 +500,9 @@ export function ProductDetailPage({
               <MadeInEuropeScoreCard
                 data={detail.madeInEurope}
                 locale={locale}
-                countryLabel={detail.listing.countryLabel}
                 manufacturer={detail.manufacturer}
                 brandSlug={brandSlug}
               />
-            </div>
-          ) : showBadges ? (
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
-              <Link
-                href="/verified"
-                className="inline-flex h-7 items-center rounded-full border border-wf-900 bg-wf-900 px-2.5 text-[11px] font-bold leading-none text-white"
-              >
-                ✓ {t("euVerified", locale)}™
-              </Link>
-              <span className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800">
-                {t("madeInLabel", locale)} {detail.listing.countryLabel}
-              </span>
-              <Link
-                href={`/merk/${brandSlug}#productie`}
-                className="inline-flex h-7 items-center text-[12px] font-semibold leading-none text-wf-800 underline-offset-2 hover:underline"
-              >
-                {t("producerLabel", locale)} {detail.manufacturer} ›
-              </Link>
             </div>
           ) : null}
           {detail.europeanOwnership ? (
@@ -509,17 +510,35 @@ export function ProductDetailPage({
               <EuropeanOwnershipBadge
                 data={detail.europeanOwnership}
                 locale={locale}
-                manufacturerHref={`/merk/${brandSlug}`}
+                brandName={detail.listing.brand}
+                brandHref={`/merk/${brandSlug}`}
               />
             </div>
-          ) : null}
-          {showBadges ? (
+          ) : showBadges ? (
             <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
               <Link href={`/merk/${brandSlug}`}>
                 <Badge variant="outline">
                   {t("brandLabel", locale)} {detail.listing.brand}
                 </Badge>
               </Link>
+            </div>
+          ) : null}
+
+          {detail.sizeVariants.length > 0 ? (
+            <div className="mt-3">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-wf-500">
+                {t("vpAxisSize", locale)}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {detail.sizeVariants.map((size) => (
+                  <span
+                    key={size.id}
+                    className="rounded border border-wf-300 bg-white px-2 py-1 text-[12px] text-wf-800"
+                  >
+                    {size.label}
+                  </span>
+                ))}
+              </div>
             </div>
           ) : null}
 
@@ -565,8 +584,9 @@ export function ProductDetailPage({
           data-cms-section="buybox"
         >
           <BuyBox
-            selected={selected}
-            offerCount={offers.length}
+            selected={testCatalog ? null : selected}
+            offerCount={testCatalog ? 0 : offers.length}
+            testCatalog={testCatalog}
             availability={detail.availability}
             alternatives={detail.alternatives}
             notice={detail.buyBoxNotice}
@@ -591,7 +611,7 @@ export function ProductDetailPage({
       </div>
 
       {/* Trustbalk — horizontale rij (scroll/carousel), geen 2×2 grid */}
-      {(() => {
+      {testCatalog ? null : (() => {
         const trust = presentation?.trust
         const showTrust =
           trust == null ||
@@ -1007,7 +1027,7 @@ export function ProductDetailPage({
             />
           </div>
         ) : null}
-        {frequentlyBoughtVisible ? (
+        {testCatalog ? null : frequentlyBoughtVisible ? (
           <div data-cms-section="frequently_bought">
             <ProductCarousel
               title={t("frequentlyBought", locale)}
@@ -1019,6 +1039,7 @@ export function ProductDetailPage({
             />
           </div>
         ) : null}
+        {testCatalog ? null : (
         <ProductCarousel
           title={t("othersAlsoViewed", locale)}
           subtitle={t("othersSubtitle", locale)}
@@ -1027,6 +1048,8 @@ export function ProductDetailPage({
           lazy={false}
           locale={locale}
         />
+        )}
+        {testCatalog ? null : (
         <ProductCarousel
           title={t("recentlyViewed", locale)}
           products={recentProducts}
@@ -1035,6 +1058,7 @@ export function ProductDetailPage({
           lazy={false}
           locale={locale}
         />
+        )}
       </section>
 
       {/* FAQ */}
@@ -1073,7 +1097,7 @@ export function ProductDetailPage({
         </div>
       ) : null}
 
-      {/* Sticky bottom bar — mobiel (CMP-028) */}
+      {testCatalog ? null : (
       <div className="sticky bottom-0 z-30 flex items-center gap-2.5 border-t border-wf-400 bg-white px-3.5 py-2.5 shadow-[0_-2px_6px_rgba(0,0,0,0.06)] tablet:hidden">
         <div className="shrink-0">
           {selected ? (
@@ -1104,6 +1128,7 @@ export function ProductDetailPage({
           {cartBusy ? t("adding", locale) : t("addToCart", locale)}
         </Button>
       </div>
+      )}
     </PublicStorefrontChrome>
   )
 }
@@ -1151,6 +1176,7 @@ function BuyBox({
   cartBusy,
   cartNote,
   locale,
+  testCatalog = false,
   showPrice = true,
   showReviews = true,
   showStock = true,
@@ -1168,6 +1194,7 @@ function BuyBox({
   cartBusy: boolean
   cartNote: string | null
   locale: StorefrontLocale
+  testCatalog?: boolean
   showPrice?: boolean
   showReviews?: boolean
   showStock?: boolean
@@ -1186,7 +1213,9 @@ function BuyBox({
         aria-label="Buy Box"
       >
         <p className="text-sm font-semibold text-wf-900">
-          {availability === "out_of_stock"
+          {testCatalog
+            ? t("testProductNotForSale", locale)
+            : availability === "out_of_stock"
             ? t("unavailableOutOfStock", locale)
             : availability === "not_published"
               ? t("unavailableNotPublished", locale)
@@ -1197,13 +1226,15 @@ function BuyBox({
                   : t("noActiveOffer", locale)}
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-wf-700">
-          {availability === "out_of_stock"
+          {testCatalog
+            ? t("noActiveCommerceOffer", locale)
+            : availability === "out_of_stock"
             ? t("unavailableOutOfStock", locale)
             : availability === "not_deliverable"
               ? t("unavailableNotDeliverable", locale)
               : t("noCommerceOfferBody", locale)}
         </p>
-        {alternatives.length > 0 ? (
+        {!testCatalog && alternatives.length > 0 ? (
           <div className="mt-3">
             <p className="text-[12px] font-semibold text-wf-800">
               {t("unavailableAlternatives", locale)}
@@ -1219,12 +1250,14 @@ function BuyBox({
             </ul>
           </div>
         ) : null}
+        {testCatalog ? null : (
         <Notice variant="info" className="mt-3 text-[11px]">
           ⓘ {noticeText}{" "}
           <Link href="/buy-box" className="text-wf-800 underline">
             {t("moreExplanation", locale)}
           </Link>
         </Notice>
+        )}
       </aside>
     )
   }

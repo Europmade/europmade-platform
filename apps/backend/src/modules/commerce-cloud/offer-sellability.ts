@@ -1,9 +1,12 @@
 /**
- * Offer sales lifecycle helpers (Commerce Cloud).
- * Independent of Product Cloud publication_status.
+ * Commerce Cloud sellability.
+ * Product approval and publication stay separate. This function only decides
+ * whether an existing offer can be sold.
  */
 
 import { randomBytes } from "node:crypto"
+import { offerShipsToCountry } from "@europmade/utils"
+import { normalizeCountryRates } from "./shipping-profile-types"
 
 export type OfferSalesStatus = "active" | "paused"
 
@@ -37,14 +40,229 @@ export function isOfferActiveForSale(
   return (salesStatus ?? "active") === "active"
 }
 
-export function isOfferSellable(input: {
+export type OfferSellabilityCode =
+  | "missing_offer"
+  | "invalid_price"
+  | "missing_inventory"
+  | "no_stock"
+  | "invalid_delivery"
+  | "missing_shipping_profile"
+  | "invalid_shipping_profile"
+  | "sales_status"
+  | "not_published"
+
+export type OfferSellabilityReason = {
+  code: OfferSellabilityCode
+  message: string
+}
+
+export type OfferSellabilityInput = {
+  has_offer?: boolean
   sales_status?: string | null
+  base_price?: number | null
+  has_inventory?: boolean
   quantity_available?: number | null
-}): boolean {
-  return (
-    isOfferActiveForSale(input.sales_status) &&
-    (input.quantity_available ?? 0) > 0
+  delivery_days_max?: number | null
+  shipping_profile_id?: string | null
+  shipping_profile_status?: string | null
+  /** False when the linked profile does not serve the offer region. */
+  shipping_profile_serves_region?: boolean | null
+  publication_status?: string | null
+  /** Ignored. Approval never changes this result. */
+  approval_status?: string | null
+}
+
+export type OfferSellabilityResult = {
+  sellable: boolean
+  /** Price, inventory row, delivery and shipping profile are present and valid. */
+  offer_complete: boolean
+  published: boolean
+  reasons: OfferSellabilityReason[]
+}
+
+export type StorefrontAvailability =
+  | "orderable"
+  | "out_of_stock"
+  | "not_deliverable"
+  | "not_published"
+  | "paused"
+
+const COMPLETE_BLOCKERS = new Set<OfferSellabilityCode>([
+  "missing_offer",
+  "invalid_price",
+  "missing_inventory",
+  "invalid_delivery",
+  "missing_shipping_profile",
+  "invalid_shipping_profile",
+])
+
+export function shippingProfileFacts(input: {
+  shipping_profile_id?: string | null
+  region_code?: string | null
+  profile?: { status?: string | null; country_rates?: unknown } | null
+}): {
+  shipping_profile_status: string | null
+  shipping_profile_serves_region: boolean | null
+} {
+  const profileId = input.shipping_profile_id?.trim() || ""
+  if (!profileId) {
+    return { shipping_profile_status: null, shipping_profile_serves_region: null }
+  }
+  if (!input.profile) {
+    return { shipping_profile_status: "inactive", shipping_profile_serves_region: false }
+  }
+  const region = (input.region_code ?? "").trim().toUpperCase()
+  const rates = normalizeCountryRates(
+    input.profile.country_rates as Record<string, unknown> | null
   )
+  const row = region ? rates[region] : undefined
+  const status = String(input.profile.status ?? "active")
+  return {
+    shipping_profile_status: status,
+    shipping_profile_serves_region: offerShipsToCountry({
+      regionCode: region,
+      destinationCountry: region,
+      shippingProfileId: profileId,
+      profileStatus: status,
+      countryActive: Boolean(row && row.active !== false),
+    }),
+  }
+}
+
+export function evaluateOfferSellability(
+  input: OfferSellabilityInput
+): OfferSellabilityResult {
+  const published = input.publication_status === "Gepubliceerd"
+  const reasons: OfferSellabilityReason[] = []
+  if (input.has_offer === false) {
+    reasons.push({ code: "missing_offer", message: "Geen verkoopaanbod aanwezig" })
+  } else {
+    const price = input.base_price
+    if (price == null || !Number.isFinite(price)) {
+      reasons.push({ code: "invalid_price", message: "Verkoopprijs invullen" })
+    } else if (price <= 0) {
+      reasons.push({
+        code: "invalid_price",
+        message: "Verkoopprijs moet groter zijn dan nul.",
+      })
+    }
+
+    const inventoryPresent =
+      input.has_inventory === true ||
+      (input.has_inventory !== false && input.quantity_available != null)
+    if (!inventoryPresent) {
+      reasons.push({ code: "missing_inventory", message: "Voorraad instellen" })
+    } else if ((input.quantity_available ?? 0) <= 0) {
+      reasons.push({ code: "no_stock", message: "Geen beschikbare voorraad" })
+    }
+
+    const delivery = input.delivery_days_max
+    if (
+      delivery == null ||
+      !Number.isInteger(delivery) ||
+      delivery < 0 ||
+      delivery > 365
+    ) {
+      reasons.push({
+        code: "invalid_delivery",
+        message:
+          delivery == null
+            ? "Levertijd/verzending instellen"
+            : "Levertijd is ongeldig.",
+      })
+    }
+
+    const profileId = input.shipping_profile_id?.trim() || ""
+    if (!profileId) {
+      reasons.push({
+        code: "missing_shipping_profile",
+        message: "Verzendprofiel koppelen",
+      })
+    } else if (
+      (input.shipping_profile_status != null &&
+        input.shipping_profile_status !== "active") ||
+      input.shipping_profile_serves_region === false
+    ) {
+      reasons.push({
+        code: "invalid_shipping_profile",
+        message: "Verzendprofiel is niet geldig.",
+      })
+    }
+
+    if (!isOfferActiveForSale(input.sales_status)) {
+      reasons.push({
+        code: "sales_status",
+        message: "Aanbod staat niet op verkoop.",
+      })
+    }
+  }
+  if (!published) {
+    reasons.push({
+      code: "not_published",
+      message: "Product is niet gepubliceerd.",
+    })
+  }
+  const offer_complete = !reasons.some((reason) => COMPLETE_BLOCKERS.has(reason.code))
+  return {
+    sellable: reasons.length === 0,
+    offer_complete,
+    published,
+    reasons,
+  }
+}
+
+export function isOfferSellable(input: OfferSellabilityInput): boolean {
+  return evaluateOfferSellability(input).sellable
+}
+
+export async function publicationStatusForIdentifier(
+  productCloud: {
+    retrieveIdentifier: (id: string) => Promise<{ product_variant_id: string }>
+    retrieveProductVariant: (id: string) => Promise<{ product_id: string }>
+    listProductVersions: (
+      filters: { product_id: string; publication_status: string },
+      config?: { take?: number }
+    ) => Promise<Array<{ publication_status?: string }>>
+  },
+  identifierId: string,
+  cache: Map<string, string | null> = new Map()
+): Promise<string | null> {
+  if (cache.has(identifierId)) return cache.get(identifierId) ?? null
+  try {
+    const identifier = await productCloud.retrieveIdentifier(identifierId)
+    const variant = await productCloud.retrieveProductVariant(identifier.product_variant_id)
+    const versions = await productCloud.listProductVersions(
+      { product_id: variant.product_id, publication_status: "Gepubliceerd" },
+      { take: 1 }
+    )
+    const status = versions[0] ? "Gepubliceerd" : null
+    cache.set(identifierId, status)
+    return status
+  } catch {
+    cache.set(identifierId, null)
+    return null
+  }
+}
+
+export function storefrontAvailability(input: {
+  published: boolean
+  offers: Array<{ ships: boolean; decision: OfferSellabilityResult }>
+}): StorefrontAvailability {
+  if (!input.published) return "not_published"
+  const reachable = input.offers.filter((offer) => offer.ships)
+  if (reachable.some((offer) => offer.decision.sellable)) return "orderable"
+  if (reachable.some((offer) => offer.decision.reasons.some((reason) => reason.code === "no_stock"))) {
+    return "out_of_stock"
+  }
+  if (
+    reachable.length > 0 &&
+    reachable.every((offer) =>
+      offer.decision.reasons.some((reason) => reason.code === "sales_status")
+    )
+  ) {
+    return "paused"
+  }
+  return "not_deliverable"
 }
 
 /**

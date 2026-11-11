@@ -1,0 +1,3113 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "pcgy_E06B89EAFAA79BB0D98E8393F1",
+      "slug": "accugereedschap",
+      "nl": "Accugereedschap",
+      "en": "Cordless Tools"
+    },
+    {
+      "id": "pcgy_807EFEC26D03A7A767BD4C18EC",
+      "slug": "action-cams-drones-en-gimbals",
+      "nl": "Action cams, drones & gimbals",
+      "en": "Action Cams, Drones & Gimbals"
+    },
+    {
+      "id": "pcgy_608D442D01A63E3BE0D498C8EC",
+      "slug": "adventskalenders-en-kerstpakketten",
+      "nl": "Adventskalenders & kerstpakketten",
+      "en": "Advent Calendars & Christmas Hampers"
+    },
+    {
+      "id": "pcgy_28626F44C085ABE8ED8D04A6BE",
+      "slug": "agenda-s-en-kalenders",
+      "nl": "Agenda's & Kalenders",
+      "en": "Diaries & Calendars"
+    },
+    {
+      "id": "pcgy_4ED7643C12CBF545BFDA85B429",
+      "slug": "agenda-s-en-planners",
+      "nl": "Agenda's & planners",
+      "en": "Diaries & Planners"
+    },
+    {
+      "id": "pcgy_A0AE6132EB11B64E146F29E5A9",
+      "slug": "airfryers-en-frituurpannen",
+      "nl": "Airfryers & frituurpannen",
+      "en": "Air Fryers & Deep Fryers"
+    },
+    {
+      "id": "pcgy_01KYS273NHNQ1Y55M2A2ES2D36",
+      "slug": "algemeen",
+      "nl": "Algemeen",
+      "en": "General"
+    },
+    {
+      "id": "pcgy_39504DD7889C0BAA0AF8D52AC3",
+      "slug": "alles-in-agenda-s-en-kalenders",
+      "nl": "Alles in Agenda's & Kalenders",
+      "en": "All in Diaries & Calendars"
+    },
+    {
+      "id": "pcgy_08B13A6C6E3DDC1FCA80D85F12",
+      "slug": "alles-in-audio-en-headphones",
+      "nl": "Alles in Audio & Headphones",
+      "en": "All in Audio & Headphones"
+    },
+    {
+      "id": "pcgy_67F289083DCE9DA7D94152876A",
+      "slug": "alles-in-auto-accessoires",
+      "nl": "Alles in Auto-accessoires",
+      "en": "All in Car Accessories"
+    },
+    {
+      "id": "pcgy_1F6C95EE6E34874A822C8BDEF7",
+      "slug": "alles-in-auto-onderhoud-en-onderdelen",
+      "nl": "Alles in Auto-onderhoud & Onderdelen",
+      "en": "All in Car Maintenance & Parts"
+    },
+    {
+      "id": "pcgy_AC34B5372D481731B1F8FC940E",
+      "slug": "alles-in-baby",
+      "nl": "Alles in Baby",
+      "en": "All in Baby"
+    },
+    {
+      "id": "pcgy_13AC3F531E4FA8EE52D5987942",
+      "slug": "alles-in-babyverzorging",
+      "nl": "Alles in Babyverzorging",
+      "en": "All in Baby Care"
+    },
+    {
+      "id": "pcgy_28F08B3B70B9E072E88D55B911",
+      "slug": "alles-in-babyvoeding",
+      "nl": "Alles in Babyvoeding",
+      "en": "All in Baby Food"
+    },
+    {
+      "id": "pcgy_3D8BD24CF79F833234D88447B7",
+      "slug": "alles-in-badkamer",
+      "nl": "Alles in Badkamer",
+      "en": "All in Bathroom"
+    },
+    {
+      "id": "pcgy_5462180F0F0CB7CA1C1107BEE3",
+      "slug": "alles-in-barbecue-en-buitenkeuken",
+      "nl": "Alles in Barbecue & Buitenkeuken",
+      "en": "All in Barbecue & Outdoor Kitchen"
+    },
+    {
+      "id": "pcgy_A5324CC110DA949B2E154A0E58",
+      "slug": "alles-in-bloemen-en-vazen",
+      "nl": "Alles in Bloemen & Vazen",
+      "en": "All in Flowers & Vases"
+    },
+    {
+      "id": "pcgy_780375EBD2D17E704117967B37",
+      "slug": "alles-in-boeken",
+      "nl": "Alles in Boeken",
+      "en": "All in Books"
+    },
+    {
+      "id": "pcgy_F5CDBFA2C99095884D53BD5133",
+      "slug": "alles-in-bouwmaterialen-en-verf",
+      "nl": "Alles in Bouwmaterialen & Verf",
+      "en": "All in Building Materials & Paint"
+    },
+    {
+      "id": "pcgy_9FC4CC0F246B0CB675D47021B6",
+      "slug": "alles-in-buitenspeelgoed",
+      "nl": "Alles in Buitenspeelgoed",
+      "en": "All in Outdoor Toys"
+    },
+    {
+      "id": "pcgy_CE16109F1DAF37A84C85EE2DD2",
+      "slug": "alles-in-bureau-en-organisatie",
+      "nl": "Alles in Bureau & Organisatie",
+      "en": "All in Office & Organisation"
+    },
+    {
+      "id": "pcgy_0A8FC4461248DD1E6DD80FFD05",
+      "slug": "alles-in-cadeaus-per-doelgroep",
+      "nl": "Alles in Cadeaus per doelgroep",
+      "en": "All in Gifts by Recipient"
+    },
+    {
+      "id": "pcgy_8D961633519B9017E223567B0C",
+      "slug": "alles-in-cadeausets",
+      "nl": "Alles in Cadeausets",
+      "en": "All in Gift Sets"
+    },
+    {
+      "id": "pcgy_FC983B77A6CDB3A724E8CF3B13",
+      "slug": "alles-in-cadeauverpakking",
+      "nl": "Alles in Cadeauverpakking",
+      "en": "All in Gift Wrapping"
+    },
+    {
+      "id": "pcgy_5E4CFE8F1EE96F10C3DD5390BB",
+      "slug": "alles-in-camera-s-en-foto",
+      "nl": "Alles in Camera's & Foto",
+      "en": "All in Cameras & Photography"
+    },
+    {
+      "id": "pcgy_4FCA7FC430B84EFB35FB073C07",
+      "slug": "alles-in-computers-en-laptops",
+      "nl": "Alles in Computers & Laptops",
+      "en": "All in Computers & Laptops"
+    },
+    {
+      "id": "pcgy_78A3118E3950FB98E35AACF949",
+      "slug": "alles-in-dames",
+      "nl": "Alles in Dames",
+      "en": "All in Women"
+    },
+    {
+      "id": "pcgy_91B92F734967251774CA7D3243",
+      "slug": "alles-in-damesschoenen",
+      "nl": "Alles in Damesschoenen",
+      "en": "All in Women's Shoes"
+    },
+    {
+      "id": "pcgy_F72DEE5740002BF7881492CE06",
+      "slug": "alles-in-dranken",
+      "nl": "Alles in Dranken",
+      "en": "All in Drinks"
+    },
+    {
+      "id": "pcgy_8607503B858BA8A432DE74C920",
+      "slug": "alles-in-elektrisch-gereedschap",
+      "nl": "Alles in Elektrisch gereedschap",
+      "en": "All in Power Tools"
+    },
+    {
+      "id": "pcgy_7BD7B957E1277262AC5D1D2563",
+      "slug": "alles-in-erotiek",
+      "nl": "Alles in Erotiek",
+      "en": "All in Erotica"
+    },
+    {
+      "id": "pcgy_C1A3303233E5E44B54EAE65165",
+      "slug": "alles-in-feestartikelen-en-verkleden",
+      "nl": "Alles in Feestartikelen & Verkleden",
+      "en": "All in Party Supplies & Fancy Dress"
+    },
+    {
+      "id": "pcgy_1E6AD28EBC402F6E865EE53E20",
+      "slug": "alles-in-feestdagen",
+      "nl": "Alles in Feestdagen",
+      "en": "All in Holidays"
+    },
+    {
+      "id": "pcgy_A24114244B94759E210E66ACC5",
+      "slug": "alles-in-fietsen-en-accessoires",
+      "nl": "Alles in Fietsen & Accessoires",
+      "en": "All in Bikes & Accessories"
+    },
+    {
+      "id": "pcgy_E30D92ACCCA441753E6A773AFC",
+      "slug": "alles-in-fitness-en-training",
+      "nl": "Alles in Fitness & Training",
+      "en": "All in Fitness & Training"
+    },
+    {
+      "id": "pcgy_E2445FED548C32F46F0E5E7EE8",
+      "slug": "alles-in-gaming",
+      "nl": "Alles in Gaming",
+      "en": "All in Gaming"
+    },
+    {
+      "id": "pcgy_D662DB2866EBE59B2953191CA1",
+      "slug": "alles-in-grasmaaiers-en-robots",
+      "nl": "Alles in Grasmaaiers & Robots",
+      "en": "All in Lawn Mowers & Robots"
+    },
+    {
+      "id": "pcgy_27058CE922187455B66FF29BA4",
+      "slug": "alles-in-haarverzorging",
+      "nl": "Alles in Haarverzorging",
+      "en": "All in Hair Care"
+    },
+    {
+      "id": "pcgy_EC68F39B88A11B047CA71204EF",
+      "slug": "alles-in-handgereedschap",
+      "nl": "Alles in Handgereedschap",
+      "en": "All in Hand Tools"
+    },
+    {
+      "id": "pcgy_4E1C60FEDFBC23C5183650B68C",
+      "slug": "alles-in-handtassen-en-tassen",
+      "nl": "Alles in Handtassen & Tassen",
+      "en": "All in Handbags & Bags"
+    },
+    {
+      "id": "pcgy_6AC558EE0BC4C2F413C66EC852",
+      "slug": "alles-in-hardlopen-en-trail",
+      "nl": "Alles in Hardlopen & Trail",
+      "en": "All in Running & Trail"
+    },
+    {
+      "id": "pcgy_46A7DE4629F0A96320B4791EEC",
+      "slug": "alles-in-heggenscharen",
+      "nl": "Alles in Heggenscharen",
+      "en": "All in Hedge Trimmers"
+    },
+    {
+      "id": "pcgy_04E7488268F6A796907724C2AD",
+      "slug": "alles-in-heren",
+      "nl": "Alles in Heren",
+      "en": "All in Men"
+    },
+    {
+      "id": "pcgy_95E88F020DB86A7F0791264D64",
+      "slug": "alles-in-herenschoenen",
+      "nl": "Alles in Herenschoenen",
+      "en": "All in Men's Shoes"
+    },
+    {
+      "id": "pcgy_BFD347BE87650BF8A4C6AACBA0",
+      "slug": "alles-in-hobby-en-creatief",
+      "nl": "Alles in Hobby & Creatief",
+      "en": "All in Hobbies & Crafts"
+    },
+    {
+      "id": "pcgy_25CB2AD3F79407692BFF762091",
+      "slug": "alles-in-home-en-living",
+      "nl": "Alles in Home & Living",
+      "en": "All in Home & Living"
+    },
+    {
+      "id": "pcgy_91882005C5A8A1ADDC02FDD81D",
+      "slug": "alles-in-hond",
+      "nl": "Alles in Hond",
+      "en": "All in Dog"
+    },
+    {
+      "id": "pcgy_1932607F5F8BAE0D9401733EB7",
+      "slug": "alles-in-horloges",
+      "nl": "Alles in Horloges",
+      "en": "All in Watches"
+    },
+    {
+      "id": "pcgy_760022C4DBC4232B9D2DA71D8F",
+      "slug": "alles-in-hout-en-leer",
+      "nl": "Alles in Hout & Leer",
+      "en": "All in Wood & Leather"
+    },
+    {
+      "id": "pcgy_8823D3869FE31A20CE85E6359B",
+      "slug": "alles-in-huidverzorging",
+      "nl": "Alles in Huidverzorging",
+      "en": "All in Skincare"
+    },
+    {
+      "id": "pcgy_16010B37D9F15E354A980E608E",
+      "slug": "alles-in-inbouwapparatuur",
+      "nl": "Alles in Inbouwapparatuur",
+      "en": "All in Built-in Appliances"
+    },
+    {
+      "id": "pcgy_FB419BFB1FFD2405CE2BF7CDCB",
+      "slug": "alles-in-irrigatie-en-kweek",
+      "nl": "Alles in Irrigatie & Kweek",
+      "en": "All in Irrigation & Growing"
+    },
+    {
+      "id": "pcgy_C37325B879CED68166D14E2CDF",
+      "slug": "alles-in-kaarsen-en-geur",
+      "nl": "Alles in Kaarsen & Geur",
+      "en": "All in Candles & Fragrance"
+    },
+    {
+      "id": "pcgy_3B18EFDC7C09890020736528A5",
+      "slug": "alles-in-kat",
+      "nl": "Alles in Kat",
+      "en": "All in Cat"
+    },
+    {
+      "id": "pcgy_B50537F8B44182FAF35CE3E8F6",
+      "slug": "alles-in-keramiek-en-glas",
+      "nl": "Alles in Keramiek & Glas",
+      "en": "All in Ceramics & Glass"
+    },
+    {
+      "id": "pcgy_F05D402C6BFE2AE05D0D6B970B",
+      "slug": "alles-in-keuken",
+      "nl": "Alles in Keuken",
+      "en": "All in Kitchen"
+    },
+    {
+      "id": "pcgy_3BCA204D9CB78F6078C037158F",
+      "slug": "alles-in-kinderkamer",
+      "nl": "Alles in Kinderkamer",
+      "en": "All in Kids' Room"
+    },
+    {
+      "id": "pcgy_3DE3607DB6DE33806FC9EDB395",
+      "slug": "alles-in-kinderkleding",
+      "nl": "Alles in Kinderkleding",
+      "en": "All in Children's Clothing"
+    },
+    {
+      "id": "pcgy_B624E0BA98492CF299E0A94423",
+      "slug": "alles-in-kinderschoenen",
+      "nl": "Alles in Kinderschoenen",
+      "en": "All in Children's Shoes"
+    },
+    {
+      "id": "pcgy_E9F6C5516300F85AA3990831B9",
+      "slug": "alles-in-kleine-keukenapparaten",
+      "nl": "Alles in Kleine keukenapparaten",
+      "en": "All in Small Kitchen Appliances"
+    },
+    {
+      "id": "pcgy_D3F1B519F9669EFCF96B092277",
+      "slug": "alles-in-klimaatbeheersing",
+      "nl": "Alles in Klimaatbeheersing",
+      "en": "All in Climate Control"
+    },
+    {
+      "id": "pcgy_56716D04700C7EEDAEAEC1DDD8",
+      "slug": "alles-in-koffers-en-reistassen",
+      "nl": "Alles in Koffers & Reistassen",
+      "en": "All in Suitcases & Travel Bags"
+    },
+    {
+      "id": "pcgy_5B624BB2FD4F4CA468536D08B3",
+      "slug": "alles-in-levensmiddelen-en-delicatessen",
+      "nl": "Alles in Levensmiddelen & Delicatessen",
+      "en": "All in Groceries & Delicatessen"
+    },
+    {
+      "id": "pcgy_1F49047C9F3178A2DBEA3B2C28",
+      "slug": "alles-in-make-up-en-geur",
+      "nl": "Alles in Make-up & Geur",
+      "en": "All in Make-up & Fragrance"
+    },
+    {
+      "id": "pcgy_49BF78EA522F24F775FE8A5784",
+      "slug": "alles-in-media-en-entertainment",
+      "nl": "Alles in Media & Entertainment",
+      "en": "All in Media & Entertainment"
+    },
+    {
+      "id": "pcgy_184C53AB366E70799782D5E001",
+      "slug": "alles-in-motor-en-scooter",
+      "nl": "Alles in Motor & Scooter",
+      "en": "All in Motorcycle & Scooter"
+    },
+    {
+      "id": "pcgy_AC2D17927022F9B7447A385D80",
+      "slug": "alles-in-netwerken-en-peripherals",
+      "nl": "Alles in Netwerken & Peripherals",
+      "en": "All in Networking & Peripherals"
+    },
+    {
+      "id": "pcgy_A3BAA18CC14870778072E3E180",
+      "slug": "alles-in-onderkleding-lingerie",
+      "nl": "Alles in Onderkleding / Lingerie",
+      "en": "All in Underwear / Lingerie"
+    },
+    {
+      "id": "pcgy_1D40D8FE78F4398385E381F2C1",
+      "slug": "alles-in-onderweg-met-baby",
+      "nl": "Alles in Onderweg met baby",
+      "en": "All in Baby on the Go"
+    },
+    {
+      "id": "pcgy_AD2C175DBE4A28B59BE7E61958",
+      "slug": "alles-in-opslag-en-organisatie",
+      "nl": "Alles in Opslag & Organisatie",
+      "en": "All in Storage & Organisation"
+    },
+    {
+      "id": "pcgy_C2DC2ED2BDC893A7708512965C",
+      "slug": "alles-in-outdoor",
+      "nl": "Alles in Outdoor",
+      "en": "All in Outdoor"
+    },
+    {
+      "id": "pcgy_7CA681E67161E8927EA2133E1E",
+      "slug": "alles-in-overige-dieren",
+      "nl": "Alles in Overige dieren",
+      "en": "All in Other Animals"
+    },
+    {
+      "id": "pcgy_0F7640E18EBFAA361D4ECCB621",
+      "slug": "alles-in-overige-sporten",
+      "nl": "Alles in Overige sporten",
+      "en": "All in Other Sports"
+    },
+    {
+      "id": "pcgy_80551C9CDC66A985EFD8B4E880",
+      "slug": "alles-in-persoonlijke-cadeaus",
+      "nl": "Alles in Persoonlijke cadeaus",
+      "en": "All in Personalised Gifts"
+    },
+    {
+      "id": "pcgy_CE348E14ED9CCD751933CCCF39",
+      "slug": "alles-in-persoonlijke-verzorging",
+      "nl": "Alles in Persoonlijke verzorging",
+      "en": "All in Personal Care"
+    },
+    {
+      "id": "pcgy_444E6985D671461B8C1AB298F7",
+      "slug": "alles-in-planten",
+      "nl": "Alles in Planten",
+      "en": "All in Plants"
+    },
+    {
+      "id": "pcgy_79FEE862128BC63F3A8AC6924E",
+      "slug": "alles-in-portemonnees-en-kleine-lederwaren",
+      "nl": "Alles in Portemonnees & Kleine lederwaren",
+      "en": "All in Wallets & Small Leather Goods"
+    },
+    {
+      "id": "pcgy_99472C2FD025DC7CC74A587DE1",
+      "slug": "alles-in-print-en-papier",
+      "nl": "Alles in Print & Papier",
+      "en": "All in Print & Paper"
+    },
+    {
+      "id": "pcgy_5777532269586A6CCBAFF6566A",
+      "slug": "alles-in-reisaccessoires",
+      "nl": "Alles in Reisaccessoires",
+      "en": "All in Travel Accessories"
+    },
+    {
+      "id": "pcgy_C4A6E78D5A5CF42495B99D068A",
+      "slug": "alles-in-riemen-en-accessoires",
+      "nl": "Alles in Riemen & Accessoires",
+      "en": "All in Belts & Accessories"
+    },
+    {
+      "id": "pcgy_5F398EDE33B466BFEFD86D2CBD",
+      "slug": "alles-in-rugzakken",
+      "nl": "Alles in Rugzakken",
+      "en": "All in Backpacks"
+    },
+    {
+      "id": "pcgy_25500A6ADEFF44E00D5AD0CED0",
+      "slug": "alles-in-sandalen",
+      "nl": "Alles in Sandalen",
+      "en": "All in Sandals"
+    },
+    {
+      "id": "pcgy_949B1217F3FAF71703C93AFE64",
+      "slug": "alles-in-schoolspullen",
+      "nl": "Alles in Schoolspullen",
+      "en": "All in School Supplies"
+    },
+    {
+      "id": "pcgy_E6837640FF632ACDCDA6ABE54B",
+      "slug": "alles-in-schoonmaak",
+      "nl": "Alles in Schoonmaak",
+      "en": "All in Cleaning"
+    },
+    {
+      "id": "pcgy_8F2E520E1527831EF8866EC999",
+      "slug": "alles-in-schrijfwaren",
+      "nl": "Alles in Schrijfwaren",
+      "en": "All in Writing Supplies"
+    },
+    {
+      "id": "pcgy_BF1E503C6BCD212C0D0741D36F",
+      "slug": "alles-in-seizoensdecoratie",
+      "nl": "Alles in Seizoensdecoratie",
+      "en": "All in Seasonal Decoration"
+    },
+    {
+      "id": "pcgy_1571F75EEE4A36E1C71A2A6EC3",
+      "slug": "alles-in-sieraden",
+      "nl": "Alles in Sieraden",
+      "en": "All in Jewellery"
+    },
+    {
+      "id": "pcgy_9E304A3799616A610E7D2897E3",
+      "slug": "alles-in-slaapkamer",
+      "nl": "Alles in Slaapkamer",
+      "en": "All in Bedroom"
+    },
+    {
+      "id": "pcgy_FCC04FFBA581F3C19999962577",
+      "slug": "alles-in-smart-home",
+      "nl": "Alles in Smart Home",
+      "en": "All in Smart Home"
+    },
+    {
+      "id": "pcgy_1172AC5CD978E6687602F3E283",
+      "slug": "alles-in-speelgoed",
+      "nl": "Alles in Speelgoed",
+      "en": "All in Toys"
+    },
+    {
+      "id": "pcgy_1ED2BB445BCD3E3E316E833FAF",
+      "slug": "alles-in-tv-en-video",
+      "nl": "Alles in TV & Video",
+      "en": "All in TV & Video"
+    },
+    {
+      "id": "pcgy_3622A618387CB10D75012E78B0",
+      "slug": "alles-in-teamsport",
+      "nl": "Alles in Teamsport",
+      "en": "All in Team Sports"
+    },
+    {
+      "id": "pcgy_F877696E26C0E6E70271CD63AF",
+      "slug": "alles-in-telefoons-en-tablets",
+      "nl": "Alles in Telefoons & Tablets",
+      "en": "All in Phones & Tablets"
+    },
+    {
+      "id": "pcgy_ADD916279F6F5E37837F9098A4",
+      "slug": "alles-in-textiel-en-wol",
+      "nl": "Alles in Textiel & Wol",
+      "en": "All in Textiles & Wool"
+    },
+    {
+      "id": "pcgy_C7704D25984AEF0D5C73FA66E5",
+      "slug": "alles-in-tijdschriften-en-puzzelboeken",
+      "nl": "Alles in Tijdschriften & Puzzelboeken",
+      "en": "All in Magazines & Puzzle Books"
+    },
+    {
+      "id": "pcgy_FA3E18F8C982D573E9F9FE250B",
+      "slug": "alles-in-tuinbouw-en-afscheiding",
+      "nl": "Alles in Tuinbouw & Afscheiding",
+      "en": "All in Horticulture & Fencing"
+    },
+    {
+      "id": "pcgy_C93814305FE52B183AD29369C0",
+      "slug": "alles-in-tuinhandgereedschap",
+      "nl": "Alles in Tuinhandgereedschap",
+      "en": "All in Garden Hand Tools"
+    },
+    {
+      "id": "pcgy_364C3D0DDFDB2A722C75861569",
+      "slug": "alles-in-tuininrichting-en-decoratie",
+      "nl": "Alles in Tuininrichting & Decoratie",
+      "en": "All in Garden Furnishing & Decoration"
+    },
+    {
+      "id": "pcgy_F55BC7A537660847A960722C6D",
+      "slug": "alles-in-tuinmeubelen",
+      "nl": "Alles in Tuinmeubelen",
+      "en": "All in Garden Furniture"
+    },
+    {
+      "id": "pcgy_EF60DE98040E41E758B90411FD",
+      "slug": "alles-in-tuinonderhoud",
+      "nl": "Alles in Tuinonderhoud",
+      "en": "All in Garden Maintenance"
+    },
+    {
+      "id": "pcgy_1412B07A6C0F45B7D5D57B3A41",
+      "slug": "alles-in-veiligheid-en-zitjes",
+      "nl": "Alles in Veiligheid & Zitjes",
+      "en": "All in Safety & Seats"
+    },
+    {
+      "id": "pcgy_7DC5D04A27AC54140E11B69CD5",
+      "slug": "alles-in-verduurzamen-en-beveiligen",
+      "nl": "Alles in Verduurzamen & Beveiligen",
+      "en": "All in Sustainability & Security Upgrades"
+    },
+    {
+      "id": "pcgy_11CD03B2C60A6687C6228A0E63",
+      "slug": "alles-in-verlichting",
+      "nl": "Alles in Verlichting",
+      "en": "All in Lighting"
+    },
+    {
+      "id": "pcgy_0DD7F8E4B378431E6F079E1E5D",
+      "slug": "alles-in-vitaminen-en-supplements",
+      "nl": "Alles in Vitaminen & Supplements",
+      "en": "All in Vitamins & Supplements"
+    },
+    {
+      "id": "pcgy_F737699BE5152927A8B8F6E4AB",
+      "slug": "alles-in-was-en-drogen",
+      "nl": "Alles in Was & Drogen",
+      "en": "All in Laundry & Drying"
+    },
+    {
+      "id": "pcgy_4F71F16388863877ABA91BE0C6",
+      "slug": "alles-in-wearables-en-smartwatches",
+      "nl": "Alles in Wearables & Smartwatches",
+      "en": "All in Wearables & Smartwatches"
+    },
+    {
+      "id": "pcgy_5761253797EAF8456B9442A318",
+      "slug": "alles-in-wenskaarten-en-papierwaren",
+      "nl": "Alles in Wenskaarten & Papierwaren",
+      "en": "All in Greeting Cards & Paper Goods"
+    },
+    {
+      "id": "pcgy_DCFCFA0F90F2AC3CBA72D8ED56",
+      "slug": "alles-in-werkplaats-en-opslag",
+      "nl": "Alles in Werkplaats & Opslag",
+      "en": "All in Workshop & Storage"
+    },
+    {
+      "id": "pcgy_FACF151553DB770D9187B5F6BC",
+      "slug": "alles-in-woonaccessoires",
+      "nl": "Alles in Woonaccessoires",
+      "en": "All in Home Accessories"
+    },
+    {
+      "id": "pcgy_DD3E19488D36E24355403EE72F",
+      "slug": "alles-in-woonkamer",
+      "nl": "Alles in Woonkamer",
+      "en": "All in Living Room"
+    },
+    {
+      "id": "pcgy_BCA1FAA6423A85075C84BB5E3F",
+      "slug": "alles-in-woontextiel",
+      "nl": "Alles in Woontextiel",
+      "en": "All in Home Textiles"
+    },
+    {
+      "id": "pcgy_D2E5C6FA7B734338B153568C1B",
+      "slug": "alles-in-zelfzorg-en-medisch",
+      "nl": "Alles in Zelfzorg & Medisch",
+      "en": "All in Self-Care & Medical"
+    },
+    {
+      "id": "pcgy_D4E30153BB8985F43B5AFB0038",
+      "slug": "alles-in-zwem-en-watersport",
+      "nl": "Alles in Zwem- & Watersport",
+      "en": "All in Swimming & Water Sports"
+    },
+    {
+      "id": "pcgy_01KZTTCWR1VY3K9P90ZEB3BPG5",
+      "slug": "ambacht",
+      "nl": "Ambacht",
+      "en": "Craft"
+    },
+    {
+      "id": "pcgy_DBC9F21A36EEFD7CA9C9F77610",
+      "slug": "archiveren-verpakken-en-verzenden",
+      "nl": "Archiveren, verpakken & verzenden",
+      "en": "Filing, Packaging & Shipping"
+    },
+    {
+      "id": "pcgy_D5VGSNE6FB4DWCGGD5VGSNE6FB",
+      "slug": "audio-headphones",
+      "nl": "Audio & Headphones",
+      "en": "Audio & Headphones"
+    },
+    {
+      "id": "pcgy_01M0Z1CJC12PTJRGBH33S24SM0",
+      "slug": "auto-motor",
+      "nl": "Auto & Motor",
+      "en": "Car & Motorcycle"
+    },
+    {
+      "id": "pcgy_EXRQ7E262CQKJNBZEXRQ7E262C",
+      "slug": "auto-accessoires",
+      "nl": "Auto-accessoires",
+      "en": "Car Accessories"
+    },
+    {
+      "id": "pcgy_5EE18763153A064AFCC03A8C4C",
+      "slug": "auto-onderhoud-en-onderdelen",
+      "nl": "Auto-onderhoud & Onderdelen",
+      "en": "Car Maintenance & Parts"
+    },
+    {
+      "id": "pcgy_17DEB49876A2554B1096832E0F",
+      "slug": "autogereedschap-en-veiligheid",
+      "nl": "Autogereedschap & veiligheid",
+      "en": "Car Tools & Safety"
+    },
+    {
+      "id": "pcgy_C73562372DA3C740355BAF1087",
+      "slug": "autopoets-en-verzorging",
+      "nl": "Autopoets & -verzorging",
+      "en": "Car Cleaning & Care"
+    },
+    {
+      "id": "pcgy_B3FDB95E933824D14B1434F59C",
+      "slug": "autostoeltjes",
+      "nl": "Autostoeltjes",
+      "en": "Car Seats"
+    },
+    {
+      "id": "pcgy_226B995443EC3DE575A22A464D",
+      "slug": "baardverzorging",
+      "nl": "Baardverzorging",
+      "en": "Beard Care"
+    },
+    {
+      "id": "pcgy_01M59RQAS4C2QYNAS9HBH3525H",
+      "slug": "baby-kleding",
+      "nl": "Baby",
+      "en": "Baby"
+    },
+    {
+      "id": "pcgy_01KZTTCVM1YBVK6PJHPK152PWT",
+      "slug": "baby-en-kind",
+      "nl": "Baby & Kind",
+      "en": "Baby & Kids"
+    },
+    {
+      "id": "pcgy_CA2959D918F5F9AB6A516DD8F3",
+      "slug": "baby-basics-en-pyjama-s",
+      "nl": "Baby basics & pyjama's",
+      "en": "Baby Basics & Pyjamas"
+    },
+    {
+      "id": "pcgy_A5E62D233D821358E87CE7BF11",
+      "slug": "baby-peuter-en-knuffelspeelgoed",
+      "nl": "Baby-, peuter- & knuffelspeelgoed",
+      "en": "Baby, Toddler & Soft Toys"
+    },
+    {
+      "id": "pcgy_2FFE0771D538A027A17461B2A3",
+      "slug": "babybad-en-huidverzorging",
+      "nl": "Babybad & -huidverzorging",
+      "en": "Baby Bath & Skincare"
+    },
+    {
+      "id": "pcgy_608B91949EA026145A62571C72",
+      "slug": "babyflessen-en-spenen",
+      "nl": "Babyflessen & spenen",
+      "en": "Baby Bottles & Teats"
+    },
+    {
+      "id": "pcgy_321BF4042FC193DB1EAB6E6401",
+      "slug": "babyfoons",
+      "nl": "Babyfoons",
+      "en": "Baby Monitors"
+    },
+    {
+      "id": "pcgy_8E0CD54144AD0A0F935612F27D",
+      "slug": "babygeschenksets",
+      "nl": "Babygeschenksets",
+      "en": "Baby Gift Sets"
+    },
+    {
+      "id": "pcgy_8DA166C35DB55E3806E432405B",
+      "slug": "babygezondheid-en-bijtringen",
+      "nl": "Babygezondheid & bijtringen",
+      "en": "Baby Health & Teethers"
+    },
+    {
+      "id": "pcgy_464FBF44A081231DA2E24303B5",
+      "slug": "babykamermeubels",
+      "nl": "Babykamermeubels",
+      "en": "Nursery Furniture"
+    },
+    {
+      "id": "pcgy_47E4160E40EDFCD2FCEF351668",
+      "slug": "babyschoenen",
+      "nl": "Babyschoenen",
+      "en": "Baby Shoes"
+    },
+    {
+      "id": "pcgy_BB69E0811591BE4DCC0D83026A",
+      "slug": "babyslaapzakken-en-beddengoed",
+      "nl": "Babyslaapzakken & -beddengoed",
+      "en": "Baby Sleeping Bags & Bedding"
+    },
+    {
+      "id": "pcgy_ZER3ZKTZD6N6X8WNZER3ZKTZD6",
+      "slug": "babyverzorging",
+      "nl": "Babyverzorging",
+      "en": "Baby Care"
+    },
+    {
+      "id": "pcgy_7EEC7D4FEE2BF8204D66B7BC5D",
+      "slug": "babyvoeding",
+      "nl": "Babyvoeding",
+      "en": "Baby Food"
+    },
+    {
+      "id": "pcgy_0524433EBC73EFED79EC1BE228",
+      "slug": "babyvoeding-en-flesvoeding",
+      "nl": "Babyvoeding & flesvoeding",
+      "en": "Baby Food & Formula"
+    },
+    {
+      "id": "pcgy_03C0821D490A28448E9573F609",
+      "slug": "backpacks-reisrugzakken",
+      "nl": "Backpacks (reisrugzakken)",
+      "en": "Travel Backpacks"
+    },
+    {
+      "id": "pcgy_01M0Z1CQ48AGJKA11F0JXD2251",
+      "slug": "badkamer",
+      "nl": "Badkamer",
+      "en": "Bathroom"
+    },
+    {
+      "id": "pcgy_8482994D609755DDBD7C320051",
+      "slug": "badkameraccessoires",
+      "nl": "Badkameraccessoires",
+      "en": "Bathroom Accessories"
+    },
+    {
+      "id": "pcgy_B73765F070E414EA191ED7392F",
+      "slug": "badkamermeubels-en-sanitair",
+      "nl": "Badkamermeubels & sanitair",
+      "en": "Bathroom Furniture & Sanitaryware"
+    },
+    {
+      "id": "pcgy_7F63A7CD6EE6C3DD2EBF5B47CB",
+      "slug": "badtextiel",
+      "nl": "Badtextiel",
+      "en": "Bath Linen"
+    },
+    {
+      "id": "pcgy_FB18E371D6966576ECEF12B7F6",
+      "slug": "bakproducten",
+      "nl": "Bakproducten",
+      "en": "Baking Products"
+    },
+    {
+      "id": "pcgy_CD0465CBFF4182851469E6D31C",
+      "slug": "bakspullen",
+      "nl": "Bakspullen",
+      "en": "Baking Equipment"
+    },
+    {
+      "id": "pcgy_A6D336AAD966599834806F4558",
+      "slug": "banden-ruitenwissers-en-autoverlichting",
+      "nl": "Banden, ruitenwissers & autoverlichting",
+      "en": "Tyres, Wipers & Car Lighting"
+    },
+    {
+      "id": "pcgy_C61A51FE22FC931AFC43287AFC",
+      "slug": "banken-en-fauteuils",
+      "nl": "Banken & fauteuils",
+      "en": "Sofas & Armchairs"
+    },
+    {
+      "id": "pcgy_310F08025620DFACF25E35F91D",
+      "slug": "barbecue-buitenkeuken",
+      "nl": "Barbecue & Buitenkeuken",
+      "en": "Barbecue & Outdoor Kitchen"
+    },
+    {
+      "id": "pcgy_8B7622B7ACD712D39B36EA9D86",
+      "slug": "barbecues",
+      "nl": "Barbecues",
+      "en": "Barbecues"
+    },
+    {
+      "id": "pcgy_35DDEDEA85E3C4418D11353F9D",
+      "slug": "batterijen-en-opladers",
+      "nl": "Batterijen & opladers",
+      "en": "Batteries & Chargers"
+    },
+    {
+      "id": "pcgy_01KZTTCT7Z9Y4N7AM04H5791WK",
+      "slug": "beauty-en-verzorging",
+      "nl": "Beauty & Verzorging",
+      "en": "Beauty & Personal Care"
+    },
+    {
+      "id": "pcgy_B667FF50B7BF2A29DD30483692",
+      "slug": "beauty-en-parfumgiftsets",
+      "nl": "Beauty- & parfumgiftsets",
+      "en": "Beauty & Fragrance Gift Sets"
+    },
+    {
+      "id": "pcgy_0070A656452B9C68453BEBB3BB",
+      "slug": "bedden-en-matrassen",
+      "nl": "Bedden & matrassen",
+      "en": "Beds & Mattresses"
+    },
+    {
+      "id": "pcgy_1ACF0E7748D954BDB0E88B5C92",
+      "slug": "beddengoed",
+      "nl": "Beddengoed",
+      "en": "Bedding"
+    },
+    {
+      "id": "pcgy_0934C7E83E14F494F3F64D1813",
+      "slug": "bemesting-onkruid-en-ongediertebestrijding",
+      "nl": "Bemesting, onkruid- & ongediertebestrijding",
+      "en": "Fertilisers, Weed & Pest Control"
+    },
+    {
+      "id": "pcgy_136377F4E1DD99AC3BA403B715",
+      "slug": "bergingen-en-overkappingen",
+      "nl": "Bergingen & overkappingen",
+      "en": "Sheds & Canopies"
+    },
+    {
+      "id": "pcgy_2359E3DC3347DCA0D1CCE20211",
+      "slug": "bestrating",
+      "nl": "Bestrating",
+      "en": "Paving"
+    },
+    {
+      "id": "pcgy_99F10802F915D56A19E8C68F91",
+      "slug": "bewatering",
+      "nl": "Bewatering",
+      "en": "Watering"
+    },
+    {
+      "id": "pcgy_G1FWYXZAQN7XRN5DG1FWYXZAQN",
+      "slug": "bloemen-vazen",
+      "nl": "Bloemen & Vazen",
+      "en": "Flowers & Vases"
+    },
+    {
+      "id": "pcgy_2F5740D9176DD78AAC85162C7F",
+      "slug": "bloemen-en-bloembollen",
+      "nl": "Bloemen & bloembollen",
+      "en": "Flowers & Bulbs"
+    },
+    {
+      "id": "pcgy_3E364BE91397E81CC2A6F2491A",
+      "slug": "bloempotten-en-plantenbakken",
+      "nl": "Bloempotten & plantenbakken",
+      "en": "Flower Pots & Planters"
+    },
+    {
+      "id": "pcgy_52TR6PT6CH1SJ0N952TR6PT6CH",
+      "slug": "boeken",
+      "nl": "Boeken",
+      "en": "Books"
+    },
+    {
+      "id": "pcgy_01M0Z1CKV0TH41FN9QC2X1983G",
+      "slug": "boeken-media",
+      "nl": "Boeken & Media",
+      "en": "Books & Media"
+    },
+    {
+      "id": "pcgy_3D5EB74A888583E2DBF15BFB9A",
+      "slug": "boodschappentassen-en-trolleys",
+      "nl": "Boodschappentassen & -trolleys",
+      "en": "Shopping Bags & Trolleys"
+    },
+    {
+      "id": "pcgy_4A52E2A7F24A364D299E3A0312",
+      "slug": "borstvoeding",
+      "nl": "Borstvoeding",
+      "en": "Breastfeeding"
+    },
+    {
+      "id": "pcgy_80591BDBBFBAF5D789D0670968",
+      "slug": "bouw-constructie-en-educatief-speelgoed",
+      "nl": "Bouw-, constructie- & educatief speelgoed",
+      "en": "Building, Construction & Educational Toys"
+    },
+    {
+      "id": "pcgy_D8993223386E3040E6A574C912",
+      "slug": "bouwmateriaal-deuren-en-ijzerwaren",
+      "nl": "Bouwmateriaal, deuren & ijzerwaren",
+      "en": "Building Materials, Doors & Hardware"
+    },
+    {
+      "id": "pcgy_A0D9C60A646CFB0D2B4E2AE3F4",
+      "slug": "bouwmaterialen-en-verf",
+      "nl": "Bouwmaterialen & Verf",
+      "en": "Building Materials & Paint"
+    },
+    {
+      "id": "pcgy_C50E0160E333A070B52C2AA0C5",
+      "slug": "boxen-wip-en-loopstoeltjes",
+      "nl": "Boxen, wip- & loopstoeltjes",
+      "en": "Playpens, Bouncers & Baby Walkers"
+    },
+    {
+      "id": "pcgy_C0D5C879489E3037F0A19A82DE",
+      "slug": "brandbeveiliging-en-rookmelders",
+      "nl": "Brandbeveiliging & rookmelders",
+      "en": "Fire Safety & Smoke Alarms"
+    },
+    {
+      "id": "pcgy_72F94086CB61D47B8242BCDFB7",
+      "slug": "buitenspeelgoed",
+      "nl": "Buitenspeelgoed",
+      "en": "Outdoor Toys"
+    },
+    {
+      "id": "pcgy_7076119B041233F49DE808FF02",
+      "slug": "buitenverlichting",
+      "nl": "Buitenverlichting",
+      "en": "Outdoor Lighting"
+    },
+    {
+      "id": "pcgy_9EEP344NR83B4DXK9EEP344NR8",
+      "slug": "bureau-organisatie",
+      "nl": "Bureau & Organisatie",
+      "en": "Office & Organisation"
+    },
+    {
+      "id": "pcgy_A1285F91F62BF79734E4A51DDA",
+      "slug": "bureau-accessoires-en-whiteboards",
+      "nl": "Bureau-accessoires & whiteboards",
+      "en": "Desk Accessories & Whiteboards"
+    },
+    {
+      "id": "pcgy_01211CFABD1D59FB8F5A24B15C",
+      "slug": "bureaus-en-bureaustoelen",
+      "nl": "Bureaus & bureaustoelen",
+      "en": "Desks & Office Chairs"
+    },
+    {
+      "id": "pcgy_01KZTTCT8HD6422KWFJ2AKZM2B",
+      "slug": "cadeaus",
+      "nl": "Cadeaus",
+      "en": "Gifts"
+    },
+    {
+      "id": "pcgy_E21F613B4949F1E42498EA343D",
+      "slug": "cadeaus-per-doelgroep",
+      "nl": "Cadeaus per doelgroep",
+      "en": "Gifts by Recipient"
+    },
+    {
+      "id": "pcgy_QEP47T5G4P10W00VQEP47T5G4P",
+      "slug": "cadeausets",
+      "nl": "Cadeausets",
+      "en": "Gift Sets"
+    },
+    {
+      "id": "pcgy_743E009B6A634745CE1F49716E",
+      "slug": "cadeauverpakking",
+      "nl": "Cadeauverpakking",
+      "en": "Gift Wrapping"
+    },
+    {
+      "id": "pcgy_327E2043B72A0AE237D473C13D",
+      "slug": "cadeauzakjes-en-geschenkdozen",
+      "nl": "Cadeauzakjes & geschenkdozen",
+      "en": "Gift Bags & Gift Boxes"
+    },
+    {
+      "id": "pcgy_E04491B6F0D28585AADC03E2AA",
+      "slug": "camera-s",
+      "nl": "Camera's",
+      "en": "Cameras"
+    },
+    {
+      "id": "pcgy_AEADA16DA7CD84227B1A128E1A",
+      "slug": "camera-s-en-foto",
+      "nl": "Camera's & Foto",
+      "en": "Cameras & Photography"
+    },
+    {
+      "id": "pcgy_F14706A8785B6EA4665DEBED4A",
+      "slug": "cameralenzen-en-accessoires",
+      "nl": "Cameralenzen & -accessoires",
+      "en": "Camera Lenses & Accessories"
+    },
+    {
+      "id": "pcgy_EC77985432BED2A3376F4611B0",
+      "slug": "car-audio-radio-s-versterkers-en-speakers",
+      "nl": "Car audio (radio's, versterkers & speakers)",
+      "en": "Car Audio (Radios, Amplifiers & Speakers)"
+    },
+    {
+      "id": "pcgy_8E58FA1E171715F6A59E90234D",
+      "slug": "chips-noten-en-borrel",
+      "nl": "Chips, noten & borrel",
+      "en": "Crisps, Nuts & Party Snacks"
+    },
+    {
+      "id": "pcgy_317E2E894E24EE44FFC3DE75C7",
+      "slug": "computeronderdelen",
+      "nl": "Computeronderdelen",
+      "en": "Computer Components"
+    },
+    {
+      "id": "pcgy_AT9TMEKGF1JXMNFGAT9TMEKGF1",
+      "slug": "computers-laptops",
+      "nl": "Computers & Laptops",
+      "en": "Computers & Laptops"
+    },
+    {
+      "id": "pcgy_F1FFEBCBCAA20B59D37ABF2455",
+      "slug": "condooms-en-glijmiddel",
+      "nl": "Condooms & glijmiddel",
+      "en": "Condoms & Lubricant"
+    },
+    {
+      "id": "pcgy_E7D4E414692B40442D1E1BE06A",
+      "slug": "controllers-en-gaming-headsets",
+      "nl": "Controllers & gaming headsets",
+      "en": "Controllers & Gaming Headsets"
+    },
+    {
+      "id": "pcgy_81B5929EFA7D4A80A3D580643C",
+      "slug": "dagboeken-en-vriendenboekjes",
+      "nl": "Dagboeken & vriendenboekjes",
+      "en": "Journals & Friendship Books"
+    },
+    {
+      "id": "pcgy_E44DC5E5EAAEC5CB47078E2A88",
+      "slug": "dakkoffers-en-bagagedragers",
+      "nl": "Dakkoffers & bagagedragers",
+      "en": "Roof Boxes & Roof Racks"
+    },
+    {
+      "id": "pcgy_01M59RQAS0W670PDE7FWTSQPFM",
+      "slug": "dames",
+      "nl": "Dames",
+      "en": "Women"
+    },
+    {
+      "id": "pcgy_9796E24FDEB833FA222EE3B1FD",
+      "slug": "damesjassen-en-truien",
+      "nl": "Damesjassen & -truien",
+      "en": "Women's Coats & Jumpers"
+    },
+    {
+      "id": "pcgy_93D371315951E3F21C86688E75",
+      "slug": "dameslaarzen",
+      "nl": "Dameslaarzen",
+      "en": "Women's Boots"
+    },
+    {
+      "id": "pcgy_5E0AB1224150F21D4F50058221",
+      "slug": "damesnachtmode-en-loungewear",
+      "nl": "Damesnachtmode & loungewear",
+      "en": "Women's Nightwear & Loungewear"
+    },
+    {
+      "id": "pcgy_HFEZSDP98V6TVET7HFEZSDP98V",
+      "slug": "damesschoenen",
+      "nl": "Damesschoenen",
+      "en": "Women's Shoes"
+    },
+    {
+      "id": "pcgy_CCC43B9DBC1030103ACCE7319C",
+      "slug": "damessneakers",
+      "nl": "Damessneakers",
+      "en": "Women's Sneakers"
+    },
+    {
+      "id": "pcgy_B8C7E5BFD828CE0E3AC526CBED",
+      "slug": "damessportkleding",
+      "nl": "Damessportkleding",
+      "en": "Women's Sportswear"
+    },
+    {
+      "id": "pcgy_03892C3B686E3D606D99D721EA",
+      "slug": "darten",
+      "nl": "Darten",
+      "en": "Darts"
+    },
+    {
+      "id": "pcgy_9C75ADBD8ADC03A6B5712860DF",
+      "slug": "dataopslag-en-netwerk",
+      "nl": "Dataopslag & netwerk",
+      "en": "Data Storage & Networking"
+    },
+    {
+      "id": "pcgy_D51BD2F2DF60F1C1BDD4D22F52",
+      "slug": "decoratieve-accessoires",
+      "nl": "Decoratieve accessoires",
+      "en": "Decorative Accessories"
+    },
+    {
+      "id": "pcgy_3E4A7FDBE5DE08C19B100A2085",
+      "slug": "desktops",
+      "nl": "Desktops",
+      "en": "Desktops"
+    },
+    {
+      "id": "pcgy_01M0Z1CGSGDVGQX18F9HJ31C4V",
+      "slug": "dieren",
+      "nl": "Dieren",
+      "en": "Pets & Animals"
+    },
+    {
+      "id": "pcgy_EC1ABC02390ECD2205AF44E695",
+      "slug": "draagzakken-en-doeken",
+      "nl": "Draagzakken & -doeken",
+      "en": "Baby Carriers & Slings"
+    },
+    {
+      "id": "pcgy_E8H5Z7FGB5303AV0E8H5Z7FGB5",
+      "slug": "dranken",
+      "nl": "Dranken",
+      "en": "Drinks"
+    },
+    {
+      "id": "pcgy_01M0Z1CRSJ1QEN2R1ES8RHCS9J",
+      "slug": "duurzaam",
+      "nl": "Duurzaam",
+      "en": "Sustainable"
+    },
+    {
+      "id": "pcgy_119682DF162ADBBED0C1AFC89E",
+      "slug": "duurzame-energie",
+      "nl": "Duurzame energie",
+      "en": "Renewable Energy"
+    },
+    {
+      "id": "pcgy_9D7C628A773316C70DC035D68B",
+      "slug": "e-books-en-luisterboeken",
+      "nl": "E-books & luisterboeken",
+      "en": "E-books & Audiobooks"
+    },
+    {
+      "id": "pcgy_01KYS5ZP0QZ105DTHQSPMH321B",
+      "slug": "",
+      "nl": "E2E Cat",
+      "en": "E2E Cat"
+    },
+    {
+      "id": "pcgy_4D16FD26649A8AEFC6FD959C51",
+      "slug": "elektra",
+      "nl": "Elektra",
+      "en": "Electrical"
+    },
+    {
+      "id": "pcgy_8VQPZRD4HAPJAX628VQPZRD4HA",
+      "slug": "elektrisch-gereedschap",
+      "nl": "Elektrisch gereedschap",
+      "en": "Power Tools"
+    },
+    {
+      "id": "pcgy_EFC1F35B8ED13432F8BDAF46FC",
+      "slug": "elektrische-fietsen-en-steps",
+      "nl": "Elektrische fietsen & steps",
+      "en": "Electric Bikes & Kick Scooters"
+    },
+    {
+      "id": "pcgy_3121F4F63F8AC44942F2081735",
+      "slug": "elektrische-scooters",
+      "nl": "Elektrische scooters",
+      "en": "Electric Scooters"
+    },
+    {
+      "id": "pcgy_01KYSAP66YNXE2XRSXETRZHWQR",
+      "slug": "elektronica",
+      "nl": "Elektronica",
+      "en": "Electronics"
+    },
+    {
+      "id": "pcgy_72615093F7E8D5A18F1D8F4ABE",
+      "slug": "engels-en-anderstalige-boeken",
+      "nl": "Engels- & anderstalige boeken",
+      "en": "English & Foreign-Language Books"
+    },
+    {
+      "id": "pcgy_201F601C1F35DBC01F1C29F6C2",
+      "slug": "erotiek",
+      "nl": "Erotiek",
+      "en": "Erotica"
+    },
+    {
+      "id": "pcgy_3B96DC438FC075554A2C5491F8",
+      "slug": "erotische-giftsets-spellen-en-massage",
+      "nl": "Erotische giftsets, spellen & massage",
+      "en": "Erotic Gift Sets, Games & Massage"
+    },
+    {
+      "id": "pcgy_A21C262F7ABE5818A4BF201B7D",
+      "slug": "exterieur-styling-en-wieldoppen",
+      "nl": "Exterieur, styling & wieldoppen",
+      "en": "Exterior, Styling & Hubcaps"
+    },
+    {
+      "id": "pcgy_01M0Z1CWCR23J4Q85HXN2XEC9H",
+      "slug": "feest-seizoen",
+      "nl": "Feest & Seizoen",
+      "en": "Party & Seasonal"
+    },
+    {
+      "id": "pcgy_BD7046B4261175AC28AF8A3164",
+      "slug": "feestartikelen-en-verkleden",
+      "nl": "Feestartikelen & Verkleden",
+      "en": "Party Supplies & Fancy Dress"
+    },
+    {
+      "id": "pcgy_V37X649ETGSJ66RZV37X649ETG",
+      "slug": "feestdagen",
+      "nl": "Feestdagen",
+      "en": "Holidays"
+    },
+    {
+      "id": "pcgy_9F65E3ACB0565107FF08202A5B",
+      "slug": "feestversiering-en-ballonnen",
+      "nl": "Feestversiering & ballonnen",
+      "en": "Party Decorations & Balloons"
+    },
+    {
+      "id": "pcgy_748C0F13084A14AD58CE317B6F",
+      "slug": "fietsaccessoires-tassen-en-dragers",
+      "nl": "Fietsaccessoires, -tassen & -dragers",
+      "en": "Bike Accessories, Bags & Racks"
+    },
+    {
+      "id": "pcgy_A6JNY0CPQ9PFREQJA6JNY0CPQ9",
+      "slug": "fietsen",
+      "nl": "Fietsen & Accessoires",
+      "en": "Bikes & Accessories"
+    },
+    {
+      "id": "pcgy_1906DDB15AAC12ED6053D378AD",
+      "slug": "fietsen-en-racefietsen",
+      "nl": "Fietsen & racefietsen",
+      "en": "Bikes & Road Bikes"
+    },
+    {
+      "id": "pcgy_58A0D5B19ACD30B3EA83703451",
+      "slug": "fietskleding",
+      "nl": "Fietskleding",
+      "en": "Cycling Clothing"
+    },
+    {
+      "id": "pcgy_97F1F1D664F79F44A09E1C1611",
+      "slug": "films-en-series",
+      "nl": "Films & series",
+      "en": "Films & Series"
+    },
+    {
+      "id": "pcgy_QD30K05MN8BSE3T2QD30K05MN8",
+      "slug": "fitness-training",
+      "nl": "Fitness & Training",
+      "en": "Fitness & Training"
+    },
+    {
+      "id": "pcgy_CB261F51C5AFF69D0AAC8264F6",
+      "slug": "fotolijsten-en-fotoalbums",
+      "nl": "Fotolijsten & fotoalbums",
+      "en": "Photo Frames & Photo Albums"
+    },
+    {
+      "id": "pcgy_FB0645EAD9B674D82231F75546",
+      "slug": "frisdrank-energiedrank-en-alcoholvrij",
+      "nl": "Frisdrank, energiedrank & alcoholvrij",
+      "en": "Soft Drinks, Energy Drinks & Alcohol-Free"
+    },
+    {
+      "id": "pcgy_C40C6C21A4F6399E91550734AF",
+      "slug": "gameconsoles",
+      "nl": "Gameconsoles",
+      "en": "Game Consoles"
+    },
+    {
+      "id": "pcgy_518E7469DC02C4F01415C23D26",
+      "slug": "games",
+      "nl": "Games",
+      "en": "Games"
+    },
+    {
+      "id": "pcgy_0AEAEE7E81A5A3B5BA887D8281",
+      "slug": "gamestoelen-en-bureaus",
+      "nl": "Gamestoelen & -bureaus",
+      "en": "Gaming Chairs & Desks"
+    },
+    {
+      "id": "pcgy_9A3C83C2CCDB77987CCC2D3AA6",
+      "slug": "gaming",
+      "nl": "Gaming",
+      "en": "Gaming"
+    },
+    {
+      "id": "pcgy_AEEA0FD1CE7966DCB06F043708",
+      "slug": "gaming-muizen-toetsenborden-en-accessoires",
+      "nl": "Gaming muizen, toetsenborden & accessoires",
+      "en": "Gaming Mice, Keyboards & Accessories"
+    },
+    {
+      "id": "pcgy_C256489319583FE5ED78CD05F4",
+      "slug": "gezichtsverzorging-en-reiniging",
+      "nl": "Gezichtsverzorging & -reiniging",
+      "en": "Facial Care & Cleansing"
+    },
+    {
+      "id": "pcgy_01M0Z1CN93C0VTP3JRPMSH6WW3",
+      "slug": "gezondheid",
+      "nl": "Gezondheid",
+      "en": "Health"
+    },
+    {
+      "id": "pcgy_82C78AE4F037987F6493FB7465",
+      "slug": "gezondheidsapparaten-en-thuistesten",
+      "nl": "Gezondheidsapparaten & thuistesten",
+      "en": "Health Devices & Home Tests"
+    },
+    {
+      "id": "pcgy_992ED421828EF50BF76BCAD6F5",
+      "slug": "gordijnen-en-raamdecoratie",
+      "nl": "Gordijnen & raamdecoratie",
+      "en": "Curtains & Window Coverings"
+    },
+    {
+      "id": "pcgy_TZBKZWS1DET2B055TZBKZWS1DE",
+      "slug": "grasmaaiers-robots",
+      "nl": "Grasmaaiers & Robots",
+      "en": "Lawn Mowers & Robots"
+    },
+    {
+      "id": "pcgy_2848DCD45306536889DA69717F",
+      "slug": "grills-broodroosters-en-funcooking",
+      "nl": "Grills, broodroosters & funcooking",
+      "en": "Grills, Toasters & Fun Cooking"
+    },
+    {
+      "id": "pcgy_BE0078A78CDE44F6D4C14B0124",
+      "slug": "haarstylingtools",
+      "nl": "Haarstylingtools",
+      "en": "Hair Styling Tools"
+    },
+    {
+      "id": "pcgy_SX7J8STSX9151S60SX7J8STSX9",
+      "slug": "haarverzorging",
+      "nl": "Haarverzorging",
+      "en": "Hair Care"
+    },
+    {
+      "id": "pcgy_5AD69RPADTTJWQ9S5AD69RPADT",
+      "slug": "handgereedschap",
+      "nl": "Handgereedschap",
+      "en": "Hand Tools"
+    },
+    {
+      "id": "pcgy_8YWT13VZSJ1QFP8Y8YWT13VZSJ",
+      "slug": "handtassen",
+      "nl": "Handtassen & Tassen",
+      "en": "Handbags & Bags"
+    },
+    {
+      "id": "pcgy_524C7C8576208EA958B2B9C3AD",
+      "slug": "hang-plafondlampen-en-spots",
+      "nl": "Hang-, plafondlampen & spots",
+      "en": "Pendant Lights, Ceiling Lights & Spotlights"
+    },
+    {
+      "id": "pcgy_QYK49ZDPEM70PA1EQYK49ZDPEM",
+      "slug": "hardlopen",
+      "nl": "Hardlopen & Trail",
+      "en": "Running & Trail"
+    },
+    {
+      "id": "pcgy_s7_heg",
+      "slug": "heggenscharen",
+      "nl": "Heggenscharen",
+      "en": "Hedge Trimmers"
+    },
+    {
+      "id": "pcgy_69D64B6BE8D64D5B6A1462A98F",
+      "slug": "hengelsport",
+      "nl": "Hengelsport",
+      "en": "Fishing"
+    },
+    {
+      "id": "pcgy_01M59RQARWAZR9P50BW24T0SHD",
+      "slug": "heren",
+      "nl": "Heren",
+      "en": "Men"
+    },
+    {
+      "id": "pcgy_5B26BF5D9825E050056DA98991",
+      "slug": "herenboots",
+      "nl": "Herenboots",
+      "en": "Men's Boots"
+    },
+    {
+      "id": "pcgy_10E8C8B6C1562F59206CB06772",
+      "slug": "herenjassen-en-truien",
+      "nl": "Herenjassen & -truien",
+      "en": "Men's Coats & Jumpers"
+    },
+    {
+      "id": "pcgy_4EB36D09B8974A29BE11E82362",
+      "slug": "herenondergoed-en-zwembroeken",
+      "nl": "Herenondergoed & zwembroeken",
+      "en": "Men's Underwear & Swim Trunks"
+    },
+    {
+      "id": "pcgy_FE20D0AF324B7F928C32599CD8",
+      "slug": "herenpyjama-s-en-loungewear",
+      "nl": "Herenpyjama's & loungewear",
+      "en": "Men's Pyjamas & Loungewear"
+    },
+    {
+      "id": "pcgy_XN2E20YTVDXBE47WXN2E20YTVD",
+      "slug": "herenschoenen",
+      "nl": "Herenschoenen",
+      "en": "Men's Shoes"
+    },
+    {
+      "id": "pcgy_E210FE2BD6D7F3BE903CF8A3A9",
+      "slug": "herensneakers",
+      "nl": "Herensneakers",
+      "en": "Men's Sneakers"
+    },
+    {
+      "id": "pcgy_29B73FB5F092848E5DDEE40B31",
+      "slug": "herensportkleding",
+      "nl": "Herensportkleding",
+      "en": "Men's Sportswear"
+    },
+    {
+      "id": "pcgy_CDD10C25EFC3195FC5C98F62EE",
+      "slug": "hobby-en-creatief",
+      "nl": "Hobby & Creatief",
+      "en": "Hobbies & Crafts"
+    },
+    {
+      "id": "pcgy_1D01C28A493742EA4E552F33CC",
+      "slug": "hockey",
+      "nl": "Hockey",
+      "en": "Hockey"
+    },
+    {
+      "id": "pcgy_96DF9B00C49785A48C580EB4C3",
+      "slug": "hoesjes-en-accessoires",
+      "nl": "Hoesjes & accessoires",
+      "en": "Cases & Accessories"
+    },
+    {
+      "id": "pcgy_660B49BA8FC5EB99FB6F1F6408",
+      "slug": "hogedrukreinigers",
+      "nl": "Hogedrukreinigers",
+      "en": "Pressure Washers"
+    },
+    {
+      "id": "pcgy_01M0HNEAJJRWEE0C158YY9RS8E",
+      "slug": "home-en-living",
+      "nl": "Home & Living",
+      "en": "Home & Living"
+    },
+    {
+      "id": "pcgy_RV77B9X00ESA4H1GRV77B9X00E",
+      "slug": "hond",
+      "nl": "Hond",
+      "en": "Dog"
+    },
+    {
+      "id": "pcgy_BXADQ6CM769FMXN5BXADQ6CM76",
+      "slug": "horloges",
+      "nl": "Horloges",
+      "en": "Watches"
+    },
+    {
+      "id": "pcgy_3MEVRWWS8P8SDMWY3MEVRWWS8P",
+      "slug": "hout-leer",
+      "nl": "Hout & Leer",
+      "en": "Wood & Leather"
+    },
+    {
+      "id": "pcgy_CCNPSS6XY4N7C97PCCNPSS6XY4",
+      "slug": "huidverzorging",
+      "nl": "Huidverzorging",
+      "en": "Skincare"
+    },
+    {
+      "id": "pcgy_E11E28FC6A7BBF817F2645B054",
+      "slug": "huishoud-en-toiletpapier",
+      "nl": "Huishoud- & toiletpapier",
+      "en": "Household & Toilet Paper"
+    },
+    {
+      "id": "pcgy_01KZTTCPC3AC9EYE661Z639D8M",
+      "slug": "huishouden",
+      "nl": "Huishouden",
+      "en": "Household"
+    },
+    {
+      "id": "pcgy_82409C95DA8B7B744FC36122E0",
+      "slug": "huisparfum",
+      "nl": "Huisparfum",
+      "en": "Home Fragrance"
+    },
+    {
+      "id": "pcgy_D212F5D816FC5B0718213F0ABE",
+      "slug": "hulpmiddelen-optiek-en-gehoor",
+      "nl": "Hulpmiddelen, optiek & gehoor",
+      "en": "Aids, Optics & Hearing"
+    },
+    {
+      "id": "pcgy_7551D30E93C68F5BB73F491907",
+      "slug": "inbouwapparatuur",
+      "nl": "Inbouwapparatuur",
+      "en": "Built-in Appliances"
+    },
+    {
+      "id": "pcgy_C77C63E1B93DD9687AACC70A72",
+      "slug": "inbraakbeveiliging-camera-s-en-deurbellen",
+      "nl": "Inbraakbeveiliging, camera's & deurbellen",
+      "en": "Burglar Protection, Cameras & Doorbells"
+    },
+    {
+      "id": "pcgy_31C7A70B09D6C75AF41EBC5792",
+      "slug": "inpakpapier-lint-en-labels",
+      "nl": "Inpakpapier, lint & labels",
+      "en": "Wrapping Paper, Ribbon & Labels"
+    },
+    {
+      "id": "pcgy_4A53F419488B4E64586A25FB2C",
+      "slug": "interieuraccessoires-en-automatten",
+      "nl": "Interieuraccessoires & automatten",
+      "en": "Interior Accessories & Car Mats"
+    },
+    {
+      "id": "pcgy_468F5A3E7A3B6CF3C32B83E3CB",
+      "slug": "intieme-hygiene",
+      "nl": "Intieme hygiëne",
+      "en": "Intimate Hygiene"
+    },
+    {
+      "id": "pcgy_GZV0CFG0ZVJZRXETGZV0CFG0ZV",
+      "slug": "irrigatie-kweek",
+      "nl": "Irrigatie & Kweek",
+      "en": "Irrigation & Growing"
+    },
+    {
+      "id": "pcgy_7DFBAF7E8F92E814CA37ADCDC6",
+      "slug": "isolatie-en-energie-besparen",
+      "nl": "Isolatie & energie besparen",
+      "en": "Insulation & Energy Saving"
+    },
+    {
+      "id": "pcgy_519944FA25B11A035C12686AE7",
+      "slug": "jongenskleding",
+      "nl": "Jongenskleding",
+      "en": "Boys' Clothing"
+    },
+    {
+      "id": "pcgy_01M0Z1CT396Q5XMPC0PQCM6V90",
+      "slug": "juwelen-horloges",
+      "nl": "Juwelen & Horloges",
+      "en": "Jewellery & Watches"
+    },
+    {
+      "id": "pcgy_5667EAE31190EBE2EE0948DC67",
+      "slug": "kaarsen",
+      "nl": "Kaarsen",
+      "en": "Candles"
+    },
+    {
+      "id": "pcgy_67A883C8E52C8A546872FE1DDD",
+      "slug": "kaarsen-geur",
+      "nl": "Kaarsen & Geur",
+      "en": "Candles & Fragrance"
+    },
+    {
+      "id": "pcgy_774A2A3FA82720A17277AA2EE9",
+      "slug": "kachels-en-sfeerhaarden",
+      "nl": "Kachels & sfeerhaarden",
+      "en": "Heaters & Decorative Fires"
+    },
+    {
+      "id": "pcgy_067DF493BAFA1802F0707EA40E",
+      "slug": "kalenders",
+      "nl": "Kalenders",
+      "en": "Calendars"
+    },
+    {
+      "id": "pcgy_0DBC03FD470899579A005BBEB3",
+      "slug": "kamerplanten",
+      "nl": "Kamerplanten",
+      "en": "Houseplants"
+    },
+    {
+      "id": "pcgy_BCG1FDHN07NVWMV4BCG1FDHN07",
+      "slug": "kamperen",
+      "nl": "Kamperen",
+      "en": "Camping"
+    },
+    {
+      "id": "pcgy_01KZTTCQJHNB6E3CAZKR80XR70",
+      "slug": "kantoor",
+      "nl": "Kantoor",
+      "en": "Office"
+    },
+    {
+      "id": "pcgy_5DD890D47FA0A1AC10BB733A0E",
+      "slug": "kasten",
+      "nl": "Kasten",
+      "en": "Cupboards & Cabinets"
+    },
+    {
+      "id": "pcgy_ZFS7FET1BTF686ZFZFS7FET1BT",
+      "slug": "kat",
+      "nl": "Kat",
+      "en": "Cat"
+    },
+    {
+      "id": "pcgy_WVVNP1SFYKJPQGF1WVVNP1SFYK",
+      "slug": "keramiek-glas",
+      "nl": "Keramiek & Glas",
+      "en": "Ceramics & Glass"
+    },
+    {
+      "id": "pcgy_72A738F5FA66A9DF38901CCD26",
+      "slug": "kerstballen-en-boomversiering",
+      "nl": "Kerstballen & boomversiering",
+      "en": "Baubles & Tree Decorations"
+    },
+    {
+      "id": "pcgy_D0403DEEB6533DECDCF42DD139",
+      "slug": "kerstbomen",
+      "nl": "Kerstbomen",
+      "en": "Christmas Trees"
+    },
+    {
+      "id": "pcgy_6630CCC6628153C19F56C951F8",
+      "slug": "kerstdecoratie",
+      "nl": "Kerstdecoratie",
+      "en": "Christmas Decorations"
+    },
+    {
+      "id": "pcgy_82F68CD78DF78691AEB2BCBBB3",
+      "slug": "kerstverlichting",
+      "nl": "Kerstverlichting",
+      "en": "Christmas Lighting"
+    },
+    {
+      "id": "pcgy_01KZTTCPBFXE0MRKVZGYM3GXW3",
+      "slug": "keuken",
+      "nl": "Keuken",
+      "en": "Kitchen"
+    },
+    {
+      "id": "pcgy_B70C107FB314BFEBC24479C60B",
+      "slug": "keukenmachines-en-mixers",
+      "nl": "Keukenmachines & mixers",
+      "en": "Food Processors & Mixers"
+    },
+    {
+      "id": "pcgy_3A1EF3A0E99189F6C657B4875C",
+      "slug": "kinder-en-babyboeken",
+      "nl": "Kinder- & babyboeken",
+      "en": "Children's & Baby Books"
+    },
+    {
+      "id": "pcgy_4655CFD853B703691C776624D6",
+      "slug": "kinder-en-kraamcadeaus",
+      "nl": "Kinder- & kraamcadeaus",
+      "en": "Kids' & New Baby Gifts"
+    },
+    {
+      "id": "pcgy_16816698CE01EFCFA2F3B4E380",
+      "slug": "kinderjassen",
+      "nl": "Kinderjassen",
+      "en": "Children's Coats"
+    },
+    {
+      "id": "pcgy_B8PNXGFRR2VSJJ50B8PNXGFRR2",
+      "slug": "kinderkamer",
+      "nl": "Kinderkamer",
+      "en": "Kids' Room"
+    },
+    {
+      "id": "pcgy_01M59RQAS1DTRY5GV3YBG9NJS1",
+      "slug": "kinderkleding",
+      "nl": "Kinderkleding",
+      "en": "Children's Clothing"
+    },
+    {
+      "id": "pcgy_A105D466287041C9ECA00A2A4E",
+      "slug": "kinderlaarzen-en-boots",
+      "nl": "Kinderlaarzen & boots",
+      "en": "Children's Boots"
+    },
+    {
+      "id": "pcgy_B002ADAB96FE35964944DCF8D7",
+      "slug": "kinderondergoed-pyjama-s-en-loungewear",
+      "nl": "Kinderondergoed, pyjama's & loungewear",
+      "en": "Children's Underwear, Pyjamas & Loungewear"
+    },
+    {
+      "id": "pcgy_44FS2W47M65PW2D644FS2W47M6",
+      "slug": "kinderschoenen",
+      "nl": "Kinderschoenen",
+      "en": "Children's Shoes"
+    },
+    {
+      "id": "pcgy_512BF10811921C861816D04D8A",
+      "slug": "kinderservies-en-slabbetjes",
+      "nl": "Kinderservies & slabbetjes",
+      "en": "Children's Tableware & Bibs"
+    },
+    {
+      "id": "pcgy_5393CDEF368030577AF05A3A18",
+      "slug": "kindersneakers-en-schoenen",
+      "nl": "Kindersneakers & schoenen",
+      "en": "Children's Sneakers & Shoes"
+    },
+    {
+      "id": "pcgy_008FB77660854C52EDD2781307",
+      "slug": "kindersport-en-zwemkleding",
+      "nl": "Kindersport- & zwemkleding",
+      "en": "Children's Sports & Swimwear"
+    },
+    {
+      "id": "pcgy_743B01500655E6E067BBF9699E",
+      "slug": "kinderstoelen",
+      "nl": "Kinderstoelen",
+      "en": "High Chairs"
+    },
+    {
+      "id": "pcgy_B7E80BB25EFBF89BFE7FA5998B",
+      "slug": "kinderwagens-en-buggy-s",
+      "nl": "Kinderwagens & buggy's",
+      "en": "Strollers & Buggies"
+    },
+    {
+      "id": "pcgy_EDB105D1B2105F4F86118BBCF1",
+      "slug": "kippen-en-boerderijdieren",
+      "nl": "Kippen & boerderijdieren",
+      "en": "Chickens & Farm Animals"
+    },
+    {
+      "id": "pcgy_02619912BAB21763CBBA66AD25",
+      "slug": "kittenartikelen",
+      "nl": "Kittenartikelen",
+      "en": "Kitten Supplies"
+    },
+    {
+      "id": "pcgy_01M05PKVCBFP3Z748ZSQNB8GA6",
+      "slug": "kleding",
+      "nl": "Kleding",
+      "en": "Clothing"
+    },
+    {
+      "id": "pcgy_C197D2796C3F67A44F7AABB432",
+      "slug": "kleine-keukenapparaten",
+      "nl": "Kleine keukenapparaten",
+      "en": "Small Kitchen Appliances"
+    },
+    {
+      "id": "pcgy_D64335BE3FA28AFC5485ECF5A0",
+      "slug": "klimaatbeheersing",
+      "nl": "Klimaatbeheersing",
+      "en": "Climate Control"
+    },
+    {
+      "id": "pcgy_01KZTTCME4Z4KVRR38YHW92KFK",
+      "slug": "klus-en-gereedschap",
+      "nl": "Klus & Gereedschap",
+      "en": "DIY & Tools"
+    },
+    {
+      "id": "pcgy_F278553683F409D506CF5D7599",
+      "slug": "knaagdieren-en-konijnen",
+      "nl": "Knaagdieren & konijnen",
+      "en": "Rodents & Rabbits"
+    },
+    {
+      "id": "pcgy_D32FED4C3A36ADF3E9A023E34A",
+      "slug": "knutselen-en-kleien",
+      "nl": "Knutselen & kleien",
+      "en": "Crafts & Modelling Clay"
+    },
+    {
+      "id": "pcgy_EEB63866E4C219C122DA82E710",
+      "slug": "koek-crackers-en-tussendoortjes",
+      "nl": "Koek, crackers & tussendoortjes",
+      "en": "Biscuits, Crackers & Snacks"
+    },
+    {
+      "id": "pcgy_A96B4C10C209CCA8D810A87C33",
+      "slug": "koelkasten-en-vriezers",
+      "nl": "Koelkasten & vriezers",
+      "en": "Fridges & Freezers"
+    },
+    {
+      "id": "pcgy_8BCBDAAB9DA6FE60BFC6A7B833",
+      "slug": "koffers-en-reistassen",
+      "nl": "Koffers & Reistassen",
+      "en": "Suitcases & Travel Bags"
+    },
+    {
+      "id": "pcgy_2F8BD85434D014485F3C252583",
+      "slug": "koffers-en-koffersets",
+      "nl": "Koffers & koffersets",
+      "en": "Suitcases & Suitcase Sets"
+    },
+    {
+      "id": "pcgy_1EFC03980FC35FAC8E6E5D759B",
+      "slug": "koffie",
+      "nl": "Koffie",
+      "en": "Coffee"
+    },
+    {
+      "id": "pcgy_8D7ABCDF1E0AD6C3E3D09E8617",
+      "slug": "koffie-thee-en-baraccessoires",
+      "nl": "Koffie-, thee- & baraccessoires",
+      "en": "Coffee, Tea & Bar Accessories"
+    },
+    {
+      "id": "pcgy_0EB5468525A9D0FC6C5B19152A",
+      "slug": "koffiezetapparaten-en-waterkokers",
+      "nl": "Koffiezetapparaten & waterkokers",
+      "en": "Coffee Makers & Kettles"
+    },
+    {
+      "id": "pcgy_5C8A3582770F368D2D3EA101BF",
+      "slug": "kook-reis-en-hobbyboeken",
+      "nl": "Kook-, reis- & hobbyboeken",
+      "en": "Cookery, Travel & Hobby Books"
+    },
+    {
+      "id": "pcgy_14400B32A011E01F3C9B2F0C9F",
+      "slug": "kookplaten-fornuizen-en-afzuigkappen",
+      "nl": "Kookplaten, fornuizen & afzuigkappen",
+      "en": "Hobs, Cookers & Extractor Hoods"
+    },
+    {
+      "id": "pcgy_66F4AF876A090E5F5D15EBDCB6",
+      "slug": "koptelefoons-en-oordopjes",
+      "nl": "Koptelefoons & oordopjes",
+      "en": "Headphones & Earbuds"
+    },
+    {
+      "id": "pcgy_EB9176B2F1F5E67DB18717F25F",
+      "slug": "kranen-en-douches",
+      "nl": "Kranen & douches",
+      "en": "Taps & Showers"
+    },
+    {
+      "id": "pcgy_7C615297DC23935F474BA07273",
+      "slug": "kunstgras",
+      "nl": "Kunstgras",
+      "en": "Artificial Grass"
+    },
+    {
+      "id": "pcgy_EE24032FF62811152C8F6BEAF4",
+      "slug": "laptops",
+      "nl": "Laptops",
+      "en": "Laptops"
+    },
+    {
+      "id": "pcgy_1FC7DD1A4787353BAF6CF0ED2D",
+      "slug": "laptoptassen-en-hoezen",
+      "nl": "Laptoptassen & -hoezen",
+      "en": "Laptop Bags & Sleeves"
+    },
+    {
+      "id": "pcgy_G2978PQX8H2EVVQ2G2978PQX8H",
+      "slug": "levensmiddelen",
+      "nl": "Levensmiddelen & Delicatessen",
+      "en": "Groceries & Delicatessen"
+    },
+    {
+      "id": "pcgy_2B4F122EB91D3F75ED3F38F0AD",
+      "slug": "lichaams-hand-en-voetverzorging",
+      "nl": "Lichaams-, hand- & voetverzorging",
+      "en": "Body, Hand & Foot Care"
+    },
+    {
+      "id": "pcgy_D309C3F5425D0CB810525FD16B",
+      "slug": "lichtbronnen-en-led",
+      "nl": "Lichtbronnen & LED",
+      "en": "Light Bulbs & LED"
+    },
+    {
+      "id": "pcgy_84C65304538684E89DBA0E88DB",
+      "slug": "lingerie-en-badmode-dames",
+      "nl": "Lingerie & badmode dames",
+      "en": "Women's Lingerie & Swimwear"
+    },
+    {
+      "id": "pcgy_991BF5148CA2FDFBF83895AB85",
+      "slug": "literatuur-romans-en-young-adult",
+      "nl": "Literatuur, romans & young adult",
+      "en": "Literature, Novels & Young Adult"
+    },
+    {
+      "id": "pcgy_D738E55EC4366D73D5B295053C",
+      "slug": "luchtreinigers-bevochtigers-en-ontvochtigers",
+      "nl": "Luchtreinigers, -bevochtigers & -ontvochtigers",
+      "en": "Air Purifiers, Humidifiers & Dehumidifiers"
+    },
+    {
+      "id": "pcgy_4D33FB7ABC6A9DCCF1893E9C36",
+      "slug": "luiers-en-billendoekjes",
+      "nl": "Luiers & billendoekjes",
+      "en": "Nappies & Baby Wipes"
+    },
+    {
+      "id": "pcgy_9E068B85D4F029D2BCDA09EBB1",
+      "slug": "luiertassen-en-campingbedjes",
+      "nl": "Luiertassen & campingbedjes",
+      "en": "Changing Bags & Travel Cots"
+    },
+    {
+      "id": "pcgy_412F3C0838D72E091FB956CA0D",
+      "slug": "make-up",
+      "nl": "Make-up",
+      "en": "Make-up"
+    },
+    {
+      "id": "pcgy_M759SBY61SXW944RM759SBY61S",
+      "slug": "make-up-geur",
+      "nl": "Make-up & Geur",
+      "en": "Make-up & Fragrance"
+    },
+    {
+      "id": "pcgy_480BA3D8CBFDCA34F5CE5C67F0",
+      "slug": "massage-en-ontspanning",
+      "nl": "Massage & ontspanning",
+      "en": "Massage & Relaxation"
+    },
+    {
+      "id": "pcgy_AMZWRB2QTSB7NXH1AMZWRB2QTS",
+      "slug": "media-entertainment",
+      "nl": "Media & Entertainment",
+      "en": "Media & Entertainment"
+    },
+    {
+      "id": "pcgy_46E1959490D2DF9C28EAFD7C61",
+      "slug": "meisjeskleding",
+      "nl": "Meisjeskleding",
+      "en": "Girls' Clothing"
+    },
+    {
+      "id": "pcgy_0B0E7791D0398EB3EBB6D70EA5",
+      "slug": "merchandise-en-fanartikelen",
+      "nl": "Merchandise & fanartikelen",
+      "en": "Merchandise & Fan Items"
+    },
+    {
+      "id": "pcgy_01KZTTCRSWFETW3C7H3A9QKTYC",
+      "slug": "mode",
+      "nl": "Mode",
+      "en": "Fashion"
+    },
+    {
+      "id": "pcgy_C1A9DF841BA75329BAE361AA9D",
+      "slug": "modeaccessoires",
+      "nl": "Modeaccessoires",
+      "en": "Fashion Accessories"
+    },
+    {
+      "id": "pcgy_AD156B37E4E84A47069D81B370",
+      "slug": "modelbouw",
+      "nl": "Modelbouw",
+      "en": "Model Building"
+    },
+    {
+      "id": "pcgy_CDE4CE26EE638C9F0CA1900909",
+      "slug": "moestuin-en-zaden",
+      "nl": "Moestuin & zaden",
+      "en": "Vegetable Garden & Seeds"
+    },
+    {
+      "id": "pcgy_F0E37769394EE08C132B8DF13F",
+      "slug": "monitoren",
+      "nl": "Monitoren",
+      "en": "Monitors"
+    },
+    {
+      "id": "pcgy_SHEJ0GF6VC9WBAFXSHEJ0GF6VC",
+      "slug": "motor-scooter",
+      "nl": "Motor & Scooter",
+      "en": "Motorcycle & Scooter"
+    },
+    {
+      "id": "pcgy_B734B4C02DEF7CA772C424A261",
+      "slug": "motor-en-scooteraccessoires",
+      "nl": "Motor- & scooteraccessoires",
+      "en": "Motorcycle & Scooter Accessories"
+    },
+    {
+      "id": "pcgy_62D9B43AB57E0EC4231E66A48C",
+      "slug": "motor-en-scooterhelmen",
+      "nl": "Motor- & scooterhelmen",
+      "en": "Motorcycle & Scooter Helmets"
+    },
+    {
+      "id": "pcgy_6DD6313A5FEE35A58BD7C20C31",
+      "slug": "motorkleding",
+      "nl": "Motorkleding",
+      "en": "Motorcycle Clothing"
+    },
+    {
+      "id": "pcgy_1849F5D6C824CB504CBAA45DDE",
+      "slug": "mutsen-sjaals-en-handschoenen",
+      "nl": "Mutsen, sjaals & handschoenen",
+      "en": "Hats, Scarves & Gloves"
+    },
+    {
+      "id": "pcgy_DBA00B7372D63C86B7B5197BF1",
+      "slug": "muziek-cd-lp-en-dvd",
+      "nl": "Muziek (cd, lp & dvd)",
+      "en": "Music (CD, LP & DVD)"
+    },
+    {
+      "id": "pcgy_D8A9EFE9C3DF8823849A610F7C",
+      "slug": "muziekinstrumenten-dj-en-studio",
+      "nl": "Muziekinstrumenten, DJ & studio",
+      "en": "Musical Instruments, DJ & Studio"
+    },
+    {
+      "id": "pcgy_CA5415658A7ECD91895AF5F871",
+      "slug": "naaien-breien-en-haken",
+      "nl": "Naaien, breien & haken",
+      "en": "Sewing, Knitting & Crochet"
+    },
+    {
+      "id": "pcgy_09D95A0039E1A54DD778E3A392",
+      "slug": "navigatie-dashcams-en-carkits",
+      "nl": "Navigatie, dashcams & carkits",
+      "en": "Navigation, Dash Cams & Car Kits"
+    },
+    {
+      "id": "pcgy_JV104BMF8BJKG1A8JV104BMF8B",
+      "slug": "networking",
+      "nl": "Netwerken & Peripherals",
+      "en": "Networking & Peripherals"
+    },
+    {
+      "id": "pcgy_BE281A0B283E51C29076194609",
+      "slug": "non-fictie-biografieen-en-zelfhulp",
+      "nl": "Non-fictie, biografieën & zelfhulp",
+      "en": "Non-Fiction, Biographies & Self-Help"
+    },
+    {
+      "id": "pcgy_D160E813F13D786B58DFA94F58",
+      "slug": "notitieboeken-en-blokken",
+      "nl": "Notitieboeken & blokken",
+      "en": "Notebooks & Notepads"
+    },
+    {
+      "id": "pcgy_6EC867643EDC4CE937D02FB74C",
+      "slug": "olie-vloeistoffen-en-additieven",
+      "nl": "Olie, vloeistoffen & additieven",
+      "en": "Oil, Fluids & Additives"
+    },
+    {
+      "id": "pcgy_01M59RQAS5PWA9Q4RY9054HKK4",
+      "slug": "onderkleding",
+      "nl": "Onderkleding / Lingerie",
+      "en": "Underwear / Lingerie"
+    },
+    {
+      "id": "pcgy_0D480325C07162200D7B2B8985",
+      "slug": "onderweg-met-baby",
+      "nl": "Onderweg met baby",
+      "en": "Baby on the Go"
+    },
+    {
+      "id": "pcgy_8C1CB1653C1174AE2834DB4926",
+      "slug": "ontbijt-en-broodbeleg",
+      "nl": "Ontbijt & broodbeleg",
+      "en": "Breakfast & Spreads"
+    },
+    {
+      "id": "pcgy_57644EC3C891A9B3DED63767D2",
+      "slug": "opbergartikelen",
+      "nl": "Opbergartikelen",
+      "en": "Storage Products"
+    },
+    {
+      "id": "pcgy_S314NBF32JE8DM9NS314NBF32J",
+      "slug": "opslag-organisatie",
+      "nl": "Opslag & Organisatie",
+      "en": "Storage & Organisation"
+    },
+    {
+      "id": "pcgy_01KZTTCN14W8EP0HN8SQHBA0SK",
+      "slug": "outdoor",
+      "nl": "Outdoor",
+      "en": "Outdoor"
+    },
+    {
+      "id": "pcgy_AF35107D8C6064D839806D2028",
+      "slug": "ovens-en-magnetrons",
+      "nl": "Ovens & magnetrons",
+      "en": "Ovens & Microwaves"
+    },
+    {
+      "id": "pcgy_Z208PWZXCZ2WQHFZZ208PWZXCZ",
+      "slug": "overige-dieren",
+      "nl": "Overige dieren",
+      "en": "Other Animals"
+    },
+    {
+      "id": "pcgy_D7E5E15F3721698F54817BE166",
+      "slug": "overige-sporten",
+      "nl": "Overige sporten",
+      "en": "Other Sports"
+    },
+    {
+      "id": "pcgy_7C98E04BDF2B923DE2BFDFB78B",
+      "slug": "paarden",
+      "nl": "Paarden",
+      "en": "Horses"
+    },
+    {
+      "id": "pcgy_11DD59D41940A729EE673FC401",
+      "slug": "padel",
+      "nl": "Padel",
+      "en": "Padel"
+    },
+    {
+      "id": "pcgy_AC02DB598351A46E0BA82708FC",
+      "slug": "pannen-en-keukengerei",
+      "nl": "Pannen & keukengerei",
+      "en": "Cookware & Kitchen Utensils"
+    },
+    {
+      "id": "pcgy_5286D3186CC8BA59C490C227C5",
+      "slug": "parfum",
+      "nl": "Parfum",
+      "en": "Perfume"
+    },
+    {
+      "id": "pcgy_2A961096E5B9ED495A481832BB",
+      "slug": "partytenten-en-zonwering",
+      "nl": "Partytenten & zonwering",
+      "en": "Party Tents & Sun Shades"
+    },
+    {
+      "id": "pcgy_EEE1E56B08D30C3328A1271EFE",
+      "slug": "pasjeshouders",
+      "nl": "Pasjeshouders",
+      "en": "Card Holders"
+    },
+    {
+      "id": "pcgy_09D4F3FFD04988225B9C8A9E0C",
+      "slug": "pasta-rijst-en-wereldkeuken",
+      "nl": "Pasta, rijst & wereldkeuken",
+      "en": "Pasta, Rice & World Cuisine"
+    },
+    {
+      "id": "pcgy_0PNQTDVPMBQSBHGA0PNQTDVPMB",
+      "slug": "persoonlijke-cadeaus",
+      "nl": "Persoonlijke cadeaus",
+      "en": "Personalised Gifts"
+    },
+    {
+      "id": "pcgy_TTJNPMFVHJSR7W3HTTJNPMFVHJ",
+      "slug": "persoonlijke-verzorging",
+      "nl": "Persoonlijke verzorging",
+      "en": "Personal Care"
+    },
+    {
+      "id": "pcgy_01KZTTCNRTAGDHVV4FJSH4JPBB",
+      "slug": "plant-en-bloem",
+      "nl": "Plant & Bloem",
+      "en": "Plants & Flowers"
+    },
+    {
+      "id": "pcgy_78SEXHSW5FHWM8RK78SEXHSW5F",
+      "slug": "planten",
+      "nl": "Planten",
+      "en": "Plants"
+    },
+    {
+      "id": "pcgy_66A32F5DEA7BD79F9A9F8DA270",
+      "slug": "plantenvoeding-en-bescherming",
+      "nl": "Plantenvoeding & -bescherming",
+      "en": "Plant Food & Protection"
+    },
+    {
+      "id": "pcgy_46B40BE60496E232B9E90834A7",
+      "slug": "platenspelers",
+      "nl": "Platenspelers",
+      "en": "Turntables"
+    },
+    {
+      "id": "pcgy_C296E59577EF04E154FE6811B5",
+      "slug": "poppen-speelfiguren-en-rollenspel",
+      "nl": "Poppen, speelfiguren & rollenspel",
+      "en": "Dolls, Action Figures & Role Play"
+    },
+    {
+      "id": "pcgy_A99AD6B0A3CF876A4D8C398162",
+      "slug": "portemonnees",
+      "nl": "Portemonnees & Kleine lederwaren",
+      "en": "Wallets & Small Leather Goods"
+    },
+    {
+      "id": "pcgy_56E068C858C804592DFEECA148",
+      "slug": "print-papier",
+      "nl": "Print & Papier",
+      "en": "Print & Paper"
+    },
+    {
+      "id": "pcgy_1E0D23C623836375A1856C8AB6",
+      "slug": "print-en-fotopapier",
+      "nl": "Print- & fotopapier",
+      "en": "Printer & Photo Paper"
+    },
+    {
+      "id": "pcgy_89315A9E9CB6320507F084D0E3",
+      "slug": "printers-en-supplies",
+      "nl": "Printers & supplies",
+      "en": "Printers & Supplies"
+    },
+    {
+      "id": "pcgy_A099E8FCC8BC1D08D374AD4F27",
+      "slug": "puppyartikelen",
+      "nl": "Puppyartikelen",
+      "en": "Puppy Supplies"
+    },
+    {
+      "id": "pcgy_269A6C24EC0E7684BFD882C7F9",
+      "slug": "puzzelboeken",
+      "nl": "Puzzelboeken",
+      "en": "Puzzle Books"
+    },
+    {
+      "id": "pcgy_3723015F589979D75709359F84",
+      "slug": "reis-en-weekendtassen",
+      "nl": "Reis- & weekendtassen",
+      "en": "Travel & Weekend Bags"
+    },
+    {
+      "id": "pcgy_NWC7CCFR4AGKWZ3RNWC7CCFR4A",
+      "slug": "reisaccessoires",
+      "nl": "Reisaccessoires",
+      "en": "Travel Accessories"
+    },
+    {
+      "id": "pcgy_13E657E6CF76E8C8807D4B4C32",
+      "slug": "rekenmachines-en-schoolagenda-s",
+      "nl": "Rekenmachines & schoolagenda's",
+      "en": "Calculators & School Planners"
+    },
+    {
+      "id": "pcgy_84813BAC28082A4A3ECABD1C8C",
+      "slug": "riemen-accessoires",
+      "nl": "Riemen & Accessoires",
+      "en": "Belts & Accessories"
+    },
+    {
+      "id": "pcgy_JRXK61WBMM0JRZ7KJRXK61WBMM",
+      "slug": "rugzakken",
+      "nl": "Rugzakken",
+      "en": "Backpacks"
+    },
+    {
+      "id": "pcgy_95DB6F824C379DC44E95683B7A",
+      "slug": "sandalen",
+      "nl": "Sandalen",
+      "en": "Sandals"
+    },
+    {
+      "id": "pcgy_DC36118B25D18AD1892F1960D2",
+      "slug": "sauzen-kruiden-en-olie",
+      "nl": "Sauzen, kruiden & olie",
+      "en": "Sauces, Spices & Oil"
+    },
+    {
+      "id": "pcgy_C2CC3207AA0B53DE3FFD779F27",
+      "slug": "scheren-trimmen-en-ontharen",
+      "nl": "Scheren, trimmen & ontharen",
+      "en": "Shaving, Trimming & Hair Removal"
+    },
+    {
+      "id": "pcgy_01KZTTCTYBZ964HF7FJ1BJH6MC",
+      "slug": "schoenen",
+      "nl": "Schoenen",
+      "en": "Shoes"
+    },
+    {
+      "id": "pcgy_4F5EE09766253F5B7CAA4EEC1A",
+      "slug": "schoolspullen",
+      "nl": "Schoolspullen",
+      "en": "School Supplies"
+    },
+    {
+      "id": "pcgy_16443B8598413EBE092303AAC0",
+      "slug": "schooltassen-en-etuis",
+      "nl": "Schooltassen & etuis",
+      "en": "School Bags & Pencil Cases"
+    },
+    {
+      "id": "pcgy_HXN9VVRNK03TZZHRHXN9VVRNK0",
+      "slug": "schoonmaak",
+      "nl": "Schoonmaak",
+      "en": "Cleaning"
+    },
+    {
+      "id": "pcgy_084C7A7D7F241832E24DAB4F40",
+      "slug": "schoonmaakmiddelen-en-artikelen",
+      "nl": "Schoonmaakmiddelen & -artikelen",
+      "en": "Cleaning Products & Supplies"
+    },
+    {
+      "id": "pcgy_C2E2B6CDB197BA3CA12673DA68",
+      "slug": "schriften-mappen-en-boekenkaften",
+      "nl": "Schriften, mappen & boekenkaften",
+      "en": "Exercise Books, Folders & Book Covers"
+    },
+    {
+      "id": "pcgy_EPGSZV4B5CRXWG6NEPGSZV4B5C",
+      "slug": "schrijfwaren",
+      "nl": "Schrijfwaren",
+      "en": "Writing Supplies"
+    },
+    {
+      "id": "pcgy_E07AFA8DADF367C4D438D81C49",
+      "slug": "schuttingen-hekken-en-tuinschermen",
+      "nl": "Schuttingen, hekken & tuinschermen",
+      "en": "Fences, Gates & Garden Screens"
+    },
+    {
+      "id": "pcgy_MRJHV7BYX6H93AG5MRJHV7BYX6",
+      "slug": "seizoensdecoratie",
+      "nl": "Seizoensdecoratie",
+      "en": "Seasonal Decoration"
+    },
+    {
+      "id": "pcgy_442FBBA0044F59BD9EDE6C6CB0",
+      "slug": "seksspeeltjes-en-bdsm",
+      "nl": "Seksspeeltjes & BDSM",
+      "en": "Sex Toys & BDSM"
+    },
+    {
+      "id": "pcgy_7E9A2C16357DD5CB36ADEDDC16",
+      "slug": "servies-glazen-en-tafelaccessoires",
+      "nl": "Servies, glazen & tafelaccessoires",
+      "en": "Tableware, Glasses & Table Accessories"
+    },
+    {
+      "id": "pcgy_970FE3AEB870409948B39CB707",
+      "slug": "sexy-lingerie-en-kleding",
+      "nl": "Sexy lingerie & kleding",
+      "en": "Sexy Lingerie & Clothing"
+    },
+    {
+      "id": "pcgy_907A4B6A24DAEB464E01D18C40",
+      "slug": "shampoo-en-haarproducten",
+      "nl": "Shampoo & haarproducten",
+      "en": "Shampoo & Hair Products"
+    },
+    {
+      "id": "pcgy_SHVBB1QQE96HJQP4SHVBB1QQE9",
+      "slug": "sieraden",
+      "nl": "Sieraden",
+      "en": "Jewellery"
+    },
+    {
+      "id": "pcgy_033A841A505346BD436924D5D3",
+      "slug": "sieraden-maken-en-diy-decoratie",
+      "nl": "Sieraden maken & DIY-decoratie",
+      "en": "Jewellery Making & DIY Decoration"
+    },
+    {
+      "id": "pcgy_99196109C3DFF856055302BCD1",
+      "slug": "sierkussens-en-plaids",
+      "nl": "Sierkussens & plaids",
+      "en": "Cushions & Throws"
+    },
+    {
+      "id": "pcgy_BC87E919C04BC5AC0B5608CF6E",
+      "slug": "sim-racing-en-flight-simulation",
+      "nl": "Sim racing & flight simulation",
+      "en": "Sim Racing & Flight Simulation"
+    },
+    {
+      "id": "pcgy_ABA0BE95E303BBFEE17BA52EF5",
+      "slug": "slaaphulp-en-mobielen",
+      "nl": "Slaaphulp & mobielen",
+      "en": "Sleep Aids & Mobiles"
+    },
+    {
+      "id": "pcgy_01KZTTCRSDGZ778QJCSN44758F",
+      "slug": "slaapkamer",
+      "nl": "Slaapkamer",
+      "en": "Bedroom"
+    },
+    {
+      "id": "pcgy_BE1C43B6A902560F6C61841397",
+      "slug": "slimme-speakers",
+      "nl": "Slimme speakers",
+      "en": "Smart Speakers"
+    },
+    {
+      "id": "pcgy_AB6F49D8FA35F42029EBC03BBF",
+      "slug": "slimme-verlichting-en-stekkers",
+      "nl": "Slimme verlichting & stekkers",
+      "en": "Smart Lighting & Plugs"
+    },
+    {
+      "id": "pcgy_KEP8MMAVWVT5TNYTKEP8MMAVWV",
+      "slug": "smart-home",
+      "nl": "Smart Home",
+      "en": "Smart Home"
+    },
+    {
+      "id": "pcgy_F1CCA6BABC7E6DB54BB0935021",
+      "slug": "smartphones",
+      "nl": "Smartphones",
+      "en": "Smartphones"
+    },
+    {
+      "id": "pcgy_E06F3C7B0E0D5C11848C97FE7A",
+      "slug": "smartwatch-accessoires",
+      "nl": "Smartwatch-accessoires",
+      "en": "Smartwatch Accessories"
+    },
+    {
+      "id": "pcgy_F7AE18CB845110B0E7EC8823B3",
+      "slug": "smartwatches-en-smartringen",
+      "nl": "Smartwatches & smartringen",
+      "en": "Smartwatches & Smart Rings"
+    },
+    {
+      "id": "pcgy_63C25CF2498C0B88A1696EDD53",
+      "slug": "snoep-en-chocolade",
+      "nl": "Snoep & chocolade",
+      "en": "Sweets & Chocolate"
+    },
+    {
+      "id": "pcgy_261FC8D3581C779937FF162A1D",
+      "slug": "soepen-conserven-en-diepvries",
+      "nl": "Soepen, conserven & diepvries",
+      "en": "Soups, Canned Goods & Frozen Food"
+    },
+    {
+      "id": "pcgy_B5BBEBB54D9EC86F85D073FF3E",
+      "slug": "software",
+      "nl": "Software",
+      "en": "Software"
+    },
+    {
+      "id": "pcgy_2793B1B6E35E85B8E64DAABF9D",
+      "slug": "speakers-en-soundbars",
+      "nl": "Speakers & soundbars",
+      "en": "Speakers & Soundbars"
+    },
+    {
+      "id": "pcgy_01KZTTCZZ5FZKZMRQMGQSN808W",
+      "slug": "speelgoed",
+      "nl": "Speelgoed",
+      "en": "Toys"
+    },
+    {
+      "id": "pcgy_B5748B0100FEDA563C9BC04E61",
+      "slug": "speelgoedvoertuigen",
+      "nl": "Speelgoedvoertuigen",
+      "en": "Toy Vehicles"
+    },
+    {
+      "id": "pcgy_2DAB738F58491A8AA3CD7ED3CD",
+      "slug": "speeltoestellen-trampolines-en-zandbakken",
+      "nl": "Speeltoestellen, trampolines & zandbakken",
+      "en": "Play Equipment, Trampolines & Sandpits"
+    },
+    {
+      "id": "pcgy_DF89A4B843B8F79123659BF7E6",
+      "slug": "spellen-en-puzzels",
+      "nl": "Spellen & puzzels",
+      "en": "Games & Puzzles"
+    },
+    {
+      "id": "pcgy_01KZTTCW2Q22JEXB57D3NRJ043",
+      "slug": "sport",
+      "nl": "Sport",
+      "en": "Sports"
+    },
+    {
+      "id": "pcgy_974022BF43278C7C51C10B2DBF",
+      "slug": "sport-en-afslankvoeding",
+      "nl": "Sport- & afslankvoeding",
+      "en": "Sports & Weight-Loss Nutrition"
+    },
+    {
+      "id": "pcgy_9806AF115B22DA0A2ACD01D0F5",
+      "slug": "sporthorloges-en-activitytrackers",
+      "nl": "Sporthorloges & activitytrackers",
+      "en": "Sports Watches & Activity Trackers"
+    },
+    {
+      "id": "pcgy_F5530F697B8C3FFE04EBE4A986",
+      "slug": "steps-loopfietsen-en-kinderauto-s",
+      "nl": "Steps, loopfietsen & kinderauto's",
+      "en": "Scooters, Balance Bikes & Ride-On Cars"
+    },
+    {
+      "id": "pcgy_B3B9D55F1E08996F211758D928",
+      "slug": "stofzuigers-en-stoomreinigers",
+      "nl": "Stofzuigers & stoomreinigers",
+      "en": "Vacuum Cleaners & Steam Cleaners"
+    },
+    {
+      "id": "pcgy_45FB0891F2B86EFD95327AA357",
+      "slug": "strijken",
+      "nl": "Strijken",
+      "en": "Ironing"
+    },
+    {
+      "id": "pcgy_D1801D4F8942AD81CFCAC3EDC7",
+      "slug": "strips-manga-en-graphic-novels",
+      "nl": "Strips, manga & graphic novels",
+      "en": "Comics, Manga & Graphic Novels"
+    },
+    {
+      "id": "pcgy_9B1AFC3052D8E1EC53089004D9",
+      "slug": "studieboeken",
+      "nl": "Studieboeken",
+      "en": "Textbooks"
+    },
+    {
+      "id": "pcgy_BD6A71AB339B324F0F8C388BF4",
+      "slug": "superfoods-en-suikervervangers",
+      "nl": "Superfoods & suikervervangers",
+      "en": "Superfoods & Sugar Substitutes"
+    },
+    {
+      "id": "pcgy_CYTYX2KP1X1ZH1ATCYTYX2KP1X",
+      "slug": "tv-video",
+      "nl": "TV & Video",
+      "en": "TV & Video"
+    },
+    {
+      "id": "pcgy_40023CBD61403B5992DF51A08C",
+      "slug": "tablets-en-e-readers",
+      "nl": "Tablets & e-readers",
+      "en": "Tablets & E-readers"
+    },
+    {
+      "id": "pcgy_C598ED044F5452A9630F3124EE",
+      "slug": "tafel-vloer-en-wandlampen",
+      "nl": "Tafel-, vloer- & wandlampen",
+      "en": "Table, Floor & Wall Lamps"
+    },
+    {
+      "id": "pcgy_2A1A3C1DA7C5565D2F5F689E4B",
+      "slug": "tafels-en-stoelen",
+      "nl": "Tafels & stoelen",
+      "en": "Tables & Chairs"
+    },
+    {
+      "id": "pcgy_B8EA07CA754F129BD045B1417D",
+      "slug": "tand-en-mondverzorging",
+      "nl": "Tand- & mondverzorging",
+      "en": "Dental & Oral Care"
+    },
+    {
+      "id": "pcgy_01KZTTCVMG2BN0Q5PGDNPZPN7E",
+      "slug": "tassen-en-accessoires",
+      "nl": "Tassen & Accessoires",
+      "en": "Bags & Accessories"
+    },
+    {
+      "id": "pcgy_01615B08710F6C15AC571E4BDF",
+      "slug": "teamsport",
+      "nl": "Teamsport",
+      "en": "Team Sports"
+    },
+    {
+      "id": "pcgy_9BA98698764C5719E773FA5415",
+      "slug": "tekenen-schilderen-en-handlettering",
+      "nl": "Tekenen, schilderen & handlettering",
+      "en": "Drawing, Painting & Hand Lettering"
+    },
+    {
+      "id": "pcgy_QSCMNZ5EZDBS78FWQSCMNZ5EZD",
+      "slug": "phones-tablets",
+      "nl": "Telefoons & Tablets",
+      "en": "Phones & Tablets"
+    },
+    {
+      "id": "pcgy_154049A178046C9FD77658FBAC",
+      "slug": "televisies-en-beamers",
+      "nl": "Televisies & beamers",
+      "en": "Televisions & Projectors"
+    },
+    {
+      "id": "pcgy_DVHK5FKT0WECFDYNDVHK5FKT0W",
+      "slug": "textiel-wol",
+      "nl": "Textiel & Wol",
+      "en": "Textiles & Wool"
+    },
+    {
+      "id": "pcgy_9ED74094C2E083081C8EA3F7FA",
+      "slug": "thee",
+      "nl": "Thee",
+      "en": "Tea"
+    },
+    {
+      "id": "pcgy_5ACBF4980B7773DDDAEA595A6F",
+      "slug": "thrillers-fantasy-en-sciencefiction",
+      "nl": "Thrillers, fantasy & sciencefiction",
+      "en": "Thrillers, Fantasy & Science Fiction"
+    },
+    {
+      "id": "pcgy_E8DE4ADDC60EDD149B91251DA7",
+      "slug": "tijdschriften",
+      "nl": "Tijdschriften",
+      "en": "Magazines"
+    },
+    {
+      "id": "pcgy_571F5A174EFCDB68BF9B27988B",
+      "slug": "tijdschriften-en-puzzelboeken",
+      "nl": "Tijdschriften & Puzzelboeken",
+      "en": "Magazines & Puzzle Books"
+    },
+    {
+      "id": "pcgy_6EB060CB0B706E03B633637B65",
+      "slug": "toetsenborden-muizen-en-pc-accessoires",
+      "nl": "Toetsenborden, muizen & pc-accessoires",
+      "en": "Keyboards, Mice & PC Accessories"
+    },
+    {
+      "id": "pcgy_8DEE49FDC03B2C64DFC3524729",
+      "slug": "toilettassen-en-beautycases",
+      "nl": "Toilettassen & beautycases",
+      "en": "Wash Bags & Beauty Cases"
+    },
+    {
+      "id": "pcgy_C2A7BBF19F0EDBD4721B893574",
+      "slug": "traphekjes-en-kinderbeveiliging",
+      "nl": "Traphekjes & kinderbeveiliging",
+      "en": "Stair Gates & Child Safety"
+    },
+    {
+      "id": "pcgy_s7_tuin",
+      "slug": "tuin",
+      "nl": "Tuin",
+      "en": "Garden"
+    },
+    {
+      "id": "pcgy_F2B48B702C97A8EE312B7A4DD8",
+      "slug": "tuinbouw-en-afscheiding",
+      "nl": "Tuinbouw & Afscheiding",
+      "en": "Horticulture & Fencing"
+    },
+    {
+      "id": "pcgy_00EAD29AA97B0F437A01628AD6",
+      "slug": "tuindecoratie",
+      "nl": "Tuindecoratie",
+      "en": "Garden Decoration"
+    },
+    {
+      "id": "pcgy_4CXZXSK34GQZM3PS4CXZXSK34G",
+      "slug": "tuinhandgereedschap",
+      "nl": "Tuinhandgereedschap",
+      "en": "Garden Hand Tools"
+    },
+    {
+      "id": "pcgy_8547F51D48A9885CD171165CC2",
+      "slug": "tuininrichting-en-decoratie",
+      "nl": "Tuininrichting & Decoratie",
+      "en": "Garden Furnishing & Decoration"
+    },
+    {
+      "id": "pcgy_HAMP0PX12Z3VYTGBHAMP0PX12Z",
+      "slug": "tuinmeubelen",
+      "nl": "Tuinmeubelen",
+      "en": "Garden Furniture"
+    },
+    {
+      "id": "pcgy_2D2846C14F1D94CEB446586756",
+      "slug": "tuinonderhoud",
+      "nl": "Tuinonderhoud",
+      "en": "Garden Maintenance"
+    },
+    {
+      "id": "pcgy_95E585BA0047AD867F255E15F9",
+      "slug": "tuinplanten-en-bomen",
+      "nl": "Tuinplanten & bomen",
+      "en": "Garden Plants & Trees"
+    },
+    {
+      "id": "pcgy_9676769D51E28580A5C890CBD8",
+      "slug": "tuinverwarming",
+      "nl": "Tuinverwarming",
+      "en": "Garden Heating"
+    },
+    {
+      "id": "pcgy_EEFBABA2C26D67688F39BA5832",
+      "slug": "tv-accessoires",
+      "nl": "Tv-accessoires",
+      "en": "TV Accessories"
+    },
+    {
+      "id": "pcgy_8B27451BE3F4CBB452D20A7B91",
+      "slug": "tv-meubels-en-dressoirs",
+      "nl": "Tv-meubels & dressoirs",
+      "en": "TV Stands & Sideboards"
+    },
+    {
+      "id": "pcgy_4BBAE9F081CCE3C9F55C1A5AB7",
+      "slug": "vaatwasmiddelen-en-accessoires",
+      "nl": "Vaatwasmiddelen & -accessoires",
+      "en": "Dishwasher Products & Accessories"
+    },
+    {
+      "id": "pcgy_7D74829D06984BAC3DFDF90D0A",
+      "slug": "vaatwassers",
+      "nl": "Vaatwassers",
+      "en": "Dishwashers"
+    },
+    {
+      "id": "pcgy_FAB56D1754F9A5BA4537ACC1BD",
+      "slug": "vechtsport",
+      "nl": "Vechtsport",
+      "en": "Combat Sports"
+    },
+    {
+      "id": "pcgy_CFD7FA8CD20920F23072B36C5F",
+      "slug": "veiligheid-en-zitjes",
+      "nl": "Veiligheid & Zitjes",
+      "en": "Safety & Seats"
+    },
+    {
+      "id": "pcgy_AC024BB1715B203EDC91F97FD4",
+      "slug": "ventilatoren-en-airco-s",
+      "nl": "Ventilatoren & airco's",
+      "en": "Fans & Air Conditioners"
+    },
+    {
+      "id": "pcgy_C9ED08BFB369BEA9A54EEEE9AC",
+      "slug": "verduurzamen-en-beveiligen",
+      "nl": "Verduurzamen & Beveiligen",
+      "en": "Sustainability & Security Upgrades"
+    },
+    {
+      "id": "pcgy_7F03A23CD50B757B15D40C4415",
+      "slug": "verf-en-behang",
+      "nl": "Verf & behang",
+      "en": "Paint & Wallpaper"
+    },
+    {
+      "id": "pcgy_EE832A36F8C2E1C94FEA521792",
+      "slug": "verhuis-en-transportmiddelen",
+      "nl": "Verhuis- & transportmiddelen",
+      "en": "Moving & Transport Equipment"
+    },
+    {
+      "id": "pcgy_F46947ACE579E63F9F4481C0BE",
+      "slug": "verkleden-en-schmink",
+      "nl": "Verkleden & schmink",
+      "en": "Fancy Dress & Face Paint"
+    },
+    {
+      "id": "pcgy_01KZTTCQKK4ZW4C7JGCS8Y9E9A",
+      "slug": "verlichting",
+      "nl": "Verlichting",
+      "en": "Lighting"
+    },
+    {
+      "id": "pcgy_8F28FD0C7CED7599287FC06514",
+      "slug": "verwarming-en-thermostaten",
+      "nl": "Verwarming & thermostaten",
+      "en": "Heating & Thermostats"
+    },
+    {
+      "id": "pcgy_2B0D4B1302D4010F89500548C4",
+      "slug": "vissen-aquaria-en-reptielen",
+      "nl": "Vissen, aquaria & reptielen",
+      "en": "Fish, Aquariums & Reptiles"
+    },
+    {
+      "id": "pcgy_ERED4AVZTZBFGEP6ERED4AVZTZ",
+      "slug": "vitaminen-supplements",
+      "nl": "Vitaminen & Supplements",
+      "en": "Vitamins & Supplements"
+    },
+    {
+      "id": "pcgy_34EAF98DF9564D6BE64161F533",
+      "slug": "vloeren-en-tegels",
+      "nl": "Vloeren & tegels",
+      "en": "Flooring & Tiles"
+    },
+    {
+      "id": "pcgy_2B22C15DD1F40570533E010BAD",
+      "slug": "vloerkleden",
+      "nl": "Vloerkleden",
+      "en": "Rugs"
+    },
+    {
+      "id": "pcgy_01M0Z1CC03Q95DCH0HTV76QF8J",
+      "slug": "voeding",
+      "nl": "Voeding",
+      "en": "Food"
+    },
+    {
+      "id": "pcgy_833C50FDF6B938F07A43EC86E2",
+      "slug": "voedingssupplementen",
+      "nl": "Voedingssupplementen",
+      "en": "Dietary Supplements"
+    },
+    {
+      "id": "pcgy_BC044A4FF3CA4779D8D4BE0ED7",
+      "slug": "voedsel-bewaren-en-prullenbakken",
+      "nl": "Voedsel bewaren & prullenbakken",
+      "en": "Food Storage & Bins"
+    },
+    {
+      "id": "pcgy_E7C7D8476329622618282C7577",
+      "slug": "voetbal",
+      "nl": "Voetbal",
+      "en": "Football"
+    },
+    {
+      "id": "pcgy_4506799F1E7B886462900D2C31",
+      "slug": "vogels-en-tuindieren",
+      "nl": "Vogels & tuindieren",
+      "en": "Birds & Garden Wildlife"
+    },
+    {
+      "id": "pcgy_85BF71C1DBE705375965846608",
+      "slug": "wanddecoratie-klokken-en-spiegels",
+      "nl": "Wanddecoratie, klokken & spiegels",
+      "en": "Wall Decoration, Clocks & Mirrors"
+    },
+    {
+      "id": "pcgy_WQ7FSKQ7FJGKMVYCWQ7FSKQ7FJ",
+      "slug": "wandelen-outdoor",
+      "nl": "Wandelen & Outdoor gear",
+      "en": "Hiking & Outdoor Gear"
+    },
+    {
+      "id": "pcgy_E6128DEEA8BC0281073BEE8910",
+      "slug": "wandelen-en-outdoorkleding",
+      "nl": "Wandelen & outdoorkleding",
+      "en": "Hiking & Outdoor Clothing"
+    },
+    {
+      "id": "pcgy_2HKTWMZXZH0E0ZXP2HKTWMZXZH",
+      "slug": "was-droog",
+      "nl": "Was & Drogen",
+      "en": "Laundry & Drying"
+    },
+    {
+      "id": "pcgy_0BE64AA51220CDA60ED6277FAD",
+      "slug": "wasmachines-en-drogers",
+      "nl": "Wasmachines & drogers",
+      "en": "Washing Machines & Dryers"
+    },
+    {
+      "id": "pcgy_32E3993CB306FD52B768B8F4EF",
+      "slug": "wasmiddelen-en-droogrekken",
+      "nl": "Wasmiddelen & droogrekken",
+      "en": "Laundry Detergents & Drying Racks"
+    },
+    {
+      "id": "pcgy_65FF40B6D7AC0AFE368C0923D8",
+      "slug": "water-sappen-en-siropen",
+      "nl": "Water, sappen & siropen",
+      "en": "Water, Juices & Syrups"
+    },
+    {
+      "id": "pcgy_051DC8C5BB8815789A48A421E9",
+      "slug": "water-en-zwembadspeelgoed",
+      "nl": "Water- & zwembadspeelgoed",
+      "en": "Water & Pool Toys"
+    },
+    {
+      "id": "pcgy_258E93B2BEF762A7B9FE6AE926",
+      "slug": "wearables",
+      "nl": "Wearables & Smartwatches",
+      "en": "Wearables & Smartwatches"
+    },
+    {
+      "id": "pcgy_97CDC7F595B3172A048103170A",
+      "slug": "wellness-sauna-en-spa",
+      "nl": "Wellness (sauna & spa)",
+      "en": "Wellness (Sauna & Spa)"
+    },
+    {
+      "id": "pcgy_72360A31D04EE098A9E2FAC0AC",
+      "slug": "wenskaarten-en-papierwaren",
+      "nl": "Wenskaarten & Papierwaren",
+      "en": "Greeting Cards & Paper Goods"
+    },
+    {
+      "id": "pcgy_B1648BBE80CAE1F0B5B7225BC0",
+      "slug": "wenskaarten-en-uitnodigingen",
+      "nl": "Wenskaarten & uitnodigingen",
+      "en": "Greeting Cards & Invitations"
+    },
+    {
+      "id": "pcgy_E5746E79C4F6F41223CA214875",
+      "slug": "werkkleding",
+      "nl": "Werkkleding",
+      "en": "Workwear"
+    },
+    {
+      "id": "pcgy_7K2ZP6MW0BT2CZCF7K2ZP6MW0B",
+      "slug": "werkplaats-opslag",
+      "nl": "Werkplaats & Opslag",
+      "en": "Workshop & Storage"
+    },
+    {
+      "id": "pcgy_2853FC83F44C82D06D6BF8381B",
+      "slug": "wintersport",
+      "nl": "Wintersport",
+      "en": "Winter Sports"
+    },
+    {
+      "id": "pcgy_01KZTTCND9HG6T57H7DDVVJMZ9",
+      "slug": "wonen",
+      "nl": "Wonen",
+      "en": "Home"
+    },
+    {
+      "id": "pcgy_188680606FB11A11D084C70DE8",
+      "slug": "woonaccessoires",
+      "nl": "Woonaccessoires",
+      "en": "Home Accessories"
+    },
+    {
+      "id": "pcgy_582340E2C5A0F94387AE088549",
+      "slug": "wooncadeaus",
+      "nl": "Wooncadeaus",
+      "en": "Home Gifts"
+    },
+    {
+      "id": "pcgy_8QVZF9YRKBZVSS7R8QVZF9YRKB",
+      "slug": "woonkamer",
+      "nl": "Woonkamer",
+      "en": "Living Room"
+    },
+    {
+      "id": "pcgy_34EF4EC4701BD06B6ED84F4D51",
+      "slug": "woontextiel",
+      "nl": "Woontextiel",
+      "en": "Home Textiles"
+    },
+    {
+      "id": "pcgy_CA291073EE9B879D17EB530BA2",
+      "slug": "yoga",
+      "nl": "Yoga",
+      "en": "Yoga"
+    },
+    {
+      "id": "pcgy_9CDFDDEF5605FBE9761E15D7C8",
+      "slug": "zelfzorg-en-medisch",
+      "nl": "Zelfzorg & Medisch",
+      "en": "Self-Care & Medical"
+    },
+    {
+      "id": "pcgy_5486487BB47D9376EFD4848C5F",
+      "slug": "zelfzorgmiddelen-en-ehbo",
+      "nl": "Zelfzorgmiddelen & EHBO",
+      "en": "Self-Care Products & First Aid"
+    },
+    {
+      "id": "pcgy_1581A36C55B98E4CD6BCA5C8FF",
+      "slug": "zindelijkheid-en-potjes",
+      "nl": "Zindelijkheid & potjes",
+      "en": "Potty Training"
+    },
+    {
+      "id": "pcgy_125436BD788979993A2257F25B",
+      "slug": "zonbescherming-en-zelfbruining",
+      "nl": "Zonbescherming & zelfbruining",
+      "en": "Sun Protection & Self-Tan"
+    },
+    {
+      "id": "pcgy_A34BA15567D160A60A979532C0",
+      "slug": "zuivel-en-plantaardige-dranken",
+      "nl": "Zuivel- & plantaardige dranken",
+      "en": "Dairy & Plant-Based Drinks"
+    },
+    {
+      "id": "pcgy_AA61192C74D41C57A1599BCFF4",
+      "slug": "zwangerschapskleding",
+      "nl": "Zwangerschapskleding",
+      "en": "Maternity Clothing"
+    },
+    {
+      "id": "pcgy_F797936E482938C94FE7325AAF",
+      "slug": "zwem-watersport",
+      "nl": "Zwem- & Watersport",
+      "en": "Swimming & Water Sports"
+    }
+  ]
+}

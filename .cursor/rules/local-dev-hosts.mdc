@@ -1,0 +1,37 @@
+---
+description: Controleer lokale EuropMade-hosts (:9000/:3000/:3001) vóór productwerk; gebruik healthcheck/startup-scripts
+alwaysApply: true
+---
+
+# Lokale ontwikkelhosts (Windows)
+
+Vereiste lokale hosts voor vrijwel alle feature-/auth-/storefront-taken:
+
+- Backend Medusa: `http://localhost:9000` (`GET /health` → 200)
+- Seller/storefront: `http://localhost:3000`
+- Admin: `http://localhost:3001`
+- PostgreSQL: Docker Compose-service `postgres`, container `europmade-postgres`
+
+## Bij het begin van werk dat deze hosts nodig heeft
+
+1. **Eerst healthcheck** — start geen servers als ze al gezond zijn:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-local\Test-EuropMadeHealth.ps1
+```
+
+2. Alleen bij FAIL: veilig herstel via het bestaande script (hergebruikt gezonde processen):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-local\Test-EuropMadeHealth.ps1 -Repair
+```
+
+   Of volledige start: `.\scripts\dev-local\Start-EuropMade.ps1` (optioneel `-Repair`).
+
+3. Als herstel mislukt: onderzoek eerst `logs/dev-local/` en de betrokken terminal-/app-logs. Geen database-reset, geen migratie zonder noodzaak, geen productontwikkeling voortzetten zolang de vereiste hosts down zijn.
+
+4. **Niet** in elke chat opnieuw servers starten wanneer de healthcheck al PASS is. Geen dubbele processen op 3000/3001/9000.
+
+5. HTTP 200 op een loginpagina is geen bewijs van werkende authenticatie; login apart verifiëren wanneer de taak dat vereist.
+
+Details: `scripts/dev-local/README.md`. Zie ook `dev-server-build-safety.mdc` (geen production build terwijl `dev` draait).

@@ -65,6 +65,9 @@ export default function ProductDeliveriesPage() {
       id?: string
     }>
   >([])
+  const [attributeOverrides, setAttributeOverrides] = useState<
+    Record<string, Record<string, string>>
+  >({})
 
   const loadBatches = useCallback(async () => {
     try {
@@ -115,11 +118,23 @@ export default function ProductDeliveriesPage() {
         manual_links: confirmed ? links : undefined,
         brand_choices: brandChoices,
         category_decisions: categoryDecisions,
+        attribute_overrides: attributeOverrides,
       })
       setPreview(res)
       setLinks(res.preview.links)
       if (!language && res.preview.language.suggested) setLanguage(res.preview.language.suggested)
       setLanguageConfirmed(confirmed && Boolean(language || res.preview.language.suggested))
+      const nextOverrides: Record<string, Record<string, string>> = {}
+      for (const row of res.preview.preview) {
+        const fields: Record<string, string> = {
+          ...(attributeOverrides[String(row.row)] || {}),
+        }
+        for (const field of res.preview.category_fields || []) {
+          if (fields[field.code] === undefined) fields[field.code] = ""
+        }
+        if (Object.keys(fields).length) nextOverrides[String(row.row)] = fields
+      }
+      setAttributeOverrides(nextOverrides)
     } catch (err) {
       setError(err instanceof ProductApprovalAdminApiError ? err.message : "Preview mislukt.")
     } finally {
@@ -145,6 +160,7 @@ export default function ProductDeliveriesPage() {
         manual_links: links,
         brand_choices: brandChoices,
         category_decisions: categoryDecisions,
+        attribute_overrides: attributeOverrides,
       })
       setNotice(
         `Import klaar. ${res.created.length} nieuwe producten, ${res.proposals.length} wijzigingsvoorstellen, ${res.translations_added.length} vertalingen. Offers aangemaakt: ${res.offers_created}.`
@@ -165,7 +181,9 @@ export default function ProductDeliveriesPage() {
     <div>
       <h1 className="text-lg font-bold text-wf-900">Productaanleveringen</h1>
       <p className="mt-1 text-xs text-wf-600">
-        Import van een merk of fabrikant zonder selleraccount. Prijs, voorraad en seller-SKU worden niet geïmporteerd en er wordt geen offer gemaakt.
+        Admin-import van centrale Product Cloud-informatie (Excel, Engels). Prijs,
+        voorraad, verzendkosten en seller-SKU horen niet in dit bestand en worden
+        niet geïmporteerd; er wordt geen Seller-aanbod aangemaakt.
       </p>
       <div className="mt-3">
         <button
@@ -173,7 +191,7 @@ export default function ProductDeliveriesPage() {
           className="rounded border border-wf-400 px-3 py-1.5 text-xs font-semibold"
           onClick={() => void downloadBrandWorkbook().catch(() => setError("Importbestand downloaden mislukt."))}
         >
-          Download importbestand (.xlsx)
+          Download Admin producttemplate (.xlsx)
         </button>
       </div>
       <div className="mt-4">
@@ -221,6 +239,7 @@ export default function ProductDeliveriesPage() {
             setFile(e.target.files?.[0] || null)
             setPreview(null)
             setLinks([])
+            setAttributeOverrides({})
           }}
         />
         <button
@@ -427,6 +446,79 @@ export default function ProductDeliveriesPage() {
               )}
             </div>
           ))}
+          {(preview.preview.category_fields || []).length ? (
+            <div className="rounded border border-wf-300 bg-white p-3">
+              <h2 className="text-xs font-bold text-wf-900">Categoriekenmerken</h2>
+              <p className="mt-1 text-[11px] text-wf-600">
+                Herkend: {(preview.preview.detected_categories || []).join(", ") || "—"}.
+                Vul alleen relevante kenmerken in; lege optionele velden blijven leeg.
+                Bij hergebruik van een bestaande EAN worden alleen ontbrekende kenmerken
+                aangevuld (geen stille overschrijving).
+              </p>
+              <div className="mt-2 overflow-x-auto">
+                <table className="min-w-full text-[11px]">
+                  <thead>
+                    <tr className="text-left text-wf-500">
+                      <th className="pr-2">Rij</th>
+                      {(preview.preview.category_fields || []).map((field) => (
+                        <th key={field.code} className="pr-2">
+                          {field.name}
+                          {field.requirement_tier === "category_required"
+                            ? " (voorwaardelijk verplicht)"
+                            : " (optioneel)"}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {preview.preview.preview.map((row) => (
+                      <tr key={row.row}>
+                        <td className="pr-2 align-top">{row.row}</td>
+                        {(preview.preview.category_fields || []).map((field) => {
+                          const options = field.option_values || []
+                          const value =
+                            attributeOverrides[String(row.row)]?.[field.code] ?? ""
+                          const onChange = (next: string) =>
+                            setAttributeOverrides((prev) => ({
+                              ...prev,
+                              [String(row.row)]: {
+                                ...(prev[String(row.row)] || {}),
+                                [field.code]: next,
+                              },
+                            }))
+                          return (
+                            <td key={field.code} className="pr-2 pb-1">
+                              {options.length ? (
+                                <select
+                                  className="h-7 w-full rounded border border-wf-400 px-1"
+                                  value={value}
+                                  onChange={(e) => onChange(e.target.value)}
+                                >
+                                  <option value="">—</option>
+                                  {options.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <input
+                                  className="h-7 w-full rounded border border-wf-400 px-1"
+                                  value={value}
+                                  onChange={(e) => onChange(e.target.value)}
+                                />
+                              )}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+
           {(preview.preview.category_proposals || []).map((proposal) => {
             const key = `${proposal.kind}:${brandKey(proposal.raw)}`
             const decision = categoryDecisions.find(

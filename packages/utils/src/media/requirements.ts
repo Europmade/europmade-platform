@@ -173,6 +173,22 @@ export const MEDIA_REQUIREMENTS: Record<MediaPlacement, MediaRequirements> = {
     enforceDimensions: false,
     enforceAspectRatio: false,
   },
+  category_image: {
+    placement: "category_image",
+    label: "Categorie-afbeelding",
+    recommendedSize: null,
+    minSize: null,
+    maxSize: null,
+    aspectRatio: null,
+    aspectRatioValue: null,
+    maxBytes: 10 * MB,
+    mimeTypes: ["image/png", "image/jpeg", "image/webp"],
+    transparency: "allowed",
+    notes:
+      "Hero, tegel, advieskaart, keuzehulp of koopgids. De uitsnede wordt in het Category CMS gekozen en hier niet afgedwongen.",
+    enforceDimensions: false,
+    enforceAspectRatio: false,
+  },
   homepage_hero: {
     placement: "homepage_hero",
     label: "Homepage hero",

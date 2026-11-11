@@ -55,25 +55,7 @@ export function composeVariantFromAxes(
 /**
  * Category → suggested variant axes (heuristic; seller confirms).
  */
-export function suggestVariantAxesForCategory(categoryName: string): string[] {
-  const n = categoryName.toLowerCase()
-  if (/kleding|fashion|apparel|shirt|jas|broek|t-shirt|tshirt/.test(n)) {
-    return ["Kleur", "Maat", "Uitvoering"]
-  }
-  if (/schoen|shoe|sneaker|boot/.test(n)) {
-    return ["Kleur", "Maat"]
-  }
-  if (/stofzuiger|robotstofzuiger|vacuum/.test(n)) {
-    return ["Kleur", "Uitvoering", "Bundel"]
-  }
-  if (/robotmaaier|maaier|lawn/.test(n)) {
-    return ["Uitvoering", "Vermogen", "Inhoud"]
-  }
-  if (/elektronica|phone|tablet|laptop|computer|tv|capaciteit|opslag/.test(n)) {
-    return ["Kleur", "Inhoud", "Uitvoering"]
-  }
-  if (/meubel|stoel|tafel|kast|tuin/.test(n)) {
-    return ["Kleur", "Materiaal", "Uitvoering"]
-  }
-  return ["Uitvoering", "Kleur"]
+/** Commercial axes are not suggested. Colour, size and material are product specifications. */
+export function suggestVariantAxesForCategory(_categoryName: string): string[] {
+  return []
 }

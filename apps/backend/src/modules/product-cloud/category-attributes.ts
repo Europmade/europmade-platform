@@ -3,6 +3,13 @@
  * requirement_tier drives dynamic Product Form sections.
  */
 
+import {
+  allRecordedEuSizes,
+  euSizesForAudience,
+  isShoeProduct,
+  resolveShoeAudience,
+} from "./shoe-sizes"
+
 export type RequirementTier =
   | "compliance_required"
   | "category_required"
@@ -71,6 +78,28 @@ export function productMatchesCategoryFilter(
   return parts.some((part) => productMatchesSingleCategory(categoryNames, part))
 }
 
+/**
+ * Category ids whose stored name matches the public catalog filter.
+ * Same rule as productMatchesCategoryFilter on category_names: exact name
+ * or canonical slug, no substring. Slug-only rows are not included, because
+ * the catalog scan filters on names.
+ */
+export function categoryIdsMatchingCatalogFilter(
+  categories: Array<{ id: string; name?: string | null }>,
+  filter: string
+): string[] {
+  const parts = filter
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return []
+  return categories.flatMap((category) => {
+    const name = category.name?.trim() ?? ""
+    if (!name || !category.id) return []
+    return productMatchesCategoryFilter([name], filter) ? [category.id] : []
+  })
+}
+
 function productMatchesSingleCategory(
   categoryNames: string[],
   filter: string
@@ -98,6 +127,49 @@ export type AttributeCatalogItem = {
   option_values?: string[] | null
 }
 
+/**
+ * Source catalogs sometimes store Ja/Nee as "has unit?" flags in the unit
+ * column. Those must never be shown as a measurement unit (e.g. "Merk (NEE)").
+ */
+const NON_UNIT_TOKENS = new Set([
+  "",
+  "-",
+  "nee",
+  "ja",
+  "no",
+  "yes",
+  "true",
+  "false",
+  "0",
+  "1",
+  "n",
+  "y",
+  "null",
+  "none",
+  "n/a",
+  "na",
+])
+
+export function sanitizeAttributeUnit(
+  raw: string | null | undefined
+): string | null {
+  const trimmed = String(raw ?? "").trim()
+  if (!trimmed) return null
+  if (NON_UNIT_TOKENS.has(trimmed.toLowerCase())) return null
+  return trimmed
+}
+
+/** Label for UI/Excel: name, plus real unit in parentheses when present. */
+export function formatAttributeDisplayName(
+  name: string,
+  unit?: string | null
+): string {
+  const base = String(name || "").trim()
+  const u = sanitizeAttributeUnit(unit)
+  if (!base) return u ? `(${u})` : ""
+  return u ? `${base} (${u})` : base
+}
+
 export function resolveRequirementTier(
   item: Pick<AttributeCatalogItem, "is_required" | "requirement_tier">
 ): RequirementTier {
@@ -112,7 +184,8 @@ export function resolveRequirementTier(
 export const GPSR_COMPLIANCE_ATTRIBUTES: AttributeCatalogItem[] = [
   {
     code: "gpsr_manufacturer_name",
-    name: "Fabrikantnaam",
+    // Distinct from entity field "Fabrikant" (manufacturer_id). Import aliases keep "Fabrikantnaam".
+    name: "GPSR-fabrikantnaam (etiket)",
     data_type: "Tekst-met-eenheid",
     is_required: true,
     requirement_tier: "compliance_required",
@@ -562,7 +635,49 @@ export const CATEGORY_ATTRIBUTE_CATALOGS: Record<string, AttributeCatalogItem[]>
         sort_order: 40,
       },
     ],
+    schoenen: [
+      {
+        code: "maat",
+        name: "Maat",
+        data_type: "Keuzelijst",
+        is_required: true,
+        requirement_tier: "category_required",
+        option_values: allRecordedEuSizes(),
+        help_text:
+          "EU-maat is de invoer. UK wordt alleen getoond als de conversietabel die maat voor de doelgroep bevat. XS–XL horen bij kleding.",
+        sort_order: 10,
+      },
+      {
+        code: "materiaal",
+        name: "Materiaal",
+        data_type: "Tekst-met-eenheid",
+        is_required: false,
+        requirement_tier: "recommended",
+        sort_order: 20,
+      },
+      {
+        code: "kleur",
+        name: "Kleur",
+        data_type: "Tekst-met-eenheid",
+        is_required: false,
+        requirement_tier: "recommended",
+        sort_order: 30,
+      },
+    ],
   }
+
+function shoeCatalogItems(
+  items: AttributeCatalogItem[],
+  names: Array<string | null | undefined>
+): AttributeCatalogItem[] {
+  const labels = names.filter((name): name is string => Boolean(name?.trim()))
+  if (!isShoeProduct(labels)) return items
+  const audience = resolveShoeAudience(labels)
+  const options = audience ? euSizesForAudience(audience) : allRecordedEuSizes()
+  return items.map((item) =>
+    item.code === "maat" ? { ...item, option_values: options } : item
+  )
+}
 
 /** Merge category catalog + GPSR compliance (compliance always present). */
 export const MANUAL_LANGUAGE_OPTIONS = [
@@ -662,8 +777,8 @@ function sharedChoiceAttributes(
       code: "manual_languages",
       name: "Taal handleiding",
       data_type: "Keuzelijst",
-      is_required: electronics,
-      requirement_tier: electronics ? "category_required" : "recommended",
+      is_required: false,
+      requirement_tier: "optional",
       option_values: [...MANUAL_LANGUAGE_OPTIONS],
       sort_order: 940,
       is_filterable: false,
@@ -681,20 +796,42 @@ export function resolveCatalogKey(
   if (/robot|stofzuig|vacuum/.test(hay)) return "robotstofzuiger"
   if (/elektr|electron|apparaat/.test(hay)) return "elektronica"
   if (/heggensch|tuin|maaier|grasmaai/.test(hay)) return "tuin"
-  if (/schoen|shoe|mode|kleding|fashion/.test(hay)) return "mode"
+  if (/schoen|shoe|sneaker|boot|laars|sandal|sandaal/.test(hay)) return "schoenen"
+  if (/mode|kleding|fashion|apparel/.test(hay)) return "mode"
   return slug || ""
 }
 
 /** Merge category catalog + GPSR + shared CE/app/data/language choices. */
 export function catalogForCategorySlug(slug: string | null | undefined): AttributeCatalogItem[] {
   const key = resolveCatalogKey(slug)
-  const base = CATEGORY_ATTRIBUTE_CATALOGS[key] ?? CATEGORY_ATTRIBUTE_CATALOGS[slug || ""] ?? []
-  const codes = new Set(base.map((i) => i.code))
+  const base = shoeCatalogItems(
+    CATEGORY_ATTRIBUTE_CATALOGS[key] ?? CATEGORY_ATTRIBUTE_CATALOGS[slug || ""] ?? [],
+    [slug || ""]
+  )
+  // Subcategory product-spec catalogs (max 10, optional) seed onto the child category.
+  // Lazy require avoids circular import with product-specifications.ts.
+  let productSpecs: AttributeCatalogItem[] = []
+  try {
+    const { productSpecsForSubcategory } = require("./product-specifications") as {
+      productSpecsForSubcategory: (
+        s: string | null | undefined
+      ) => AttributeCatalogItem[]
+    }
+    productSpecs = productSpecsForSubcategory(slug)
+  } catch {
+    productSpecs = []
+  }
+  const byCode = new Map<string, AttributeCatalogItem>()
+  for (const item of base) byCode.set(item.code, item)
+  for (const item of productSpecs) {
+    if (!byCode.has(item.code)) byCode.set(item.code, item)
+  }
+  const codes = new Set(byCode.keys())
   const extra = [
     ...GPSR_COMPLIANCE_ATTRIBUTES,
     ...sharedChoiceAttributes(key || slug),
   ].filter((i) => !codes.has(i.code))
-  return [...base, ...extra]
+  return [...byCode.values(), ...extra]
 }
 
 /**
@@ -725,8 +862,20 @@ export function categorySpecificFieldsForNames(
   for (const name of names) {
     if (!name?.trim()) continue
     const key = resolveCatalogKey(slugifyCategoryName(name), [name])
-    const items = CATEGORY_ATTRIBUTE_CATALOGS[key] ?? []
+    const items = shoeCatalogItems(CATEGORY_ATTRIBUTE_CATALOGS[key] ?? [], [name])
     for (const item of items) byCode.set(item.code, item)
+  }
+  try {
+    const { productSpecsForCategoryNames } = require("./product-specifications") as {
+      productSpecsForCategoryNames: (
+        n: Array<string | null | undefined>
+      ) => AttributeCatalogItem[]
+    }
+    for (const item of productSpecsForCategoryNames(names)) {
+      if (!byCode.has(item.code)) byCode.set(item.code, item)
+    }
+  } catch {
+    /* optional merge */
   }
   return [...byCode.values()]
 }

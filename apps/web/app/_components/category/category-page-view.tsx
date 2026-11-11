@@ -7,11 +7,14 @@ import { PublicStorefrontChrome } from "../marketplace/public-storefront-chrome"
 import { CategoryHero } from "./category-hero"
 import { CategoryExperience } from "./category-experience"
 import { CommercialNavVisitBeacon } from "../../_lib/commercial-nav-visit"
+import Link from "next/link"
+import { t, tFormat } from "../../_lib/i18n/messages"
 
 type CategoryPageViewProps = {
   page: ResolvedCategoryPage
   products: ListingProduct[]
   alternatives?: ListingProduct[]
+  subcategories?: Array<{ slug: string; name: string; product_count: number }>
 }
 
 /**
@@ -21,6 +24,7 @@ export function CategoryPageView({
   page,
   products,
   alternatives = [],
+  subcategories = [],
 }: CategoryPageViewProps) {
   const productKind = CATEGORY_PRODUCT_KIND[page.slug] ?? "coffee"
 
@@ -44,6 +48,28 @@ export function CategoryPageView({
         breadcrumbLabel={page.title}
         productKind={productKind}
       />
+
+      {subcategories.length > 0 ? (
+        <nav
+          aria-label={t("navOpenSubcategories", page.locale)}
+          className="mx-auto mt-4 flex max-w-6xl flex-wrap gap-2 px-4"
+        >
+          {subcategories.map((child) => (
+            <Link
+              key={child.slug}
+              href={`/categorie/${child.slug}`}
+              className="rounded border border-wf-300 bg-white px-3 py-1.5 text-xs font-semibold text-wf-800 hover:underline"
+            >
+              {child.name}
+              <span className="ml-1 font-normal text-wf-500">
+                {tFormat("navProductCount", page.locale, {
+                  count: child.product_count,
+                })}
+              </span>
+            </Link>
+          ))}
+        </nav>
+      ) : null}
 
       <CategoryExperience page={page} products={products} alternatives={alternatives} />
     </PublicStorefrontChrome>

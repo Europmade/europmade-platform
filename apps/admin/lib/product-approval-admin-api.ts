@@ -69,6 +69,15 @@ export type ApprovalProductRow = {
     compliance_review_status?: string
     compliance_status?: string
     publication_blocked_reasons?: string[]
+    findings?: Array<{
+      code: string
+      field: string
+      category: string
+      blocks?: string[]
+      severity: string
+      message: string
+      action: string
+    }>
     documents?: Array<{
       code?: string
       name?: string
@@ -130,6 +139,14 @@ export type AdminProductDetail = {
   change_proposals: Array<Record<string, unknown>>
   evidence: Array<Record<string, unknown>>
   made_in_europe: Record<string, unknown> | null
+  european_ownership: {
+    id?: string
+    ownership_band?: string
+    ownership_band_label?: string
+    source?: string
+    status?: string
+    source_label?: string
+  } | null
   seller_id: string | null
   seller_name: string | null
   seller_onboarding_status: string | null
@@ -232,6 +249,34 @@ export function saveAdminProductSection(id: string, body: Record<string, unknown
     `/admin/product-cloud/products/${id}/central`,
     { method: "POST", body: JSON.stringify(body) }
   )
+}
+
+/** Persist only L1/L2/L3 category links (Seller-equivalent immediate category change). */
+export function saveAdminProductCategories(id: string, categoryIds: string[]) {
+  return saveAdminProductSection(id, {
+    section: "categories",
+    category_ids: categoryIds,
+  })
+}
+
+export function saveAdminMadeInEurope(
+  id: string,
+  body: {
+    assembly_eu_band: string
+    parts_eu_level: string
+    materials_eu_level: string
+    production_facility_id?: string | null
+    primary_assembly_country?: string | null
+  }
+) {
+  return request<{
+    product_id: string
+    made_in_europe: Record<string, unknown>
+    note?: string
+  }>(`/admin/product-cloud/products/${id}/made-in-europe`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
 }
 
 export function updateAdminProductGtin(id: string, identifier_value: string) {
@@ -482,17 +527,36 @@ export function saveSectionReview(
 export type BulkApprovalRow = {
   product_id: string
   title: string | null
+  identifier?: string | null
+  lifecycle_status?: string | null
+  publication_status?: string | null
+  offer_status?: string | null
+  sellability?: string | null
   status: "eligible" | "approved" | "skipped" | "failed"
+  outcome_label?: string
   reason: string | null
+  decided_by?: string | null
+  findings?: Array<{
+    code: string
+    field: string
+    category: string
+    severity: string
+    blocks?: string[]
+    message: string
+    action: string
+  }>
 }
 
 export type BulkApprovalReport = {
   dry_run: boolean
   mode: "selected" | "relation"
+  selected_count?: number
   eligible_count: number
   approved_count: number
   skipped_count: number
   failed_count: number
+  warning_count?: number
+  partial?: boolean
   limit_reached: boolean
   results: BulkApprovalRow[]
 }

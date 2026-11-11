@@ -17,7 +17,8 @@ export type MarketplaceCategory = {
 export const MARKETPLACE_CATEGORIES: MarketplaceCategory[] = [
   { slug: "tuin", label: "Tuin", popular: true },
   { slug: "elektronica", label: "Elektronica", popular: true },
-  { slug: "mode", label: "Mode", popular: true },
+  { slug: "kleding", label: "Kleding", popular: true },
+  { slug: "mode", label: "Mode" },
   { slug: "wonen", label: "Wonen", popular: true },
   { slug: "sport", label: "Sport", popular: true },
   { slug: "voeding", label: "Voeding", popular: true },

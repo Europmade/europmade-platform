@@ -1,0 +1,1801 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "nl": "kolomnaam",
+      "en": "column_name"
+    },
+    {
+      "nl": "nederlandse_naam",
+      "en": "dutch_name"
+    },
+    {
+      "nl": "betekenis",
+      "en": "meaning"
+    },
+    {
+      "nl": "verplicht_label",
+      "en": "required_label"
+    },
+    {
+      "nl": "voorbeeld",
+      "en": "example"
+    },
+    {
+      "nl": "toegestane_waarden",
+      "en": "allowed_values"
+    },
+    {
+      "nl": "invulinstructie",
+      "en": "fill_instruction"
+    },
+    {
+      "nl": "ean",
+      "en": "ean"
+    },
+    {
+      "nl": "EAN / GTIN",
+      "en": "EAN / GTIN"
+    },
+    {
+      "nl": "EAN/GTIN van de variant (primaire matching)",
+      "en": "EAN/GTIN of the variant (primary matching)"
+    },
+    {
+      "nl": "Voorwaardelijk verplicht",
+      "en": "Conditionally required"
+    },
+    {
+      "nl": "4242005482320",
+      "en": "4242005482320"
+    },
+    {
+      "nl": "Cijfers, 8 of 12–14 tekens met geldig checksum",
+      "en": "Digits, 8 or 12–14 characters with a valid checksum"
+    },
+    {
+      "nl": "Mag leeg bij een Concept (net als in de wizard). Verplicht vóór indienen ter controle, admin-goedkeuring, publicatie en verkoop. Bestaande EAN = bestaand product (geen duplicaat).",
+      "en": "May be empty for a Draft (same as in the wizard). Required before submitting for review, admin approval, publication and sale. Existing EAN = existing product (no duplicate)."
+    },
+    {
+      "nl": "mpn",
+      "en": "mpn"
+    },
+    {
+      "nl": "Fabrikantnummer / MPN",
+      "en": "Manufacturer number / MPN"
+    },
+    {
+      "nl": "Manufacturer Part Number",
+      "en": "Manufacturer Part Number"
+    },
+    {
+      "nl": "Optioneel",
+      "en": "Optional"
+    },
+    {
+      "nl": "",
+      "en": ""
+    },
+    {
+      "nl": "Vrije tekst",
+      "en": "Free text"
+    },
+    {
+      "nl": "Nooit de primaire productidentiteit. Alleen secundaire match als EAN ontbreekt. Seller SKU hoort niet in deze kolom.",
+      "en": "Never the primary product identity. Secondary match only when EAN is missing. Seller SKU does not belong in this column."
+    },
+    {
+      "nl": "sku",
+      "en": "sku"
+    },
+    {
+      "nl": "Seller SKU / artikelnummer",
+      "en": "Seller SKU / article number"
+    },
+    {
+      "nl": "Intern artikelnummer van deze seller",
+      "en": "Internal article number of this seller"
+    },
+    {
+      "nl": "Blijft seller-specifiek op het verkoopaanbod. Wordt niet als catalogus-EAN gebruikt.",
+      "en": "Remains seller-specific on the sales offer. Not used as a catalogue EAN."
+    },
+    {
+      "nl": "title",
+      "en": "title"
+    },
+    {
+      "nl": "Productnaam",
+      "en": "Product name"
+    },
+    {
+      "nl": "Productnaam in de brontaal",
+      "en": "Product name in the source language"
+    },
+    {
+      "nl": "Verplicht",
+      "en": "Required"
+    },
+    {
+      "nl": "Bosch Serie 8 volledig geïntegreerde vaatwasser 60 cm SMD8TCX04E",
+      "en": "Bosch Serie 8 fully integrated dishwasher 60 cm SMD8TCX04E"
+    },
+    {
+      "nl": "Verplicht bij aanmaken (wizard en Excel), ook zonder EAN. Vul in de taal die je bij de import kiest (brontaal). Geen aparte kolommen per doeltaal.",
+      "en": "Required when creating (wizard and Excel), even without EAN. Enter it in the language you choose at import (source language). No separate columns per target language."
+    },
+    {
+      "nl": "short_description",
+      "en": "short_description"
+    },
+    {
+      "nl": "Korte omschrijving",
+      "en": "Short description"
+    },
+    {
+      "nl": "Korte producttekst",
+      "en": "Short product text"
+    },
+    {
+      "nl": "Wordt samen met de uitgebreide beschrijving opgeslagen in het beschrijvingsveld van Product Cloud.",
+      "en": "Stored together with the full description in the Product Cloud description field."
+    },
+    {
+      "nl": "description",
+      "en": "description"
+    },
+    {
+      "nl": "Uitgebreide beschrijving",
+      "en": "Full description"
+    },
+    {
+      "nl": "Productbeschrijving",
+      "en": "Product description"
+    },
+    {
+      "nl": "Optioneel bij Concept. Aanbevolen vóór publicatie. Zelfde brontaal als de productnaam. Vertalingen maakt het systeem daarna.",
+      "en": "Optional for Draft. Recommended before publication. Same source language as the product name. The system creates translations afterwards."
+    },
+    {
+      "nl": "usp_1",
+      "en": "usp_1"
+    },
+    {
+      "nl": "Belangrijkste kenmerk 1",
+      "en": "Key feature 1"
+    },
+    {
+      "nl": "Afzonderlijk productkenmerk / USP 1",
+      "en": "Separate product feature / USP 1"
+    },
+    {
+      "nl": "Duurzaam Europees leer",
+      "en": "Sustainable European leather"
+    },
+    {
+      "nl": "Vrije tekst (één kenmerk)",
+      "en": "Free text (one feature)"
+    },
+    {
+      "nl": "Vul elk kenmerk in een aparte kolom. Oudere bestanden met één kolom 'Belangrijkste kenmerken / USP's' blijven werken (regels worden gesplitst). Dit zijn geen categoriekenmerken (maat/kleur); die staan op blad Kenmerken.",
+      "en": "Enter each feature in a separate column. Older files with a single 'Key features / USPs' column still work (lines are split). These are not category attributes (size/colour); those are on the Attributes sheet."
+    },
+    {
+      "nl": "usp_2",
+      "en": "usp_2"
+    },
+    {
+      "nl": "Belangrijkste kenmerk 2",
+      "en": "Key feature 2"
+    },
+    {
+      "nl": "Afzonderlijk productkenmerk / USP 2",
+      "en": "Separate product feature / USP 2"
+    },
+    {
+      "nl": "Optioneel apart kenmerk. Lege kolommen laten bestaande USP's bij gap-fill onaangeroerd.",
+      "en": "Optional separate feature. Empty columns leave existing USPs untouched during gap-fill."
+    },
+    {
+      "nl": "usp_3",
+      "en": "usp_3"
+    },
+    {
+      "nl": "Belangrijkste kenmerk 3",
+      "en": "Key feature 3"
+    },
+    {
+      "nl": "Afzonderlijk productkenmerk / USP 3",
+      "en": "Separate product feature / USP 3"
+    },
+    {
+      "nl": "usp_4",
+      "en": "usp_4"
+    },
+    {
+      "nl": "Belangrijkste kenmerk 4",
+      "en": "Key feature 4"
+    },
+    {
+      "nl": "Afzonderlijk productkenmerk / USP 4",
+      "en": "Separate product feature / USP 4"
+    },
+    {
+      "nl": "usp_5",
+      "en": "usp_5"
+    },
+    {
+      "nl": "Belangrijkste kenmerk 5",
+      "en": "Key feature 5"
+    },
+    {
+      "nl": "Afzonderlijk productkenmerk / USP 5",
+      "en": "Separate product feature / USP 5"
+    },
+    {
+      "nl": "specifications",
+      "en": "specifications"
+    },
+    {
+      "nl": "Productspecificaties",
+      "en": "Product specifications"
+    },
+    {
+      "nl": "Vrije specificatietekst",
+      "en": "Free-form specification text"
+    },
+    {
+      "nl": "Vrije tekst voor de beschrijving. Gestructureerde specificaties per subcategorie staan in Specificatie 1–10 / Waarde 1–10 (na Subcategorie).",
+      "en": "Free text for the description. Structured specifications per subcategory are in Specification 1–10 / Value 1–10 (after Subcategory)."
+    },
+    {
+      "nl": "brand",
+      "en": "brand"
+    },
+    {
+      "nl": "Merk",
+      "en": "Brand"
+    },
+    {
+      "nl": "Merknaam of merk-ID",
+      "en": "Brand name or brand ID"
+    },
+    {
+      "nl": "Bosch",
+      "en": "Bosch"
+    },
+    {
+      "nl": "Bestaand seller-merk",
+      "en": "Existing seller brand"
+    },
+    {
+      "nl": "Verplicht bij aanmaken. Moet een merk zijn dat je mag beheren.",
+      "en": "Required when creating. Must be a brand you are allowed to manage."
+    },
+    {
+      "nl": "manufacturer",
+      "en": "manufacturer"
+    },
+    {
+      "nl": "Fabrikant",
+      "en": "Manufacturer"
+    },
+    {
+      "nl": "Fabrikantnaam of -ID",
+      "en": "Manufacturer name or ID"
+    },
+    {
+      "nl": "Naam of ID",
+      "en": "Name or ID"
+    },
+    {
+      "nl": "Verplicht vóór publicatie. Leeg bij import: het merk wordt als fallback gebruikt (zelfde als nu).",
+      "en": "Required before publication. Empty on import: the brand is used as fallback (same as now)."
+    },
+    {
+      "nl": "category",
+      "en": "category"
+    },
+    {
+      "nl": "Niveau 1",
+      "en": "Level 1"
+    },
+    {
+      "nl": "Bestaande Product Cloud-hoofdcategorie (niveau 1)",
+      "en": "Existing Product Cloud top category (level 1)"
+    },
+    {
+      "nl": "Huishouden",
+      "en": "Household"
+    },
+    {
+      "nl": "Bestaande EuropMade-hoofdcategorie (dropdown in XLSX)",
+      "en": "Existing EuropMade top category (dropdown in XLSX)"
+    },
+    {
+      "nl": "Kies niveau 1. Daarna niveau 2 en 3. Onbekende namen blokkeren de import niet: het product wordt Concept tot toewijzing.",
+      "en": "Choose level 1. Then levels 2 and 3. Unknown names do not block import: the product becomes Draft until assigned."
+    },
+    {
+      "nl": "subcategory",
+      "en": "subcategory"
+    },
+    {
+      "nl": "Niveau 2",
+      "en": "Level 2"
+    },
+    {
+      "nl": "Bestaande Product Cloud-categorie op niveau 2",
+      "en": "Existing Product Cloud category at level 2"
+    },
+    {
+      "nl": "Bestaande EuropMade-categorie niveau 2 (dropdown in XLSX)",
+      "en": "Existing EuropMade category level 2 (dropdown in XLSX)"
+    },
+    {
+      "nl": "Moet bij het gekozen niveau 1 horen. Zelfde bron als Seller- en Admin-UI.",
+      "en": "Must belong to the chosen level 1. Same source as Seller and Admin UI."
+    },
+    {
+      "nl": "subcategory_l3",
+      "en": "subcategory_l3"
+    },
+    {
+      "nl": "Niveau 3",
+      "en": "Level 3"
+    },
+    {
+      "nl": "Bestaande Product Cloud-categorie op niveau 3",
+      "en": "Existing Product Cloud category at level 3"
+    },
+    {
+      "nl": "Bestaande EuropMade-categorie niveau 3 (dropdown in XLSX)",
+      "en": "Existing EuropMade category level 3 (dropdown in XLSX)"
+    },
+    {
+      "nl": "Moet bij het gekozen niveau 2 horen. Inclusief expliciete 'Alles in …'-categorieën uit de bronboom.",
+      "en": "Must belong to the chosen level 2. Including explicit 'All in …' categories from the source tree."
+    },
+    {
+      "nl": "spec_label_1",
+      "en": "spec_label_1"
+    },
+    {
+      "nl": "Specificatie 1 (automatisch)",
+      "en": "Specification 1 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 1 op basis van subcategorie",
+      "en": "Automatic specification name 1 based on subcategory"
+    },
+    {
+      "nl": "Automatisch",
+      "en": "Automatic"
+    },
+    {
+      "nl": "Automatisch via subcategorie (niet handmatig kiezen)",
+      "en": "Automatic via subcategory (do not choose manually)"
+    },
+    {
+      "nl": "Naam volgt automatisch uit de gekozen subcategorie (Excel-formule / SpecDeps). Niet zelf een willekeurige naam invullen. Server valideert altijd tegen de catalogus. Maximaal 10 optionele productspecificaties; los van USP's en van variantkenmerken (maat/kleur).",
+      "en": "Name follows automatically from the chosen subcategory (Excel formula / SpecDeps). Do not enter an arbitrary name yourself. The server always validates against the catalogue. Maximum 10 optional product specifications; separate from USPs and from variant attributes (size/colour)."
+    },
+    {
+      "nl": "spec_value_1",
+      "en": "spec_value_1"
+    },
+    {
+      "nl": "Waarde 1",
+      "en": "Value 1"
+    },
+    {
+      "nl": "Waarde voor specificatie 1",
+      "en": "Value for specification 1"
+    },
+    {
+      "nl": "Vrije tekst, getal of keuzelijstwaarde volgens de specificatie",
+      "en": "Free text, number or list value according to the specification"
+    },
+    {
+      "nl": "Optioneel. Lege waarden worden niet opgeslagen en wissen bestaande data niet. Ongeldige waarden voor de subcategorie worden geweigerd.",
+      "en": "Optional. Empty values are not stored and do not clear existing data. Invalid values for the subcategory are rejected."
+    },
+    {
+      "nl": "spec_label_2",
+      "en": "spec_label_2"
+    },
+    {
+      "nl": "Specificatie 2 (automatisch)",
+      "en": "Specification 2 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 2 op basis van subcategorie",
+      "en": "Automatic specification name 2 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 2.",
+      "en": "Automatic specification name for slot 2."
+    },
+    {
+      "nl": "spec_value_2",
+      "en": "spec_value_2"
+    },
+    {
+      "nl": "Waarde 2",
+      "en": "Value 2"
+    },
+    {
+      "nl": "Waarde voor specificatie 2",
+      "en": "Value for specification 2"
+    },
+    {
+      "nl": "spec_label_3",
+      "en": "spec_label_3"
+    },
+    {
+      "nl": "Specificatie 3 (automatisch)",
+      "en": "Specification 3 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 3 op basis van subcategorie",
+      "en": "Automatic specification name 3 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 3.",
+      "en": "Automatic specification name for slot 3."
+    },
+    {
+      "nl": "spec_value_3",
+      "en": "spec_value_3"
+    },
+    {
+      "nl": "Waarde 3",
+      "en": "Value 3"
+    },
+    {
+      "nl": "Waarde voor specificatie 3",
+      "en": "Value for specification 3"
+    },
+    {
+      "nl": "spec_label_4",
+      "en": "spec_label_4"
+    },
+    {
+      "nl": "Specificatie 4 (automatisch)",
+      "en": "Specification 4 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 4 op basis van subcategorie",
+      "en": "Automatic specification name 4 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 4.",
+      "en": "Automatic specification name for slot 4."
+    },
+    {
+      "nl": "spec_value_4",
+      "en": "spec_value_4"
+    },
+    {
+      "nl": "Waarde 4",
+      "en": "Value 4"
+    },
+    {
+      "nl": "Waarde voor specificatie 4",
+      "en": "Value for specification 4"
+    },
+    {
+      "nl": "spec_label_5",
+      "en": "spec_label_5"
+    },
+    {
+      "nl": "Specificatie 5 (automatisch)",
+      "en": "Specification 5 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 5 op basis van subcategorie",
+      "en": "Automatic specification name 5 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 5.",
+      "en": "Automatic specification name for slot 5."
+    },
+    {
+      "nl": "spec_value_5",
+      "en": "spec_value_5"
+    },
+    {
+      "nl": "Waarde 5",
+      "en": "Value 5"
+    },
+    {
+      "nl": "Waarde voor specificatie 5",
+      "en": "Value for specification 5"
+    },
+    {
+      "nl": "spec_label_6",
+      "en": "spec_label_6"
+    },
+    {
+      "nl": "Specificatie 6 (automatisch)",
+      "en": "Specification 6 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 6 op basis van subcategorie",
+      "en": "Automatic specification name 6 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 6.",
+      "en": "Automatic specification name for slot 6."
+    },
+    {
+      "nl": "spec_value_6",
+      "en": "spec_value_6"
+    },
+    {
+      "nl": "Waarde 6",
+      "en": "Value 6"
+    },
+    {
+      "nl": "Waarde voor specificatie 6",
+      "en": "Value for specification 6"
+    },
+    {
+      "nl": "spec_label_7",
+      "en": "spec_label_7"
+    },
+    {
+      "nl": "Specificatie 7 (automatisch)",
+      "en": "Specification 7 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 7 op basis van subcategorie",
+      "en": "Automatic specification name 7 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 7.",
+      "en": "Automatic specification name for slot 7."
+    },
+    {
+      "nl": "spec_value_7",
+      "en": "spec_value_7"
+    },
+    {
+      "nl": "Waarde 7",
+      "en": "Value 7"
+    },
+    {
+      "nl": "Waarde voor specificatie 7",
+      "en": "Value for specification 7"
+    },
+    {
+      "nl": "spec_label_8",
+      "en": "spec_label_8"
+    },
+    {
+      "nl": "Specificatie 8 (automatisch)",
+      "en": "Specification 8 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 8 op basis van subcategorie",
+      "en": "Automatic specification name 8 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 8.",
+      "en": "Automatic specification name for slot 8."
+    },
+    {
+      "nl": "spec_value_8",
+      "en": "spec_value_8"
+    },
+    {
+      "nl": "Waarde 8",
+      "en": "Value 8"
+    },
+    {
+      "nl": "Waarde voor specificatie 8",
+      "en": "Value for specification 8"
+    },
+    {
+      "nl": "spec_label_9",
+      "en": "spec_label_9"
+    },
+    {
+      "nl": "Specificatie 9 (automatisch)",
+      "en": "Specification 9 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 9 op basis van subcategorie",
+      "en": "Automatic specification name 9 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 9.",
+      "en": "Automatic specification name for slot 9."
+    },
+    {
+      "nl": "spec_value_9",
+      "en": "spec_value_9"
+    },
+    {
+      "nl": "Waarde 9",
+      "en": "Value 9"
+    },
+    {
+      "nl": "Waarde voor specificatie 9",
+      "en": "Value for specification 9"
+    },
+    {
+      "nl": "spec_label_10",
+      "en": "spec_label_10"
+    },
+    {
+      "nl": "Specificatie 10 (automatisch)",
+      "en": "Specification 10 (automatic)"
+    },
+    {
+      "nl": "Automatische specificatienaam 10 op basis van subcategorie",
+      "en": "Automatic specification name 10 based on subcategory"
+    },
+    {
+      "nl": "Automatische specificatienaam voor slot 10.",
+      "en": "Automatic specification name for slot 10."
+    },
+    {
+      "nl": "spec_value_10",
+      "en": "spec_value_10"
+    },
+    {
+      "nl": "Waarde 10",
+      "en": "Value 10"
+    },
+    {
+      "nl": "Waarde voor specificatie 10",
+      "en": "Value for specification 10"
+    },
+    {
+      "nl": "regular_price",
+      "en": "regular_price"
+    },
+    {
+      "nl": "Reguliere verkoopprijs",
+      "en": "Regular selling price"
+    },
+    {
+      "nl": "Centrale klantprijs excl. verzending",
+      "en": "Central customer price excl. shipping"
+    },
+    {
+      "nl": "1749",
+      "en": "1749"
+    },
+    {
+      "nl": "Getal ≥ 0",
+      "en": "Number ≥ 0"
+    },
+    {
+      "nl": "Valuta volgt de markt/regio (niet invullen). Verplicht om verkoopbaar te zijn. Eén prijs voor alle markten.",
+      "en": "Currency follows the market/region (do not enter). Required to be sellable. One price for all markets."
+    },
+    {
+      "nl": "promo_price",
+      "en": "promo_price"
+    },
+    {
+      "nl": "Actieprijs",
+      "en": "Promo price"
+    },
+    {
+      "nl": "Tijdelijke prijs excl. verzending",
+      "en": "Temporary price excl. shipping"
+    },
+    {
+      "nl": "Getal ≥ 0, lager dan reguliere prijs",
+      "en": "Number ≥ 0, lower than the regular price"
+    },
+    {
+      "nl": "Per markt op het aanbod. Leeg = geen actie.",
+      "en": "Per market on the offer. Empty = no promo."
+    },
+    {
+      "nl": "sales_status",
+      "en": "sales_status"
+    },
+    {
+      "nl": "Verkoopstatus",
+      "en": "Sales status"
+    },
+    {
+      "nl": "Aanbod actief of gepauzeerd",
+      "en": "Offer active or paused"
+    },
+    {
+      "nl": "active",
+      "en": "active"
+    },
+    {
+      "nl": "active of paused",
+      "en": "active or paused"
+    },
+    {
+      "nl": "paused = niet te koop op die markt. Catalogusproduct blijft bestaan.",
+      "en": "paused = not for sale on that market. Catalogue product remains."
+    },
+    {
+      "nl": "stock",
+      "en": "stock"
+    },
+    {
+      "nl": "Voorraad",
+      "en": "Stock"
+    },
+    {
+      "nl": "Voorraad voor de markt",
+      "en": "Stock for the market"
+    },
+    {
+      "nl": "30",
+      "en": "30"
+    },
+    {
+      "nl": "Geheel getal ≥ 0",
+      "en": "Integer ≥ 0"
+    },
+    {
+      "nl": "Verplicht om verkoopbaar te zijn. Mag 0 zijn (niet te koop door voorraad).",
+      "en": "Required to be sellable. May be 0 (not for sale due to stock)."
+    },
+    {
+      "nl": "shipping_cost",
+      "en": "shipping_cost"
+    },
+    {
+      "nl": "Verzendkosten",
+      "en": "Shipping cost"
+    },
+    {
+      "nl": "Verzendkosten voor de markt",
+      "en": "Shipping cost for the market"
+    },
+    {
+      "nl": "4.95",
+      "en": "4.95"
+    },
+    {
+      "nl": "Mag per land verschillen.",
+      "en": "May differ per country."
+    },
+    {
+      "nl": "extra_delivery_cost",
+      "en": "extra_delivery_cost"
+    },
+    {
+      "nl": "Extra leverings-/handlingkosten",
+      "en": "Extra delivery/handling costs"
+    },
+    {
+      "nl": "Objectieve extra kosten per markt",
+      "en": "Objective extra costs per market"
+    },
+    {
+      "nl": "0",
+      "en": "0"
+    },
+    {
+      "nl": "Geen willekeurige landopslag op de productprijs.",
+      "en": "No arbitrary country surcharge on the product price."
+    },
+    {
+      "nl": "region",
+      "en": "region"
+    },
+    {
+      "nl": "Markt / land",
+      "en": "Market / country"
+    },
+    {
+      "nl": "ISO-2 van het verkoopaanbod",
+      "en": "ISO-2 of the sales offer"
+    },
+    {
+      "nl": "NL",
+      "en": "NL"
+    },
+    {
+      "nl": "ISO-2, bijv. NL, DE, BE",
+      "en": "ISO-2, e.g. NL, DE, BE"
+    },
+    {
+      "nl": "Standaard NL. Valuta volgt deze markt.",
+      "en": "Default NL. Currency follows this market."
+    },
+    {
+      "nl": "delivery_days",
+      "en": "delivery_days"
+    },
+    {
+      "nl": "Levertijd (dagen)",
+      "en": "Delivery time (days)"
+    },
+    {
+      "nl": "Maximale beloofde levertijd",
+      "en": "Maximum promised delivery time"
+    },
+    {
+      "nl": "3",
+      "en": "3"
+    },
+    {
+      "nl": "Geheel getal 0–365",
+      "en": "Integer 0–365"
+    },
+    {
+      "nl": "Verplicht om verkoopbaar te zijn.",
+      "en": "Required to be sellable."
+    },
+    {
+      "nl": "shipping_profile_id",
+      "en": "shipping_profile_id"
+    },
+    {
+      "nl": "Verzendprofiel",
+      "en": "Shipping profile"
+    },
+    {
+      "nl": "ID van jouw verzendprofiel",
+      "en": "ID of your shipping profile"
+    },
+    {
+      "nl": "cshp_… of leeg",
+      "en": "cshp_… or empty"
+    },
+    {
+      "nl": "Koppel het profiel uit Seller → Verzending. Verplicht om verkoopbaar te zijn. Admin keurt dit niet inhoudelijk in de template.",
+      "en": "Link the profile from Seller → Shipping. Required to be sellable. Admin does not substantively review this in the template."
+    },
+    {
+      "nl": "primary_image_url",
+      "en": "primary_image_url"
+    },
+    {
+      "nl": "Hoofdafbeelding (URL of pad)",
+      "en": "Primary image (URL or path)"
+    },
+    {
+      "nl": "Vrijstaande productfoto",
+      "en": "Cut-out product photo"
+    },
+    {
+      "nl": "/static/1788509822754-bosch-smd8tcx04e-serie-8-inbouw-vaatwasser-800.webp",
+      "en": "/static/1788509822754-bosch-smd8tcx04e-serie-8-inbouw-vaatwasser-800.webp"
+    },
+    {
+      "nl": "URL of /static/… pad",
+      "en": "URL or /static/… path"
+    },
+    {
+      "nl": "Verplicht vóór publicatie. De hoofdafbeelding moet vrijstaand / achtergrondvrij zijn. Bewijsstukken keurt de admin goed (Admincontrole), niet via deze kolom.",
+      "en": "Required before publication. The primary image must be cut-out / background-free. Evidence is approved by admin (Admin review), not via this column."
+    },
+    {
+      "nl": "extra_image_urls",
+      "en": "extra_image_urls"
+    },
+    {
+      "nl": "Overige afbeeldingen",
+      "en": "Additional images"
+    },
+    {
+      "nl": "Extra foto's, gescheiden door | of ;",
+      "en": "Extra photos, separated by | or ;"
+    },
+    {
+      "nl": "Meerdere URL's",
+      "en": "Multiple URLs"
+    },
+    {
+      "nl": "Legacy/gecombineerde kolom: URL's gescheiden door | of ;. Bij voorkeur Afbeelding 2–10 gebruiken (vaste volgorde). Samen met hoofdafbeelding maximaal 10 unieke URL's. Sfeerafbeeldingen mogen een achtergrond hebben. Geen PDF's.",
+      "en": "Legacy/combined column: URLs separated by | or ;. Prefer using Image 2–10 (fixed order). Together with the primary image, maximum 10 unique URLs. Lifestyle images may have a background. No PDFs."
+    },
+    {
+      "nl": "video_url",
+      "en": "video_url"
+    },
+    {
+      "nl": "Video-URL",
+      "en": "Video URL"
+    },
+    {
+      "nl": "Productvideo",
+      "en": "Product video"
+    },
+    {
+      "nl": "https://www.youtube.com/embed/ReGvfmYkrEw",
+      "en": "https://www.youtube.com/embed/ReGvfmYkrEw"
+    },
+    {
+      "nl": "URL",
+      "en": "URL"
+    },
+    {
+      "nl": "Optioneel. YouTube-embed of andere https-URL.",
+      "en": "Optional. YouTube embed or other https URL."
+    },
+    {
+      "nl": "production_country",
+      "en": "production_country"
+    },
+    {
+      "nl": "Productieland",
+      "en": "Country of production"
+    },
+    {
+      "nl": "Land van productie / primaire assemblage",
+      "en": "Country of production / primary assembly"
+    },
+    {
+      "nl": "DE",
+      "en": "DE"
+    },
+    {
+      "nl": "ISO-2",
+      "en": "ISO-2"
+    },
+    {
+      "nl": "Universeel veld. Made in Europe-score berekent het systeem (Automatisch). Bewijs keurt de admin goed (Admincontrole).",
+      "en": "Universal field. The system calculates the Made in Europe score (Automatic). Evidence is approved by admin (Admin review)."
+    },
+    {
+      "nl": "production_location",
+      "en": "production_location"
+    },
+    {
+      "nl": "Productieplaats",
+      "en": "Place of production"
+    },
+    {
+      "nl": "Locatie / fabrieksomschrijving",
+      "en": "Location / factory description"
+    },
+    {
+      "nl": "BSH Hausgeräte GmbH",
+      "en": "BSH Hausgeräte GmbH"
+    },
+    {
+      "nl": "Optioneel, naast productieland.",
+      "en": "Optional, in addition to country of production."
+    },
+    {
+      "nl": "assembly_eu_band",
+      "en": "assembly_eu_band"
+    },
+    {
+      "nl": "Assemblage",
+      "en": "Assembly"
+    },
+    {
+      "nl": "Made in Europe — aandeel assemblage in de EU",
+      "en": "Made in Europe — share of assembly in the EU"
+    },
+    {
+      "nl": "100% assemblage in EU",
+      "en": "100% assembly in EU"
+    },
+    {
+      "nl": "100% assemblage in EU | 75–99% assemblage in EU | 50–74% assemblage in EU | Minder dan 50% assemblage in EU",
+      "en": "100% assembly in EU | 75–99% assembly in EU | 50–74% assembly in EU | Less than 50% assembly in EU"
+    },
+    {
+      "nl": "Zelfde keuzes als Seller/Admin-compliance. Samen met Onderdelen en Materialen berekent EuropMade de Made in Europe-score. Geen bewijs-upload via Excel.",
+      "en": "Same choices as Seller/Admin compliance. Together with Parts and Materials, EuropMade calculates the Made in Europe score. No evidence upload via Excel."
+    },
+    {
+      "nl": "parts_eu_level",
+      "en": "parts_eu_level"
+    },
+    {
+      "nl": "Onderdelen",
+      "en": "Parts"
+    },
+    {
+      "nl": "Made in Europe — herkomst onderdelen",
+      "en": "Made in Europe — origin of parts"
+    },
+    {
+      "nl": "Overwegend EU",
+      "en": "Predominantly EU"
+    },
+    {
+      "nl": "Overwegend EU | Gedeeltelijk EU | Niet of nauwelijks EU",
+      "en": "Predominantly EU | Partially EU | Not or barely EU"
+    },
+    {
+      "nl": "Zelfde keuzes als Seller/Admin-compliance. Vereist samen met Assemblage en Materialen voor een berekende score.",
+      "en": "Same choices as Seller/Admin compliance. Required together with Assembly and Materials for a calculated score."
+    },
+    {
+      "nl": "materials_eu_level",
+      "en": "materials_eu_level"
+    },
+    {
+      "nl": "Materialen",
+      "en": "Materials"
+    },
+    {
+      "nl": "Made in Europe — herkomst materialen",
+      "en": "Made in Europe — origin of materials"
+    },
+    {
+      "nl": "Gedeeltelijk EU",
+      "en": "Partially EU"
+    },
+    {
+      "nl": "Zelfde keuzes als Seller/Admin-compliance. Vereist samen met Assemblage en Onderdelen voor een berekende score.",
+      "en": "Same choices as Seller/Admin compliance. Required together with Assembly and Parts for a calculated score."
+    },
+    {
+      "nl": "european_ownership_band",
+      "en": "european_ownership_band"
+    },
+    {
+      "nl": "Europees eigendom van het merk",
+      "en": "European ownership of the brand"
+    },
+    {
+      "nl": "EU-eigendomsband van het merk (niet de productiescore)",
+      "en": "EU ownership band of the brand (not the production score)"
+    },
+    {
+      "nl": "100%",
+      "en": "100%"
+    },
+    {
+      "nl": "0% | 1–25% | 26–50% | 51–75% | 76–99% | 100% | Niet bekend",
+      "en": "0% | 1–25% | 26–50% | 51–75% | 76–99% | 100% | Unknown"
+    },
+    {
+      "nl": "Geldt op merkniveau voor alle producten van dit merk. Los van Made in Europe-score en van bewijsdocumenten. Gebruik de dropdownwaarden (0% … 100% / Niet bekend).",
+      "en": "Applies at brand level for all products of this brand. Separate from the Made in Europe score and from evidence documents. Use the dropdown values (0% … 100% / Unknown)."
+    },
+    {
+      "nl": "ce_marking",
+      "en": "ce_marking"
+    },
+    {
+      "nl": "CE-markering zichtbaar",
+      "en": "CE marking visible"
+    },
+    {
+      "nl": "Zichtbaar of niet van toepassing",
+      "en": "Visible or not applicable"
+    },
+    {
+      "nl": "Zichtbaar",
+      "en": "Visible"
+    },
+    {
+      "nl": "Zichtbaar of Niet van toepassing",
+      "en": "Visible or Not applicable"
+    },
+    {
+      "nl": "Zichtbaar → CE-bewijs uploaden in de wizard; admin keurt goed (Admincontrole). Bij elektronica is 'Niet van toepassing' niet toegestaan.",
+      "en": "Visible → upload CE evidence in the wizard; admin approves (Admin review). For electronics, 'Not applicable' is not allowed."
+    },
+    {
+      "nl": "app_required",
+      "en": "app_required"
+    },
+    {
+      "nl": "App vereist",
+      "en": "App required"
+    },
+    {
+      "nl": "App nodig voor volledige functionaliteit",
+      "en": "App needed for full functionality"
+    },
+    {
+      "nl": "Nee",
+      "en": "No"
+    },
+    {
+      "nl": "Ja of Nee",
+      "en": "Yes or No"
+    },
+    {
+      "nl": "Verplicht in elektronica-categorieën. Anders optioneel.",
+      "en": "Required in electronics categories. Otherwise optional."
+    },
+    {
+      "nl": "collects_data",
+      "en": "collects_data"
+    },
+    {
+      "nl": "Verwerkt gebruikersgegevens",
+      "en": "Processes user data"
+    },
+    {
+      "nl": "Product verwerkt persoons-/gebruiksdata",
+      "en": "Product processes personal/usage data"
+    },
+    {
+      "nl": "Ja → datagebruikdocument verplicht tot admin-goedkeuring. Elektronisch zijn is niet genoeg.",
+      "en": "Yes → data-use document required until admin approval. Being electronic is not enough."
+    },
+    {
+      "nl": "product_languages",
+      "en": "product_languages"
+    },
+    {
+      "nl": "Producttaal",
+      "en": "Product language"
+    },
+    {
+      "nl": "Talen op het product / display",
+      "en": "Languages on the product / display"
+    },
+    {
+      "nl": "Nederlands,Engels,Duits,Frans",
+      "en": "Dutch,English,German,French"
+    },
+    {
+      "nl": "Komma-gescheiden waarden uit Lijsten!talen (zelfde bron als UI)",
+      "en": "Comma-separated values from Lists!languages (same source as UI)"
+    },
+    {
+      "nl": "Aanbevolen. Meerdere waarden scheiden met komma. Gebruik alleen talen uit tabblad Lijsten → talen (zelfde keuzes als Seller/Admin).",
+      "en": "Recommended. Separate multiple values with a comma. Use only languages from the Lists → languages tab (same choices as Seller/Admin)."
+    },
+    {
+      "nl": "manual_languages",
+      "en": "manual_languages"
+    },
+    {
+      "nl": "Taal handleiding",
+      "en": "Manual language"
+    },
+    {
+      "nl": "Talen van de handleiding",
+      "en": "Languages of the manual"
+    },
+    {
+      "nl": "Nederlands,Duits,Engels,Frans",
+      "en": "Dutch,German,English,French"
+    },
+    {
+      "nl": "Verplicht in elektronica-categorieën. Meerdere waarden met komma; bron = Lijsten → talen.",
+      "en": "Required in electronics categories. Multiple values with comma; source = Lists → languages."
+    },
+    {
+      "nl": "gpsr_manufacturer_name",
+      "en": "gpsr_manufacturer_name"
+    },
+    {
+      "nl": "GPSR-fabrikantnaam (etiket)",
+      "en": "GPSR manufacturer name (label)"
+    },
+    {
+      "nl": "GPSR-etiketnaam van de fabrikant. Verschilt van kolom Fabrikant (catalogusentiteit). Oudere bestanden met 'Fabrikantnaam' blijven werken.",
+      "en": "GPSR label name of the manufacturer. Differs from the Manufacturer column (catalogue entity). Older files with 'Manufacturer name' still work."
+    },
+    {
+      "nl": "gpsr_manufacturer_address",
+      "en": "gpsr_manufacturer_address"
+    },
+    {
+      "nl": "Fabrikantadres (straat + nr)",
+      "en": "Manufacturer address (street + no.)"
+    },
+    {
+      "nl": "Verplicht vóór indienen, goedkeuring, publicatie en verkoop. Mag leeg bij een Concept.",
+      "en": "Required before submitting, approval, publication and sale. May be empty for a Draft."
+    },
+    {
+      "nl": "gpsr_manufacturer_postal_city",
+      "en": "gpsr_manufacturer_postal_city"
+    },
+    {
+      "nl": "Fabrikant postcode + plaats",
+      "en": "Manufacturer postcode + city"
+    },
+    {
+      "nl": "gpsr_manufacturer_country",
+      "en": "gpsr_manufacturer_country"
+    },
+    {
+      "nl": "Fabrikant land",
+      "en": "Manufacturer country"
+    },
+    {
+      "nl": "ISO-2 landcode",
+      "en": "ISO-2 country code"
+    },
+    {
+      "nl": "gpsr_manufacturer_email",
+      "en": "gpsr_manufacturer_email"
+    },
+    {
+      "nl": "Fabrikant e-mail / elektronisch contact",
+      "en": "Manufacturer email / electronic contact"
+    },
+    {
+      "nl": "gpsr_eu_responsible_name",
+      "en": "gpsr_eu_responsible_name"
+    },
+    {
+      "nl": "EU verantwoordelijke persoon / economic operator",
+      "en": "EU responsible person / economic operator"
+    },
+    {
+      "nl": "gpsr_eu_responsible_address",
+      "en": "gpsr_eu_responsible_address"
+    },
+    {
+      "nl": "EU verantwoordelijke — adres",
+      "en": "EU responsible — address"
+    },
+    {
+      "nl": "gpsr_eu_responsible_postal_city",
+      "en": "gpsr_eu_responsible_postal_city"
+    },
+    {
+      "nl": "EU verantwoordelijke — postcode + plaats",
+      "en": "EU responsible — postcode + city"
+    },
+    {
+      "nl": "gpsr_eu_responsible_country",
+      "en": "gpsr_eu_responsible_country"
+    },
+    {
+      "nl": "EU verantwoordelijke — land",
+      "en": "EU responsible — country"
+    },
+    {
+      "nl": "gpsr_eu_responsible_contact",
+      "en": "gpsr_eu_responsible_contact"
+    },
+    {
+      "nl": "EU verantwoordelijke — e-mail/telefoon",
+      "en": "EU responsible — email/phone"
+    },
+    {
+      "nl": "gpsr_safety_warnings",
+      "en": "gpsr_safety_warnings"
+    },
+    {
+      "nl": "Veiligheidswaarschuwingen",
+      "en": "Safety warnings"
+    },
+    {
+      "nl": "Optioneel. Veiligheidswaarschuwingen helpen de klant; blokkeren publicatie niet.",
+      "en": "Optional. Safety warnings help the customer; they do not block publication."
+    },
+    {
+      "nl": "(categorievelden)",
+      "en": "(category_fields)"
+    },
+    {
+      "nl": "Categorie-afhankelijke kenmerken",
+      "en": "Category-dependent attributes"
+    },
+    {
+      "nl": "Velden van de gekozen productcategorie",
+      "en": "Fields of the chosen product category"
+    },
+    {
+      "nl": "zuigkracht, maat, processor, …",
+      "en": "suction power, size, processor, …"
+    },
+    {
+      "nl": "Zie Product Cloud per categorie",
+      "en": "See Product Cloud per category"
+    },
+    {
+      "nl": "Categorie-afhankelijke kenmerken staan niet in dit algemene blad. Na upload volgt een tweede stap met de velden van de herkende categorie.",
+      "en": "Category-dependent attributes are not on this general sheet. After upload, a second step follows with the fields of the recognised category."
+    },
+    {
+      "nl": "(product_id)",
+      "en": "(product_id)"
+    },
+    {
+      "nl": "Product-ID",
+      "en": "Product ID"
+    },
+    {
+      "nl": "Interne EuropMade-ID",
+      "en": "Internal EuropMade ID"
+    },
+    {
+      "nl": "prod_…",
+      "en": "prod_…"
+    },
+    {
+      "nl": "—",
+      "en": "—"
+    },
+    {
+      "nl": "Niet invullen. Wordt bij import aangemaakt.",
+      "en": "Do not fill in. Created on import."
+    },
+    {
+      "nl": "(draft_ean)",
+      "en": "(draft_ean)"
+    },
+    {
+      "nl": "Concept zonder EAN",
+      "en": "Draft without EAN"
+    },
+    {
+      "nl": "Tijdelijke IMPORT_REF",
+      "en": "Temporary IMPORT_REF"
+    },
+    {
+      "nl": "DRAFT-…",
+      "en": "DRAFT-…"
+    },
+    {
+      "nl": "Als EAN leeg is, maakt het systeem dezelfde DRAFT-referentie als de wizard. Status blijft Concept tot er een geldige EAN is.",
+      "en": "If EAN is empty, the system creates the same DRAFT reference as the wizard. Status remains Draft until there is a valid EAN."
+    },
+    {
+      "nl": "(valuta)",
+      "en": "(currency)"
+    },
+    {
+      "nl": "Valuta",
+      "en": "Currency"
+    },
+    {
+      "nl": "Munt van de markt",
+      "en": "Currency of the market"
+    },
+    {
+      "nl": "EUR",
+      "en": "EUR"
+    },
+    {
+      "nl": "Volgt de gekozen markt/regio. Niet als kolom invullen.",
+      "en": "Follows the chosen market/region. Do not enter as a column."
+    },
+    {
+      "nl": "(variantkolommen)",
+      "en": "(variant_columns)"
+    },
+    {
+      "nl": "Varianttype / Variantwaarde",
+      "en": "Variant type / Variant value"
+    },
+    {
+      "nl": "Niet in dit bestand",
+      "en": "Not in this file"
+    },
+    {
+      "nl": "Deze kolommen horen niet in het importbestand. Staan ze in een ouder bestand, dan worden ze genegeerd. Nieuwe producten krijgen standaard Uitvoering / Standaard.",
+      "en": "These columns do not belong in the import file. If they appear in an older file, they are ignored. New products get default Version / Standard."
+    },
+    {
+      "nl": "(mie_score)",
+      "en": "(mie_score)"
+    },
+    {
+      "nl": "Made in Europe-score",
+      "en": "Made in Europe score"
+    },
+    {
+      "nl": "Berekende herkomstscore",
+      "en": "Calculated origin score"
+    },
+    {
+      "nl": "Score volgt uit kolommen Assemblage, Onderdelen en Materialen (zelfde keuzes als de UI). Bewijs upload je via de seller-wizard; admin keurt goed.",
+      "en": "Score follows from columns Assembly, Parts and Materials (same choices as the UI). Upload evidence via the seller wizard; admin approves."
+    },
+    {
+      "nl": "variant_type",
+      "en": "variant_type"
+    },
+    {
+      "nl": "Varianttype",
+      "en": "Variant type"
+    },
+    {
+      "nl": "Niet meer in het importbestand",
+      "en": "No longer in the import file"
+    },
+    {
+      "nl": "Genegeerd",
+      "en": "Ignored"
+    },
+    {
+      "nl": "Varianttype hoort niet in dit bestand. Staat de kolom in een ouder bestand, dan wordt die genegeerd. Nieuwe producten krijgen standaard Uitvoering.",
+      "en": "Variant type does not belong in this file. If the column appears in an older file, it is ignored. New products get default Version."
+    },
+    {
+      "nl": "variant_value",
+      "en": "variant_value"
+    },
+    {
+      "nl": "Variantwaarde",
+      "en": "Variant value"
+    },
+    {
+      "nl": "Variantwaarde hoort niet in dit bestand. Staat de kolom in een ouder bestand, dan wordt die genegeerd. Nieuwe producten krijgen standaard Standaard.",
+      "en": "Variant value does not belong in this file. If the column appears in an older file, it is ignored. New products get default Standard."
+    },
+    {
+      "nl": "category_path_active",
+      "en": "category_path_active"
+    },
+    {
+      "nl": "Categoriepad (actief)",
+      "en": "Category path (active)"
+    },
+    {
+      "nl": "Excel-hulpkolom (formule)",
+      "en": "Excel helper column (formula)"
+    },
+    {
+      "nl": "Alleen ter controle in Excel. Wordt niet geïmporteerd.",
+      "en": "For checking in Excel only. Not imported."
+    },
+    {
+      "nl": "value_check_warning",
+      "en": "value_check_warning"
+    },
+    {
+      "nl": "Waarde-controle (automatisch)",
+      "en": "Value check (automatic)"
+    },
+    {
+      "nl": "Excel-waarschuwing na categorie-wijziging",
+      "en": "Excel warning after category change"
+    },
+    {
+      "nl": "Alleen ter waarschuwing in Excel. Wordt niet geïmporteerd.",
+      "en": "For warning in Excel only. Not imported."
+    },
+    {
+      "nl": "spec_unit_1",
+      "en": "spec_unit_1"
+    },
+    {
+      "nl": "Eenheid 1 (automatisch)",
+      "en": "Unit 1 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 1",
+      "en": "Automatic unit for specification 1"
+    },
+    {
+      "nl": "Alleen ter weergave in Excel. Wordt niet geïmporteerd; eenheid volgt uit de specificatiecatalogus.",
+      "en": "For display in Excel only. Not imported; unit follows from the specification catalogue."
+    },
+    {
+      "nl": "spec_unit_2",
+      "en": "spec_unit_2"
+    },
+    {
+      "nl": "Eenheid 2 (automatisch)",
+      "en": "Unit 2 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 2",
+      "en": "Automatic unit for specification 2"
+    },
+    {
+      "nl": "spec_unit_3",
+      "en": "spec_unit_3"
+    },
+    {
+      "nl": "Eenheid 3 (automatisch)",
+      "en": "Unit 3 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 3",
+      "en": "Automatic unit for specification 3"
+    },
+    {
+      "nl": "spec_unit_4",
+      "en": "spec_unit_4"
+    },
+    {
+      "nl": "Eenheid 4 (automatisch)",
+      "en": "Unit 4 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 4",
+      "en": "Automatic unit for specification 4"
+    },
+    {
+      "nl": "spec_unit_5",
+      "en": "spec_unit_5"
+    },
+    {
+      "nl": "Eenheid 5 (automatisch)",
+      "en": "Unit 5 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 5",
+      "en": "Automatic unit for specification 5"
+    },
+    {
+      "nl": "spec_unit_6",
+      "en": "spec_unit_6"
+    },
+    {
+      "nl": "Eenheid 6 (automatisch)",
+      "en": "Unit 6 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 6",
+      "en": "Automatic unit for specification 6"
+    },
+    {
+      "nl": "spec_unit_7",
+      "en": "spec_unit_7"
+    },
+    {
+      "nl": "Eenheid 7 (automatisch)",
+      "en": "Unit 7 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 7",
+      "en": "Automatic unit for specification 7"
+    },
+    {
+      "nl": "spec_unit_8",
+      "en": "spec_unit_8"
+    },
+    {
+      "nl": "Eenheid 8 (automatisch)",
+      "en": "Unit 8 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 8",
+      "en": "Automatic unit for specification 8"
+    },
+    {
+      "nl": "spec_unit_9",
+      "en": "spec_unit_9"
+    },
+    {
+      "nl": "Eenheid 9 (automatisch)",
+      "en": "Unit 9 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 9",
+      "en": "Automatic unit for specification 9"
+    },
+    {
+      "nl": "spec_unit_10",
+      "en": "spec_unit_10"
+    },
+    {
+      "nl": "Eenheid 10 (automatisch)",
+      "en": "Unit 10 (automatic)"
+    },
+    {
+      "nl": "Automatische eenheid voor specificatie 10",
+      "en": "Automatic unit for specification 10"
+    },
+    {
+      "nl": "(admin_evidence)",
+      "en": "(admin_evidence)"
+    },
+    {
+      "nl": "Bewijsstukken CE / MiE / GPSR / handleiding",
+      "en": "Evidence CE / MiE / GPSR / manual"
+    },
+    {
+      "nl": "URL-kolommen in dit bestand + wizard-upload",
+      "en": "URL columns in this file + wizard upload"
+    },
+    {
+      "nl": "Voorwaardelijk verplicht / Optioneel",
+      "en": "Conditionally required / Optional"
+    },
+    {
+      "nl": "https-URL",
+      "en": "https-URL"
+    },
+    {
+      "nl": "Master V2: EuropMade-bewijs, CE-certificaat (tevens Conformiteitsverklaring), Veiligheidsinformatieblad, Handleiding en Garantiebewijs staan als URL-kolommen in de template. Seller-importmapping en -opslag voor deze URL's zijn nog niet uitgebreid (latere fase). Garantieperiode staat in de template zonder opslagmapping. Veiligheidswaarschuwingen (tekst) staat niet in deze template; oude imports blijven herkend. Wizard-upload blijft beschikbaar.",
+      "en": "Master V2: EuropMade evidence, CE certificate (also Declaration of Conformity), Safety data sheet, Manual and Warranty certificate appear as URL columns in the template. Seller import mapping and storage for these URLs are not yet extended (later phase). Warranty period is in the template without storage mapping. Safety warnings (text) are not in this template; older imports remain recognised. Wizard upload remains available."
+    },
+    {
+      "nl": "(vertalingen)",
+      "en": "(translations)"
+    },
+    {
+      "nl": "Vertalingen",
+      "en": "Translations"
+    },
+    {
+      "nl": "Doeltalen via bestaande AI-vertaalflow",
+      "en": "Target languages via existing AI translation flow"
+    },
+    {
+      "nl": "EN / FR / DE (configureerbaar)",
+      "en": "EN / FR / DE (configurable)"
+    },
+    {
+      "nl": "Geen aparte taalkolommen voor titel of beschrijving. Kies bij import de brontaal. Het systeem vertaalt titel en beschrijving naar de vereiste doeltalen. Handmatige vertalingen worden niet overschreven.",
+      "en": "No separate language columns for title or description. Choose the source language at import. The system translates title and description to the required target languages. Manual translations are not overwritten."
+    },
+    {
+      "nl": "(categorie_stap)",
+      "en": "(category_step)"
+    },
+    {
+      "nl": "Categoriekenmerken",
+      "en": "Category attributes"
+    },
+    {
+      "nl": "Extra velden na categoriedetectie",
+      "en": "Extra fields after category detection"
+    },
+    {
+      "nl": "processor, zuigkracht, …",
+      "en": "processor, suction power, …"
+    },
+    {
+      "nl": "Niet in dit algemene blad. Na upload toont de import een tweede stap met de velden van de herkende categorie. Vul die in vóór indienen ter controle.",
+      "en": "Not on this general sheet. After upload, import shows a second step with the fields of the recognised category. Fill those in before submitting for review."
+    },
+    {
+      "nl": "(specificaties_definitief)",
+      "en": "(specifications_final)"
+    },
+    {
+      "nl": "Productspecificaties per categoriepad",
+      "en": "Product specifications per category path"
+    },
+    {
+      "nl": "Top 10 slots per L1+L2+L3; zichtbare naam uit Specificatie-woordenboek",
+      "en": "Top 10 slots per L1+L2+L3; visible name from Specification dictionary"
+    },
+    {
+      "nl": "Optioneel (alle bron-specs zijn optioneel)",
+      "en": "Optional (all source specs are optional)"
+    },
+    {
+      "nl": "Materiaal, Vermogen, …",
+      "en": "Material, Power, …"
+    },
+    {
+      "nl": "Zie Eenheid-kolommen / bron",
+      "en": "See Unit columns / source"
+    },
+    {
+      "nl": "Namen en eenheden vullen automatisch. Geen verzonnen keuzelijstwaarden. Bij categorie-wijziging: controleer Waarde 1–10 (worden niet automatisch gewist).",
+      "en": "Names and units fill automatically. No invented list values. On category change: check Value 1–10 (they are not cleared automatically)."
+    },
+    {
+      "nl": "Kleur in koprij Producten",
+      "en": "Colour in Products header row"
+    },
+    {
+      "nl": "Tekstlabel",
+      "en": "Text label"
+    },
+    {
+      "nl": "Betekenis",
+      "en": "Meaning"
+    },
+    {
+      "nl": "Roodachtig",
+      "en": "Reddish"
+    },
+    {
+      "nl": "Moet ingevuld zijn om een nieuw product aan te maken (titel, merk, categorie).",
+      "en": "Must be filled in to create a new product (title, brand, category)."
+    },
+    {
+      "nl": "Lichtblauw",
+      "en": "Light blue"
+    },
+    {
+      "nl": "Mag leeg. Helpt de productpagina, blokkeert Concept niet.",
+      "en": "May be empty. Helps the product page, does not block Draft."
+    },
+    {
+      "nl": "Geel",
+      "en": "Yellow"
+    },
+    {
+      "nl": "Nodig vóór indienen, goedkeuring, publicatie of verkoop (bijv. EAN, GPSR, hoofdafbeelding, prijs).",
+      "en": "Needed before submitting, approval, publication or sale (e.g. EAN, GPSR, primary image, price)."
+    },
+    {
+      "nl": "Groen (alleen in uitleg)",
+      "en": "Green (explanation only)"
+    },
+    {
+      "nl": "Vult het systeem in. Niet in de invoerkolommen zetten.",
+      "en": "Filled by the system. Do not put in the input columns."
+    },
+    {
+      "nl": "Admincontrole",
+      "en": "Admin review"
+    },
+    {
+      "nl": "Seller levert data/bestanden; EuropMade-admin keurt goed. Geen seller-kolom voor de beslissing zelf.",
+      "en": "Seller provides data/files; EuropMade admin approves. No seller column for the decision itself."
+    },
+    {
+      "nl": "Via seller-wizard",
+      "en": "Via seller wizard"
+    },
+    {
+      "nl": "CE-bewijs, Made in Europe-bewijs, GPSR-documenten en handleiding: via seller-wizard uploaden. Geen Excel-bestandskolom.",
+      "en": "CE evidence, Made in Europe evidence, GPSR documents and manual: upload via seller wizard. No Excel file column."
+    },
+    {
+      "nl": "Hoofdafbeelding",
+      "en": "Primary image"
+    },
+    {
+      "nl": "Vrijstaand",
+      "en": "Cut-out"
+    },
+    {
+      "nl": "De hoofdfoto moet vrijstaand / achtergrondvrij zijn. Vul daarna optioneel Afbeelding 2–10 (volgorde). Overige afbeeldingen blijft legacy (| of ;). Samen max. 10 unieke URL's.",
+      "en": "The main photo must be cut-out / background-free. Then optionally fill Image 2–10 (order). Additional images remains legacy (| or ;). Together max. 10 unique URLs."
+    },
+    {
+      "nl": "Niveau 2 / Niveau 3",
+      "en": "Level 2 / Level 3"
+    },
+    {
+      "nl": "Afhankelijk",
+      "en": "Dependent"
+    },
+    {
+      "nl": "Niveau 2 toont kinderen van niveau 1; niveau 3 toont kinderen van niveau 2 (Excel INDIRECT via CatDeps / CatDepsL3).",
+      "en": "Level 2 shows children of level 1; level 3 shows children of level 2 (Excel INDIRECT via CatDeps / CatDepsL3)."
+    },
+    {
+      "nl": "Specificatie 1–10",
+      "en": "Specification 1–10"
+    },
+    {
+      "nl": "Namen = officiële woordenboeknaam via SpecDeps (Niveau 1+2+3). Eenheid staat in Eenheid 1–10, niet dubbel in de naam. Vul alleen Waarde 1–10 in. Kolom Waarde-controle waarschuwt bij gevulde waarden: Excel zonder macro's wist waarden níet automatisch bij categorie-wijziging.",
+      "en": "Names = official dictionary name via SpecDeps (Level 1+2+3). Unit is in Unit 1–10, not duplicated in the name. Only fill in Value 1–10. The Value check column warns when values are filled: Excel without macros does not clear values automatically on category change."
+    },
+    {
+      "nl": "Waarde-controle",
+      "en": "Value check"
+    },
+    {
+      "nl": "Waarschuwing",
+      "en": "Warning"
+    },
+    {
+      "nl": "Verschijnt zodra minstens één Waarde is gevuld. Na categorie-wijziging blijven oude waarden staan — wist of corrigeer handmatig.",
+      "en": "Appears as soon as at least one Value is filled. After category change, old values remain — clear or correct manually."
+    },
+    {
+      "nl": "Hulpbladen",
+      "en": "Helper sheets"
+    },
+    {
+      "nl": "Verborgen",
+      "en": "Hidden"
+    },
+    {
+      "nl": "CatDeps, CatDepsL3, SpecDeps, SpecMeta en Lijsten zijn verborgen; dropdowns en formules blijven werken.",
+      "en": "CatDeps, CatDepsL3, SpecDeps, SpecMeta and Lists are hidden; dropdowns and formulas keep working."
+    },
+    {
+      "nl": "keuken",
+      "en": "kitchen"
+    },
+    {
+      "nl": "Product type (crème, serum, reiniger)",
+      "en": "Product type (cream, serum, cleanser)"
+    },
+    {
+      "nl": "Treatment (geïmpregneerd)",
+      "en": "Treatment (impregnated)"
+    }
+  ]
+}

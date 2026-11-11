@@ -14,6 +14,10 @@ import type VerificationModuleService from "../../../../../modules/verification/
 import { buildSellerProductManagerDetail } from "../../../../store/product-cloud/product-manager"
 import { loadMadeInEuropeForProduct } from "../../../../store/product-cloud/made-in-europe-helpers"
 import {
+  findClaimForProductRefs,
+  serializeEuropeanOwnershipClaim,
+} from "../../../../store/product-cloud/european-ownership-helpers"
+import {
   sellerMadeInEuropeStatusLabel,
   sellerVerificationStatusLabel,
 } from "../../../partner-onboarding/seller-enrichment"
@@ -106,10 +110,23 @@ export async function GET(
   }
 
   let made_in_europe: unknown = null
+  let european_ownership: ReturnType<typeof serializeEuropeanOwnershipClaim> | null = null
   try {
     made_in_europe = await loadMadeInEuropeForProduct(req.scope, id)
   } catch {
     made_in_europe = null
+  }
+  try {
+    const verification = req.scope.resolve(
+      VERIFICATION_MODULE
+    ) as VerificationModuleService
+    const claim = await findClaimForProductRefs(verification, {
+      brand_id: product.brand_id,
+      manufacturer_id: product.manufacturer_id,
+    })
+    european_ownership = claim ? serializeEuropeanOwnershipClaim(claim) : null
+  } catch {
+    european_ownership = null
   }
 
   let seller_name: string | null = product.current_owner_seller_id
@@ -262,11 +279,20 @@ export async function GET(
         { take: 200 }
       )
     : []
-  const [brands, manufacturers, categories] = await Promise.all([
+  const [brands, manufacturers, categories, categoryLinksAll] = await Promise.all([
     partner.listBrands({}, { take: 500, order: { name: "ASC" } }).catch(() => []),
     partner.listManufacturers({}, { take: 500, order: { name: "ASC" } }).catch(() => []),
-    productCloud.listCategories({}, { take: 500, order: { name: "ASC" } }),
+    productCloud.listCategories({}, { take: 2000, order: { name: "ASC" } }),
+    productCloud.listProductCategories({}, { take: 20000 }).catch(() => []),
   ])
+  const categoryLinkCount = new Map<string, number>()
+  for (const link of categoryLinksAll as Array<{ category_id?: string | null }>) {
+    if (!link.category_id) continue
+    categoryLinkCount.set(
+      link.category_id,
+      (categoryLinkCount.get(link.category_id) ?? 0) + 1
+    )
+  }
 
   res.json({
     product: { ...detail, category_ids: categoryIds, translations },
@@ -277,6 +303,7 @@ export async function GET(
     change_proposals: proposals,
     evidence,
     made_in_europe,
+    european_ownership,
     seller_id: product.current_owner_seller_id,
     seller_name,
     seller_onboarding_status,
@@ -297,11 +324,18 @@ export async function GET(
         name: row.name || row.id,
       })),
       categories: (
-        categories as Array<{ id: string; name?: string; parent_category_id?: string | null }>
+        categories as Array<{
+          id: string
+          name?: string
+          slug?: string | null
+          parent_category_id?: string | null
+        }>
       ).map((row) => ({
         id: row.id,
         name: row.name || row.id,
+        slug: row.slug ?? null,
         parent_id: row.parent_category_id || null,
+        link_count: categoryLinkCount.get(row.id) ?? 0,
       })),
       variant_types: [...VARIANT_TYPES],
       languages: [...PRODUCT_CLOUD_ACTIVE_LANGUAGES],

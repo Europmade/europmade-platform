@@ -28,7 +28,7 @@ export const HOMEPAGE_NAV_LINKS = [
   { label: "Categorieën", href: "/categorie" },
   { label: "Tuin", href: "/categorie/tuin" },
   { label: "Elektronica", href: "/categorie/elektronica" },
-  { label: "Mode", href: "/categorie/mode" },
+  { label: "Kleding", href: "/categorie/kleding" },
   { label: "Over EuropMade", href: "/over" },
 ] as const
 

@@ -1,7 +1,9 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { CMS_MODULE } from "../../../../../modules/cms"
 import type CmsModuleService from "../../../../../modules/cms/service"
-import { serializeCmsCategory } from "../../../../cms/serialize"
+import { withResolvedStoreDocument } from "../../../../cms/category-asset-urls"
+import { serializeCmsCategoryStore } from "../../../../cms/serialize"
+import { requestBackendOrigin } from "../../../../request-backend-origin"
 
 function isMissingCmsCategoryTable(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err)
@@ -9,7 +11,8 @@ function isMissingCmsCategoryTable(err: unknown): boolean {
 }
 
 /**
- * GET /store/cms/categories/:slug — alleen gepubliceerde categorie-CMS.
+ * GET /store/cms/categories/:slug — alleen published_document.
+ * Draft lekt nooit naar deze response.
  */
 export async function GET(
   req: MedusaRequest & { params: { slug: string } },
@@ -19,17 +22,23 @@ export async function GET(
   const slug = decodeURIComponent(req.params.slug ?? "").trim().toLowerCase()
   try {
     const rows = await cms.listCmsCategories(
-      { category_slug: slug, published: true },
+      { category_slug: slug },
       { take: 1 }
     )
-    const row = rows[0]
+    const row = rows[0] as unknown as Record<string, unknown> | undefined
     if (!row) {
       res.status(200).json({ category: null })
       return
     }
-    res.status(200).json({
-      category: serializeCmsCategory(row as unknown as Record<string, unknown>),
-    })
+    const category = serializeCmsCategoryStore(row)
+    if (category) {
+      category.document = await withResolvedStoreDocument(
+        req.scope,
+        category.document,
+        requestBackendOrigin(req)
+      )
+    }
+    res.status(200).json({ category })
   } catch (err) {
     if (isMissingCmsCategoryTable(err)) {
       res.status(200).json({ category: null })

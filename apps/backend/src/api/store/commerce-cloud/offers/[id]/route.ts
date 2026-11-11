@@ -16,6 +16,11 @@ import { assertPermission } from "../../../../../modules/partner/permissions"
 import { buildProductCloudPreview } from "../../../product-cloud/product-preview"
 import { loadBuyBoxForIdentifier } from "../../buy-box-helpers"
 import { buildEffectivePriceView } from "../../../../../modules/commerce-cloud/offer-pricing"
+import {
+  evaluateOfferSellability,
+  publicationStatusForIdentifier,
+  shippingProfileFacts,
+} from "../../../../../modules/commerce-cloud/offer-sellability"
 import type { StorePatchOfferBodyInput } from "../../validators"
 
 type RouteParams = { id: string }
@@ -106,15 +111,44 @@ export async function GET(
         })
       : null
 
+  let profile: { status?: string | null; country_rates?: unknown } | null = null
+  if (offer.shipping_profile_id) {
+    try {
+      profile = await commerce.retrieveSellerShippingProfile(offer.shipping_profile_id)
+    } catch {
+      profile = null
+    }
+  }
+  const profileFacts = shippingProfileFacts({
+    shipping_profile_id: offer.shipping_profile_id,
+    region_code: offer.region_code,
+    profile,
+  })
+  const publicationStatus = await publicationStatusForIdentifier(
+    productCloud,
+    offer.identifier_id
+  )
+  const sellability = evaluateOfferSellability({
+    has_offer: true,
+    sales_status: offer.sales_status,
+    base_price: view?.unit_price ?? null,
+    has_inventory: inventory != null,
+    quantity_available: inventory != null ? Number(inventory.quantity_available) : null,
+    delivery_days_max:
+      offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
+    shipping_profile_id: offer.shipping_profile_id,
+    shipping_profile_status: profileFacts.shipping_profile_status,
+    shipping_profile_serves_region: profileFacts.shipping_profile_serves_region,
+    publication_status: publicationStatus,
+  })
+
   res.json({
     offer,
     inventory: inventory ?? null,
     price: price ?? null,
     total_price: view?.total_customer_price ?? null,
-    is_sellable:
-      (offer.sales_status ?? "active") === "active" &&
-      inventory != null &&
-      Number(inventory.quantity_available) > 0,
+    is_sellable: sellability.sellable,
+    sellability_reasons: sellability.reasons.map((reason) => reason.message),
     product_preview,
     buy_box: mapOwnBuyBox(buy_box, offer.id),
   })

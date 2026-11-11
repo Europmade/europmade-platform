@@ -269,7 +269,7 @@ Elke tabel wordt beschreven volgens hetzelfde stramien: **Doel**, een metadatabl
 
 ## B.4 `product_variant`
 
-**Doel:** een specifieke uitvoering van een Product (Domeinmodel §6).
+**Doel:** de technische variant van precies één zelfstandig product, voor de keten offer → identifier → variant (ADR-0040, ADR-0050). Geen commerciële uitvoering.
 
 | | |
 |---|---|
@@ -277,15 +277,15 @@ Elke tabel wordt beschreven volgens hetzelfde stramien: **Doel**, een metadatabl
 | **Unieke constraints** | geen op zichzelf (uniciteit loopt via `identifier`) |
 | **Foreign keys** | `product_id` → `product.id` |
 | **Indexen** | `product_id` |
-| **Cardinaliteit** | 1 `product` → N `product_variant`; 1 `product_variant` → N `identifier` |
+| **Cardinaliteit** | 1 `product` → 1 technische `product_variant` voor nieuwe artikelen; 1 `product_variant` → N `identifier`. Bestaande extra rijen blijven staan. |
 | **Soft delete/versiebeheer** | Volgt de levenscyclus van het bovenliggende `product` — geen eigen status |
 
 | Kolom | Datatype (conceptueel) | Verplicht | Toelichting |
 |---|---|---|---|
 | `id` | identifier | Ja | — |
 | `product_id` | identifier (FK) | Ja | — |
-| `variant_type` | opsomming | Ja | Kleur / Maat / Inhoud / Vermogen / Spanning / Materiaal / Uitvoering / Bundel |
-| `variant_value` | tekst | Ja | Bijv. "Rood," "XL" |
+| `variant_type` | opsomming | Ja | Historische kolom. Geen commerciële as meer (ADR-0050). Nieuwe artikelen gebruiken deze kolom niet als kleur, maat of uitvoering. |
+| `variant_value` | tekst | Ja | Historische kolom. Geen maat- of kleurbeheer. |
 | `created_at` | datum/tijd | Ja | — |
 
 **Businessregels:** geen aanvullende, buiten wat al bij `product` geldt.

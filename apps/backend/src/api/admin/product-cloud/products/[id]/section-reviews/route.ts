@@ -193,6 +193,13 @@ export async function PUT(
     }
   }
 
+  if (section_key === "made_in_europe") {
+    const { emitCategoryFactsChanged } = await import(
+      "../../../../../../modules/cms/category-cms-proposal-events"
+    )
+    await emitCategoryFactsChanged(req.scope, { product_id: id })
+  }
+
   const section_reviews = await listSectionReviewsForProduct(productCloud, id)
   res.json({
     section_review: section_reviews.find((s) => s.section_key === section_key),

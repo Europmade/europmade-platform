@@ -195,11 +195,103 @@ export function serializeCmsCategory(
   row: Record<string, unknown>,
   backendOrigin = "http://localhost:9000"
 ) {
+  const publishedVersion = Number(row.published_version ?? 0)
+  const hasPublished =
+    publishedVersion >= 1 &&
+    row.published_document != null &&
+    typeof row.published_document === "object"
+  const liveDocument = hasPublished
+    ? row.published_document
+    : row.published
+      ? row.document
+      : {}
   return {
     id: row.id,
     category_slug: String(row.category_slug ?? ""),
-    document: rewriteMediaStrings(row.document ?? {}, backendOrigin),
-    published: Boolean(row.published),
+    /** @deprecated Prefer published.document from serializeCmsCategoryPd */
+    document: rewriteMediaStrings(liveDocument ?? {}, backendOrigin),
+    published: hasPublished || Boolean(row.published),
+    published_version: publishedVersion,
+    draft_sync_state: String(row.draft_sync_state ?? "absent"),
+    i18n_meta: (row.i18n_meta as Record<string, unknown> | null) ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  }
+}
+
+/**
+ * Admin Published/Draft payload (design §10.1 GET).
+ * Never includes draft content in a field named for storefront use.
+ */
+export function serializeCmsCategoryPd(
+  row: Record<string, unknown>,
+  opts?: { restoredFromVersion?: number | null; backendOrigin?: string }
+) {
+  const backendOrigin = opts?.backendOrigin ?? "http://localhost:9000"
+  const publishedVersion = Number(row.published_version ?? 0)
+  const hasPublished =
+    publishedVersion >= 1 &&
+    row.published_document != null &&
+    typeof row.published_document === "object"
+  const draftDocument = row.draft_document
+  const hasDraft = draftDocument != null && typeof draftDocument === "object"
+  const draftBaseVersion =
+    row.draft_base_version == null ? null : Number(row.draft_base_version)
+  const staleBase =
+    hasDraft &&
+    publishedVersion > 0 &&
+    Number(draftBaseVersion ?? NaN) !== publishedVersion
+
+  return {
+    id: row.id,
+    category_slug: String(row.category_slug ?? ""),
+    i18n_meta: (row.i18n_meta as Record<string, unknown> | null) ?? null,
+    published: hasPublished
+      ? {
+          document: rewriteMediaStrings(
+            row.published_document ?? {},
+            backendOrigin
+          ),
+          version: publishedVersion,
+          at: row.published_at ?? null,
+          by: row.published_by ?? null,
+          note: row.published_note ?? null,
+        }
+      : null,
+    draft: hasDraft
+      ? {
+          document: rewriteMediaStrings(draftDocument ?? {}, backendOrigin),
+          base_version: draftBaseVersion,
+          revision: Number(row.draft_revision ?? 0),
+          sync_state: String(row.draft_sync_state ?? "unpublished_changes"),
+          updated_at: row.draft_updated_at ?? null,
+          updated_by: row.draft_updated_by ?? null,
+          restored_from_version: opts?.restoredFromVersion ?? null,
+        }
+      : null,
+    stale_base: staleBase,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  }
+}
+
+/** Storefront: only published_document, never draft. */
+export function serializeCmsCategoryStore(
+  row: Record<string, unknown>,
+  backendOrigin = "http://localhost:9000"
+) {
+  const publishedVersion = Number(row.published_version ?? 0)
+  const hasPublished =
+    publishedVersion >= 1 &&
+    row.published_document != null &&
+    typeof row.published_document === "object"
+  if (!hasPublished) return null
+  return {
+    id: row.id,
+    category_slug: String(row.category_slug ?? ""),
+    document: rewriteMediaStrings(row.published_document ?? {}, backendOrigin),
+    published: true,
+    published_version: publishedVersion,
     i18n_meta: (row.i18n_meta as Record<string, unknown> | null) ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,

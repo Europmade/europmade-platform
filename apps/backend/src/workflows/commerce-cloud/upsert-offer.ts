@@ -34,6 +34,8 @@ export type UpsertOfferInput = {
   promo_starts_at?: string | Date | null
   promo_ends_at?: string | Date | null
   clear_promo?: boolean
+  /** Seller-owned shipping profile on this offer (not other sellers). */
+  shipping_profile_id?: string | null
 }
 
 export type UpsertOfferWorkflowResult = {

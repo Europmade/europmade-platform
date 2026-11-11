@@ -8,7 +8,13 @@ import { PARTNER_MODULE } from "../../../../../modules/partner"
 import type PartnerModuleService from "../../../../../modules/partner/service"
 import { VERIFICATION_MODULE } from "../../../../../modules/verification"
 import type VerificationModuleService from "../../../../../modules/verification/service"
-import { statusAfterAdminDecision } from "../../../../../modules/verification/european-ownership"
+import {
+  EUROPEAN_OWNERSHIP_BANDS,
+  EUROPEAN_OWNERSHIP_SOURCES,
+  isEuropeanOwnershipBand,
+  isEuropeanOwnershipSource,
+  statusAfterAdminDecision,
+} from "../../../../../modules/verification/european-ownership"
 import {
   appendOwnershipStatusEvent,
   serializeEuropeanOwnershipClaim,
@@ -20,6 +26,11 @@ type RouteParams = { id: string }
 const DecideBody = z.object({
   decision: z.enum(["approve", "request_info", "reject"]),
   note: z.string().trim().max(4000).optional(),
+})
+
+const BandBody = z.object({
+  ownership_band: z.enum(EUROPEAN_OWNERSHIP_BANDS),
+  source: z.enum(EUROPEAN_OWNERSHIP_SOURCES).optional(),
 })
 
 async function loadClaim(
@@ -149,6 +160,66 @@ export async function POST(
     actor_id: actor,
     actor_type: "admin",
     decision: parsed.data.decision,
+  })
+
+  res.json({ claim: serializeEuropeanOwnershipClaim(updated) })
+}
+
+/**
+ * PUT /admin/product-cloud/european-ownership/:id
+ * Update ownership_band (and optional source) without changing the review decision.
+ */
+export async function PUT(
+  req: AuthenticatedMedusaRequest,
+  res: MedusaResponse
+) {
+  const { id } = req.params as RouteParams
+  const parsed = BandBody.safeParse(req.body ?? {})
+  if (!parsed.success) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "ownership_band is verplicht en moet een bekende band zijn."
+    )
+  }
+  if (!isEuropeanOwnershipBand(parsed.data.ownership_band)) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "Ongeldige ownership_band."
+    )
+  }
+  if (
+    parsed.data.source !== undefined &&
+    !isEuropeanOwnershipSource(parsed.data.source)
+  ) {
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      "Ongeldige source."
+    )
+  }
+
+  const verification = req.scope.resolve(
+    VERIFICATION_MODULE
+  ) as VerificationModuleService
+  const claim = await loadClaim(verification, id)
+  const actor =
+    (req.auth_context as { actor_id?: string } | undefined)?.actor_id ?? "admin"
+
+  const updated = (await verification.updateEuropeanOwnershipClaims({
+    id: claim.id,
+    ownership_band: parsed.data.ownership_band,
+    ...(parsed.data.source ? { source: parsed.data.source } : {}),
+  })) as EuropeanOwnershipClaimRow
+
+  await appendOwnershipStatusEvent(verification, {
+    claim_id: claim.id,
+    brand_id: claim.brand_id,
+    manufacturer_id: claim.manufacturer_id,
+    from_status: claim.status,
+    to_status: claim.status,
+    note: `Admin heeft eigendomsband bijgewerkt naar ${parsed.data.ownership_band}`,
+    actor_id: actor,
+    actor_type: "admin",
+    decision: "admin_band_update",
   })
 
   res.json({ claim: serializeEuropeanOwnershipClaim(updated) })

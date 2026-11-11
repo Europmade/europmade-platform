@@ -246,6 +246,7 @@ export async function POST(
       description: body.description,
       category_name: body.category_name,
       category_names: body.category_names,
+      category_ids: body.category_ids,
       identifier_type,
       identifier_value,
       country_scope,

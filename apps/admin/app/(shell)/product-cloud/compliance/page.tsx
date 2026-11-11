@@ -48,14 +48,23 @@ export default function ComplianceReviewPage() {
 
   async function review(
     row: ComplianceEvidenceRow,
-    status: "approved" | "rejected"
+    status: "approved" | "rejected" | "needs_info"
   ) {
+    const note = rejectReason[row.id]?.trim() || ""
+    if (status === "rejected" && !note) {
+      setError("Bij afwijzen is een reden verplicht.")
+      return
+    }
+    if (status === "needs_info" && !note) {
+      setError("Bij aanvullend bewijs is een toelichting verplicht.")
+      return
+    }
     setBusyId(row.id)
     setError(null)
     try {
       await reviewComplianceEvidence(row.product_id, row.id, {
         status,
-        reason: status === "rejected" ? rejectReason[row.id]?.trim() : undefined,
+        reason: status === "approved" ? undefined : note,
       })
       await load()
     } catch (err) {
@@ -83,7 +92,7 @@ export default function ComplianceReviewPage() {
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {(["pending", "approved", "rejected", "all"] as const).map((tab) => (
+        {(["pending", "needs_info", "approved", "rejected", "all"] as const).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -126,6 +135,14 @@ export default function ComplianceReviewPage() {
                   <p className="mt-1 text-wf-600">
                     Bestand: {row.file_name || row.document_type}
                   </p>
+                  <p className="mt-1 text-wf-600">
+                    Beoordeeld: {row.verified_at ? new Date(row.verified_at).toLocaleString("nl-NL") : "—"}
+                    {" · "}
+                    Door: {row.verified_by || "—"}
+                  </p>
+                  {row.verification_notes ? (
+                    <p className="mt-1 text-wf-700">{row.verification_notes}</p>
+                  ) : null}
                   <a
                     href={row.storage_reference}
                     className="mt-1 inline-block underline"
@@ -136,10 +153,10 @@ export default function ComplianceReviewPage() {
                   </a>
                 </div>
                 <Link
-                  href={`/product-cloud/translations`}
+                  href={`/product-cloud/products/${row.product_id}`}
                   className="text-[11px] underline"
                 >
-                  Product {row.product_id}
+                  Productpagina
                 </Link>
               </div>
               <div className="mt-3 flex flex-wrap items-end gap-2">
@@ -151,7 +168,7 @@ export default function ComplianceReviewPage() {
                   Goedkeuren
                 </Button>
                 <Input
-                  label="Afwijsreden"
+                  label="Reden of toelichting"
                   value={rejectReason[row.id] || ""}
                   onChange={(e) =>
                     setRejectReason((prev) => ({
@@ -167,6 +184,14 @@ export default function ComplianceReviewPage() {
                   onClick={() => void review(row, "rejected")}
                 >
                   Afkeuren
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={busyId === row.id}
+                  onClick={() => void review(row, "needs_info")}
+                >
+                  Aanvullend bewijs
                 </Button>
               </div>
             </article>

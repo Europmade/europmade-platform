@@ -75,19 +75,31 @@ Zie [`docs/README.md`](./docs/README.md) voor de volledige documentatie-index en
 # 1. Dependencies installeren
 pnpm install
 
-# 2. Lokale PostgreSQL starten
-docker compose up -d
-
-# 3. Environment-bestanden aanmaken (kopieer en vul lokaal in)
+# 2. Environment-bestanden aanmaken (kopieer en vul lokaal in)
 cp .env.example .env
 cp apps/web/.env.example apps/web/.env.local
 cp apps/admin/.env.example apps/admin/.env.local
-
-# 4. Alle apps starten (Turborepo)
-pnpm dev
 ```
 
-`apps/web` draait vervolgens op `http://localhost:3000`, `apps/admin` op `http://localhost:3001`.
+**Windows (aanbevolen):** één commando start Docker/PostgreSQL + backend `:9000` + storefront `:3000` + admin `:3001` als detached processen (blijven draaien na het script):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-local\Start-EuropMade.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dev-local\Test-EuropMadeHealth.ps1
+```
+
+Zie [`scripts/dev-local/README.md`](./scripts/dev-local/README.md) voor healthcheck, `-Repair`, en optionele Task Scheduler-installatie na Windows-logon.
+
+**Handmatig / cross-platform:**
+
+```bash
+docker compose up -d
+pnpm --filter @europmade/backend dev   # :9000
+pnpm --filter @europmade/web dev       # :3000
+pnpm --filter @europmade/admin dev     # :3001
+```
+
+Of alle apps via Turborepo: `pnpm dev` (vereist open terminals; stopt mee met de shell).
 
 Overige scripts (op elk niveau via Turborepo): `pnpm build`, `pnpm lint`, `pnpm type-check`, `pnpm format`.
 

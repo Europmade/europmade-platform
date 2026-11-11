@@ -101,12 +101,7 @@ export async function Homepage({
   const newestSection = cms.sections.newest
   const bestSection = cms.sections.best_sellers
 
-  const featuredProducts = pickHomepageRailProducts(
-    pool,
-    featuredSection,
-    "offers",
-    12
-  )
+  const featuredProducts = pickHomepageRailProducts(pool, featuredSection, "offers", 12)
   const newest = pickHomepageRailProducts(pool, newestSection, "newest", 12)
   const bestSold = pickHomepageRailProducts(pool, bestSection, "offers", 12)
   const catalogBrands: ResolvedPartnerSpotlight[] = []

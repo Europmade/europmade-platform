@@ -85,3 +85,17 @@ export function decideEuropeanOwnershipClaim(
     }
   )
 }
+
+/** Update the ownership band (percentage) without changing the review decision. */
+export function updateEuropeanOwnershipBand(
+  id: string,
+  body: { ownership_band: string; source?: string }
+) {
+  return request<{ claim: EuropeanOwnershipClaimRow }>(
+    `/admin/product-cloud/european-ownership/${id}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }
+  )
+}

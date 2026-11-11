@@ -11,9 +11,9 @@ import {
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react"
+import { discountLabelKind } from "@europmade/utils"
 import { Badge } from "@europmade/ui"
 import {
-  discountPercent,
   formatEuroFromCents,
   starsForRating,
   type ListingProduct,
@@ -21,6 +21,8 @@ import {
 import { hashHue } from "../../_lib/cart-line-meta"
 import { isFavorite, toggleFavorite } from "../../_lib/favorites"
 import { productMockupSrc } from "../../_lib/product-mockup"
+import { useCartOptional } from "../cart/cart-provider"
+import { OrderServiceApiError } from "../../_lib/order-service-api"
 import {
   DEFAULT_STOREFRONT_LOCALE,
   type StorefrontLocale,
@@ -163,17 +165,33 @@ function SkeletonCard({ compact }: { compact?: boolean }) {
   )
 }
 
-function FavoriteButton({ slug, title }: { slug: string; title: string }) {
+function FavoriteButton({
+  slug,
+  title,
+  locale,
+}: {
+  slug: string
+  title: string
+  locale: StorefrontLocale
+}) {
   const [active, setActive] = useState(false)
 
   useEffect(() => {
-    setActive(isFavorite(slug))
+    const sync = () => setActive(isFavorite(slug))
+    sync()
+    window.addEventListener("em-favorites", sync)
+    window.addEventListener("storage", sync)
+    return () => {
+      window.removeEventListener("em-favorites", sync)
+      window.removeEventListener("storage", sync)
+    }
   }, [slug])
 
   function onToggle(e: MouseEvent<HTMLButtonElement>) {
     e.preventDefault()
     e.stopPropagation()
     setActive(toggleFavorite(slug))
+    window.dispatchEvent(new Event("em-favorites"))
   }
 
   return (
@@ -181,11 +199,7 @@ function FavoriteButton({ slug, title }: { slug: string; title: string }) {
       type="button"
       onClick={onToggle}
       aria-pressed={active}
-      aria-label={
-        active
-          ? `${title} uit favorieten verwijderen`
-          : `${title} aan favorieten toevoegen`
-      }
+      aria-label={tFormat(active ? "removeFavorite" : "addFavorite", locale, { title })}
       className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-sm text-wf-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-wf-900"
     >
       <span aria-hidden>{active ? "♥" : "♡"}</span>
@@ -211,16 +225,48 @@ export function ProductCarouselCard({
 }) {
   const compact = variant === "compact"
   const href = `/product/${product.slug}`
-  const pct = discountPercent(product)
-  const hasPromo =
-    pct != null &&
-    product.originalPriceCents != null &&
-    product.originalPriceCents > product.priceCents
+  const cart = useCartOptional()
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState<string | null>(null)
+  const offerId = product.buyBoxOfferId?.trim() || ""
+  const canAdd = Boolean(cart && offerId.startsWith("offr_") && product.priceCents > 0)
+  const regularCents =
+    product.regularPriceCents != null && product.regularPriceCents > product.priceCents
+      ? product.regularPriceCents
+      : null
+  const discountKind = discountLabelKind(regularCents, product.priceCents)
+  const hasReview = (product.reviewCount ?? 0) > 0 && product.rating > 0
   const showFrom = product.offerCount > 1
   const shellClass =
     layout === "grid"
       ? "relative h-full w-full"
       : `${cardShellClass(compact)} group/card relative`
+
+  async function addToCart(event: MouseEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    event.stopPropagation()
+    if (!cart || !canAdd) return
+    setBusy(true)
+    setNote(null)
+    try {
+      await cart.addLine(offerId, 1, {
+        offer_id: offerId,
+        product_id: product.slug,
+        slug: product.slug,
+        title: product.title,
+        seller_id: product.buyBoxSellerId || "",
+        seller_name: product.buyBoxSellerName || product.seller,
+        verified: product.verified,
+        delivery: "",
+        stock: t("inStock", locale),
+        returns: t("trust30DayReturn", locale),
+      })
+    } catch (err) {
+      setNote(err instanceof OrderServiceApiError ? err.message : t("addFailed", locale))
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
     <article className={`${shellClass} group/card`}>
@@ -233,9 +279,16 @@ export function ProductCarouselCard({
           />
           <span
             className="pointer-events-none absolute left-1.5 top-1.5 z-[1] rounded bg-white/90 px-1 py-0.5 text-[9.5px] leading-none tracking-tighter text-wf-800 shadow-sm backdrop-blur-sm"
-            aria-label={`Beoordeling ${product.rating.toFixed(1).replace(".", ",")}`}
+            aria-hidden={hasReview ? undefined : true}
+            aria-label={
+              hasReview
+                ? tFormat("productRating", locale, {
+                    rating: product.rating.toFixed(1).replace(".", ","),
+                  })
+                : undefined
+            }
           >
-            {starsForRating(product.rating)}
+            {hasReview ? starsForRating(product.rating) : "☆☆☆☆☆"}
           </span>
           {product.verified ? (
             <span className="pointer-events-none absolute bottom-1.5 left-1.5 z-[1]">
@@ -247,9 +300,9 @@ export function ProductCarouselCard({
               </Badge>
             </span>
           ) : null}
-          {hasPromo ? (
+          {discountKind ? (
             <span className="pointer-events-none absolute bottom-1.5 right-1.5 z-[1] rounded bg-wf-900 px-1 py-0.5 text-[9px] font-bold text-white shadow-sm">
-              −{pct}%
+              {t(discountKind === "high_discount" ? "highDiscount" : "discount", locale)}
             </span>
           ) : null}
         </div>
@@ -262,26 +315,46 @@ export function ProductCarouselCard({
           <p className="min-w-0 truncate text-[11px] text-wf-600">
             {product.brand}
           </p>
-          <div className="flex shrink-0 flex-col items-end leading-none">
-            {hasPromo ? (
-              <span className="mb-0.5 text-[10px] text-wf-500 line-through">
-                {formatEuroFromCents(product.originalPriceCents!)}
-              </span>
+          <div className="flex shrink-0 items-end gap-1.5">
+            {product.priceCents > 0 ? (
+              <div className="flex flex-col items-end leading-none">
+                {regularCents != null ? (
+                  <span className="mb-0.5 text-[10px] text-wf-500 line-through">
+                    {formatEuroFromCents(regularCents)}
+                  </span>
+                ) : null}
+                <p
+                  className={`font-bold tracking-tight text-wf-900 ${
+                    regularCents != null ? "text-[17px]" : "text-[16px]"
+                  }`}
+                >
+                  {showFrom ? (
+                    <span className="mr-0.5 align-baseline text-[10px] font-semibold text-wf-600">
+                      {t("fromPrice", locale)}
+                    </span>
+                  ) : null}
+                  {formatEuroFromCents(product.priceCents)}
+                </p>
+              </div>
             ) : null}
-            <p
-              className={`font-bold tracking-tight text-wf-900 ${
-                hasPromo ? "text-[17px]" : "text-[16px]"
-              }`}
-            >
-              {showFrom ? (
-                <span className="mr-0.5 align-baseline text-[10px] font-semibold text-wf-600">
-                  {t("fromPrice", locale)}
-                </span>
-              ) : null}
-              {formatEuroFromCents(product.priceCents)}
-            </p>
+            {canAdd ? (
+              <button
+                type="button"
+                className="relative z-[2] inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1f8a4c] text-white disabled:opacity-60"
+                aria-label={t("addToCart", locale)}
+                disabled={busy}
+                onClick={(event) => void addToCart(event)}
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                  <path d="M6 6h15l-1.5 9h-12L5 3H2" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="9" cy="20" r="1.2" fill="currentColor" stroke="none" />
+                  <circle cx="18" cy="20" r="1.2" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
+            ) : null}
           </div>
         </div>
+        {note ? <p className="relative z-[2] mt-1 text-[11px] leading-4 text-red-700">{note}</p> : null}
 
         <Link
           href={href}
@@ -291,7 +364,7 @@ export function ProductCarouselCard({
         />
 
         <div className="absolute right-2 top-2 z-[2]">
-          <FavoriteButton slug={product.slug} title={product.title} />
+          <FavoriteButton slug={product.slug} title={product.title} locale={locale} />
         </div>
       </div>
     </article>

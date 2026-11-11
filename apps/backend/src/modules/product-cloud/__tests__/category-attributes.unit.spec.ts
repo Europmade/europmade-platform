@@ -3,6 +3,7 @@ import {
   productMatchesUseCase,
   serializeUseCaseTags,
   slugifyCategoryName,
+  categoryIdsMatchingCatalogFilter,
   productMatchesCategoryFilter,
   CATEGORY_ATTRIBUTE_CATALOGS,
   uniqueCatalogFieldsForImport,
@@ -51,6 +52,22 @@ describe("Product Cloud category-attributes helpers (ADR-0037)", () => {
     ).toBe(false)
   })
 
+  it("limits a catalog scan to categories whose name matches the filter", () => {
+    const categories = [
+      { id: "wash", name: "Wasmachines" },
+      { id: "dry", name: "Wasdrogers" },
+      { id: "dish-name", name: "Vaatwassers" },
+      { id: "empty", name: "" },
+    ]
+    expect(categoryIdsMatchingCatalogFilter(categories, "wasmachines")).toEqual(["wash"])
+    expect(categoryIdsMatchingCatalogFilter(categories, "vaatwassers")).toEqual(["dish-name"])
+    expect(categoryIdsMatchingCatalogFilter(categories, "wasmachines,wasdrogers")).toEqual([
+      "wash",
+      "dry",
+    ])
+    expect(categoryIdsMatchingCatalogFilter(categories, "")).toEqual([])
+  })
+
   it("exposes category-specific attribute catalogs", () => {
     expect(CATEGORY_ATTRIBUTE_CATALOGS.elektronica?.some((a) => a.code === "geheugen")).toBe(
       true
@@ -79,13 +96,26 @@ describe("Product Cloud category-attributes helpers (ADR-0037)", () => {
     expect(fields.some((f) => f.code === "zuigkracht")).toBe(true)
   })
 
-  it("returns tuin fields for heggenschaar and mode fields for schoenen", () => {
+  it("returns tuin fields for heggenschaar and EU sizes for schoenen", () => {
     const hedge = categorySpecificFieldsForNames(["Heggenschaar"])
     expect(hedge.some((f) => f.code === "vermogen")).toBe(true)
     expect(hedge.some((f) => f.code === "maat")).toBe(false)
     const shoes = categorySpecificFieldsForNames(["Schoenen"])
-    expect(shoes.some((f) => f.code === "maat")).toBe(true)
+    const shoeSize = shoes.find((f) => f.code === "maat")
+    expect(shoeSize?.option_values).toContain("40")
+    expect(shoeSize?.option_values).not.toContain("XS")
     expect(shoes.some((f) => f.code === "zuigkracht")).toBe(false)
+    const women = categorySpecificFieldsForNames(["Damesschoenen"])
+    expect(women.find((f) => f.code === "maat")?.option_values).toContain("40")
+    expect(women.find((f) => f.code === "maat")?.option_values).not.toContain("47")
+    const clothing = categorySpecificFieldsForNames(["Kleding"])
+    expect(clothing.find((f) => f.code === "maat")?.option_values).toEqual([
+      "XS",
+      "S",
+      "M",
+      "L",
+      "XL",
+    ])
   })
 
   it("serializes and matches use-case tags for toplist prep", () => {

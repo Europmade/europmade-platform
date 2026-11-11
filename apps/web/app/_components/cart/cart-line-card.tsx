@@ -86,9 +86,6 @@ export function CartLineCard({
         </div>
 
         <div className={`mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-wf-600 ${compact ? "" : "text-[12.5px]"}`}>
-          {meta.variant ? <span>Variant: {meta.variant}</span> : null}
-          {meta.color ? <span>Kleur: {meta.color}</span> : null}
-          {meta.size ? <span>Maat: {meta.size}</span> : null}
           <span>Levertijd: {meta.delivery}</span>
           <span>{meta.stock}</span>
           {!compact ? <span>{meta.returns}</span> : null}

@@ -2,7 +2,7 @@ export type ImportCommitProduct = {
   row: number
   product_id: string
   title: string
-  action: "created" | "updated"
+  action: "created" | "updated" | "reused"
   lifecycle_status: string | null
   publication_status: string
   category_status: "linked" | "category_pending"
@@ -18,6 +18,7 @@ export type ImportCommitResult = {
   updated: number
   created_count: number
   updated_count: number
+  reused_count: number
   warning_count: number
   skipped_count: number
   error_count: number
@@ -32,6 +33,10 @@ export type ImportCommitResult = {
     queued: number
     skipped_manual: number
   }
+  received_rows?: number
+  attention_count?: number
+  new_brands?: number
+  technical_error_rows?: number
 }
 
 export function categoryStatusFromResolution(input: {
@@ -49,11 +54,17 @@ export function categoryPendingWarning(raw: string): string {
 export function buildImportCommitMessage(input: {
   created_count: number
   updated_count: number
+  reused_count?: number
   warning_count: number
   error_count: number
 }): string {
-  if (input.error_count > 0 && input.created_count + input.updated_count === 0) {
+  const stored =
+    input.created_count + input.updated_count + (input.reused_count ?? 0)
+  if (input.error_count > 0 && stored === 0) {
     return "Import mislukt."
+  }
+  if (input.error_count > 0) {
+    return "Import deels geslaagd. Technisch onverwerkbare regels zijn overgeslagen."
   }
   if (input.warning_count > 0) {
     return "Import geslaagd, met waarschuwingen."
@@ -70,6 +81,7 @@ export function buildImportCommitResult(input: {
 }): ImportCommitResult {
   const created = input.products.filter((p) => p.action === "created")
   const updated = input.products.filter((p) => p.action === "updated")
+  const reused = input.products.filter((p) => p.action === "reused")
   const warnings = input.products
     .map((p) => p.warning)
     .filter((w): w is string => Boolean(w))
@@ -84,6 +96,7 @@ export function buildImportCommitResult(input: {
     updated: updated_count,
     created_count,
     updated_count,
+    reused_count: reused.length,
     warning_count,
     skipped_count: input.skipped_count ?? 0,
     error_count,
@@ -94,6 +107,7 @@ export function buildImportCommitResult(input: {
     message: buildImportCommitMessage({
       created_count,
       updated_count,
+      reused_count: reused.length,
       warning_count,
       error_count,
     }),

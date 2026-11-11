@@ -11,6 +11,11 @@ import { resolveApprovedSeller } from "../../product-cloud/resolve-seller"
 import { assertPermission } from "../../../../modules/partner/permissions"
 import { buildProductCloudPreview } from "../../product-cloud/product-preview"
 import { buildEffectivePriceView } from "../../../../modules/commerce-cloud/offer-pricing"
+import {
+  evaluateOfferSellability,
+  publicationStatusForIdentifier,
+  shippingProfileFacts,
+} from "../../../../modules/commerce-cloud/offer-sellability"
 import type { StoreUpsertOfferBodyInput } from "../validators"
 
 /** Eigen offers van de goedgekeurde seller. */
@@ -44,35 +49,65 @@ export async function GET(
 
   const offers = await commerce.listOffers(filters)
   const enriched = []
+  const publicationCache = new Map<string, string | null>()
   for (const offer of offers) {
     const [inventory] = await commerce.listOfferInventories({
       offer_id: offer.id,
     })
     const [price] = await commerce.listOfferPrices({ offer_id: offer.id })
-      const view =
-        price != null
-          ? buildEffectivePriceView({
-              base_price: Number(price.base_price),
-              shipping_cost: Number(price.shipping_cost),
-              extra_delivery_cost:
-                price.extra_delivery_cost != null
-                  ? Number(price.extra_delivery_cost)
-                  : null,
-              promo_price:
-                price.promo_price != null ? Number(price.promo_price) : null,
-              promo_starts_at: price.promo_starts_at ?? null,
-              promo_ends_at: price.promo_ends_at ?? null,
-            })
-          : null
-      enriched.push({
+    const publicationStatus = await publicationStatusForIdentifier(
+      productCloud,
+      offer.identifier_id,
+      publicationCache
+    )
+    let profile: { status?: string | null; country_rates?: unknown } | null = null
+    if (offer.shipping_profile_id) {
+      try {
+        profile = await commerce.retrieveSellerShippingProfile(offer.shipping_profile_id)
+      } catch {
+        profile = null
+      }
+    }
+    const profileFacts = shippingProfileFacts({
+      shipping_profile_id: offer.shipping_profile_id,
+      region_code: offer.region_code,
+      profile,
+    })
+    const view =
+      price != null
+        ? buildEffectivePriceView({
+            base_price: Number(price.base_price),
+            shipping_cost: Number(price.shipping_cost),
+            extra_delivery_cost:
+              price.extra_delivery_cost != null
+                ? Number(price.extra_delivery_cost)
+                : null,
+            promo_price:
+              price.promo_price != null ? Number(price.promo_price) : null,
+            promo_starts_at: price.promo_starts_at ?? null,
+            promo_ends_at: price.promo_ends_at ?? null,
+          })
+        : null
+    const sellability = evaluateOfferSellability({
+      has_offer: true,
+      sales_status: offer.sales_status,
+      base_price: view?.unit_price ?? null,
+      has_inventory: inventory != null,
+      quantity_available: inventory != null ? Number(inventory.quantity_available) : null,
+      delivery_days_max:
+        offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
+      shipping_profile_id: offer.shipping_profile_id,
+      shipping_profile_status: profileFacts.shipping_profile_status,
+      shipping_profile_serves_region: profileFacts.shipping_profile_serves_region,
+      publication_status: publicationStatus,
+    })
+    enriched.push({
         offer,
         inventory: inventory ?? null,
         price: price ?? null,
         total_price: view?.total_customer_price ?? null,
-        is_sellable:
-          (offer.sales_status ?? "active") === "active" &&
-          inventory != null &&
-          Number(inventory.quantity_available) > 0,
+        is_sellable: sellability.sellable,
+        sellability_reasons: sellability.reasons.map((reason) => reason.message),
       })
   }
 

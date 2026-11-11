@@ -123,3 +123,7 @@ export function useCart() {
   }
   return ctx
 }
+
+export function useCartOptional() {
+  return useContext(CartContext)
+}

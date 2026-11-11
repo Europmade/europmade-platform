@@ -21,6 +21,7 @@ import {
   type EvidenceKind,
 } from "../../../../../../../modules/product-cloud/compliance-gates"
 import { reopenSectionReviewAfterEvidenceUpload } from "../../../../../../../modules/product-cloud/section-review-evidence-sync"
+import { summarizeProductEvidence } from "../../../../../../../modules/verification/evidence-review"
 
 type RouteParams = { id: string }
 
@@ -70,29 +71,28 @@ export async function GET(
   )
   const mie = await loadMadeInEuropeForProduct(req.scope, id)
 
-  const active = (evidence as Array<{ verification_status: string }>).filter(
-    (e) => e.verification_status !== "superseded"
-  )
-  const hasApproved = active.some((e) => e.verification_status === "approved")
-  const hasPending = active.some((e) => e.verification_status === "pending")
-  const hasRejected = active.some((e) => e.verification_status === "rejected")
-
-  let evidence_status:
-    | "missing"
-    | "pending_review"
-    | "approved"
-    | "rejected" = "missing"
-  if (hasApproved) evidence_status = "approved"
-  else if (hasPending) evidence_status = "pending_review"
-  else if (hasRejected) evidence_status = "rejected"
-
-  const score_qualifies = Boolean(mie?.score?.is_made_in_europe)
-  const is_verified = score_qualifies && hasApproved
+  const summary = summarizeProductEvidence({
+    statuses: (evidence as Array<{ verification_status: string }>).map(
+      (row) => row.verification_status
+    ),
+    score_qualifies: Boolean(mie?.score?.is_made_in_europe),
+    origin_status: mie?.origin?.status ?? null,
+    score: mie?.score?.score ?? null,
+  })
+  const evidence_status = summary.evidence_status
+  const score_qualifies = summary.is_made_in_europe_score
+  const is_verified = summary.is_made_in_europe_verified
 
   res.json({
     product_id: id,
     origin_status: mie?.origin?.status ?? null,
     score: mie?.score ?? null,
+    assembly_eu_band: mie?.origin?.assembly_eu_band ?? null,
+    parts_eu_level: mie?.origin?.parts_eu_level ?? null,
+    materials_eu_level: mie?.origin?.materials_eu_level ?? null,
+    primary_assembly_country: mie?.origin?.primary_assembly_country ?? null,
+    production_country: mie?.origin?.production_country ?? null,
+    score_can_be_calculated: Boolean(mie?.score),
     facility: serializeProductionLocation(mie?.facility ?? null),
     evidence_status,
     is_made_in_europe_score: score_qualifies,
@@ -260,6 +260,10 @@ export async function POST(
       id: origin.id,
       status: toStatus,
     })
+    const { emitCategoryFactsChanged } = await import(
+      "../../../../../../../modules/cms/category-cms-proposal-events"
+    )
+    await emitCategoryFactsChanged(req.scope, { product_id: id })
   }
 
   const reopened_sections = await reopenSectionReviewAfterEvidenceUpload({

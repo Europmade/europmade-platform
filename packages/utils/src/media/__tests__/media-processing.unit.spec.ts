@@ -196,6 +196,19 @@ describe("media validation — MIME normalization", () => {
     expect(result.ok).toBe(true)
   })
 
+  it("accepts a category image without enforcing a crop", () => {
+    const result = validateMedia({
+      placement: "category_image",
+      mimeType: "image/jpeg",
+      sizeBytes: 400_000,
+      width: 800,
+      height: 600,
+      fileName: "tegel.jpg",
+    })
+    expect(result.ok).toBe(true)
+    expect(getMediaRequirements("category_image").enforceAspectRatio).toBe(false)
+  })
+
   it("accepts empty MIME with .jpeg extension", () => {
     const result = validateMedia({
       placement: "homepage_hero",

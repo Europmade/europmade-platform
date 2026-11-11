@@ -11,6 +11,10 @@ import type CommerceCloudModuleService from "../../../../../../../modules/commer
 import { resolveApprovedSeller } from "../../../../resolve-seller"
 import { assertSellerCanDirectEditCatalog } from "../../../../catalog-edit-guard"
 import { composeVariantFromAxes } from "../../../../variant-axes"
+import {
+  applyShoeMaatToAxes,
+  canonicalizeShoeMaat,
+} from "../../../../../../../modules/product-cloud/shoe-sizes"
 
 type RouteParams = { id: string; variantId: string }
 
@@ -65,6 +69,11 @@ export async function PATCH(
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) {
+  await resolveApprovedSeller(req.scope, req.auth_context.actor_id)
+  throw new MedusaError(
+    MedusaError.Types.NOT_ALLOWED,
+    "Een verkoopbaar artikel is een zelfstandig product. De technische variant wordt niet bewerkt."
+  )
   const seller = await resolveApprovedSeller(
     req.scope,
     req.auth_context.actor_id
@@ -89,11 +98,16 @@ export async function PATCH(
     seller
   )
 
+  const categoryNames = await categoryNamesForProduct(productCloud, id)
   let nextType = body.variant_type
   let nextValue = body.variant_value
   if (body.axes?.length) {
+    const sized = applyShoeMaatToAxes(body.axes, categoryNames)
+    if (!sized.ok) {
+      throw new MedusaError(MedusaError.Types.INVALID_DATA, sized.message)
+    }
     try {
-      const composed = composeVariantFromAxes(body.axes)
+      const composed = composeVariantFromAxes(sized.axes)
       nextType = composed.variant_type
       nextValue = composed.variant_value
     } catch (err) {
@@ -102,6 +116,12 @@ export async function PATCH(
         err instanceof Error ? err.message : "Ongeldige variantassen."
       )
     }
+  } else if ((nextType || variant.variant_type) === "Maat" && nextValue) {
+    const stored = canonicalizeShoeMaat(nextValue, categoryNames)
+    if (!stored.ok) {
+      throw new MedusaError(MedusaError.Types.INVALID_DATA, stored.message)
+    }
+    if ("value" in stored) nextValue = stored.value
   }
 
   const patch: Record<string, unknown> = { id: variantId }
@@ -186,6 +206,11 @@ export async function DELETE(
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) {
+  await resolveApprovedSeller(req.scope, req.auth_context.actor_id)
+  throw new MedusaError(
+    MedusaError.Types.NOT_ALLOWED,
+    "Een verkoopbaar artikel is een zelfstandig product. De technische variant wordt niet verwijderd."
+  )
   const seller = await resolveApprovedSeller(
     req.scope,
     req.auth_context.actor_id
@@ -260,4 +285,24 @@ export async function DELETE(
   })
 
   res.json({ ok: true, variant_id: variantId, offers_withdrawn: withdrawOffers })
+}
+
+async function categoryNamesForProduct(
+  productCloud: ProductCloudModuleService,
+  productId: string
+): Promise<string[]> {
+  const links = await productCloud.listProductCategories({ product_id: productId })
+  const names: string[] = []
+  for (const link of links) {
+    try {
+      const cat = await productCloud.retrieveCategory(
+        (link as { category_id: string }).category_id
+      )
+      const name = String((cat as { name?: string }).name || "").trim()
+      if (name) names.push(name)
+    } catch {
+      /* skip a missing category */
+    }
+  }
+  return names
 }

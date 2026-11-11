@@ -290,6 +290,14 @@ export const publishVersionStep = createStep(
       )
     }
 
+    // Already live: do not archive this version and publish it again.
+    if (version.publication_status === "Gepubliceerd") {
+      return new StepResponse({
+        version,
+        lifecycle_status: product.lifecycle_status,
+      })
+    }
+
     const allowed: PublicationStatus[] = [
       "Concept",
       "In review",
@@ -324,6 +332,8 @@ export const publishVersionStep = createStep(
         `[audit] lifecycle →Actief product=${product.id} trigger=first_publish`
       )
     }
+    const { emitCategoryFactsChanged } = await import("../../modules/cms/category-cms-proposal-events")
+    await emitCategoryFactsChanged(container, { product_id: input.product_id })
 
     return new StepResponse({
       version: result.version as ProductVersionRow,
@@ -451,6 +461,8 @@ export const ownerLifecycleStep = createStep(
     logger.info(
       `[audit] lifecycle ${product.lifecycle_status}→${input.target_status} product=${product.id} by=${input.seller_id}`
     )
+    const { emitCategoryFactsChanged } = await import("../../modules/cms/category-cms-proposal-events")
+    await emitCategoryFactsChanged(container, { product_id: product.id })
     return new StepResponse(result)
   }
 )
@@ -493,6 +505,8 @@ export const adminArchiveStep = createStep(
     logger.info(
       `[audit] lifecycle Niet meer leverbaar→Gearchiveerd product=${product.id} by=admin`
     )
+    const { emitCategoryFactsChanged } = await import("../../modules/cms/category-cms-proposal-events")
+    await emitCategoryFactsChanged(container, { product_id: product.id })
     return new StepResponse(result)
   }
 )

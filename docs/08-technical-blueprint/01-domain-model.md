@@ -165,26 +165,26 @@ Daarnaast een derde as (Verificatiestatus, zie domeinobject Verification/Product
 
 ---
 
-## 6. Product Variant
+## 6. Technische productvariant
 
 ### Doel
-Een specifieke uitvoering van een Product — kleur, maat, inhoud, vermogen, e.d.
+Interne koppelrij van precies één zelfstandig Product Cloud-product naar identifiers en offers (ADR-0050). Geen commerciële uitvoering.
 
 ### Verantwoordelijkheid
-Deelt alle Product-niveau-gegevens en voegt uitsluitend de afwijkende gegevens toe (Product Cloud Architecture Deel 2.3).
+Draagt geen eigen titel, specificaties of media. Kleur, maat, inhoud, vermogen, spanning, materiaal, uitvoering, batterij en bundel zijn productspecificaties of een ander product.
 
 ### Belangrijkste eigenschappen
-- `variant_type` (kleur, maat, inhoud, vermogen, spanning, materiaal, uitvoering, bundel).
-- Eén of meer Identifiers (GTIN/EAN/MPN, met `country_scope` — één Variant kan per land een andere EAN hebben).
-- Variant-specifieke media (bijv. een kleurfoto).
+- Geen commerciële variantas. Een historische `variant_type` is geen bedrijfsfunctie.
+- Eén of meer Identifiers (GTIN/EAN/MPN, met `country_scope`) voor hetzelfde verkoopbare artikel.
+- Geen variant-specifieke media.
 
 ### Relaties
-- **1 Product → N Product Variant.**
-- **1 Product Variant → 1..N Identifier.**
-- **1 Product Variant ↔ N Offer** (elke Offer verwijst naar exact één EAN/Variant + Region).
+- **1 Product → 1 technische Product Variant** voor nieuwe artikelen. Bestaande extra rijen blijven staan tot een latere implementatie.
+- **1 technische variant → 1..N Identifier.**
+- **1 technische variant ↔ N Offer** (elke Offer verwijst naar exact één EAN + Region).
 
 ### Lifecycle
-Gebonden aan de levenscyclus van het bovenliggende Product — een Variant heeft geen eigen, zelfstandige status.
+Gebonden aan de levenscyclus van het bovenliggende Product — de technische variant heeft geen eigen goedkeurings- of publicatiestatus.
 
 ### Businessregels
 - Een geldig GTIN/EAN is de sterkste matchsleutel (Deel 2.4) — EAN-13 wordt architecturaal behandeld als een GTIN-13-subtype, geen los identifier-systeem.

@@ -10,7 +10,9 @@ export type ProductCloudPreview = {
   brand_id: string
   manufacturer_id: string
   lifecycle_status: string
+  category_ids: string[]
   category_names: string[]
+  category_slugs: string[]
   identifier_id: string | null
   identifier_type: string | null
   identifier_value: string | null
@@ -39,6 +41,7 @@ type ProductCategoryRow = {
 type CategoryRow = {
   id: string
   name: string
+  slug?: string | null
 }
 
 type VariantRow = {
@@ -154,13 +157,23 @@ export async function buildProductCloudPreview(
     }
   }
 
+  const byId = new Map(categories.map((c) => [c.id, c]))
+  const ordered = categoryIds
+    .map((id) => byId.get(id))
+    .filter((c): c is CategoryRow => Boolean(c))
+
   return {
     product_id: product.id,
     title: pickDisplayTitle(versions),
     brand_id: product.brand_id,
     manufacturer_id: product.manufacturer_id,
     lifecycle_status: product.lifecycle_status,
-    category_names: categories.map((c) => c.name),
+    category_ids: ordered.map((c) => c.id),
+    category_names: ordered.map((c) => c.name),
+    category_slugs: ordered.flatMap((category) => {
+      const slug = category.slug?.trim().toLowerCase()
+      return slug ? [slug] : []
+    }),
     identifier_id,
     identifier_type,
     identifier_value,

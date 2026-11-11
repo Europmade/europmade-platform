@@ -41,6 +41,8 @@ export type ComplianceEvidenceRow = {
   verification_status: string
   verification_result?: string | null
   verification_notes?: string | null
+  verified_at?: string | null
+  verified_by?: string | null
   created_at?: string
 }
 
@@ -55,7 +57,7 @@ export function listComplianceEvidence(status = "pending", sellerId?: string) {
 export function reviewComplianceEvidence(
   productId: string,
   evidenceId: string,
-  body: { status: "approved" | "rejected"; reason?: string }
+  body: { status: "approved" | "rejected" | "needs_info"; reason?: string }
 ) {
   return request<{ evidence: ComplianceEvidenceRow }>(
     `/admin/product-cloud/products/${productId}/evidence/${evidenceId}/review`,

@@ -41,6 +41,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     typeof req.query.limit === "string" ? Number(req.query.limit) : 24
   const region_code =
     typeof req.query.region_code === "string" ? req.query.region_code : "NL"
+  const include_attributes = req.query.include_attributes === "true"
 
   const baseOpts = {
     category,
@@ -61,6 +62,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       | undefined,
     price_min: Number.isFinite(price_min) ? price_min : undefined,
     price_max: Number.isFinite(price_max) ? price_max : undefined,
+    include_attributes,
   }
 
   const page = await listPublishedCatalogProducts(req.scope, {

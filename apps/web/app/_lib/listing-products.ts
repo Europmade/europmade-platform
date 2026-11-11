@@ -3,17 +3,33 @@
  * Geen businesslogica — alleen presentatiedata voor CMP-017.
  */
 
+import { discountLabelKind } from "@europmade/utils"
+
 export type ListingProduct = {
   slug: string
   title: string
+  /** Product Cloud description, when the catalog already has one. */
+  description?: string | null
   brand: string
+  brandId?: string | null
+  brandSlug?: string | null
+  brandLogoUrl?: string | null
+  brandPagePublished?: boolean
   manufacturer?: string
   manufacturerSlug?: string
   seller: string
   categorySlugs: string[]
   priceCents: number
   originalPriceCents?: number
+  /** Set only when the buy-box price is an active promo below the regular total. */
+  regularPriceCents?: number | null
   offerCount: number
+  /** Product reviews. Zero means the rating must stay hidden. */
+  reviewCount?: number
+  /** Buy-box offer that the category shelf may add to the cart. */
+  buyBoxOfferId?: string | null
+  buyBoxSellerId?: string | null
+  buyBoxSellerName?: string | null
   rating: number
   countryCode: string
   countryLabel: string
@@ -21,6 +37,13 @@ export type ListingProduct = {
   features: string[]
   keywords: string[]
   imageUrl?: string | null
+  imageUrls?: string[]
+  specs?: Array<{ code: string; value: string }>
+  publishedAt?: string | null
+  /** Set only for admin draft preview. Public catalog items leave this empty. */
+  previewStatus?: "concept"
+  /** Development/staging test catalog. Not an offer and not for sale. */
+  testCatalog?: boolean
 }
 
 function p(
@@ -501,10 +524,9 @@ export function discountPercent(product: ListingProduct): number | null {
 }
 
 export function discountBadgeLabel(product: ListingProduct): string | null {
-  const pct = discountPercent(product)
-  if (pct == null) return null
-  if (pct >= 20) return "Hoge korting"
-  if (pct >= 10) return "Korting"
+  const kind = discountLabelKind(product.regularPriceCents, product.priceCents)
+  if (kind === "high_discount") return "Hoge korting"
+  if (kind === "discount") return "Korting"
   return null
 }
 

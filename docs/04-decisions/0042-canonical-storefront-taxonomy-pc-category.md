@@ -60,9 +60,10 @@ Voor de MVP is **`pc_category` de canonieke storefront-taxonomie**.
 7. **Redirects:** 301 voor bekende oude slugs naar de canonieke slug. Geen stille 404 bij bekende mapping. Onbekende slug: 404.
 8. **Categorie ≠ Made in Europe / Verification.** Categorie mag GPSR, required attributes en completeness sturen. Verified™/MiE blijft Deel 7 + ADR-0043.
 9. **Externe taxonomieën** = alleen **mapping** naar `pc_category`, nooit automatische vervanging (ADR-0043).
-10. **Canonieke MVP-basis = alle 30 bestaande storefront-slugs** (tuin … algemeen). Alle 30 zijn top-level (`parent_category_id = null`) totdat later bewust subcategorieën worden ingericht. **Geen** tijdelijke live-subset van 8–12. Lege categorieën **mogen bestaan**, maar mogen **geen misleidende storefront-content** tonen (geen gefingeerde productcounts, geen producttype-copy die de lege of andersoortige catalogus weerspreekt). Subcategorieën blijven **optioneel**.
-11. **Minimale Admin Category UI hoort bij dezelfde MVP-cutover:** aanmaken, wijzigen, parent/child, actief/inactief, vertalingen, volgorde indien nodig voor storefront, redirects. **P2:** uitgebreide SEO, afbeeldingen, FAQ, guides.
-12. Laptop-specifieke attrs/CMS/guides horen niet op top-level `elektronica`; later child of verwijderen van die pagina.
+10. **Canonieke MVP-basis = alle 30 bestaande storefront-slugs** (tuin … algemeen). Alle 30 zijn top-level (`parent_category_id = null`) totdat later bewust subcategorieën worden ingericht. **Geen** tijdelijke live-subset van 8–12. Lege categorieën **mogen bestaan**, maar mogen **geen misleidende storefront-content** tonen (geen gefingeerde productcounts, geen producttype-copy die de lege of andersoortige catalogus weerspreekt). Subcategorieën blijven **optioneel**. Een subcategorie zonder gepubliceerde producten wordt op de storefront niet getoond.
+11. **Kleding is de hoofdcategorie voor kleding.** Heren, Dames, Kinderkleding, Baby en Onderkleding / Lingerie horen daaronder (`parent_category_id`). Mode is geen tweede hoofdcategorie naast Kleding. `/categorie/mode` verwijst door naar `/categorie/kleding`. Producten die geen kleding zijn blijven aan hun bestaande categorie gekoppeld (schoenen, tassen, wonen, sport). Baby & Kind blijft een aparte hoofdcategorie en is niet hetzelfde als de kledingsubcategorie Baby.
+12. **Minimale Admin Category UI hoort bij dezelfde MVP-cutover:** aanmaken, wijzigen, parent/child, actief/inactief, vertalingen, volgorde indien nodig voor storefront, redirects. **P2:** uitgebreide SEO, afbeeldingen, FAQ, guides.
+13. Laptop-specifieke attrs/CMS/guides horen niet op top-level `elektronica`; later child of verwijderen van die pagina.
 
 ### Dynamische content (toekomstbestendig)
 

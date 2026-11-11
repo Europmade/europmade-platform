@@ -20,6 +20,7 @@ export function CmsImageField({
   advice,
   large,
   onChange,
+  onUploaded,
   placement = "cms_banner",
   onError,
   previewFit = "cover",
@@ -32,6 +33,7 @@ export function CmsImageField({
   advice?: string
   large?: boolean
   onChange: (url: string | null) => void
+  onUploaded?: (asset: { id: string; url: string }) => void
   placement?: MediaPlacement | string
   onError?: (message: string | null) => void
   /** How the editor thumbnail should fit the preview box. */
@@ -69,7 +71,8 @@ export function CmsImageField({
         return
       }
       const uploaded = await uploadCmsMedia(file, placement)
-      onChange(uploaded.asset.url)
+      if (onUploaded) onUploaded({ id: uploaded.asset.id, url: uploaded.asset.url })
+      else onChange(uploaded.asset.url)
       setLocalOk("Afbeelding geüpload. Sla op als concept om te bewaren.")
       onError?.(null)
     } catch (e) {

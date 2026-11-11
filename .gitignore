@@ -25,6 +25,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 *.log
+logs/
 
 # Editor/OS
 
@@ -55,3 +56,6 @@ apps/backend/static/
 # Misc
 *.tsbuildinfo
 next-env.d.ts
+
+# Local seller test secret (never commit)
+.tmp-verify/seller-password.local

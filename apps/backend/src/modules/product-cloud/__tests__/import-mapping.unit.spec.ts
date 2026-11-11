@@ -1,11 +1,13 @@
 import {
   applyMapping,
+  mergeExtraImageSlotsIntoValues,
   parseCsv,
   suggestMapping,
   validateImportRows,
 } from "../import-mapping"
 import { buildProductImportTemplate, parseXlsxFirstSheet, parseXlsxProductGrid, buildXlsxWorkbook } from "../import-xlsx"
-import { BOSCH_EXAMPLE } from "../import-columns"
+import { BOSCH_EXAMPLE, EXTRA_IMAGE_SLOT_LABELS } from "../import-columns"
+import { buildBrandImportWorkbook } from "../brand-import-template"
 
 describe("product import mapping", () => {
   it("auto-maps Dutch column aliases", () => {
@@ -122,6 +124,8 @@ describe("product import mapping", () => {
     expect(headers.some((h) => h.includes("Fabrikantnummer") && h.includes("Optioneel"))).toBe(
       true
     )
+    expect(headers.some((h) => /Varianttype/i.test(h))).toBe(false)
+    expect(headers.some((h) => /Variantwaarde/i.test(h))).toBe(false)
     expect(headers.some((h) => h.startsWith("Productnaam (Verplicht)"))).toBe(true)
     expect(headers.some((h) => h.includes("Hoofdafbeelding"))).toBe(true)
     expect(headers.some((h) => h.includes("CE-markering"))).toBe(true)
@@ -141,6 +145,10 @@ describe("product import mapping", () => {
       "Producten",
       "Uitleg velden",
       "Lijsten",
+      "CatDeps",
+      "CatDepsL3",
+      "SpecDeps",
+      "Kenmerken",
       "Legenda",
     ])
     expect(tpl.csv).toContain("Bosch")
@@ -151,8 +159,11 @@ describe("product import mapping", () => {
     expect(guide).toContain("Voorwaardelijk verplicht")
     expect(guide).toContain("Automatisch")
     expect(guide).toContain("Admincontrole")
-    expect(guide).toContain("Via seller-wizard")
-    expect(guide).toContain("CE-bewijs: via seller-wizard uploaden")
+    expect(guide).toContain("EuropMade-bewijs")
+    expect(guide).toContain("CE-certificaat")
+    expect(guide).toContain("Veiligheidsinformatieblad")
+    expect(guide).toMatch(/Varianttype/)
+    expect(guide).toMatch(/horen niet in het importbestand|genegeerd/i)
     expect(guide).not.toContain("title_en")
   })
 
@@ -185,8 +196,16 @@ describe("product import mapping", () => {
       },
     ]
     const result = validateImportRows(mapped, new Set())
-    expect(result.summary.error_rows).toBe(1)
-    expect(result.preview[0].issues[0].field).toBe("ean")
+    expect(result.summary.error_rows).toBe(0)
+    expect(result.preview[0].status).toBe("new")
+    expect(result.preview[0].values.ean).toBe("4242005482321")
+    const eanIssue = result.preview[0].issues.find((i) => i.field === "ean")
+    expect(eanIssue?.severity).toBe("invalid")
+    expect(eanIssue?.blocking).toBe(false)
+    expect(eanIssue?.supplied_value).toBe("4242005482321")
+    expect(eanIssue?.blocks).toEqual(
+      expect.arrayContaining(["submit", "approval", "publication", "sale"])
+    )
   })
 
   it("roundtrips the xlsx template through the parser without treating Bosch as a new error", () => {
@@ -207,7 +226,63 @@ describe("product import mapping", () => {
       new Set(),
       new Set([BOSCH_EXAMPLE.ean])
     )
-    expect(foreign.summary.error_rows).toBe(1)
+    expect(foreign.summary.error_rows).toBe(0)
+    expect(foreign.summary.existing_products).toBe(1)
+    expect(foreign.preview[0].status).toBe("existing")
+  })
+
+  it("plans a new offer or an offer update without blocking a foreign GTIN", () => {
+    const mapped = [
+      {
+        ean: "4242005482320",
+        title: "Andere titel",
+        brand: "Bosch",
+        category: "Huishouden",
+        regular_price: "499",
+      },
+    ]
+    const createOffer = validateImportRows(
+      mapped,
+      new Set(),
+      new Set(["4242005482320"])
+    )
+    expect(createOffer.summary.existing_products).toBe(1)
+    expect(createOffer.summary.offers_to_create).toBe(1)
+    expect(createOffer.summary.offers_to_update).toBe(0)
+    const updateOffer = validateImportRows(
+      mapped,
+      new Set(),
+      new Set(["4242005482320"]),
+      new Set(),
+      new Set(),
+      undefined,
+      undefined,
+      new Set(["4242005482320"])
+    )
+    expect(updateOffer.summary.offers_to_update).toBe(1)
+    expect(updateOffer.summary.offers_to_create).toBe(0)
+  })
+
+  it("keeps a foreign MPN without EAN as an uncertain match", () => {
+    const mapped = [
+      {
+        ean: "",
+        mpn: "SMD8TCX04E",
+        title: "Bosch",
+        brand: "Bosch",
+        category: "Huishouden",
+        sku: "SKU-1",
+      },
+    ]
+    const result = validateImportRows(
+      mapped,
+      new Set(),
+      new Set(),
+      new Set(),
+      new Set(["SMD8TCX04E"])
+    )
+    expect(result.summary.error_rows).toBe(1)
+    expect(result.summary.existing_products).toBe(0)
   })
 
   it("maps labelled Dutch headers including (Verplicht) into canonical values", () => {
@@ -317,5 +392,55 @@ describe("product import mapping", () => {
     expect(mapped).toHaveLength(1)
     expect(mapped[0].title).toBe("MOEVE Superwuschel badlaken")
     expect(validateImportRows(mapped, new Set()).summary.error_rows).toBe(0)
+  })
+
+  it("places Afbeelding 2–10 after Hoofdafbeelding in the Seller template", () => {
+    const tpl = buildProductImportTemplate()
+    const headers = tpl.sheets[0].rows[0]
+    const primary = headers.findIndex((h) => String(h).startsWith("Hoofdafbeelding"))
+    const overige = headers.findIndex((h) => String(h).startsWith("Overige afbeeldingen"))
+    expect(primary).toBeGreaterThanOrEqual(0)
+    expect(overige).toBeGreaterThan(primary)
+    for (let i = 0; i < EXTRA_IMAGE_SLOT_LABELS.length; i++) {
+      const idx = headers.findIndex((h) => String(h).startsWith(EXTRA_IMAGE_SLOT_LABELS[i]))
+      expect(idx).toBe(primary + 1 + i)
+      expect(idx).toBeLessThan(overige)
+    }
+    const admin = parseXlsxProductGrid(buildBrandImportWorkbook()).headers
+    expect(admin.indexOf("Afbeelding 2")).toBeGreaterThan(
+      admin.findIndex((h) => String(h).startsWith("Hoofdafbeelding"))
+    )
+    expect(admin.filter((h) => /^Afbeelding \d+$/.test(String(h))).length).toBe(9)
+  })
+
+  it("merges Afbeelding 2–10 then Overige into extra_image_urls without duplicates", () => {
+    const headers = [
+      "Hoofdafbeelding (URL of pad)",
+      "Afbeelding 2 (Optioneel)",
+      "Afbeelding 3 (Optioneel)",
+      "Overige afbeeldingen (Optioneel)",
+    ]
+    const row = ["https://a.example/p.jpg", "https://a.example/2.jpg", "", "https://a.example/2.jpg | https://a.example/x.jpg"]
+    const mapping = suggestMapping(headers)
+    const mapped = applyMapping(headers, [row], mapping)
+    expect(mapped[0].primary_image_url).toBe("https://a.example/p.jpg")
+    expect(mapped[0].extra_image_urls).toBe(
+      "https://a.example/2.jpg | https://a.example/x.jpg"
+    )
+    const empty = mergeExtraImageSlotsIntoValues(
+      headers,
+      ["", "", "", ""],
+      { extra_image_urls: "" }
+    )
+    expect(empty.extra_image_urls).toBe("")
+  })
+
+  it("keeps legacy Overige-only files compatible", () => {
+    const headers = ["Hoofdafbeelding", "Overige afbeeldingen"]
+    const row = ["https://a.example/p.jpg", "https://a.example/a.jpg; https://a.example/b.jpg"]
+    const mapped = applyMapping(headers, [row], suggestMapping(headers))
+    expect(mapped[0].extra_image_urls).toBe(
+      "https://a.example/a.jpg | https://a.example/b.jpg"
+    )
   })
 })

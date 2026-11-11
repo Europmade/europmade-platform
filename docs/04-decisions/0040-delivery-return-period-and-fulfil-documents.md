@@ -17,7 +17,7 @@ ADR-0023 ankert de herroepingstermijn tijdelijk op `em_order.created_at` omdat S
 4. **Retour-tracking:** optionele `carrier` / `tracking_code` / `tracking_url` op `em_return`. Statusenum: `Aangevraagd` → `Bevestigd` → `Onderweg` → `Ontvangen` → `Verwerkt` (refund door seller) | `Afgewezen`.
 5. **Refund:** via `RefundService`-interface (lokaal: `SimulatedRefundService`). Statussen: `requested` | `processing` | `processed` | `failed` | `forced`. Geen automatische refund bij aanmaken; alleen bij seller `approve`/`Verwerkt` (of admin force).
 6. **Gedeelde berekening:** `computeReturnPeriod` in `@europmade/utils` (30 dagen) is de bron voor UI (seller/buyer/admin).
-7. **Productlabels:** orderregels tonen catalogusnamen via offer → identifier → product_variant → product_version (geen technische IDs in UI).
+7. **Productlabels:** orderregels tonen catalogusnamen via offer → identifier → product_variant → product_version (geen technische IDs in UI). ADR-0050 laat deze keten intact en preciseert dat `product_variant` hier de technische variant van één zelfstandig product is, geen commerciële variantgroep.
 
 ## Consequenties
 

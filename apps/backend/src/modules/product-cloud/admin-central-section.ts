@@ -4,6 +4,7 @@
  * Saving does not change publication status or verification approval.
  */
 
+import { normalizeCategoryAssignment } from "@europmade/utils"
 import { assessImportUrl } from "./brand-import"
 import {
   GPSR_EU_RESPONSIBLE_ATTRIBUTE_CODES,
@@ -253,7 +254,16 @@ export async function applyAdminCentralSection(
   actorId: string
 ): Promise<{ section: string }> {
   const section = text(body.section)
-  if (!["information", "description", "media", "compliance", "translations"].includes(section)) {
+  if (
+    ![
+      "information",
+      "categories",
+      "description",
+      "media",
+      "compliance",
+      "translations",
+    ].includes(section)
+  ) {
     throw new CentralSectionError("section", "Onbekende sectie.")
   }
   const product = await deps.retrieveProduct(productId)
@@ -263,6 +273,7 @@ export async function applyAdminCentralSection(
   const publicationBefore = version.publication_status || null
 
   if (section === "information") await saveInformation(deps, product, version, body)
+  if (section === "categories") await saveCategoriesOnly(deps, product, body)
   if (section === "description") await saveDescription(deps, version, body)
   if (section === "media") await saveMedia(deps, version, body)
   if (section === "compliance") await saveCompliance(deps, productId, version, body, actorId)
@@ -275,6 +286,79 @@ export async function applyAdminCentralSection(
   return { section }
 }
 
+async function normalizeAdminCategoryIds(
+  deps: AdminCentralDeps,
+  categoryIds: string[]
+): Promise<string[]> {
+  if (!categoryIds.length) return []
+  const catalog = await deps.listCategories({})
+  const normalized = normalizeCategoryAssignment(
+    (
+      catalog as Array<{
+        id: string
+        name?: string
+        slug?: string | null
+        parent_category_id?: string | null
+      }>
+    ).map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      parent_id: row.parent_category_id ?? null,
+    })),
+    { categoryIds }
+  )
+  if (!normalized.ok) {
+    throw new CentralSectionError("category_ids", normalized.message)
+  }
+  return normalized.categoryIds
+}
+
+/**
+ * Persist only the Product Cloud category path (L1/L2/L3).
+ * Same immediate-refresh path as Seller category change: no attribute rewrite.
+ * Schema reload remaps values by attribute code.
+ */
+async function saveCategoriesOnly(
+  deps: AdminCentralDeps,
+  product: { id: string },
+  body: Record<string, unknown>
+) {
+  const categoryIds = Array.isArray(body.category_ids)
+    ? [...new Set(body.category_ids.map((id) => text(id)).filter(Boolean))]
+    : []
+  const normalizedCategoryIds = await normalizeAdminCategoryIds(deps, categoryIds)
+  const removedLinks: CategoryLink[] = []
+  const addedCategoryIds: string[] = []
+  try {
+    const links = await deps.listProductCategories({ product_id: product.id })
+    for (const link of links) {
+      if (!normalizedCategoryIds.includes(link.category_id)) {
+        await deps.deleteProductCategories(link.id)
+        removedLinks.push(link)
+      }
+    }
+    const linked = new Set(links.map((link) => link.category_id))
+    for (const categoryId of normalizedCategoryIds) {
+      if (!linked.has(categoryId)) {
+        await deps.createProductCategories({
+          product_id: product.id,
+          category_id: categoryId,
+        })
+        addedCategoryIds.push(categoryId)
+      }
+    }
+  } catch (err) {
+    await restoreProductCategoryLinks(
+      deps,
+      product.id,
+      removedLinks,
+      addedCategoryIds
+    )
+    throw err
+  }
+}
+
 async function saveInformation(
   deps: AdminCentralDeps,
   product: { id: string; brand_id: string; manufacturer_id: string },
@@ -285,8 +369,6 @@ async function saveInformation(
   const description = version.description || ""
   const brandId = text(body.brand_id)
   const manufacturerId = text(body.manufacturer_id)
-  const variantType = text(body.variant_type)
-  const variantValue = text(body.variant_value)
   const ean = text(body.ean)
   const mpn = text(body.mpn)
   const categoryIds = Array.isArray(body.category_ids)
@@ -295,13 +377,6 @@ async function saveInformation(
   const attributes = Array.isArray(body.attributes) ? (body.attributes as AttrInput[]) : []
   if (!title) throw new CentralSectionError("title", "Vul een productnaam in.")
   if (!brandId) throw new CentralSectionError("brand_id", "Kies een merk.")
-  if (variantType && !(VARIANT_TYPES as readonly string[]).includes(variantType)) {
-    throw new CentralSectionError(
-      "variant_type",
-      `Varianttype '${variantType}' staat niet in de bestaande lijst.`
-    )
-  }
-  if (!variantValue) throw new CentralSectionError("variant_value", "Vul een variantwaarde in.")
   try {
     await deps.retrieveBrand(brandId)
   } catch {
@@ -314,15 +389,15 @@ async function saveInformation(
   )
   const previousManufacturerId = product.manufacturer_id
   const previousBrandId = product.brand_id
-  if (categoryIds.length) {
-    const found = await deps.listCategories({ id: categoryIds })
-    if (found.length !== categoryIds.length) {
-      throw new CentralSectionError("category_ids", "Een gekozen categorie bestaat niet.")
-    }
-  }
+  const normalizedCategoryIds = await normalizeAdminCategoryIds(deps, categoryIds)
   const variants = await deps.listProductVariants({ product_id: product.id })
   const variant = variants.find((row) => row.id === text(body.variant_id)) || variants[0]
-  if (!variant) throw new CentralSectionError("variant_type", "Dit product heeft nog geen variant.")
+  if (!variant) {
+    throw new CentralSectionError(
+      "ean",
+      "Dit product heeft nog geen variant voor EAN of MPN."
+    )
+  }
   const identifiers = await deps.listIdentifiers({ product_variant_id: variant.id }, { take: 20 })
   const gtin = identifiers.find((row) => row.identifier_type === "GTIN") || null
   const mpnRow = identifiers.find((row) => row.identifier_type === "MPN") || null
@@ -357,7 +432,7 @@ async function saveInformation(
     }
     nextMpn = mpn
   }
-  await assertAttributes(deps, categoryIds, attributes, "information")
+  await assertAttributes(deps, normalizedCategoryIds, attributes, "information")
   const removedLinks: CategoryLink[] = []
   const addedCategoryIds: string[] = []
   try {
@@ -389,20 +464,15 @@ async function saveInformation(
     manufacturer_id: resolvedManufacturerId,
   })
   await deps.updateProductVersions({ id: version.id, title, description })
-  await deps.updateProductVariants({
-    id: variant.id,
-    variant_type: (variantType || "Uitvoering") as (typeof VARIANT_TYPES)[number],
-    variant_value: variantValue,
-  })
   const links = await deps.listProductCategories({ product_id: product.id })
   for (const link of links) {
-    if (!categoryIds.includes(link.category_id)) {
+    if (!normalizedCategoryIds.includes(link.category_id)) {
       await deps.deleteProductCategories(link.id)
       removedLinks.push(link)
     }
   }
   const linked = new Set(links.map((link) => link.category_id))
-  for (const categoryId of categoryIds) {
+  for (const categoryId of normalizedCategoryIds) {
     if (!linked.has(categoryId)) {
       await deps.createProductCategories({ product_id: product.id, category_id: categoryId })
       addedCategoryIds.push(categoryId)
@@ -431,19 +501,15 @@ async function saveInformation(
       title: version.title || "",
       description: version.description || "",
     }).catch(() => undefined)
-    await deps.updateProductVariants({
-      id: variant.id,
-      variant_type: ((VARIANT_TYPES as readonly string[]).includes(variant.variant_type || "")
-        ? variant.variant_type
-        : "Uitvoering") as (typeof VARIANT_TYPES)[number],
-      variant_value: variant.variant_value || "Standaard",
-    }).catch(() => undefined)
     await restoreProductCategoryLinks(deps, product.id, removedLinks, addedCategoryIds)
     throw err
   }
 }
 
-/** Writes only the central version description. Other product fields stay as they are. */
+/**
+ * Writes the long description on the version, plus optional source-language
+ * short_description / usps / specifications as translations (same fields as import).
+ */
 async function saveDescription(
   deps: AdminCentralDeps,
   version: VersionRow,
@@ -454,6 +520,38 @@ async function saveDescription(
     title: version.title || "",
     description: String(body.description ?? ""),
   })
+  const source =
+    text(body.source_language_code) ||
+    version.source_language_code ||
+    "nl"
+  if (!(PRODUCT_CLOUD_ACTIVE_LANGUAGES as readonly string[]).includes(source)) {
+    throw new CentralSectionError(
+      "source_language_code",
+      `Onbekende brontaal '${source}'.`
+    )
+  }
+  const extras: Array<{ field: (typeof TRANSLATION_FIELDS)[number]; value: string }> = [
+    { field: "short_description", value: String(body.short_description ?? "") },
+    { field: "usps", value: String(body.usps ?? "") },
+    { field: "specifications", value: String(body.specifications ?? "") },
+  ]
+  for (const extra of extras) {
+    if (!Object.prototype.hasOwnProperty.call(body, extra.field)) continue
+    const value = extra.value
+    if (!value.trim()) continue
+    await deps.upsertTranslation({
+      entity_type: "product_version",
+      entity_id: version.id,
+      field_name: extra.field,
+      language_code: source,
+      value,
+      source_language_code: source,
+      source_value: value,
+      translation_status: "Concept",
+      origin: "manual",
+      force_overwrite_manual: true,
+    })
+  }
 }
 
 async function restoreProductCategoryLinks(

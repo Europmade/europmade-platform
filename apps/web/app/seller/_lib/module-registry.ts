@@ -46,6 +46,15 @@ export const SELLER_PRIMARY_NAV: SellerNavItem[] = [
     available: true,
   },
   {
+    id: "made-in-europe",
+    naam: "Made in Europe",
+    labelKey: "sellerNavMadeInEurope",
+    route: "/seller/made-in-europe",
+    navigatiepositie: 27,
+    primary: true,
+    available: true,
+  },
+  {
     id: "orders",
     naam: "Orders",
     labelKey: "sellerNavOrders",

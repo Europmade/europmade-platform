@@ -47,6 +47,15 @@ export type BrandPreviewPayload = {
     commit_allowed: boolean
     creates_offers: false
     target_fields?: Array<{ field: string; label: string; group: string }>
+    category_fields?: Array<{
+      code: string
+      name: string
+      requirement_tier?: string
+      unit?: string | null
+      option_values?: string[] | null
+      data_type?: string | null
+    }>
+    detected_categories?: string[]
     brand_proposals?: Array<{
       name: string
       status: "create" | "ambiguous"
@@ -120,6 +129,7 @@ function formBody(input: {
     parent_name?: string
     id?: string
   }>
+  attribute_overrides?: Record<string, Record<string, string>>
 }) {
   const body = new FormData()
   if (input.file) body.set("file", input.file)
@@ -134,6 +144,9 @@ function formBody(input: {
   if (input.manual_links) body.set("manual_links", JSON.stringify(input.manual_links))
   if (input.brand_choices) body.set("brand_choices", JSON.stringify(input.brand_choices))
   if (input.category_decisions) body.set("category_decisions", JSON.stringify(input.category_decisions))
+  if (input.attribute_overrides) {
+    body.set("attribute_overrides", JSON.stringify(input.attribute_overrides))
+  }
   return body
 }
 
@@ -146,7 +159,7 @@ export async function downloadBrandWorkbook() {
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement("a")
   anchor.href = url
-  anchor.download = "europmade-importbestand.xlsx"
+  anchor.download = "EuropMade Admin product template.xlsx"
   anchor.click()
   URL.revokeObjectURL(url)
 }

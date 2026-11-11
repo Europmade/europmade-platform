@@ -4,7 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Badge, Button, Input, Notice } from "@europmade/ui"
-import { resolveDestinationVatRate } from "@europmade/utils"
+import {
+  normalizeCategoryAssignment,
+  resolveCategorySelection,
+  resolveDestinationVatRate,
+  sellerChildCategoryOptions,
+  sellerL3CategoryOptions,
+  sellerParentCategoryOptions,
+} from "@europmade/utils"
 import { SellerGate } from "../../_components/seller-gate"
 import { formatEuro } from "../../../_components/storefront-shell"
 import {
@@ -45,6 +52,7 @@ import { gpsrHint } from "../../_lib/gpsr-hints"
 import {
   complianceReviewLabel,
   parseMultiSelectValue,
+  productControlStrip,
   publicationGateLabel,
   salePresentationLabel,
   serializeMultiSelectValue,
@@ -222,7 +230,10 @@ function AttributeFieldEditor(props: {
         <div className="flex items-center gap-1">
           <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
             {gpsrFieldLabel(field.code, field.name, locale)}
-            {field.unit ? ` (${field.unit})` : ""}
+            {field.unit &&
+            !/^(nee|ja|true|false|0|1|yes|no|-)$/i.test(String(field.unit).trim())
+              ? ` (${field.unit})`
+              : ""}
           </span>
           {hint || field.help_text ? (
             <button
@@ -627,9 +638,11 @@ export default function SellerProductDetailPage() {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [pcCategories, setPcCategories] = useState<
-    Array<{ id: string; name: string }>
+    Array<{ id: string; name: string; slug: string | null; parent_category_id: string | null }>
   >([])
-  const [categoryPick, setCategoryPick] = useState("")
+  const [categoryParentId, setCategoryParentId] = useState("")
+  const [categoryChildId, setCategoryChildId] = useState("")
+  const [categoryL3Id, setCategoryL3Id] = useState("")
   const [attrDraft, setAttrDraft] = useState<Record<string, string>>({})
   const [offerDraft, setOfferDraft] = useState<OfferDraft | null>(null)
   const [regularPriceDraft, setRegularPriceDraft] = useState("")
@@ -656,6 +669,9 @@ export default function SellerProductDetailPage() {
   const [showNewManufacturer, setShowNewManufacturer] = useState(false)
   const [showEditManufacturer, setShowEditManufacturer] = useState(false)
   const [facilityId, setFacilityId] = useState("")
+  const [assemblyBand, setAssemblyBand] = useState("")
+  const [partsLevel, setPartsLevel] = useState("")
+  const [materialsLevel, setMaterialsLevel] = useState("")
   const [selectedBrandId, setSelectedBrandId] = useState("")
   const [brands, setBrands] = useState<ManageableBrand[]>([])
   const [showNewBrand, setShowNewBrand] = useState(false)
@@ -744,13 +760,24 @@ export default function SellerProductDetailPage() {
         setSelectedBrandId(res.product.brand_id || "")
         setTitle(res.product.title || "")
         setDescription(res.product.description || "")
-        setCategoryPick(res.product.category_names?.[0] || "")
         void listProductCloudCategories()
-          .then((cats) =>
-            setPcCategories(
-              (cats.categories || []).map((c) => ({ id: c.id, name: c.name }))
+          .then((cats) => {
+            const rows = (cats.categories || []).map((c) => ({
+              id: c.id,
+              name: c.name,
+              slug: c.slug,
+              parent_category_id: c.parent_category_id,
+              parent_id: c.parent_category_id,
+            }))
+            setPcCategories(rows)
+            const resolved = resolveCategorySelection(
+              rows,
+              res.product.category_ids || []
             )
-          )
+            setCategoryParentId(resolved.parentId)
+            setCategoryChildId(resolved.childId)
+            setCategoryL3Id(resolved.l3Id)
+          })
           .catch(() => undefined)
         const draft: Record<string, string> = {}
         for (const field of res.product.schema || []) {
@@ -1028,6 +1055,11 @@ export default function SellerProductDetailPage() {
     )
   }, [manufacturersLoaded, manufacturers, brands, product])
 
+  const productSpecFields = useMemo(() => {
+    if (!product || product === "loading") return []
+    return (product.schema || []).filter((f) => f.is_product_specification)
+  }, [product])
+
   const schemaByTier = useMemo(() => {
     if (!product || product === "loading") return {}
     const groups: Record<string, NonNullable<ProductManagerDetail["schema"]>> = {
@@ -1037,6 +1069,7 @@ export default function SellerProductDetailPage() {
       optional: [],
     }
     for (const field of product.schema || []) {
+      if (field.is_product_specification) continue
       const tier = field.requirement_tier || "optional"
       if (!groups[tier]) groups[tier] = []
       groups[tier].push(field)
@@ -1067,6 +1100,12 @@ export default function SellerProductDetailPage() {
     setFacilityId(selected.id)
   }, [mie, selectedBrandId])
 
+  useEffect(() => {
+    setAssemblyBand(mie?.assembly_eu_band || "")
+    setPartsLevel(mie?.parts_eu_level || "")
+    setMaterialsLevel(mie?.materials_eu_level || "")
+  }, [mie?.assembly_eu_band, mie?.parts_eu_level, mie?.materials_eu_level])
+
   const refreshCompliance = useCallback(async () => {
     const [res, mgr] = await Promise.all([
       getMadeInEuropeEvidence(productId),
@@ -1095,7 +1134,7 @@ export default function SellerProductDetailPage() {
           variantId: v.id,
           variantType: v.variant_type,
           variantValue: v.variant_value,
-          variantLabel: `${v.variant_type}: ${v.variant_value}`,
+          variantLabel: v.size_label || `${v.variant_type}: ${v.variant_value}`,
           ean: null,
           identifierId: null,
           offers: [],
@@ -1111,7 +1150,7 @@ export default function SellerProductDetailPage() {
           variantId: v.id,
           variantType: v.variant_type,
           variantValue: v.variant_value,
-          variantLabel: `${v.variant_type}: ${v.variant_value}`,
+          variantLabel: v.size_label || `${v.variant_type}: ${v.variant_value}`,
           ean: iden.identifier_value,
           identifierId: iden.id,
           offers,
@@ -1435,6 +1474,33 @@ export default function SellerProductDetailPage() {
       setNotice(t("pdpInfoSaved", locale))
       const next = nextWizardStep("information")
       if (tab === "information" && next) setTab(next)
+    } catch (err: unknown) {
+      setError(
+        err instanceof ProductCloudApiError || err instanceof Error
+          ? err.message
+          : t("pdpSaveFailed", locale)
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function saveMieBands() {
+    if (!assemblyBand || !partsLevel || !materialsLevel) {
+      setError(t("mieNotCalculatedBody", locale))
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      await assignProductMadeInEurope(productId, {
+        production_facility_id: facilityId || null,
+        assembly_eu_band: assemblyBand,
+        parts_eu_level: partsLevel,
+        materials_eu_level: materialsLevel,
+      })
+      await refreshCompliance()
+      setNotice(t("pdpInfoSaved", locale))
     } catch (err: unknown) {
       setError(
         err instanceof ProductCloudApiError || err instanceof Error
@@ -2080,6 +2146,7 @@ export default function SellerProductDetailPage() {
   const quality = qualityLabel(product, locale)
   const sales = salesBadge(product, locale)
   const pub = publicationLabel(product, locale)
+  const controlStrip = productControlStrip(product, locale)
   const brand =
     brands.find((b) => b.id === selectedBrandId)?.name ||
     product.brand_name ||
@@ -2198,12 +2265,6 @@ export default function SellerProductDetailPage() {
           : t("pdpNoOffer", locale),
     },
     {
-      key: "variants",
-      label: t("pdpTabVariants", locale),
-      tab: "variants",
-      detail: t("pdpVariantCount", locale).replace("{count}", String(product.variant_count ?? product.variants?.length ?? 0)),
-    },
-    {
       key: "media",
       label: t("pdpTabMedia", locale),
       tab: "media",
@@ -2275,6 +2336,57 @@ export default function SellerProductDetailPage() {
             </span>
             <span className="font-mono">{product.id}</span>
           </div>
+          {(product.completeness?.findings || []).length > 0 ? (
+            <div className="mt-2 rounded border border-wf-300 bg-white p-2 text-[11px] text-wf-800">
+              <p className="font-semibold text-wf-900">Actuele validatie</p>
+              <ul className="mt-1 space-y-1">
+                {(product.completeness?.findings || []).map((finding) => (
+                  <li key={finding.code}>
+                    <span className="font-semibold">
+                      {finding.severity === "warning" ? "Waarschuwing" : "Blokkade"}
+                      {" · "}
+                      {finding.category === "submission"
+                        ? "Indiening"
+                        : finding.category === "approval"
+                          ? "Goedkeuring"
+                          : finding.category === "publication"
+                            ? "Publicatie"
+                            : finding.category === "sale"
+                              ? "Verkoop"
+                              : "Waarschuwing"}
+                      {" · "}
+                      {finding.field}
+                    </span>
+                    {": "}
+                    {finding.message} {finding.action}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {(product.field_changes || []).some((change) =>
+            change.field_code?.startsWith("import.issue.")
+          ) ? (
+            <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-950">
+              <p className="font-semibold">
+                Importgeschiedenis. Dit is de oorspronkelijke melding, geen
+                actuele blokkade. Een opgelost veld verdwijnt uit de validatie
+                hierboven zodra het is opgeslagen.
+              </p>
+              <ul className="mt-1 list-disc pl-4">
+                {(product.field_changes || [])
+                  .filter((change) =>
+                    change.field_code?.startsWith("import.issue.")
+                  )
+                  .map((change) => (
+                    <li key={change.id}>
+                      {change.field_label}: {change.new_value || "leeg"} —{" "}
+                      {change.reason}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant="outline">
               {statusLabel(product.lifecycle_status, locale)}
@@ -2295,6 +2407,14 @@ export default function SellerProductDetailPage() {
             >
               {t("pdpPublicationLabel", locale)}: {pub.label}
             </span>
+            {controlStrip.map((item) => (
+              <span
+                key={item.key}
+                className="inline-block rounded bg-wf-50 px-1.5 py-0.5 text-[10px] font-semibold text-wf-800"
+              >
+                {item.label}: {item.value}
+              </span>
+            ))}
             <span className={`text-[11px] font-semibold ${quality.className}`}>
               {t("pdpInfoLabel", locale)}: {quality.label}
               {typeof product.completeness?.percent === "number"
@@ -2496,51 +2616,257 @@ export default function SellerProductDetailPage() {
                   />
                 ) : null}
               </div>
-              {!(product.category_names || []).length ? (
+              <div className="grid gap-2 tablet:col-span-2 tablet:grid-cols-3">
                 <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
-                  {t("commonCategory", locale)}
+                  Niveau 1
                   <select
                     className="mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal normal-case tracking-normal text-wf-800 disabled:bg-wf-50"
-                    value={categoryPick}
+                    value={categoryParentId}
                     disabled={saving || canProposeChange}
                     onChange={(e) => {
-                      const next = e.target.value
-                      setCategoryPick(next)
-                      if (!next) return
+                      const nextParent = e.target.value
+                      setCategoryParentId(nextParent)
+                      setCategoryChildId("")
+                      setCategoryL3Id("")
+                      if (!nextParent || canProposeChange) return
+                      const normalized = normalizeCategoryAssignment(
+                        pcCategories.map((c) => ({
+                          id: c.id,
+                          name: c.name,
+                          slug: c.slug,
+                          parent_id: c.parent_category_id,
+                        })),
+                        { parentId: nextParent, childId: "", l3Id: "" }
+                      )
+                      if (!normalized.ok) {
+                        setError(normalized.message)
+                        return
+                      }
                       setSaving(true)
-                      void patchProductCategories(productId, [next])
+                      void patchProductCategories(productId, {
+                        category_ids: normalized.categoryIds,
+                      })
                         .then(() => {
-                          setNotice("Categorie toegewezen.")
+                          setNotice("Categorie opgeslagen.")
                           load()
                         })
                         .catch((err) =>
                           setError(
                             err instanceof ProductCloudApiError
                               ? err.message
-                              : "Categorie kon niet worden toegewezen."
+                              : "Categorie kon niet worden opgeslagen."
                           )
                         )
                         .finally(() => setSaving(false))
                     }}
                   >
-                    <option value="">— kies een EuropMade-categorie —</option>
-                    {pcCategories.map((cat) => (
-                      <option key={cat.id} value={cat.name}>
+                    <option value="">— kies een hoofdcategorie —</option>
+                    {sellerParentCategoryOptions(
+                      pcCategories.map((c) => ({
+                        id: c.id,
+                        name: c.name,
+                        slug: c.slug,
+                        parent_id: c.parent_category_id,
+                      })),
+                      [categoryParentId, categoryChildId, categoryL3Id]
+                    ).map((cat) => (
+                      <option key={cat.id} value={cat.id}>
                         {cat.name}
                       </option>
                     ))}
                   </select>
-                  <span className="mt-1 block font-normal normal-case tracking-normal text-amber-800">
-                    Categorie niet herkend — kies een EuropMade-categorie.
-                  </span>
                 </label>
-              ) : (
-                <Input
-                  label={t("commonCategory", locale)}
-                  value={(product.category_names || []).join(", ")}
-                  disabled
-                />
-              )}
+                <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+                  Niveau 2
+                  <select
+                    className="mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal normal-case tracking-normal text-wf-800 disabled:bg-wf-50"
+                    value={categoryChildId}
+                    disabled={
+                      saving ||
+                      canProposeChange ||
+                      !categoryParentId ||
+                      sellerChildCategoryOptions(
+                        pcCategories.map((c) => ({
+                          id: c.id,
+                          name: c.name,
+                          slug: c.slug,
+                          parent_id: c.parent_category_id,
+                        })),
+                        categoryParentId,
+                        [
+                          categoryParentId,
+                          categoryChildId,
+                          categoryL3Id,
+                        ]
+                      ).length === 0
+                    }
+                    onChange={(e) => {
+                      const nextChild = e.target.value
+                      const filledSpecs = productSpecFields.filter((f) =>
+                        (attrDraft[f.id] || f.value || "").trim()
+                      )
+                      if (
+                        filledSpecs.length &&
+                        categoryChildId &&
+                        nextChild !== categoryChildId &&
+                        typeof window !== "undefined" &&
+                        !window.confirm(
+                          `Niveau 2 wijzigen? Ingevulde productspecificaties (${filledSpecs
+                            .map((f) => f.name)
+                            .join(", ")}) kunnen niet meer bij de nieuwe categorie passen. Waarden worden niet stilzwijgend gewist.`
+                        )
+                      ) {
+                        return
+                      }
+                      setCategoryChildId(nextChild)
+                      setCategoryL3Id("")
+                      if (!categoryParentId || canProposeChange) return
+                      const normalized = normalizeCategoryAssignment(
+                        pcCategories.map((c) => ({
+                          id: c.id,
+                          name: c.name,
+                          slug: c.slug,
+                          parent_id: c.parent_category_id,
+                        })),
+                        {
+                          parentId: categoryParentId,
+                          childId: nextChild,
+                          l3Id: "",
+                        }
+                      )
+                      if (!normalized.ok) {
+                        setError(normalized.message)
+                        return
+                      }
+                      setSaving(true)
+                      void patchProductCategories(productId, {
+                        category_ids: normalized.categoryIds,
+                      })
+                        .then(() => {
+                          setNotice(
+                            filledSpecs.length
+                              ? "Categorie opgeslagen. Controleer of de productspecificaties nog kloppen."
+                              : "Categorie opgeslagen."
+                          )
+                          load()
+                        })
+                        .catch((err) =>
+                          setError(
+                            err instanceof ProductCloudApiError
+                              ? err.message
+                              : "Categorie kon niet worden opgeslagen."
+                          )
+                        )
+                        .finally(() => setSaving(false))
+                    }}
+                  >
+                    <option value="">— kies —</option>
+                    {sellerChildCategoryOptions(
+                      pcCategories.map((c) => ({
+                        id: c.id,
+                        name: c.name,
+                        slug: c.slug,
+                        parent_id: c.parent_category_id,
+                      })),
+                      categoryParentId,
+                      [
+                        categoryParentId,
+                        categoryChildId,
+                        categoryL3Id,
+                      ]
+                    ).map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
+                  Niveau 3
+                  <select
+                    className="mt-1 h-8 w-full rounded border border-wf-400 bg-white px-2 text-xs font-normal normal-case tracking-normal text-wf-800 disabled:bg-wf-50"
+                    value={categoryL3Id}
+                    disabled={
+                      saving ||
+                      canProposeChange ||
+                      !categoryChildId ||
+                      sellerL3CategoryOptions(
+                        pcCategories.map((c) => ({
+                          id: c.id,
+                          name: c.name,
+                          slug: c.slug,
+                          parent_id: c.parent_category_id,
+                        })),
+                        categoryChildId,
+                        [
+                          categoryParentId,
+                          categoryChildId,
+                          categoryL3Id,
+                        ]
+                      ).length === 0
+                    }
+                    onChange={(e) => {
+                      const nextL3 = e.target.value
+                      setCategoryL3Id(nextL3)
+                      if (!categoryParentId || !categoryChildId || canProposeChange)
+                        return
+                      const normalized = normalizeCategoryAssignment(
+                        pcCategories.map((c) => ({
+                          id: c.id,
+                          name: c.name,
+                          slug: c.slug,
+                          parent_id: c.parent_category_id,
+                        })),
+                        {
+                          parentId: categoryParentId,
+                          childId: categoryChildId,
+                          l3Id: nextL3,
+                        }
+                      )
+                      if (!normalized.ok) {
+                        setError(normalized.message)
+                        return
+                      }
+                      setSaving(true)
+                      void patchProductCategories(productId, {
+                        category_ids: normalized.categoryIds,
+                      })
+                        .then(() => {
+                          setNotice("Categorie opgeslagen.")
+                          load()
+                        })
+                        .catch((err) =>
+                          setError(
+                            err instanceof ProductCloudApiError
+                              ? err.message
+                              : "Categorie kon niet worden opgeslagen."
+                          )
+                        )
+                        .finally(() => setSaving(false))
+                    }}
+                  >
+                    <option value="">— kies —</option>
+                    {sellerL3CategoryOptions(
+                      pcCategories.map((c) => ({
+                        id: c.id,
+                        name: c.name,
+                        slug: c.slug,
+                        parent_id: c.parent_category_id,
+                      })),
+                      categoryChildId,
+                      [
+                        categoryParentId,
+                        categoryChildId,
+                        categoryL3Id,
+                      ]
+                    ).map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
               <div className="tablet:col-span-2">
                 <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.04em] text-wf-500">
                   {t("pdpDescription", locale)}
@@ -2576,6 +2902,58 @@ export default function SellerProductDetailPage() {
               </div>
             </div>
           </section>
+
+          {productSpecFields.length ? (
+            <section className="rounded border border-wf-300 bg-white p-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-bold text-wf-900">
+                  Productspecificaties
+                </h2>
+                <span className="text-[10px] text-wf-500">
+                  {
+                    productSpecFields.filter((f) =>
+                      (attrDraft[f.id] || "").trim()
+                    ).length
+                  }{" "}
+                  / {productSpecFields.length} (optioneel, max. 10)
+                </span>
+              </div>
+              <p className="mt-1 text-[10px] text-wf-500">
+                Namen volgen de gekozen subcategorie. Lege waarden blokkeren
+                het product niet.
+              </p>
+              <div className="mt-2 grid gap-2 tablet:grid-cols-2">
+                {productSpecFields.map((field) => (
+                  <div key={field.id}>
+                    <AttributeFieldEditor
+                      field={field}
+                      value={attrDraft[field.id] || ""}
+                      onChange={(next) =>
+                        setAttrDraft((prev) => ({
+                          ...prev,
+                          [field.id]: next,
+                        }))
+                      }
+                      openHintCode={openHintCode}
+                      onToggleHint={setOpenHintCode}
+                      locale={locale}
+                      disabled={canProposeChange}
+                      onPropose={
+                        canProposeChange
+                          ? () =>
+                              openPropose(
+                                "attribute",
+                                attrDraft[field.id] || "",
+                                field.id
+                              )
+                          : undefined
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           {(
             [
@@ -2665,11 +3043,12 @@ export default function SellerProductDetailPage() {
           })}
 
           <section className="rounded border border-wf-300 bg-white p-3 text-xs">
-            <h2 className="font-semibold text-wf-900">Varianten</h2>
+            <h2 className="font-semibold text-wf-900">Gerelateerde producten</h2>
             <p className="mt-1 text-[11px] text-wf-600">
-              Dit product blijft een zelfstandig product met eigen gegevens en
-              aanbod. Varianten koppel je achteraf: selecteer 2, 3 of 4
-              producten in het productoverzicht en kies Producten koppelen.
+              Dit product blijft een zelfstandig product met eigen gegevens, EAN
+              en aanbod. Producten die bij elkaar horen koppel je in het
+              productoverzicht: selecteer 2, 3 of 4 producten en kies Producten
+              koppelen.
             </p>
             <Link
               href="/seller/products"
@@ -3103,6 +3482,92 @@ export default function SellerProductDetailPage() {
               </p>
             ) : null}
 
+            <div className="rounded border border-wf-300 bg-wf-50 p-3">
+              <p className="text-[11px] font-semibold text-wf-900">
+                {t("pdpMieInputsTitle", locale)}
+              </p>
+              <p className="mt-1 text-[11px] text-wf-600">{t("mieScoreMeaning", locale)}</p>
+              <div className="mt-2 grid gap-2 tablet:grid-cols-3">
+                <label className="block text-[11px] font-semibold text-wf-700">
+                  {t("mieAssembly", locale)}
+                  <select
+                    className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
+                    value={assemblyBand}
+                    onChange={(e) => setAssemblyBand(e.target.value)}
+                  >
+                    <option value="">{t("pdpMieChoose", locale)}</option>
+                    <option value="eu_100">{t("mieBandEu100", locale)}</option>
+                    <option value="eu_75_99">{t("mieBandEu7599", locale)}</option>
+                    <option value="eu_50_74">{t("mieBandEu5074", locale)}</option>
+                    <option value="eu_below_50">{t("mieBandBelow50", locale)}</option>
+                  </select>
+                </label>
+                <label className="block text-[11px] font-semibold text-wf-700">
+                  {t("mieParts", locale)}
+                  <select
+                    className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
+                    value={partsLevel}
+                    onChange={(e) => setPartsLevel(e.target.value)}
+                  >
+                    <option value="">{t("pdpMieChoose", locale)}</option>
+                    <option value="eu_majority">{t("mieLevelMajority", locale)}</option>
+                    <option value="eu_partial">{t("mieLevelPartial", locale)}</option>
+                    <option value="eu_none">{t("mieLevelNone", locale)}</option>
+                  </select>
+                </label>
+                <label className="block text-[11px] font-semibold text-wf-700">
+                  {t("mieMaterials", locale)}
+                  <select
+                    className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
+                    value={materialsLevel}
+                    onChange={(e) => setMaterialsLevel(e.target.value)}
+                  >
+                    <option value="">{t("pdpMieChoose", locale)}</option>
+                    <option value="eu_majority">{t("mieLevelMajority", locale)}</option>
+                    <option value="eu_partial">{t("mieLevelPartial", locale)}</option>
+                    <option value="eu_none">{t("mieLevelNone", locale)}</option>
+                  </select>
+                </label>
+              </div>
+              {(!assemblyBand || !partsLevel || !materialsLevel) ? (
+                <p className="mt-2 text-[11px] text-wf-700">
+                  {t("pdpMieMissing", locale)}:{" "}
+                  {[
+                    !assemblyBand ? t("mieAssembly", locale) : "",
+                    !partsLevel ? t("mieParts", locale) : "",
+                    !materialsLevel ? t("mieMaterials", locale) : "",
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  . {t("mieNotCalculated", locale)}.
+                </p>
+              ) : (
+                <p className="mt-2 text-[11px] text-wf-700">
+                  {mie?.evidence_status === "pending_review"
+                    ? t("compliancePendingReview", locale)
+                    : mie?.evidence_status === "approved"
+                      ? t("complianceApproved", locale)
+                      : mie?.is_made_in_europe_score
+                        ? t("pdpQualifies", locale)
+                        : t("mieNotEligibleTitle", locale)}
+                </p>
+              )}
+              {canEditCatalog ? (
+                <Button
+                  size="sm"
+                  className="mt-2"
+                  type="button"
+                  onClick={() => void saveMieBands()}
+                  disabled={saving || !assemblyBand || !partsLevel || !materialsLevel}
+                >
+                  {t("pdpMieSaveBands", locale)}
+                </Button>
+              ) : null}
+              <Link href="/seller/made-in-europe" className="mt-2 block text-[11px] underline">
+                {t("pdpMieBulkLink", locale)}
+              </Link>
+            </div>
+
             <dl className="space-y-1 text-[11px] text-wf-800">
               <div>
                 <dt className="text-wf-500">{t("pdpMieStatusLabel", locale)}</dt>
@@ -3117,7 +3582,9 @@ export default function SellerProductDetailPage() {
               <div>
                 <dt className="text-wf-500">{t("pdpScoreLabel", locale)}</dt>
                 <dd className="font-semibold">
-                  {typeof mie?.score?.score === "number" ? mie.score.score : "—"}
+                  {typeof mie?.score?.score === "number"
+                    ? `${mie.score.score}%`
+                    : t("mieNotCalculated", locale)}
                 </dd>
               </div>
             </dl>
@@ -3377,7 +3844,7 @@ export default function SellerProductDetailPage() {
                 .flatMap((r) =>
                   r.offers.map((o) => ({
                     key: o.offer_id || `${r.variantId}-${o.region_code}`,
-                    label: `${r.variantLabel} · ${o.region_code || "?"}`,
+                    label: [r.ean, o.region_code].filter(Boolean).join(" · ") || o.region_code || "Aanbod",
                     offer: o,
                   }))
                 )
@@ -3400,7 +3867,7 @@ export default function SellerProductDetailPage() {
 
           {!offerDraft ? (
             <p className="text-xs text-wf-600">
-              Geen identifier beschikbaar — maak eerst een variant/EAN aan.
+              Geen EAN beschikbaar. Vul een EAN in bij de productgegevens.
             </p>
           ) : (
             <div className="rounded border border-wf-300 bg-white p-3">
@@ -3627,7 +4094,13 @@ export default function SellerProductDetailPage() {
                             ? ` · actie ${formatEuro(mo.promo_price)}`
                             : ""}
                           {mo.sales_status ? ` · ${mo.sales_status}` : ""}
+                          {mo.is_sellable ? " · verkoopbaar" : ""}
                         </button>
+                        {mo.sellability_reasons?.length ? (
+                          <span className="mt-0.5 block text-wf-500">
+                            {mo.sellability_reasons.join(" · ")}
+                          </span>
+                        ) : null}
                       </li>
                     ))}
                   </ul>
@@ -4225,7 +4698,7 @@ export default function SellerProductDetailPage() {
                 disabled={publishBusy || !product.completeness?.publishable}
                 onClick={() => void handleSubmitForApproval()}
               >
-                {publishBusy ? t("pubSubmitting", locale) : "Product publiceren"}
+                {publishBusy ? t("pubSubmitting", locale) : t("submitForApproval", locale)}
               </Button>
             ) : null}
             <Button

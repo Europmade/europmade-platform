@@ -22,6 +22,7 @@ export const StoreCreateProductBody = z.object({
   description: z.string().trim().min(1),
   category_name: z.string().trim().min(1).optional().default("Algemeen"),
   category_names: z.array(z.string().trim().min(1)).optional(),
+  category_ids: z.array(z.string().trim().min(1)).min(1).max(3).optional(),
   identifier_type: z.enum(IDENTIFIER_TYPES).optional().default("GTIN"),
   identifier_value: z.string().trim().min(1).optional(),
   mpn: z.string().trim().min(1).optional(),
@@ -44,9 +45,14 @@ export const StoreCreateProductBody = z.object({
 })
 export type StoreCreateProductBodyInput = z.infer<typeof StoreCreateProductBody>
 
-export const StorePatchProductCategoriesBody = z.object({
-  category_names: z.array(z.string().trim().min(1)).min(1),
-})
+export const StorePatchProductCategoriesBody = z
+  .object({
+    category_ids: z.array(z.string().trim().min(1)).min(1).max(3).optional(),
+    category_names: z.array(z.string().trim().min(1)).min(1).optional(),
+  })
+  .refine((body) => Boolean(body.category_ids?.length || body.category_names?.length), {
+    message: "Geef category_ids of category_names op.",
+  })
 export type StorePatchProductCategoriesBodyInput = z.infer<
   typeof StorePatchProductCategoriesBody
 >
@@ -247,6 +253,17 @@ export const StoreBulkShippingProfileBody = z.object({
   product_ids: z.array(z.string().trim().min(1)).min(1).max(500),
   shipping_profile_id: z.string().trim().min(1).nullable(),
 })
+
+export const StoreBulkOfferCommerceBody = z.object({
+  product_ids: z.array(z.string().trim().min(1)).max(500).optional(),
+  offer_ids: z.array(z.string().trim().min(1)).max(500).optional(),
+  delivery_days_max: z.unknown().optional(),
+  quantity_available: z.unknown().optional(),
+  confirm: z.boolean().optional(),
+})
+export type StoreBulkOfferCommerceBodyInput = z.infer<
+  typeof StoreBulkOfferCommerceBody
+>
 export type StoreBulkShippingProfileBodyInput = z.infer<
   typeof StoreBulkShippingProfileBody
 >

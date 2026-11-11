@@ -43,6 +43,7 @@ export async function GET(
     if (status === "pending") return vs === "pending" || vs === "pending_review"
     if (status === "approved") return vs === "approved"
     if (status === "rejected") return vs === "rejected"
+    if (status === "needs_info") return vs === "needs_info"
     return true
   })
 
@@ -103,6 +104,8 @@ export async function GET(
       verification_status: row.verification_status,
       verification_result: row.verification_result,
       verification_notes: row.verification_notes,
+      verified_at: row.verified_at,
+      verified_by: row.verified_by,
       created_at: row.created_at,
     })
   }

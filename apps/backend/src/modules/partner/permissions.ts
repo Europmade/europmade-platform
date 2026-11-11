@@ -55,6 +55,7 @@ const ROLE_PERMISSIONS: Record<PartnerRole, PartnerPermission[]> = {
     "brands.manage",
     "facilities.view",
     "facilities.manage",
+    "mie.manage",
   ],
   PRODUCER: [
     "products.view",

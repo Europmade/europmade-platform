@@ -14,6 +14,7 @@ import {
   loadCommercialNavIcons,
   resolveCommercialNavSort,
 } from "../commercial-nav-enrich"
+import { listTestCatalogCategoryLinks } from "../test-catalog"
 
 function readQueryString(value: unknown): string | null {
   if (typeof value === "string" && value.length > 0) return value
@@ -53,7 +54,9 @@ function linkCategoryId(link: {
 
 /**
  * GET /store/catalog/category-nav
- * Flat pc_category rows with rolled-up published product counts (descendants included).
+ * Flat pc_category rows with rolled-up product counts (descendants included).
+ * Counts are published products. While the temporary test catalog is on, its
+ * products are included so the menu can show their categories. They stay unsellable.
  * Storefront builds hoofd → sub → sub/sub; empty filtering happens client-side.
  */
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -106,6 +109,16 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
       productsByCategory.set(categoryId, set)
     }
     set.add(productId)
+  }
+
+  const testLinks = await listTestCatalogCategoryLinks(req.scope).catch(() => [])
+  for (const link of testLinks) {
+    let set = productsByCategory.get(link.category_id)
+    if (!set) {
+      set = new Set()
+      productsByCategory.set(link.category_id, set)
+    }
+    set.add(link.product_id)
   }
 
   const rolled = new Map<string, Set<string>>()

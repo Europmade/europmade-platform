@@ -1,5 +1,7 @@
 import {
   computeProductCompleteness,
+  currentValidation,
+  historicalImportNotes,
 } from "../completeness"
 
 describe("Product completeness — optional must not block publishability", () => {
@@ -266,5 +268,138 @@ describe("Product completeness — optional must not block publishability", () =
       attributes: [],
     })
     expect(mpnOnly.missing_required.some((m) => m.code === "ean")).toBe(true)
+  })
+})
+
+describe("central product validation", () => {
+  const basis = {
+    title: "Robotmaaier X",
+    brand_id: "brand_1",
+    manufacturer_id: "mfr_1",
+    category_names: ["Tuin"],
+    identifier_value: "DRAFT-ABCDEF",
+    has_primary_image: true,
+  }
+
+  it("shows GTIN, delivery time and shipping profile together", () => {
+    const report = computeProductCompleteness({
+      basis,
+      attributes: [],
+      offer: {
+        has_offer: true,
+        has_price: true,
+        has_stock_configured: true,
+        has_delivery: false,
+        has_shipping_profile: false,
+      },
+    })
+    const codes = report.findings.map((finding) => finding.code)
+    expect(codes).toEqual(expect.arrayContaining(["ean", "delivery", "shipping_profile"]))
+    const ean = report.findings.find((finding) => finding.code === "ean")
+    const delivery = report.findings.find((finding) => finding.code === "delivery")
+    expect(ean?.blocks).toEqual(["submission", "approval", "publication"])
+    expect(ean?.action).toContain("EAN/GTIN")
+    expect(delivery?.blocks).toEqual(["sale"])
+    expect(delivery?.category).toBe("sale")
+    expect(report.findings.find((finding) => finding.code === "shipping_profile")?.blocks).toEqual([
+      "sale",
+    ])
+    expect(report.publication_blocked_reasons).not.toContain("Verzendprofiel koppelen")
+    expect(report.sale_blocked_reasons).toContain("Verzendprofiel koppelen")
+  })
+
+  it("stays publishable without a shipping profile or manual language", () => {
+    const report = computeProductCompleteness({
+      basis: { ...basis, identifier_value: "8720000000001" },
+      attributes: [
+        {
+          code: "manual_languages",
+          name: "Taal handleiding",
+          tier: "optional",
+          value: null,
+        },
+      ],
+      offer: {
+        has_offer: true,
+        has_price: true,
+        has_stock_configured: true,
+        has_delivery: true,
+        has_shipping_profile: false,
+      },
+    })
+    expect(report.publishable).toBe(true)
+    expect(report.publication_blocked_reasons).not.toContain("Verzendprofiel koppelen")
+    expect(report.missing_required.some((field) => field.code === "manual_languages")).toBe(
+      false
+    )
+    expect(report.findings.find((finding) => finding.code === "shipping_profile")?.blocks).toEqual([
+      "sale",
+    ])
+  })
+
+  it("removes only the solved finding and keeps the import note as history", () => {
+    const notes = historicalImportNotes([
+      {
+        id: "note_ean",
+        field_code: "import.issue.ean",
+        field_label: "EAN",
+        new_value: "geen",
+        reason: "missing | EAN ontbreekt",
+      },
+    ])
+    const open = computeProductCompleteness({
+      basis,
+      attributes: [],
+      offer: {
+        has_offer: true,
+        has_price: true,
+        has_stock_configured: true,
+        has_delivery: false,
+        has_shipping_profile: false,
+      },
+    })
+    const fixed = computeProductCompleteness({
+      basis: { ...basis, identifier_value: "8720000000001" },
+      attributes: [],
+      offer: {
+        has_offer: true,
+        has_price: true,
+        has_stock_configured: true,
+        has_delivery: false,
+        has_shipping_profile: false,
+      },
+    })
+    const current = currentValidation(fixed.findings, notes)
+    expect(open.findings.some((finding) => finding.code === "ean")).toBe(true)
+    expect(current.current.some((finding) => finding.code === "ean")).toBe(false)
+    expect(current.current.map((finding) => finding.code)).toEqual(
+      expect.arrayContaining(["delivery", "shipping_profile"])
+    )
+    expect(current.history).toEqual(notes)
+    expect(current.history).toHaveLength(1)
+    expect(current.current.some((finding) => finding.code.startsWith("import.issue."))).toBe(
+      false
+    )
+  })
+
+  it("does not turn a sale gap into an approval or publication blocker", () => {
+    const report = computeProductCompleteness({
+      basis: { ...basis, identifier_value: "8720000000001" },
+      attributes: [],
+      offer: {
+        has_offer: false,
+        has_price: false,
+        has_stock_configured: false,
+        has_delivery: false,
+      },
+      rules: { publication_status: "Gepubliceerd" },
+    })
+    expect(report.product_gate_status).toBe("published")
+    expect(report.findings.every((finding) => finding.category === "sale")).toBe(true)
+    expect(
+      report.findings.some((finding) =>
+        finding.blocks.some((gate) => gate === "approval" || gate === "publication")
+      )
+    ).toBe(false)
   })
 })

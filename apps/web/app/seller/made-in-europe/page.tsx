@@ -64,10 +64,10 @@ export default function SellerMadeInEuropePage() {
   const [newFacilityCity, setNewFacilityCity] = useState("")
   const [newFacilityCountry, setNewFacilityCountry] = useState("NL")
   const [newFacilityBrandId, setNewFacilityBrandId] = useState("")
-  const [assembly, setAssembly] = useState("eu_100")
-  const [parts, setParts] = useState("eu_majority")
-  const [materials, setMaterials] = useState("eu_majority")
-  const [country, setCountry] = useState("NL")
+  const [assembly, setAssembly] = useState("")
+  const [parts, setParts] = useState("")
+  const [materials, setMaterials] = useState("")
+  const [country, setCountry] = useState("")
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -137,6 +137,10 @@ export default function SellerMadeInEuropePage() {
   }
 
   async function applyBulk() {
+    if (!assembly || !parts || !materials) {
+      setError(t("mieNotCalculatedBody", locale))
+      return
+    }
     setBusy(true)
     setError(null)
     setNotice(null)
@@ -149,7 +153,7 @@ export default function SellerMadeInEuropePage() {
           assembly_eu_band: assembly,
           parts_eu_level: parts,
           materials_eu_level: materials,
-          primary_assembly_country: country,
+          primary_assembly_country: country.trim() || null,
         }
       )
       setNotice(`${res.success_count}/${res.count} OK`)
@@ -408,6 +412,7 @@ export default function SellerMadeInEuropePage() {
               value={assembly}
               onChange={(e) => setAssembly(e.target.value)}
             >
+              <option value="">{t("pdpMieChoose", locale)}</option>
               <option value="eu_100">{t("mieBandEu100", locale)}</option>
               <option value="eu_75_99">{t("mieBandEu7599", locale)}</option>
               <option value="eu_50_74">{t("mieBandEu5074", locale)}</option>
@@ -421,6 +426,7 @@ export default function SellerMadeInEuropePage() {
               value={parts}
               onChange={(e) => setParts(e.target.value)}
             >
+              <option value="">{t("pdpMieChoose", locale)}</option>
               <option value="eu_majority">{t("mieLevelMajority", locale)}</option>
               <option value="eu_partial">{t("mieLevelPartial", locale)}</option>
               <option value="eu_none">{t("mieLevelNone", locale)}</option>
@@ -433,6 +439,7 @@ export default function SellerMadeInEuropePage() {
               value={materials}
               onChange={(e) => setMaterials(e.target.value)}
             >
+              <option value="">{t("pdpMieChoose", locale)}</option>
               <option value="eu_majority">{t("mieLevelMajority", locale)}</option>
               <option value="eu_partial">{t("mieLevelPartial", locale)}</option>
               <option value="eu_none">{t("mieLevelNone", locale)}</option>
@@ -450,7 +457,11 @@ export default function SellerMadeInEuropePage() {
         </section>
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button type="button" disabled={busy || selected.size === 0} onClick={() => void applyBulk()}>
+          <Button
+            type="button"
+            disabled={busy || selected.size === 0 || !assembly || !parts || !materials}
+            onClick={() => void applyBulk()}
+          >
             Toepassen op geselecteerde producten ({selected.size})
           </Button>
           <Button

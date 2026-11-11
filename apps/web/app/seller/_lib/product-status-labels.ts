@@ -151,6 +151,62 @@ export function serializeMultiSelectValue(values: string[]): string {
   return JSON.stringify([...new Set(values.map((v) => v.trim()).filter(Boolean))])
 }
 
+export type ProductControlStripItem = {
+  key: "approval" | "publication" | "offer" | "sellability"
+  label: string
+  value: string
+}
+
+/** Four separate facts. Offer problems do not change approval or publication. */
+export function productControlStrip(
+  product: {
+    publication_status?: string | null
+    admin_review_outcome?: string | null
+    completeness?: CompletenessReport | null
+    offers?: { offer_count?: number; sales_status?: string | null } | null
+    offer?: { has_offer?: boolean; sales_status?: string | null } | null
+  },
+  locale: StorefrontLocale = "nl"
+): ProductControlStripItem[] {
+  const status = product.publication_status
+  const outcome = product.admin_review_outcome
+  let approval = t("stripApprovalPending", locale)
+  if (outcome === "rejected") approval = t("wfRejected", locale)
+  else if (outcome === "needs_info") approval = t("wfNeedsInformation", locale)
+  else if (outcome === "approved" || status === "Gepubliceerd" || status === "Goedgekeurd")
+    approval = t("complianceApproved", locale)
+  else if (status === "In review") approval = t("wfPendingApproval", locale)
+
+  let publication = status || "—"
+  if (status === "Concept") publication = t("wfDraft", locale)
+  else if (status === "Goedgekeurd") publication = t("complianceApproved", locale)
+  else if (status === "Gepubliceerd") publication = t("pubPublished", locale)
+  else if (status === "Gearchiveerd") publication = t("stripArchived", locale)
+
+  const hasOffer = Boolean(
+    product.offers?.offer_count || product.offer?.has_offer
+  )
+  const salesStatus = product.offers?.sales_status ?? product.offer?.sales_status
+  let offer = t("saleNoOffer", locale)
+  if (hasOffer && salesStatus === "paused") offer = t("salePaused", locale)
+  else if (hasOffer && (salesStatus === "active" || salesStatus === "mixed"))
+    offer = t("stripOfferActive", locale)
+  else if (hasOffer) offer = t("stripOfferPresent", locale)
+
+  const sellability = salePresentationLabel(
+    product.completeness,
+    { sales_status: salesStatus, has_offer: hasOffer },
+    locale
+  ).label
+
+  return [
+    { key: "approval", label: t("stripApproval", locale), value: approval },
+    { key: "publication", label: t("stripPublication", locale), value: publication },
+    { key: "offer", label: t("stripOffer", locale), value: offer },
+    { key: "sellability", label: t("stripSellability", locale), value: sellability },
+  ]
+}
+
 export function productHasSaleBlock(product: ProductManagerDetail): boolean {
   return (
     product.completeness?.sale_presentation === "blocked" ||

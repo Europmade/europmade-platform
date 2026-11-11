@@ -56,6 +56,7 @@ export async function POST(req: MulterRequest, res: MedusaResponse) {
     skipped_empty: parsed.skipped_empty,
     skipped_header_rows: parsed.skipped_header_rows,
     transposed: parsed.transposed,
+    container: req.scope,
   })
   res.json({
     ...preview,

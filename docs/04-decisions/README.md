@@ -57,3 +57,4 @@ ADR's worden nooit stilzwijgend gewijzigd. Een nieuwe inzicht dat een eerdere AD
 | [0047](./0047-engagement-content-automation-separation.md) | Engagement: content/automation-scheiding & communicatie-architectuur | Geaccepteerd | Marketing, Communicatie, Partner Engagement, CMS, AI |
 | [0048](./0048-affiliate-commission-paid-by-selling-seller.md) | Affiliatecommissie betaalt de verkopende seller | Geaccepteerd | Affiliate, Seller, Finance |
 | [0049](./0049-marketing-delivery-provider.md) | Marketingmail via een providerinterface, niet via Crisp | Geaccepteerd | Marketing, Communicatie |
+| [0050](./0050-independent-product-identity.md) | Zelfstandig Product Cloud-product; geen commerciële varianten | Geaccepteerd | Product Cloud, Commerce Cloud, Seller, Admin, Import |

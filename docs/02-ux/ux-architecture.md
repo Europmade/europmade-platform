@@ -54,7 +54,7 @@ Per de Blueprint (H5.4, H9.3) is eigendom van productinformatie en commerciële 
 |---|---|
 | **Doel** | Officiële productinformatie beheren, merk correct presenteren, compliance borgen. |
 | **Rechten** | Volledig beheer van alle officiële productinformatie (titel, omschrijving, specificaties, afbeeldingen, video's, handleidingen, certificeringen — H5.4, H7.13); goedkeuren/afwijzen van wijzigingsvoorstellen van retailers, altijd het laatste woord (H9.8); claimen van *Retailer Created*-producten, waarna beheer automatisch overgaat (H6.10); compliance-data invullen (GPSR, CE, DPP-voorbereiding — H13.8, H13.10); Verified™-status aanvragen (H13.6). Optioneel: ook eigen verkoop (dan tevens Retailer-rechten, rollen zijn combineerbaar — H9.3). |
-| **Belangrijkste functionaliteiten** | Product Cloud-beheer (aanmaken, varianten, EAN's, relaties — H7), wijzigingsvoorstellen beoordelen (AI-voorcontrole zichtbaar — H9.7), Product Quality Score & Product Health Score-inzicht (H7.10–7.11), Compliance Dashboard + AI Compliance Assistent (H13.9), versiehistorie/audittrail (H13.11), Verified™-aanvraagflow, AI-ondersteuning (vertalingen, SEO, contentsuggesties — H7.12). |
+| **Belangrijkste functionaliteiten** | Product Cloud-beheer (aanmaken, specificaties, EAN's, relaties — H7, ADR-0050), wijzigingsvoorstellen beoordelen (AI-voorcontrole zichtbaar — H9.7), Product Quality Score & Product Health Score-inzicht (H7.10–7.11), Compliance Dashboard + AI Compliance Assistent (H13.9), versiehistorie/audittrail (H13.11), Verified™-aanvraagflow, AI-ondersteuning (vertalingen, SEO, contentsuggesties — H7.12). |
 
 ### 1.5 Administrator (EuropMade platformbeheer)
 
@@ -194,7 +194,7 @@ Notatie per flow: **Startpunt → Schermen → Beslismomenten (◆) → Uitzonde
 **Eindpunt A:** Product valt onder producentbeheer.
 
 **B. Productinformatie beheren & wijzigingen beoordelen**
-1. Product Cloud-omgeving → nieuw product aanmaken / bestaand bewerken (specificaties, media, documentatie, relaties, varianten)
+1. Product Cloud-omgeving → nieuw product aanmaken / bestaand bewerken (specificaties, media, documentatie, relaties)
 2. Inbox "Wijzigingsvoorstellen" (van retailers, AI-voorgecontroleerd) → beoordelen per voorstel
    ◆ Goedkeuren / afwijzen / aanpassen
 3. Product Quality Score & Health Score bekijken → verbeterpunten oppakken

@@ -51,7 +51,6 @@ function levelLabel(locale: StorefrontLocale, level: string): string {
 export function MadeInEuropeScoreCard({
   data,
   locale,
-  countryLabel,
   manufacturer,
   brandSlug,
 }: MadeInEuropeScoreCardProps) {
@@ -59,7 +58,21 @@ export function MadeInEuropeScoreCard({
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
-  const eligible = data.is_made_in_europe && data.score != null
+  const calculated =
+    data.incomplete !== true &&
+    data.is_made_in_europe === true &&
+    typeof data.score === "number"
+  const verified = calculated && data.evidence_approved === true
+  const notEligible =
+    data.incomplete !== true &&
+    data.is_made_in_europe === false &&
+    Boolean(data.assembly_eu_band)
+  const missingInputs = [
+    !data.assembly_eu_band ? t("mieAssembly", locale) : "",
+    !data.parts_eu_level ? t("mieParts", locale) : "",
+    !data.materials_eu_level ? t("mieMaterials", locale) : "",
+  ].filter(Boolean)
+  const scoreLabel = calculated ? `${data.score}%` : null
 
   useEffect(() => {
     if (!open) return
@@ -78,15 +91,22 @@ export function MadeInEuropeScoreCard({
     }
   }, [open])
 
+  const productionRaw =
+    data.production_country_label || data.primary_assembly_country || ""
+  const productionLabel = productionRaw
+    ? productionRaw.length === 2
+      ? countryDisplayLabel(productionRaw, locale)
+      : productionRaw
+    : ""
   const originLine =
-    countryLabel || manufacturer ? (
+    productionLabel || manufacturer ? (
       <p className="m-0 mt-1 text-[12px] leading-snug text-wf-800">
-        {countryLabel ? (
+        {productionLabel ? (
           <span>
-            {t("madeInLabel", locale)} {countryLabel}
+            {t("mieProductionCountry", locale)}: {productionLabel}
           </span>
         ) : null}
-        {countryLabel && manufacturer ? (
+        {productionLabel && manufacturer ? (
           <span className="text-wf-400"> · </span>
         ) : null}
         {manufacturer ? (
@@ -107,25 +127,30 @@ export function MadeInEuropeScoreCard({
     ) : null
 
   return (
-    <div data-made-in-europe-score={eligible ? data.score : undefined}>
+    <div
+      data-made-in-europe-score={calculated ? String(data.score) : "niet-berekend"}
+    >
       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-        {eligible ? (
+        {verified ? (
           <span className="inline-flex items-center gap-1.5 text-[13px] font-bold leading-none text-wf-900">
             <span aria-hidden="true">✓</span>
             <span>
-              {t("euVerified", locale)}™ {data.score}%
+              {t("euVerified", locale)}™
             </span>
           </span>
-        ) : (
-          <span className="text-[13px] font-semibold leading-snug text-wf-800">
-            {t("mieNotEligibleTitle", locale)}
-          </span>
-        )}
+        ) : null}
+        <span className="text-[13px] font-semibold leading-snug text-wf-900">
+          {calculated
+            ? `${t("mieScoreTitle", locale)} ${scoreLabel}`
+            : notEligible
+              ? t("mieNotEligibleTitle", locale)
+              : t("mieNotCalculated", locale)}
+        </span>
         <button
           ref={triggerRef}
           type="button"
           className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[15px] leading-none text-wf-600 transition-colors hover:bg-wf-100 hover:text-wf-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wf-900"
-          aria-label={t("mieInfoAria", locale)}
+          aria-label={t("mieHowDetermined", locale)}
           aria-haspopup="dialog"
           aria-expanded={open}
           onClick={() => setOpen(true)}
@@ -154,9 +179,13 @@ export function MadeInEuropeScoreCard({
                 id={titleId}
                 className="m-0 text-base font-bold leading-snug text-wf-900"
               >
-                {eligible
-                  ? `${t("euVerified", locale)}™ ${data.score}%`
-                  : t("mieNotEligibleTitle", locale)}
+                {verified
+                  ? `${t("euVerified", locale)}™`
+                  : calculated
+                    ? `${t("mieScoreTitle", locale)} ${scoreLabel}`
+                    : notEligible
+                      ? t("mieNotEligibleTitle", locale)
+                      : t("mieNotCalculated", locale)}
               </h2>
               <button
                 ref={closeRef}
@@ -193,10 +222,17 @@ export function MadeInEuropeScoreCard({
                   {t("mieHowDetermined", locale)}
                 </h3>
                 <p className="mt-1.5 m-0 text-[13px] leading-relaxed text-wf-700">
-                  {eligible
+                  {calculated
                     ? t("mieScoreMeaning", locale)
-                    : t("mieNotEligibleBody", locale)}
+                    : notEligible
+                      ? t("mieNotEligibleBody", locale)
+                      : t("mieNotCalculatedBody", locale)}
                 </p>
+                {!calculated && !notEligible && missingInputs.length > 0 ? (
+                  <p className="mt-1.5 m-0 text-[13px] leading-relaxed text-wf-700">
+                    {t("pdpMieMissing", locale)}: {missingInputs.join(", ")}.
+                  </p>
+                ) : null}
                 <Link
                   href="/made-in-europe"
                   className="mt-2 inline-block text-[12px] font-semibold text-wf-900 underline underline-offset-2"
@@ -206,13 +242,13 @@ export function MadeInEuropeScoreCard({
                 </Link>
               </section>
 
-              {eligible ? (
+              {calculated ? (
                 <section className="mt-5 border-t border-wf-200 pt-4">
                   <h3 className="m-0 text-[13px] font-bold text-wf-900">
                     {t("mieProductScoreTitle", locale)}
                   </h3>
                   <p className="mt-1.5 m-0 text-2xl font-bold tabular-nums text-wf-950">
-                    {data.score}%
+                    {scoreLabel}
                   </p>
                   <ul className="mt-3 space-y-1.5 text-[13px] text-wf-800">
                     <li>

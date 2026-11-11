@@ -98,10 +98,116 @@ export function isMaterialsEuLevel(value: string): value is MaterialsEuLevel {
   return (MATERIALS_EU_LEVELS as readonly string[]).includes(value)
 }
 
+/** Canonical Dutch labels — shared by Seller/Admin UI and Excel dropdowns. */
+export const ASSEMBLY_EU_BAND_LABELS: Record<AssemblyEuBand, string> = {
+  eu_100: "100% assemblage in EU",
+  eu_75_99: "75–99% assemblage in EU",
+  eu_50_74: "50–74% assemblage in EU",
+  eu_below_50: "Minder dan 50% assemblage in EU",
+}
+
+export const PARTS_EU_LEVEL_LABELS: Record<PartsEuLevel, string> = {
+  eu_majority: "Overwegend EU",
+  eu_partial: "Gedeeltelijk EU",
+  eu_none: "Niet of nauwelijks EU",
+}
+
+export const MATERIALS_EU_LEVEL_LABELS: Record<MaterialsEuLevel, string> = {
+  eu_majority: "Overwegend EU",
+  eu_partial: "Gedeeltelijk EU",
+  eu_none: "Niet of nauwelijks EU",
+}
+
+/** English Seller/Admin Excel dropdown labels (canonical storage labels stay NL). */
+const ASSEMBLY_EU_BAND_LABELS_EN: Record<AssemblyEuBand, string> = {
+  eu_100: "100% assembly in EU",
+  eu_75_99: "75–99% assembly in EU",
+  eu_50_74: "50–74% assembly in EU",
+  eu_below_50: "Less than 50% assembly in EU",
+}
+
+const PARTS_EU_LEVEL_LABELS_EN: Record<PartsEuLevel, string> = {
+  eu_majority: "Predominantly EU",
+  eu_partial: "Partially EU",
+  eu_none: "Not or barely EU",
+}
+
+const MATERIALS_EU_LEVEL_LABELS_EN: Record<MaterialsEuLevel, string> = {
+  eu_majority: "Predominantly EU",
+  eu_partial: "Partially EU",
+  eu_none: "Not or barely EU",
+}
+
+function matchBandLabel<T extends string>(
+  raw: string,
+  nl: Record<T, string>,
+  en: Record<T, string>
+): T | null {
+  const v = raw.trim().toLowerCase()
+  const entries = Object.entries(nl) as Array<[T, string]>
+  for (const [id, label] of entries) {
+    if (label.toLowerCase() === v) return id
+    if (en[id]?.toLowerCase() === v) return id
+  }
+  // Accept near-synonym used in an earlier EN template pass.
+  if (v === "little or no eu content" && (en as Record<string, string>).eu_none) {
+    return "eu_none" as T
+  }
+  return null
+}
+
+export function parseAssemblyEuBandLabel(
+  raw: string | null | undefined
+): AssemblyEuBand | null {
+  const v = String(raw || "").trim()
+  if (!v) return null
+  if (isAssemblyEuBand(v)) return v
+  return matchBandLabel(v, ASSEMBLY_EU_BAND_LABELS, ASSEMBLY_EU_BAND_LABELS_EN)
+}
+
+export function parsePartsEuLevelLabel(
+  raw: string | null | undefined
+): PartsEuLevel | null {
+  const v = String(raw || "").trim()
+  if (!v) return null
+  if (isPartsEuLevel(v)) return v
+  return matchBandLabel(v, PARTS_EU_LEVEL_LABELS, PARTS_EU_LEVEL_LABELS_EN)
+}
+
+export function parseMaterialsEuLevelLabel(
+  raw: string | null | undefined
+): MaterialsEuLevel | null {
+  const v = String(raw || "").trim()
+  if (!v) return null
+  if (isMaterialsEuLevel(v)) return v
+  return matchBandLabel(v, MATERIALS_EU_LEVEL_LABELS, MATERIALS_EU_LEVEL_LABELS_EN)
+}
+
 /**
- * Berekent de EuropMade Made in Europe-score.
- * <50% assemblage (eu_below_50) → geen Made in Europe.
+ * Ontbrekende banden worden niet aangevuld. Een lege invoer is geen score van 100.
  */
+export function completeMadeInEuropeBands(
+  input: {
+    assembly_eu_band?: string | null
+    parts_eu_level?: string | null
+    materials_eu_level?: string | null
+    primary_assembly_country?: string | null
+  }
+): MadeInEuropeInput | null {
+  const assembly = input.assembly_eu_band || ""
+  const parts = input.parts_eu_level || ""
+  const materials = input.materials_eu_level || ""
+  if (!isAssemblyEuBand(assembly) || !isPartsEuLevel(parts) || !isMaterialsEuLevel(materials)) {
+    return null
+  }
+  return {
+    assembly_eu_band: assembly,
+    parts_eu_level: parts,
+    materials_eu_level: materials,
+    primary_assembly_country: input.primary_assembly_country ?? null,
+  }
+}
+
 export function computeMadeInEuropeScore(
   input: MadeInEuropeInput
 ): MadeInEuropeScore {

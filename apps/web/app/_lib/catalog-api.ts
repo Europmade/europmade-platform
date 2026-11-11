@@ -77,9 +77,14 @@ export type CatalogListProduct = {
   description: string | null
   lifecycle_status: string
   brand_name: string | null
+  brand_id?: string | null
+  brand_slug?: string | null
+  brand_logo_url?: string | null
+  brand_page_published?: boolean
   manufacturer_id: string | null
   manufacturer_name: string | null
   category_names: string[]
+  category_slugs?: string[]
   identifier_id: string | null
   identifier_type: string | null
   identifier_value: string | null
@@ -94,6 +99,12 @@ export type CatalogListProduct = {
   average_review_score: number | null
   review_count: number
   image_url?: string | null
+  published_at?: string | null
+  attributes?: Array<{
+    code: string | null
+    name: string
+    value: string
+  }>
 }
 
 export type CatalogMediaItem = {
@@ -114,6 +125,8 @@ export type CatalogOffer = {
   base_price: number
   shipping_cost: number
   total_price: number
+  regular_total_price?: number | null
+  promo_active?: boolean
   quantity_available: number
   rank: number
   is_winner: boolean
@@ -199,6 +212,9 @@ export type CatalogManufacturerPage = {
 export type CatalogMadeInEurope = {
   is_made_in_europe: boolean
   score: number | null
+  incomplete?: boolean
+  evidence_approved?: boolean
+  production_country_label?: string | null
   assembly_points: number
   parts_points: number
   materials_points: number
@@ -228,6 +244,7 @@ export type CatalogEuropeanOwnership = {
 }
 
 export type CatalogProductDetail = {
+  test_catalog?: boolean
   availability?: "orderable" | "out_of_stock" | "not_deliverable" | "not_published" | "paused"
   product: {
     id: string
@@ -243,6 +260,19 @@ export type CatalogProductDetail = {
     country_code: string | null
     image_url?: string | null
     media?: CatalogMediaItem[]
+    attributes?: Array<{
+      code: string | null
+      name: string
+      value: string
+      unit: string | null
+      sort_order?: number
+    }>
+    variants?: Array<{
+      id: string
+      variant_type: string
+      variant_value: string
+      size_label: string
+    }>
   }
   made_in_europe?: CatalogMadeInEurope | null
   european_ownership?: CatalogEuropeanOwnership | null
@@ -275,6 +305,33 @@ export type CatalogProductDetail = {
   } | null
 }
 
+export type CatalogProductRelation = {
+  from_product_id: string
+  to_product_id: string
+  relation_type: string
+}
+
+export function listCatalogProductRelations(fromIds: string[]) {
+  const ids = fromIds.map((id) => id.trim()).filter(Boolean)
+  if (ids.length === 0) {
+    return Promise.resolve({ relations: [] as CatalogProductRelation[] })
+  }
+  const qs = new URLSearchParams({ from_ids: ids.join(",") })
+  return request<{ relations?: CatalogProductRelation[] }>(
+    `/store/catalog/product-relations?${qs.toString()}`,
+    12_000,
+    "no-store"
+  ).then((body) => ({
+    relations: (body.relations ?? []).flatMap((relation) => {
+      const fromId = relation.from_product_id?.trim() ?? ""
+      const toId = relation.to_product_id?.trim() ?? ""
+      const type = relation.relation_type?.trim() ?? ""
+      if (!fromId || !toId || !type) return []
+      return [{ from_product_id: fromId, to_product_id: toId, relation_type: type }]
+    }),
+  }))
+}
+
 export function listCatalogProducts(params?: {
   category?: string
   brand?: string
@@ -289,6 +346,7 @@ export function listCatalogProducts(params?: {
   offset?: number
   limit?: number
   region_code?: string
+  include_attributes?: boolean
   signal?: AbortSignal
 }) {
   const qs = new URLSearchParams()
@@ -305,6 +363,7 @@ export function listCatalogProducts(params?: {
   if (params?.offset != null) qs.set("offset", String(params.offset))
   if (params?.limit != null) qs.set("limit", String(params.limit))
   if (params?.region_code) qs.set("region_code", params.region_code)
+  if (params?.include_attributes) qs.set("include_attributes", "true")
   const query = qs.toString()
   return request<{
     products: CatalogListProduct[]
@@ -313,8 +372,8 @@ export function listCatalogProducts(params?: {
     limit: number
   }>(
     `/store/catalog/products${query ? `?${query}` : ""}`,
-    params?.q ? 8_000 : 12_000,
-    params?.q ? "no-store" : "force-cache",
+    params?.include_attributes ? 90_000 : params?.q ? 20_000 : 12_000,
+    params?.q || params?.include_attributes ? "no-store" : "force-cache",
     params?.signal
   )
 }
@@ -373,15 +432,47 @@ export function getCatalogManufacturer(slug: string, region_code = "NL") {
   )
 }
 
+export type TestCatalogListItem = {
+  id: string
+  title: string
+  brand_name: string | null
+  brand_id: string | null
+  brand_slug: string | null
+  brand_logo_url: string | null
+  image_url: string | null
+  gallery_urls?: string[]
+  category_slugs: string[]
+  category_names: string[]
+  specs: Array<{ code: string; value: string }>
+  gtin: string
+  offer_count: number
+  from_price: number | null
+  offer_id?: string | null
+  seller_id?: string | null
+  seller_name?: string | null
+}
+
+export function getTestCatalogProducts(category?: string) {
+  const qs = new URLSearchParams()
+  if (category) qs.set("category", category)
+  const query = qs.toString()
+  return request<{ enabled: boolean; products: TestCatalogListItem[] }>(
+    `/store/catalog/test-products${query ? `?${query}` : ""}`,
+    20_000,
+    "no-store"
+  )
+}
+
 export function getCatalogProduct(
   productId: string,
   region_code = "NL",
   opts?: { cache?: RequestCache }
 ) {
   const qs = new URLSearchParams({ region_code })
+  // PDP detail aggregates buy-box/offers/reviews; local/dev often exceeds 4s.
   return request<CatalogProductDetail>(
     `/store/catalog/products/${encodeURIComponent(productId)}?${qs}`,
-    4_000,
+    15_000,
     opts?.cache ?? "force-cache"
   )
 }

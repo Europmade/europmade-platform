@@ -82,7 +82,9 @@ export async function generateMetadata({
       locale: openGraphLocale(locale),
       type: "website",
     },
-    robots: { index: true, follow: true },
+    robots: detail.listing.testCatalog
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
   }
 }
 

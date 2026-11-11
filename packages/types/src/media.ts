@@ -30,6 +30,7 @@ export type MediaPlacement =
   | "cms_site_logo"
   | "campaign_logo"
   | "homepage_hero"
+  | "category_image"
   | "facility_photo"
   | "brand_story_photo"
   | "partner_document"

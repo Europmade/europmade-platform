@@ -60,6 +60,16 @@ export type CompletenessReport = {
   information_quality?: "insufficient" | "sufficient" | "complete"
   publication_blocked_reasons: string[]
   sale_blocked_reasons?: string[]
+  findings?: Array<{
+    code: string
+    field: string
+    category: "submission" | "approval" | "publication" | "sale" | "warning"
+    blocks: Array<"submission" | "approval" | "publication" | "sale" | "warning">
+    severity: "blocker" | "warning"
+    message: string
+    action: string
+    status: "open"
+  }>
   compliance_status:
     | "complete"
     | "incomplete"
@@ -115,6 +125,7 @@ export type SellerOfferSummary = {
   sales_status?: "active" | "paused" | null
   delivery_days_max?: number | null
   is_sellable?: boolean
+  sellability_reasons?: string[]
   has_offer: boolean
   promo_price?: number | null
   promo_starts_at?: string | null
@@ -159,6 +170,7 @@ export type CatalogProduct = {
   list_activity_at?: string | null
   title: string | null
   description?: string | null
+  category_ids?: string[]
   category_names: string[]
   category_assignment_status?: "linked" | "category_pending"
   primary_image_url?: string | null
@@ -217,6 +229,7 @@ export type ProductManagerDetail = CatalogProduct & {
     option_values: string[] | null
     value: string | null
     attribute_value_id: string | null
+    is_product_specification?: boolean
   }>
   media?: Array<{
     id: string
@@ -233,6 +246,7 @@ export type ProductManagerDetail = CatalogProduct & {
     id: string
     variant_type: string
     variant_value: string
+    size_label?: string | null
     identifiers: Array<{
       id: string
       identifier_type: string
@@ -270,6 +284,7 @@ export type ProductVariantRow = {
   product_id?: string
   variant_type: string
   variant_value: string
+  size_label?: string | null
   identifiers?: Array<{
     id: string
     identifier_type: string
@@ -290,6 +305,8 @@ export type MadeInEuropeEvidenceItem = {
   file_size_bytes?: number | null
   verification_status: string
   verification_notes?: string | null
+  verified_at?: string | null
+  verified_by?: string | null
   created_at?: string
 }
 
@@ -302,7 +319,13 @@ export type MadeInEuropeEvidenceResponse = {
     band_label?: string | null
     [key: string]: unknown
   } | null
-  evidence_status: "missing" | "pending_review" | "approved" | "rejected"
+  evidence_status: "missing" | "pending_review" | "needs_info" | "approved" | "rejected"
+  assembly_eu_band?: string | null
+  parts_eu_level?: string | null
+  materials_eu_level?: string | null
+  primary_assembly_country?: string | null
+  production_country?: string | null
+  score_can_be_calculated?: boolean
   is_made_in_europe_score: boolean
   is_made_in_europe_verified: boolean
   evidence: MadeInEuropeEvidenceItem[]
@@ -357,9 +380,10 @@ export type CreateProductInput = {
   manufacturer_id: string
   title: string
   description: string
-  category_name: string
-  identifier_type: "GTIN" | "MPN"
-  identifier_value: string
+  category_name?: string
+  category_ids?: string[]
+  identifier_type?: "GTIN" | "MPN"
+  identifier_value?: string
   create_as_retailer?: boolean
   media?: Array<{
     media_type: "Hoofdafbeelding" | "Overige afbeelding" | "Video"
@@ -612,18 +636,27 @@ export function createProduct(body: CreateProductInput) {
 
 export function listProductCloudCategories() {
   return request<{
-    categories: Array<{ id: string; name: string; slug: string | null }>
+    categories: Array<{
+      id: string
+      name: string
+      slug: string | null
+      parent_category_id: string | null
+    }>
   }>("/store/product-cloud/categories?locale=nl")
 }
 
-export function patchProductCategories(productId: string, category_names: string[]) {
+export function patchProductCategories(
+  productId: string,
+  payload: { category_ids: string[] } | { category_names: string[] }
+) {
   return request<{
     product_id: string
+    category_ids?: string[]
     category_names: string[]
     category_count: number
   }>(`/store/product-cloud/products/${productId}`, {
     method: "PATCH",
-    body: JSON.stringify({ category_names }),
+    body: JSON.stringify(payload),
   })
 }
 
@@ -947,6 +980,52 @@ export function bulkLinkBrandLocation(body: {
   })
 }
 
+export type BulkOfferCommerceRow = {
+  offer_id: string
+  product_id: string | null
+  product_title: string | null
+  identifier_value: string | null
+  region_code: string | null
+  status: "eligible" | "excluded" | "failed"
+  reason: string | null
+  current_delivery_days_max: number | null
+  next_delivery_days_max: number | null
+  current_quantity_available: number | null
+  next_quantity_available: number | null
+  publication_status: string | null
+  sellable_before: boolean
+  sellable_after: boolean
+}
+
+export type BulkOfferCommercePreview = {
+  applied: boolean
+  applied_count?: number
+  failed_count?: number
+  message: string
+  selected_count: number
+  eligible_count: number
+  excluded_count: number
+  apply_allowed: boolean
+  field_error: string | null
+  rows: BulkOfferCommerceRow[]
+}
+
+export function bulkOfferCommerce(body: {
+  product_ids?: string[]
+  offer_ids?: string[]
+  delivery_days_max?: number | string | null
+  quantity_available?: number | string | null
+  confirm?: boolean
+}) {
+  return request<BulkOfferCommercePreview>(
+    "/store/product-cloud/products/bulk-offer-commerce",
+    {
+      method: "POST",
+      body: JSON.stringify(body),
+    }
+  )
+}
+
 export function bulkAssignShippingProfile(body: {
   product_ids: string[]
   shipping_profile_id: string | null
@@ -980,6 +1059,10 @@ export function listProductVariants(productId: string) {
     variants: ProductVariantRow[]
     suggested_axes: string[]
     allowed_variant_types: string[]
+    shoe_sizes?: {
+      audience: "dames" | "heren" | "kinderen" | null
+      options: Array<{ eu: string; uk: string | null }>
+    }
     note?: string
   }>(`/store/product-cloud/products/${productId}/variants`)
 }
@@ -1108,6 +1191,7 @@ export function getEuropeanOwnershipClaim(productId: string) {
     claim: EuropeanOwnershipClaim | null
     history: unknown[]
     inherited_from_brand?: boolean
+    can_edit?: boolean
     manage_at?: string | null
   }>(`/store/product-cloud/products/${productId}/european-ownership`)
 }
@@ -1162,6 +1246,8 @@ export type ImportPreviewResponse = {
     name: string
     requirement_tier?: string
     unit?: string | null
+    option_values?: string[] | null
+    data_type?: string | null
   }>
   field_labels?: Array<{
     column: string
@@ -1174,7 +1260,22 @@ export type ImportPreviewResponse = {
     row: number
     values: Record<string, string>
     status: "new" | "existing" | "error"
-    issues: Array<{ row: number; field: string; message: string; blocking?: boolean }>
+    issues: Array<{
+      row: number
+      field: string
+      message: string
+      blocking?: boolean
+      severity?: "valid" | "warning" | "missing" | "invalid" | "requires_review"
+      supplied_value?: string | null
+      resolution?: string
+      blocks?: string[]
+    }>
+    brand_resolution?: {
+      status: string
+      name?: string
+      id?: string
+    }
+    offer_action?: "create" | "update" | "none"
     category_resolution?: {
       status: "linked" | "suggested" | "pending"
       raw: string
@@ -1187,9 +1288,15 @@ export type ImportPreviewResponse = {
     new_products: number
     existing_products: number
     error_rows: number
+    technical_error_rows?: number
+    attention_rows?: number
+    recoverable_rows?: number
+    new_brands?: number
     missing_ean: number
     missing_required: number
     concept_without_ean?: number
+    offers_to_create?: number
+    offers_to_update?: number
     skipped_empty?: number
     skipped_header_rows?: number
   }
@@ -1268,7 +1375,7 @@ export type ImportCommitProduct = {
   row: number
   product_id: string
   title: string
-  action: "created" | "updated"
+  action: "created" | "updated" | "reused"
   lifecycle_status: string | null
   publication_status: string
   category_status: "linked" | "category_pending"
@@ -1284,6 +1391,7 @@ export type ImportCommitResponse = {
   updated: number
   created_count?: number
   updated_count?: number
+  reused_count?: number
   warning_count?: number
   skipped_count?: number
   error_count?: number
@@ -1292,6 +1400,10 @@ export type ImportCommitResponse = {
   warnings?: string[]
   errors?: string[]
   message?: string
+  received_rows?: number
+  attention_count?: number
+  new_brands?: number
+  technical_error_rows?: number
   source_language_code: string
   translations: {
     provider_configured: boolean
@@ -1345,12 +1457,16 @@ export async function commitProductImportFile(
   file: File,
   mapping: Record<string, string | null>,
   sourceLanguage: string,
-  rowOverrides?: Record<string, Record<string, string>>
+  rowOverrides?: Record<string, Record<string, string>>,
+  reuseExistingConfirmed?: boolean
 ): Promise<ImportCommitResponse> {
   const form = new FormData()
   form.append("file", file)
   form.append("mapping", JSON.stringify(mapping))
   form.append("source_language_code", sourceLanguage)
+  if (reuseExistingConfirmed) {
+    form.append("reuse_existing_confirmed", "true")
+  }
   if (rowOverrides) form.append("row_overrides", JSON.stringify(rowOverrides))
   const response = await fetch(`${medusaBackendUrl()}/store/product-cloud/import`, {
     method: "POST",
@@ -1457,12 +1573,20 @@ export async function recoverImportCommitAfterFailure(
   }
 }
 
-export function productImportTemplateUrl(format: "xlsx" | "csv") {
-  return `${medusaBackendUrl()}/store/product-cloud/import/template?format=${format}`
+export function productImportTemplateUrl(
+  format: "xlsx" | "csv",
+  locale?: string
+) {
+  const params = new URLSearchParams({ format })
+  if (locale) params.set("locale", locale)
+  return `${medusaBackendUrl()}/store/product-cloud/import/template?${params}`
 }
 
-export async function downloadProductImportTemplate(format: "xlsx" | "csv") {
-  const response = await fetch(productImportTemplateUrl(format), {
+export async function downloadProductImportTemplate(
+  format: "xlsx" | "csv",
+  locale?: string
+) {
+  const response = await fetch(productImportTemplateUrl(format, locale), {
     credentials: "include",
     headers: PUBLISHABLE_KEY
       ? { "x-publishable-api-key": PUBLISHABLE_KEY }
@@ -1475,10 +1599,11 @@ export async function downloadProductImportTemplate(format: "xlsx" | "csv") {
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
+  const suffix = locale ? `-${locale}` : ""
   a.download =
     format === "csv"
-      ? "EuropMade product import.csv"
-      : "EuropMade product template.xlsx"
+      ? `EuropMade product import${suffix}.csv`
+      : `EuropMade product template.xlsx`
   a.click()
   URL.revokeObjectURL(url)
 }

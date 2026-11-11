@@ -9,6 +9,11 @@ import {
   type ProductApprovalDeps,
 } from "../product-approval-decision"
 import type { SectionReviewRow } from "../section-review-helpers"
+import {
+  productPublicationBlockers,
+  publicationAlreadyLive,
+  publishVersionAfterApproval,
+} from "../approval-publication"
 
 function review(status: SectionReviewRow["status"]): SectionReviewRow {
   return {
@@ -218,6 +223,178 @@ describe("bulk approval", () => {
     )
   })
 
+  it("reports every blocker and still approves when only the offer is incomplete", async () => {
+    const harness = deps({
+      loadPublishable: async (productId) => {
+        if (productId === "prod_gap") {
+          return {
+            publishable: false,
+            reason: "Ontbreekt: EAN / GTIN",
+            findings: [
+              {
+                code: "ean",
+                field: "EAN / GTIN",
+                category: "submission" as const,
+                blocks: ["submission", "approval", "publication"] as const,
+                severity: "blocker" as const,
+                message: "Ontbreekt: EAN / GTIN",
+                action: "Vul een geldige EAN/GTIN in en sla op.",
+                status: "open" as const,
+              },
+              {
+                code: "shipping_profile",
+                field: "Verzendprofiel",
+                category: "sale" as const,
+                blocks: ["sale"] as const,
+                severity: "blocker" as const,
+                message: "Verzendprofiel koppelen",
+                action: "Koppel een verzendprofiel en sla het aanbod op.",
+                status: "open" as const,
+              },
+            ],
+          }
+        }
+        return {
+          publishable: true,
+          reason: null,
+          findings: [
+            {
+              code: "delivery",
+              field: "Levertijd",
+              category: "sale" as const,
+              blocks: ["sale"] as const,
+              severity: "blocker" as const,
+              message: "Levertijd/verzending instellen",
+              action: "Stel de levertijd in en sla het aanbod op.",
+              status: "open" as const,
+            },
+          ],
+        }
+      },
+    })
+    const report = await runBulkProductApproval(
+      { ...harness, listProducts: async () => [] },
+      {
+        mode: "selected",
+        product_ids: ["prod_gap", "prod_ok"],
+        dry_run: true,
+        actor_id: "user_admin",
+      }
+    )
+    const gap = report.results.find((row) => row.product_id === "prod_gap")
+    const ok = report.results.find((row) => row.product_id === "prod_ok")
+    expect(gap?.status).toBe("skipped")
+    expect(gap?.findings?.map((finding) => finding.code)).toEqual([
+      "ean",
+      "shipping_profile",
+    ])
+    expect(ok?.status).toBe("eligible")
+    expect(ok?.findings?.map((finding) => finding.code)).toEqual(["delivery"])
+    expect(harness.decided).toEqual([])
+  })
+
+  it("previews several products and records the actor only on approved rows", async () => {
+    const actors: string[] = []
+    const harness = deps({
+      listProductVersions: async (productId) => [
+        {
+          id: `ver_${productId}`,
+          title: productId === "prod_title" ? "Pan" : "Concept",
+          publication_status: productId === "prod_closed" ? "Concept" : "In review",
+          version_number: 1,
+        },
+      ],
+      loadPublishable: async (productId) => ({
+        publishable: productId !== "prod_ean",
+        reason: productId === "prod_ean" ? "Ontbreekt: EAN / GTIN" : null,
+        preview: {
+          identifier: productId === "prod_title" ? "8720000000001" : null,
+          lifecycle_status: "Actief",
+          publication_status: productId === "prod_closed" ? "Concept" : "In review",
+          offer_status: "Geen aanbod",
+          sellability: "Niet verkoopbaar",
+        },
+        findings:
+          productId === "prod_ean"
+            ? [
+                {
+                  code: "ean",
+                  field: "EAN / GTIN",
+                  category: "submission" as const,
+                  blocks: ["submission", "approval", "publication"] as const,
+                  severity: "blocker" as const,
+                  message: "Ontbreekt: EAN / GTIN",
+                  action: "Vul een geldige EAN/GTIN in en sla op.",
+                  status: "open" as const,
+                },
+              ]
+            : productId === "prod_title"
+              ? [
+                  {
+                    code: "warranty_extra",
+                    field: "Extra garantie",
+                    category: "warning" as const,
+                    blocks: ["warning"] as const,
+                    severity: "warning" as const,
+                    message: "Aanbevolen: Extra garantie is nog leeg.",
+                    action: "Vul Extra garantie in als de waarde bekend is.",
+                    status: "open" as const,
+                  },
+                ]
+              : [],
+      }),
+      decide: async (input) => {
+        actors.push(input.actor_id)
+        return { version: { id: input.version_id, publication_status: "Gepubliceerd" }, lifecycle_status: "Actief" }
+      },
+    })
+    const preview = await runBulkProductApproval(
+      { ...harness, listProducts: async () => [] },
+      {
+        mode: "selected",
+        product_ids: ["prod_title", "prod_ean", "prod_closed"],
+        dry_run: true,
+        actor_id: "user_admin",
+      }
+    )
+    expect(preview.selected_count).toBe(3)
+    expect(preview.eligible_count).toBe(1)
+    expect(preview.skipped_count).toBe(2)
+    expect(preview.warning_count).toBe(1)
+    expect(preview.partial).toBe(false)
+    expect(preview.results.find((row) => row.product_id === "prod_title")).toMatchObject({
+      outcome_label: "Geschikt voor goedkeuring",
+      identifier: "8720000000001",
+      publication_status: "In review",
+      offer_status: "Geen aanbod",
+    })
+    expect(preview.results.find((row) => row.product_id === "prod_ean")?.outcome_label).toBe(
+      "Niet goedgekeurd"
+    )
+    expect(preview.results.find((row) => row.product_id === "prod_closed")?.outcome_label).toBe(
+      "Overgeslagen"
+    )
+    expect(actors).toEqual([])
+
+    const applied = await runBulkProductApproval(
+      { ...harness, listProducts: async () => [] },
+      {
+        mode: "selected",
+        product_ids: ["prod_title", "prod_ean"],
+        dry_run: false,
+        actor_id: "user_admin",
+      }
+    )
+    expect(applied.partial).toBe(true)
+    expect(applied.approved_count).toBe(1)
+    expect(applied.skipped_count).toBe(1)
+    expect(applied.results.find((row) => row.product_id === "prod_title")).toMatchObject({
+      outcome_label: "Goedgekeurd en gepubliceerd",
+      decided_by: "user_admin",
+    })
+    expect(actors).toEqual(["user_admin"])
+  })
+
   it("keeps going when one approval write fails", async () => {
     const harness = deps({
       decide: async (input) => {
@@ -243,26 +420,111 @@ describe("bulk approval", () => {
   })
 })
 
+describe("approval publication", () => {
+  it("does not publish again when the version is already published", async () => {
+    const publish = jest.fn()
+    const revert = jest.fn()
+    const result = await publishVersionAfterApproval({
+      statusAfterApproval: "Gepubliceerd",
+      publish,
+      revertToReview: revert,
+    })
+    expect(publicationAlreadyLive("Gepubliceerd")).toBe(true)
+    expect(result.published).toBe(false)
+    expect(publish).not.toHaveBeenCalled()
+    expect(revert).not.toHaveBeenCalled()
+  })
+
+  it("rolls the version back to review when publication fails", async () => {
+    const revert = jest.fn(async () => undefined)
+    await expect(
+      publishVersionAfterApproval({
+        statusAfterApproval: "Goedgekeurd",
+        publish: async () => {
+          throw new Error("geen hoofdafbeelding")
+        },
+        revertToReview: revert,
+      })
+    ).rejects.toThrow("geen hoofdafbeelding")
+    expect(revert).toHaveBeenCalledTimes(1)
+  })
+
+  it("publishes once after approval", async () => {
+    const revert = jest.fn()
+    const result = await publishVersionAfterApproval({
+      statusAfterApproval: "Goedgekeurd",
+      publish: async () => ({ publication_status: "Gepubliceerd" }),
+      revertToReview: revert,
+    })
+    expect(result).toEqual({
+      published: true,
+      result: { publication_status: "Gepubliceerd" },
+    })
+    expect(revert).not.toHaveBeenCalled()
+  })
+
+  it("keeps offer gaps out of the product approval gate", () => {
+    expect(
+      productPublicationBlockers([
+        "Geen verkoopaanbod aanwezig",
+        "Verkoopprijs invullen",
+      ])
+    ).toEqual([])
+    expect(
+      productPublicationBlockers([
+        "Geen verkoopaanbod aanwezig",
+        "Ontbreekt: Titel",
+      ])
+    ).toEqual(["Ontbreekt: Titel"])
+  })
+})
+
 describe("approval wiring", () => {
   const root = join(__dirname, "..", "..", "..", "..")
 
-  it("keeps individual approval on the shared decision and the existing publish rule", () => {
+  it("publishes the same version from admin approval and bulk approval", () => {
     const route = readFileSync(
       join(root, "src/api/admin/product-cloud/products/[id]/approval/route.ts"),
       "utf8"
     )
+    const depsFile = readFileSync(
+      join(root, "src/api/admin/product-cloud/products/approval-deps.ts"),
+      "utf8"
+    )
     const workflow = readFileSync(join(root, "src/workflows/product-cloud/versions.ts"), "utf8")
+    const service = readFileSync(join(root, "src/modules/product-cloud/service.ts"), "utf8")
     const bulk = readFileSync(
       join(root, "src/api/admin/product-cloud/products/bulk-approval/route.ts"),
       "utf8"
     )
+    const sellerPage = readFileSync(
+      join(root, "..", "..", "apps/web/app/seller/products/[id]/page.tsx"),
+      "utf8"
+    )
     expect(route).toContain("approveProductWithDeps")
     expect(route).toContain("request_info")
+    expect(route).not.toContain("publishVersionWorkflow")
     expect(route).not.toContain("publishVersionGraph")
+    expect(depsFile).toContain("publishVersionWorkflow")
+    expect(depsFile).toContain("publishVersionAfterApproval")
+    expect(depsFile).toContain("productPublicationBlockers")
+    expect(bulk).toContain("runBulkProductApproval")
+    expect(bulk).toContain("buildAdminApprovalDeps")
+    expect(bulk).toContain("actor_id: actor")
+    const middlewares = readFileSync(join(root, "src/api/middlewares.ts"), "utf8")
+    const bulkMiddleware = middlewares.slice(middlewares.indexOf('"/admin/product-cloud/products/bulk-approval"'))
+    expect(bulkMiddleware.slice(0, 180)).toContain("adminAuth")
+    expect(bulk).not.toContain("publishVersionWorkflow")
     expect(workflow).toContain("publishVersionGraph")
+    expect(workflow).toContain('publication_status === "Gepubliceerd"')
     expect(workflow).toContain('publication_status: "Goedgekeurd"')
     expect(workflow).not.toContain('new_value: "Gepubliceerd"')
-    expect(bulk).not.toContain("createManufacturers")
-    expect(bulk).not.toContain("updateOffers")
+    const graph = service.slice(service.indexOf("async publishVersionGraph_"))
+    const guardAt = graph.indexOf('publication_status === "Gepubliceerd"')
+    const archiveAt = graph.indexOf('publication_status: "Gearchiveerd"')
+    expect(guardAt).toBeGreaterThan(-1)
+    expect(archiveAt).toBeGreaterThan(guardAt)
+    expect(sellerPage).toContain("submitForApproval")
+    expect(sellerPage).not.toContain("Product publiceren")
   })
 })

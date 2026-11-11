@@ -100,7 +100,7 @@ export const COMMERCIAL_NAV_GROUPS: CommercialNavGroup[] = [
       de: "Kleidung",
       fr: "Vêtements",
     },
-    pcSlugs: ["kleding", "mode"],
+    pcSlugs: ["kleding"],
   },
   {
     key: "schoenen-lederwaren",
@@ -191,6 +191,86 @@ export function commercialCatalogCategoryParam(keyOrSlug: string): string | null
 
 export function isCommercialNavKey(slug: string): boolean {
   return COMMERCIAL_NAV_GROUPS.some((g) => g.key === slug.trim().toLowerCase())
+}
+
+export type CategorySlugNode = {
+  id: string
+  slug: string | null
+  /** Display name; used to detect aggregate `Alles in …` categories. */
+  name?: string | null
+  parent_category_id: string | null
+}
+
+/** Verzamelcategorie: toont producten van de parent én alle sibling-subcategorieën. */
+export function isAggregateAllInCategory(
+  category: Pick<CategorySlugNode, "name" | "slug"> | string | null | undefined
+): boolean {
+  if (category == null) return false
+  if (typeof category === "string") {
+    const raw = category.trim()
+    return /^alles in\b/i.test(raw) || /^alles-in-/i.test(raw)
+  }
+  const name = String(category.name || "").trim()
+  if (/^alles in\b/i.test(name)) return true
+  const slug = String(category.slug || "").trim().toLowerCase()
+  return /^alles-in-/.test(slug)
+}
+
+/**
+ * Listingfilter voor een hoofdcategorie bevat ook de slugs van de kinderen.
+ * Een product dat alleen aan Heren hangt, blijft daardoor op Kleding zichtbaar.
+ *
+ * Voor `Alles in …` (L3-verzamelcategorie): ook de parent (L2) en alle sibling-L3's,
+ * zodat producten onder de categorie én onderliggende subcategorieën zichtbaar zijn
+ * zonder handmatige productlijsten. Deduplicatie via slug-set.
+ */
+export function expandCategorySlugsWithDescendants(
+  filter: string,
+  categories: CategorySlugNode[]
+): string {
+  const parts = filter
+    .split(",")
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean)
+  const bySlug = new Map<string, CategorySlugNode>()
+  const byId = new Map<string, CategorySlugNode>()
+  const childSlugs = new Map<string, string[]>()
+  for (const category of categories) {
+    const slug = category.slug?.trim().toLowerCase()
+    byId.set(category.id, category)
+    if (!slug) continue
+    bySlug.set(slug, category)
+    const parentId = category.parent_category_id
+    if (!parentId) continue
+    const list = childSlugs.get(parentId) ?? []
+    list.push(slug)
+    childSlugs.set(parentId, list)
+  }
+  const out: string[] = []
+  const seen = new Set<string>()
+  function walk(slug: string) {
+    if (seen.has(slug)) return
+    seen.add(slug)
+    out.push(slug)
+    const category = bySlug.get(slug)
+    if (!category) return
+    for (const child of childSlugs.get(category.id) ?? []) walk(child)
+  }
+  function expandAggregate(slug: string) {
+    const category = bySlug.get(slug)
+    if (!category || !isAggregateAllInCategory(category)) return
+    const parentId = category.parent_category_id
+    if (!parentId) return
+    const parent = byId.get(parentId)
+    const parentSlug = parent?.slug?.trim().toLowerCase()
+    if (parentSlug) walk(parentSlug)
+    for (const sibling of childSlugs.get(parentId) ?? []) walk(sibling)
+  }
+  for (const part of parts) {
+    walk(part)
+    expandAggregate(part)
+  }
+  return out.join(",")
 }
 
 export function pickCommercialNavLabel(

@@ -12,6 +12,9 @@ import {
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { COMMERCE_CLOUD_MODULE } from "../../modules/commerce-cloud"
 import type CommerceCloudModuleService from "../../modules/commerce-cloud/service"
+import { PRODUCT_CLOUD_MODULE } from "../../modules/product-cloud"
+import type ProductCloudModuleService from "../../modules/product-cloud/service"
+import { publicationStatusForIdentifier } from "../../modules/commerce-cloud/offer-sellability"
 import type { BuyBoxComputationResult } from "../../modules/commerce-cloud/buy-box-engine"
 import { PARTNER_MODULE } from "../../modules/partner"
 import type PartnerModuleService from "../../modules/partner/service"
@@ -77,11 +80,16 @@ export async function executeRecomputeBuyBox(
     sellerReviewScoreById = {}
   }
 
+  const publicationStatus = await publicationStatusForIdentifier(
+    container.resolve(PRODUCT_CLOUD_MODULE) as ProductCloudModuleService,
+    input.identifier_id
+  )
   const offerInputs = await commerce.buildBuyBoxOfferInputs(
     input.identifier_id,
     region,
     sellerTenureById,
-    sellerReviewScoreById
+    sellerReviewScoreById,
+    publicationStatus
   )
   const weights = await commerce.getActiveBuyBoxWeights()
   const result = await commerce.rankOffers(

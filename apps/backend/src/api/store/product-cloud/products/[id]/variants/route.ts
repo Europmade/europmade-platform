@@ -13,6 +13,12 @@ import {
   suggestVariantAxesForCategory,
   VARIANT_AXIS_OPTIONS,
 } from "../../../variant-axes"
+import {
+  applyShoeMaatToAxes,
+  canonicalizeShoeMaat,
+  presentVariantSize,
+  shoeSizeOptions,
+} from "../../../../../../modules/product-cloud/shoe-sizes"
 
 type RouteParams = { id: string }
 
@@ -61,23 +67,25 @@ export async function GET(
   await assertSellerCanDirectEditCatalog(req.scope, product, seller)
 
   const variants = await productCloud.listProductVariants({ product_id: id })
-  const links = await productCloud.listProductCategories({ product_id: id })
-  let categoryName = "Algemeen"
-  if (links[0]) {
-    try {
-      const cat = await productCloud.retrieveCategory(links[0].category_id)
-      categoryName = String((cat as { name?: string }).name || categoryName)
-    } catch {
-      /* keep default */
-    }
-  }
+  const categoryNames = await categoryNamesForProduct(productCloud, id)
+  const categoryName = categoryNames[0] || "Algemeen"
+  const shoe = shoeSizeOptions(categoryNames)
 
   const withIds = []
   for (const v of variants) {
     const identifiers = await productCloud.listIdentifiers({
       product_variant_id: v.id,
     })
-    withIds.push({ ...v, identifiers })
+    const row = v as { variant_type: string; variant_value: string }
+    withIds.push({
+      ...v,
+      identifiers,
+      size_label: presentVariantSize({
+        variantType: row.variant_type,
+        variantValue: row.variant_value,
+        categoryNames,
+      }),
+    })
   }
 
   res.json({
@@ -85,14 +93,40 @@ export async function GET(
     variants: withIds,
     suggested_axes: suggestVariantAxesForCategory(categoryName),
     allowed_variant_types: VARIANT_AXIS_OPTIONS,
+    shoe_sizes: shoe,
     note: "Voorstellen zijn categorie-heuristiek; seller bevestigt/past aan. Geen automatische overschrijving van bestaande data.",
   })
+}
+
+async function categoryNamesForProduct(
+  productCloud: ProductCloudModuleService,
+  productId: string
+): Promise<string[]> {
+  const links = await productCloud.listProductCategories({ product_id: productId })
+  const names: string[] = []
+  for (const link of links) {
+    try {
+      const cat = await productCloud.retrieveCategory(
+        (link as { category_id: string }).category_id
+      )
+      const name = String((cat as { name?: string }).name || "").trim()
+      if (name) names.push(name)
+    } catch {
+      /* skip a missing category */
+    }
+  }
+  return names
 }
 
 export async function POST(
   req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) {
+  await resolveApprovedSeller(req.scope, req.auth_context.actor_id)
+  throw new MedusaError(
+    MedusaError.Types.NOT_ALLOWED,
+    "Een verkoopbaar artikel is een zelfstandig product. Voeg geen variant toe; maak een nieuw product met een eigen EAN."
+  )
   const seller = await resolveApprovedSeller(
     req.scope,
     req.auth_context.actor_id
@@ -125,11 +159,16 @@ export async function POST(
     )
   }
 
+  const categoryNames = await categoryNamesForProduct(productCloud, id)
   let variantType = body.variant_type
   let variantValue = body.variant_value
   if (body.axes?.length) {
+    const sized = applyShoeMaatToAxes(body.axes, categoryNames)
+    if (!sized.ok) {
+      throw new MedusaError(MedusaError.Types.INVALID_DATA, sized.message)
+    }
     try {
-      const composed = composeVariantFromAxes(body.axes)
+      const composed = composeVariantFromAxes(sized.axes)
       variantType = composed.variant_type
       variantValue = composed.variant_value
     } catch (err) {
@@ -138,6 +177,12 @@ export async function POST(
         err instanceof Error ? err.message : "Ongeldige variantassen."
       )
     }
+  } else if (variantType === "Maat" && variantValue) {
+    const stored = canonicalizeShoeMaat(variantValue, categoryNames)
+    if (!stored.ok) {
+      throw new MedusaError(MedusaError.Types.INVALID_DATA, stored.message)
+    }
+    if ("value" in stored) variantValue = stored.value
   }
 
   if (body.duplicate_from_variant_id) {
@@ -161,6 +206,19 @@ export async function POST(
       MedusaError.Types.INVALID_DATA,
       "variant_type en variant_value zijn verplicht."
     )
+  }
+
+  if (variantType === "Maat") {
+    const existing = await productCloud.listProductVariants({ product_id: id })
+    const duplicate = (existing as Array<{ variant_type: string; variant_value: string }>).some(
+      (row) => row.variant_type === "Maat" && row.variant_value === variantValue
+    )
+    if (duplicate) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "Deze maat bestaat al als variant. Kies een andere maat."
+      )
+    }
   }
 
   const variant = await productCloud.createProductVariants({

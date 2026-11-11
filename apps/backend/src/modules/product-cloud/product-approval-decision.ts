@@ -1,4 +1,5 @@
 import { MedusaError } from "@medusajs/framework/utils"
+import type { ProductValidationFinding } from "./completeness"
 import {
   reviewsThatGateApproval,
   summarizeSectionReviews,
@@ -12,11 +13,21 @@ const SECTIONS_BLOCKED =
 const NOT_PUBLISHABLE =
   "Product is niet publiceerbaar — keur eerst verplichte documenten goed en controleer completeness."
 
+export type BulkProductSnapshot = {
+  identifier: string | null
+  lifecycle_status: string | null
+  publication_status: string | null
+  offer_status: string
+  sellability: string
+}
+
 export class ApprovalRejected extends Error {
   constructor(
     readonly http: "not_found" | "not_allowed",
     message: string,
-    readonly title: string | null = null
+    readonly title: string | null = null,
+    readonly findings: ProductValidationFinding[] = [],
+    readonly preview: BulkProductSnapshot | null = null
   ) {
     super(message)
     this.name = "ApprovalRejected"
@@ -42,7 +53,12 @@ export type ProductApprovalDeps = {
   listSectionReviews: (productId: string) => Promise<SectionReviewRow[]>
   loadPublishable: (
     productId: string
-  ) => Promise<{ publishable: boolean; reason?: string | null }>
+  ) => Promise<{
+    publishable: boolean
+    reason?: string | null
+    findings?: ProductValidationFinding[]
+    preview?: BulkProductSnapshot | null
+  }>
   assertGtin: (productId: string) => Promise<void>
   decide: (input: {
     product_id: string
@@ -58,6 +74,8 @@ export type ApprovalSuccess = {
   version_id: string
   version?: unknown
   lifecycle_status?: string
+  findings?: ProductValidationFinding[]
+  preview?: BulkProductSnapshot | null
 }
 
 export function matchesApprovalRelation(
@@ -87,7 +105,12 @@ function rejectedFrom(err: unknown, title: string | null): ApprovalRejected | nu
 export async function assessProductApproval(
   deps: ProductApprovalDeps,
   productId: string
-): Promise<{ version_id: string; title: string | null }> {
+): Promise<{
+  version_id: string
+  title: string | null
+  findings: ProductValidationFinding[]
+  preview: BulkProductSnapshot | null
+}> {
   let title: string | null = null
   try {
     await deps.retrieveProduct(productId)
@@ -113,30 +136,86 @@ export async function assessProductApproval(
   const summary = summarizeSectionReviews(
     reviewsThatGateApproval(await deps.listSectionReviews(productId))
   )
+  const blocking: ProductValidationFinding[] = []
   if (summary.needs_info_count > 0 || summary.rejected_count > 0) {
-    throw new ApprovalRejected("not_allowed", SECTIONS_BLOCKED, title)
+    blocking.push({
+      code: "section_reviews",
+      field: "Beoordelingsonderdelen",
+      category: "approval",
+      blocks: ["approval", "publication"],
+      severity: "blocker",
+      message: SECTIONS_BLOCKED,
+      action: "Werk de gevraagde onderdelen bij of rond de beoordeling af.",
+      status: "open",
+    })
   }
 
   const publishable = await deps.loadPublishable(productId)
+  const preview = publishable.preview ?? null
+  const reported = publishable.findings || []
+  const productBlocking = reported.filter(
+    (finding) =>
+      finding.severity === "blocker" &&
+      finding.blocks.some((gate) => gate !== "sale" && gate !== "warning")
+  )
+  const informational = reported.filter(
+    (finding) =>
+      finding.severity === "warning" || finding.blocks.includes("sale")
+  )
   if (!publishable.publishable) {
-    throw new ApprovalRejected(
-      "not_allowed",
-      publishable.reason?.trim() || NOT_PUBLISHABLE,
-      title
-    )
+    if (productBlocking.length > 0) blocking.push(...productBlocking)
+    else {
+      blocking.push({
+        code: "publication",
+        field: "Product",
+        category: "approval",
+        blocks: ["approval", "publication"],
+        severity: "blocker",
+        message: publishable.reason?.trim() || NOT_PUBLISHABLE,
+        action: "Los de genoemde productblokkade op en sla op.",
+        status: "open",
+      })
+    }
   }
 
   try {
     await deps.assertGtin(productId)
   } catch (err) {
     const rejected = rejectedFrom(err, title)
-    if (rejected) throw rejected
-    throw err
+    const message = rejected?.message || (err instanceof Error ? err.message : "EAN/GTIN is vereist")
+    if (!blocking.some((finding) => finding.message === message || finding.code === "ean")) {
+      blocking.push({
+        code: "ean",
+        field: "EAN / GTIN",
+        category: "submission",
+        blocks: ["submission", "approval", "publication"],
+        severity: "blocker",
+        message,
+        action: "Vul een geldige EAN/GTIN in en sla op.",
+        status: "open",
+      })
+    }
+    if (!rejected && !(err instanceof MedusaError)) throw err
+  }
+
+  if (blocking.length > 0) {
+    throw new ApprovalRejected(
+      "not_allowed",
+      blocking.map((finding) => finding.message).join(" "),
+      title,
+      [...blocking, ...informational],
+      preview
+    )
   }
 
   const target = versions.find((version) => version.publication_status === "In review")
-  if (!target) throw new ApprovalRejected("not_found", NOT_IN_REVIEW, title)
-  return { version_id: target.id, title: target.title || title }
+  if (!target) throw new ApprovalRejected("not_found", NOT_IN_REVIEW, title, informational, preview)
+  return {
+    version_id: target.id,
+    title: target.title || title,
+    findings: informational,
+    preview,
+  }
 }
 
 export async function approveProductWithDeps(
@@ -156,38 +235,118 @@ export async function approveProductWithDeps(
     version_id: assessed.version_id,
     version: decided.version,
     lifecycle_status: decided.lifecycle_status,
+    findings: assessed.findings,
+    preview: assessed.preview,
   }
 }
 
 export type BulkApprovalRow = {
   product_id: string
   title: string | null
+  identifier: string | null
+  lifecycle_status: string | null
+  publication_status: string | null
+  offer_status: string | null
+  sellability: string | null
   status: "eligible" | "approved" | "skipped" | "failed"
+  outcome_label: string
   reason: string | null
+  decided_by: string | null
+  findings?: ProductValidationFinding[]
 }
 
 export type BulkApprovalReport = {
   dry_run: boolean
   mode: "selected" | "relation"
+  selected_count: number
   eligible_count: number
   approved_count: number
   skipped_count: number
   failed_count: number
+  warning_count: number
+  partial: boolean
   limit_reached: boolean
   results: BulkApprovalRow[]
+}
+
+export function describeOfferStatus(input: {
+  offer_count?: number
+  sales_status?: string | null
+}): string {
+  if (!input.offer_count) return "Geen aanbod"
+  if (input.sales_status === "paused") return "Gepauzeerd"
+  if (input.sales_status === "active" || input.sales_status === "mixed") return "Actief"
+  return "Aanwezig"
+}
+
+export function describeSellability(sale: string | null | undefined): string {
+  if (sale === "for_sale") return "Te koop"
+  if (sale === "paused") return "Gepauzeerd"
+  if (sale === "no_offer") return "Geen aanbod"
+  if (sale === "not_published") return "Niet in winkel"
+  return "Niet verkoopbaar"
+}
+
+export function bulkOutcomeLabel(
+  status: BulkApprovalRow["status"],
+  findings: ProductValidationFinding[] = []
+): string {
+  if (status === "approved") return "Goedgekeurd en gepubliceerd"
+  if (status === "failed") return "Technisch mislukt"
+  if (status === "eligible") return "Geschikt voor goedkeuring"
+  const blocksApproval = findings.some(
+    (finding) =>
+      finding.severity === "blocker" &&
+      finding.blocks.some((gate) => gate !== "sale" && gate !== "warning")
+  )
+  return blocksApproval ? "Niet goedgekeurd" : "Overgeslagen"
+}
+
+function rowBase(
+  productId: string,
+  title: string | null,
+  status: BulkApprovalRow["status"],
+  reason: string | null,
+  findings: ProductValidationFinding[],
+  preview: BulkProductSnapshot | null,
+  decidedBy: string | null
+): BulkApprovalRow {
+  return {
+    product_id: productId,
+    title,
+    identifier: preview?.identifier ?? null,
+    lifecycle_status: preview?.lifecycle_status ?? null,
+    publication_status: preview?.publication_status ?? null,
+    offer_status: preview?.offer_status ?? null,
+    sellability: preview?.sellability ?? null,
+    status,
+    outcome_label: bulkOutcomeLabel(status, findings),
+    reason,
+    decided_by: decidedBy,
+    findings,
+  }
 }
 
 function countReport(
   rows: BulkApprovalRow[],
   input: { dry_run: boolean; mode: "selected" | "relation"; limit_reached: boolean }
 ): BulkApprovalReport {
+  const eligible_count = rows.filter((row) => row.status === "eligible").length
+  const approved_count = rows.filter((row) => row.status === "approved").length
+  const skipped_count = rows.filter((row) => row.status === "skipped").length
+  const failed_count = rows.filter((row) => row.status === "failed").length
   return {
     dry_run: input.dry_run,
     mode: input.mode,
-    eligible_count: rows.filter((row) => row.status === "eligible").length,
-    approved_count: rows.filter((row) => row.status === "approved").length,
-    skipped_count: rows.filter((row) => row.status === "skipped").length,
-    failed_count: rows.filter((row) => row.status === "failed").length,
+    selected_count: rows.length,
+    eligible_count,
+    approved_count,
+    skipped_count,
+    failed_count,
+    warning_count: rows.filter((row) =>
+      (row.findings || []).some((finding) => finding.severity === "warning")
+    ).length,
+    partial: approved_count > 0 && (skipped_count > 0 || failed_count > 0),
     limit_reached: input.limit_reached,
     results: rows,
   }
@@ -202,35 +361,54 @@ async function decideOne(
   try {
     if (dryRun) {
       const assessed = await assessProductApproval(deps, productId)
-      return {
-        product_id: productId,
-        title: assessed.title,
-        status: "eligible",
-        reason: null,
-      }
+      return rowBase(
+        productId,
+        assessed.title,
+        "eligible",
+        null,
+        assessed.findings,
+        assessed.preview,
+        null
+      )
     }
     const approved = await approveProductWithDeps(deps, { productId, actorId })
-    return {
-      product_id: productId,
-      title: approved.title,
-      status: "approved",
-      reason: null,
-    }
+    return rowBase(
+      productId,
+      approved.title,
+      "approved",
+      null,
+      approved.findings || [],
+      approved.preview ?? null,
+      actorId
+    )
   } catch (err) {
     if (err instanceof ApprovalRejected) {
-      return {
-        product_id: productId,
-        title: err.title,
-        status: "skipped",
-        reason: err.message,
-      }
+      const blocking = err.findings.filter(
+        (finding) =>
+          finding.severity === "blocker" &&
+          finding.blocks.some((gate) => gate !== "sale" && gate !== "warning")
+      )
+      return rowBase(
+        productId,
+        err.title,
+        "skipped",
+        blocking.length
+          ? blocking.map((finding) => `${finding.field}: ${finding.message}`).join(" · ")
+          : err.message,
+        err.findings,
+        err.preview,
+        null
+      )
     }
-    return {
-      product_id: productId,
-      title: null,
-      status: "failed",
-      reason: err instanceof Error ? err.message : "Goedkeuren is mislukt.",
-    }
+    return rowBase(
+      productId,
+      null,
+      "failed",
+      err instanceof Error ? err.message : "Goedkeuren is mislukt.",
+      [],
+      null,
+      null
+    )
   }
 }
 
@@ -282,14 +460,19 @@ export async function runBulkProductApproval(
     if (!product.id || seen.has(product.id)) continue
     seen.add(product.id)
     if (!matchesApprovalRelation(product, relation)) {
-      results.push({
-        product_id: product.id,
-        title: null,
-        status: "skipped",
-        reason: brandId
-          ? "Dit product hoort niet bij het gekozen merk."
-          : "Dit product hoort niet bij de gekozen fabrikant.",
-      })
+      results.push(
+        rowBase(
+          product.id,
+          null,
+          "skipped",
+          brandId
+            ? "Dit product hoort niet bij het gekozen merk."
+            : "Dit product hoort niet bij de gekozen fabrikant.",
+          [],
+          null,
+          null
+        )
+      )
       continue
     }
     results.push(await decideOne(deps, product.id, input.actor_id, dryRun))

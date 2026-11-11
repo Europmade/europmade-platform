@@ -1,9 +1,15 @@
 import {
-  classifyProductAvailability,
   formatAffiliateCommissionPercent,
+  offerShipsToCountry,
   persistMediaReference,
+  pickDisplayableMediaReference,
   type ProductAvailability,
 } from "@europmade/utils"
+import {
+  evaluateOfferSellability,
+  shippingProfileFacts,
+  storefrontAvailability,
+} from "../../../modules/commerce-cloud/offer-sellability"
 import type { MedusaContainer } from "@medusajs/framework/types"
 import { commissionForSellerProduct } from "../../../modules/affiliate/offer-commission"
 import { COMMERCE_CLOUD_MODULE } from "../../../modules/commerce-cloud"
@@ -17,8 +23,10 @@ import type ReviewModuleService from "../../../modules/review/service"
 import { buildProductCloudPreview } from "../product-cloud/product-preview"
 import { loadBuyBoxForIdentifier } from "../commerce-cloud/buy-box-helpers"
 import {
+  categoryIdsMatchingCatalogFilter,
   productMatchesCategoryFilter,
 } from "../../../modules/product-cloud/category-attributes"
+import { presentVariantSize } from "../../../modules/product-cloud/shoe-sizes"
 import { loadMadeInEuropeForProduct } from "../product-cloud/made-in-europe-helpers"
 import {
   findClaimForProductRefs,
@@ -27,9 +35,36 @@ import {
 import { VERIFICATION_MODULE } from "../../../modules/verification"
 import type VerificationModuleService from "../../../modules/verification/service"
 import { buildEffectivePriceView } from "../../../modules/commerce-cloud/offer-pricing"
-import { offerReachesDestination } from "../../../modules/commerce-cloud/offer-destination"
 import { normalizeCountryRates } from "../../../modules/commerce-cloud/shipping-profile-types"
 import { toPublicProductLinkGroup } from "../../../modules/product-cloud/product-link-groups"
+
+function versionTimestamp(version: { created_at?: string | Date | null }): string | null {
+  const raw = version.created_at
+  if (!raw) return null
+  const date = raw instanceof Date ? raw : new Date(raw)
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null
+}
+
+function comparePrice(
+  left: number | null | undefined,
+  right: number | null | undefined
+): number {
+  const leftOk = left != null && Number.isFinite(left) && left > 0
+  const rightOk = right != null && Number.isFinite(right) && right > 0
+  if (leftOk && rightOk && left !== right) return (left as number) - (right as number)
+  if (leftOk !== rightOk) return leftOk ? -1 : 1
+  return 0
+}
+
+function compareNewest(left?: string | null, right?: string | null): number {
+  const leftTime = left ? Date.parse(left) : Number.NaN
+  const rightTime = right ? Date.parse(right) : Number.NaN
+  const leftOk = Number.isFinite(leftTime)
+  const rightOk = Number.isFinite(rightTime)
+  if (leftOk && rightOk && leftTime !== rightTime) return rightTime - leftTime
+  if (leftOk !== rightOk) return leftOk ? -1 : 1
+  return 0
+}
 
 type PublishedVersion = {
   id: string
@@ -49,6 +84,7 @@ export type CatalogListItem = {
   manufacturer_id: string | null
   manufacturer_name: string | null
   category_names: string[]
+  category_slugs?: string[]
   identifier_id: string | null
   identifier_type: string | null
   identifier_value: string | null
@@ -67,6 +103,17 @@ export type CatalogListItem = {
   average_review_score: number | null
   review_count: number
   image_url: string | null
+  brand_id?: string | null
+  brand_slug?: string | null
+  brand_logo_url?: string | null
+  brand_page_published?: boolean
+  published_at?: string | null
+  attributes?: Array<{
+    code: string | null
+    name: string
+    value: string
+    unit: string | null
+  }>
 }
 
 export type CatalogMediaItem = {
@@ -110,6 +157,8 @@ export type CatalogOfferView = {
   base_price: number
   shipping_cost: number
   total_price: number
+  regular_total_price: number | null
+  promo_active: boolean
   quantity_available: number
   rank: number
   is_winner: boolean
@@ -176,6 +225,39 @@ async function findPublishedProductIdsByQuery(
  * Gepubliceerde Product Cloud-producten (guest-read, Blueprint API-model §3).
  * Hergebruikt bestaande listProductVersions + buildProductCloudPreview.
  */
+async function productIdsForCategoryNameFilter(
+  productCloud: ProductCloudModuleService,
+  categoryFilter: string
+): Promise<Set<string>> {
+  const categories = (await productCloud.listCategories({}, { take: 4000 })) as Array<{
+    id: string
+    name?: string | null
+  }>
+  const categoryIds = new Set(categoryIdsMatchingCatalogFilter(categories, categoryFilter))
+  if (categoryIds.size === 0) return new Set()
+  const links = (await productCloud.listProductCategories({}, { take: 20000 })) as Array<{
+    product_id?: string
+    category_id?: string
+    product?: { id?: string } | string | null
+    category?: { id?: string } | string | null
+  }>
+  const allowed = new Set<string>()
+  for (const link of links) {
+    const categoryId =
+      (typeof link.category_id === "string" && link.category_id) ||
+      (typeof link.category === "string" && link.category) ||
+      (link.category && typeof link.category === "object" && link.category.id) ||
+      ""
+    const productId =
+      (typeof link.product_id === "string" && link.product_id) ||
+      (typeof link.product === "string" && link.product) ||
+      (link.product && typeof link.product === "object" && link.product.id) ||
+      ""
+    if (categoryId && productId && categoryIds.has(categoryId)) allowed.add(productId)
+  }
+  return allowed
+}
+
 export async function listPublishedCatalogProducts(
   scope: MedusaContainer,
   opts: {
@@ -192,6 +274,7 @@ export async function listPublishedCatalogProducts(
     price_max?: number
     verified?: boolean
     ids?: string[]
+    include_attributes?: boolean
     sort?:
       | "popularity"
       | "price_asc"
@@ -224,7 +307,9 @@ export async function listPublishedCatalogProducts(
   const limit = Math.max(1, opts.limit ?? 24)
   const offset = Math.max(0, opts.offset ?? 0)
   const q = opts.q?.trim().toLowerCase() ?? ""
-  const scanTake = q || idSet ? 8000 : Math.max(opts.take ?? 400, offset + limit)
+  const categoryFilter = opts.category?.trim().toLowerCase() ?? ""
+  const scanTake =
+    q || idSet || categoryFilter ? 8000 : Math.max(opts.take ?? 400, offset + limit)
   const sortKey = opts.sort ?? "popularity"
 
   const versions = (await productCloud.listProductVersions(
@@ -242,13 +327,16 @@ export async function listPublishedCatalogProducts(
     if (published.length >= scanTake) break
   }
 
-  const categoryFilter = opts.category?.trim().toLowerCase() ?? ""
   const brandFilter = opts.brand_id?.trim().toLowerCase() ?? ""
   const manufacturerFilter = opts.manufacturer_id?.trim().toLowerCase() ?? ""
 
   const qProductIds = q ? await findPublishedProductIdsByQuery(productCloud, q) : new Set<string>()
 
   const brandNameById = new Map<string, string | null>()
+  const brandIdentityById = new Map<
+    string,
+    { name: string | null; slug: string | null; logo_url: string | null; page_published: boolean }
+  >()
   const manufacturerNameById = new Map<string, string | null>()
   const brandCountryById = new Map<string, string | null>()
   const versionIdByProduct = new Map<string, string>()
@@ -265,11 +353,50 @@ export async function listPublishedCatalogProducts(
   )
   const needsCountryDuringScan = Boolean(opts.country_code)
 
+  async function cachedBrandIdentity(brandId: string): Promise<{
+    name: string | null
+    slug: string | null
+    logo_url: string | null
+    page_published: boolean
+  }> {
+    const cached = brandIdentityById.get(brandId)
+    if (cached) return cached
+    let identity: {
+      name: string | null
+      slug: string | null
+      logo_url: string | null
+      page_published: boolean
+    }
+    if (!brandId) {
+      identity = { name: null, slug: null, logo_url: null, page_published: false }
+    } else {
+      try {
+        const brand = await partner.retrieveBrand(brandId)
+        const slug = typeof brand.slug === "string" ? brand.slug.trim() : ""
+        const logo = typeof brand.logo_url === "string" ? brand.logo_url.trim() : ""
+        identity = {
+          name: brand.name?.trim() || null,
+          slug: slug || null,
+          logo_url: logo || null,
+          page_published: brand.public_page_status === "published" && slug.length > 0,
+        }
+      } catch {
+        identity = {
+          name: await resolveBrandName(partner, brandId),
+          slug: null,
+          logo_url: null,
+          page_published: false,
+        }
+      }
+    }
+    brandIdentityById.set(brandId, identity)
+    return identity
+  }
   async function cachedBrandName(brandId: string): Promise<string | null> {
     if (brandNameById.has(brandId)) return brandNameById.get(brandId) ?? null
-    const name = await resolveBrandName(partner, brandId)
-    brandNameById.set(brandId, name)
-    return name
+    const identity = await cachedBrandIdentity(brandId)
+    brandNameById.set(brandId, identity.name)
+    return identity.name
   }
   async function cachedManufacturerName(
     manufacturerId: string
@@ -356,6 +483,11 @@ export async function listPublishedCatalogProducts(
               .toLowerCase()
             return hay.includes(q) || version.product_id.toLowerCase().includes(compactQ)
           })
+  }
+
+  if (categoryFilter) {
+    const allowed = await productIdsForCategoryNameFilter(productCloud, categoryFilter)
+    scanList = scanList.filter((row) => allowed.has(row.product_id))
   }
 
   const items: CatalogListItem[] = []
@@ -486,6 +618,7 @@ export async function listPublishedCatalogProducts(
     if (opts.price_max != null && (from_price == null || from_price > opts.price_max)) {
       continue
     }
+    if (offer_count === 0) continue
 
     versionIdByProduct.set(version.product_id, version.id)
     brandIdByProduct.set(version.product_id, preview.brand_id)
@@ -500,6 +633,7 @@ export async function listPublishedCatalogProducts(
       manufacturer_id: preview.manufacturer_id || null,
       manufacturer_name,
       category_names: preview.category_names,
+      category_slugs: preview.category_slugs,
       identifier_id: preview.identifier_id,
       identifier_type: preview.identifier_type,
       identifier_value: preview.identifier_value,
@@ -514,6 +648,8 @@ export async function listPublishedCatalogProducts(
       average_review_score: null,
       review_count: 0,
       image_url: null,
+      published_at: versionTimestamp(version),
+      attributes: [],
     })
   }
 
@@ -543,9 +679,9 @@ export async function listPublishedCatalogProducts(
     items.sort((a, b) => {
       switch (sort) {
         case "price_asc":
-          return (a.from_price ?? Number.MAX_SAFE_INTEGER) - (b.from_price ?? Number.MAX_SAFE_INTEGER)
+          return comparePrice(a.from_price, b.from_price)
         case "price_desc":
-          return (b.from_price ?? 0) - (a.from_price ?? 0)
+          return comparePrice(b.from_price, a.from_price)
         case "rating_desc":
           return (b.average_review_score ?? 0) - (a.average_review_score ?? 0)
         case "name_asc":
@@ -569,7 +705,7 @@ export async function listPublishedCatalogProducts(
           return bc.localeCompare(ac, "nl") || (b.title ?? "").localeCompare(a.title ?? "", "nl")
         }
         case "newest":
-          return (b.id ?? "").localeCompare(a.id ?? "")
+          return compareNewest(a.published_at, b.published_at)
         case "oldest":
           return (a.id ?? "").localeCompare(b.id ?? "")
         case "popularity":
@@ -617,7 +753,20 @@ export async function listPublishedCatalogProducts(
             : null
       }
       item.image_url = image_url
-      item.brand_name = brand_name
+      if (opts.include_attributes) {
+        item.attributes = await loadPublicProductAttributes(
+          productCloud,
+          versionIdByProduct.get(item.id) ?? "",
+          item.id,
+          { includeUnlistedCodes: true }
+        )
+      }
+      const identity = await cachedBrandIdentity(brandId)
+      item.brand_name = brand_name || identity.name
+      item.brand_id = brandId || null
+      item.brand_slug = identity.slug
+      item.brand_logo_url = identity.logo_url
+      item.brand_page_published = identity.page_published
       item.manufacturer_name = manufacturer_name
       item.country_code = country_code
       await attachHighestAffiliateCommission(
@@ -721,6 +870,103 @@ export async function loadManufacturerCatalogPage(
   }
 }
 
+async function publicEuropeanOwnershipForProduct(
+  scope: MedusaContainer,
+  product: { brand_id?: string | null; manufacturer_id?: string | null }
+) {
+  const brandId = String(product.brand_id || "").trim()
+  const manufacturerId = String(product.manufacturer_id || "").trim()
+  if (!brandId && !manufacturerId) return null
+  try {
+    const verification = scope.resolve(
+      VERIFICATION_MODULE
+    ) as VerificationModuleService
+    const claim = await findClaimForProductRefs(verification, {
+      brand_id: brandId || null,
+      manufacturer_id: manufacturerId || null,
+    })
+    return toPublicEuropeanOwnership(claim)
+  } catch {
+    return null
+  }
+}
+
+async function madeInEuropeEvidenceApproved(
+  scope: MedusaContainer,
+  productId: string,
+  qualifies: boolean
+): Promise<boolean> {
+  if (!qualifies) return false
+  try {
+    const verification = scope.resolve(
+      VERIFICATION_MODULE
+    ) as VerificationModuleService
+    const rows = (await verification.listProductOriginEvidences({
+      product_id: productId,
+    })) as Array<{ verification_status?: string; evidence_kind?: string | null }>
+    return rows.some(
+      (row) =>
+        row.verification_status === "approved" &&
+        (!row.evidence_kind || row.evidence_kind === "made_in_europe")
+    )
+  } catch {
+    return false
+  }
+}
+
+function productionCountryLabel(origin: {
+  production_country?: string | null
+  primary_assembly_country?: string | null
+} | null): string | null {
+  const raw = (origin?.production_country || "").trim()
+  if (raw && raw.toUpperCase() !== "EU") return raw
+  const code = (origin?.primary_assembly_country || "").trim()
+  return code || null
+}
+
+async function storefrontMadeInEurope(
+  scope: MedusaContainer,
+  productId: string
+) {
+  const mie = await loadMadeInEuropeForProduct(scope, productId)
+  if (!mie) return null
+  const score = mie.score
+  const evidence_approved = await madeInEuropeEvidenceApproved(
+    scope,
+    productId,
+    Boolean(score?.is_made_in_europe && score.score != null)
+  )
+  const qualifies =
+    Boolean(score?.is_made_in_europe) && typeof score?.score === "number"
+  return {
+    is_made_in_europe: qualifies,
+    score: qualifies ? score!.score : null,
+    incomplete: !score,
+    evidence_approved: qualifies ? evidence_approved : false,
+    assembly_points: score?.assembly_points ?? 0,
+    parts_points: score?.parts_points ?? 0,
+    materials_points: score?.materials_points ?? 0,
+    max_assembly: score?.max_assembly ?? 75,
+    max_parts: score?.max_parts ?? 15,
+    max_materials: score?.max_materials ?? 10,
+    assembly_eu_band: score?.assembly_eu_band ?? mie.origin?.assembly_eu_band ?? "",
+    parts_eu_level: score?.parts_eu_level ?? mie.origin?.parts_eu_level ?? "",
+    materials_eu_level:
+      score?.materials_eu_level ?? mie.origin?.materials_eu_level ?? "",
+    primary_assembly_country:
+      score?.primary_assembly_country ?? mie.origin?.primary_assembly_country ?? null,
+    production_country_label: productionCountryLabel(mie.origin),
+    facility: mie.facility
+      ? {
+          id: mie.facility.id,
+          name: mie.facility.name,
+          country_code: mie.facility.country_code,
+          region: mie.facility.region ?? null,
+        }
+      : null,
+  }
+}
+
 /**
  * Publieke PDP-payload: Product Cloud + Buy Box + Offer-commercieel + reviews.
  */
@@ -772,8 +1018,8 @@ export async function loadCatalogProductDetail(
         image_url: null,
         media: [],
       },
-      made_in_europe: null,
-      european_ownership: null,
+      made_in_europe: await storefrontMadeInEurope(scope, productId),
+      european_ownership: await publicEuropeanOwnershipForProduct(scope, product),
       buy_box: null,
       offers: [],
       reviews: [],
@@ -842,53 +1088,8 @@ export async function loadCatalogProductDetail(
     }
   }
 
-  const mie = await loadMadeInEuropeForProduct(scope, productId)
-  const made_in_europe = mie?.score
-    ? {
-        is_made_in_europe: mie.score.is_made_in_europe,
-        score: mie.score.score,
-        assembly_points: mie.score.assembly_points,
-        parts_points: mie.score.parts_points,
-        materials_points: mie.score.materials_points,
-        max_assembly: mie.score.max_assembly,
-        max_parts: mie.score.max_parts,
-        max_materials: mie.score.max_materials,
-        assembly_eu_band: mie.score.assembly_eu_band,
-        parts_eu_level: mie.score.parts_eu_level,
-        materials_eu_level: mie.score.materials_eu_level,
-        primary_assembly_country: mie.score.primary_assembly_country,
-        facility: mie.facility
-          ? {
-              id: mie.facility.id,
-              name: mie.facility.name,
-              country_code: mie.facility.country_code,
-              region: mie.facility.region ?? null,
-            }
-          : null,
-      }
-    : null
-
-  let european_ownership = null as ReturnType<typeof toPublicEuropeanOwnership>
-  const brandId = String(
-    (product as { brand_id?: string | null }).brand_id || ""
-  ).trim()
-  const manufacturerId = String(
-    (product as { manufacturer_id?: string | null }).manufacturer_id || ""
-  ).trim()
-  if (brandId || manufacturerId) {
-    try {
-      const verification = scope.resolve(
-        VERIFICATION_MODULE
-      ) as VerificationModuleService
-      const claim = await findClaimForProductRefs(verification, {
-        brand_id: brandId || null,
-        manufacturer_id: manufacturerId || null,
-      })
-      european_ownership = toPublicEuropeanOwnership(claim)
-    } catch {
-      european_ownership = null
-    }
-  }
+  const made_in_europe = await storefrontMadeInEurope(scope, productId)
+  const european_ownership = await publicEuropeanOwnershipForProduct(scope, product)
 
   const rawLinkGroup =
     await productCloud.getActiveProductLinkGroupForProduct(productId)
@@ -948,41 +1149,37 @@ export async function loadCatalogProductDetail(
       identifier_id: preview.identifier_id,
       region_code: region,
     })
-    const facts = []
+    const judged = []
     for (const offer of regionOffers) {
-      const [inventory] = await commerce.listOfferInventories({
-        offer_id: offer.id,
-      })
-      const profile = offer.shipping_profile_id
-        ? await loadShippingProfile(commerce, offer.shipping_profile_id)
-        : null
-      const rates = profile
-        ? normalizeCountryRates(
-            profile.country_rates as Record<string, unknown> | null
-          )
-        : null
-      const rate = rates?.[region]
-      facts.push({
-        salesStatus: offer.sales_status,
-        quantityAvailable: Number(inventory?.quantity_available ?? 0),
-        regionCode: offer.region_code,
-        shippingProfileId: offer.shipping_profile_id,
-        profileStatus: profile
-          ? String(profile.status ?? "active")
-          : offer.shipping_profile_id
-            ? "inactive"
-            : null,
-        countryActive: offer.shipping_profile_id
-          ? Boolean(rate && rate.active !== false)
-          : null,
-      })
+      judged.push(await judgeCatalogOffer(commerce, offer, "Gepubliceerd", region))
     }
-    availability = classifyProductAvailability({
+    availability = storefrontAvailability({
       published: true,
-      destinationCountry: region,
-      offers: facts,
+      offers: judged,
     })
   }
+
+  const productAttributes = await loadPublicProductAttributes(
+    productCloud,
+    version.id,
+    productId
+  )
+  const publicVariants = (
+    (await productCloud.listProductVariants({ product_id: productId })) as Array<{
+      id: string
+      variant_type: string
+      variant_value: string
+    }>
+  ).map((row) => ({
+    id: row.id,
+    variant_type: row.variant_type,
+    variant_value: row.variant_value,
+    size_label: presentVariantSize({
+      variantType: row.variant_type,
+      variantValue: row.variant_value,
+      categoryNames: preview.category_names,
+    }),
+  }))
 
   return {
     availability,
@@ -994,12 +1191,15 @@ export async function loadCatalogProductDetail(
       brand_name,
       manufacturer_name,
       category_names: preview.category_names,
+      category_slugs: preview.category_slugs,
       identifier_id: preview.identifier_id,
       identifier_type: preview.identifier_type,
       identifier_value: preview.identifier_value,
       country_code: made_in_europe?.primary_assembly_country ?? country_code,
       image_url: await resolvePrimaryImageUrl(productCloud, version.id),
       media: await resolveProductMediaItems(productCloud, version.id),
+      attributes: productAttributes,
+      variants: publicVariants,
     },
     made_in_europe,
     european_ownership,
@@ -1028,15 +1228,75 @@ export async function loadCatalogProductDetail(
   }
 }
 
+async function loadPublicProductAttributes(
+  productCloud: ProductCloudModuleService,
+  versionId: string,
+  productId: string,
+  options?: { includeUnlistedCodes?: boolean }
+): Promise<
+  Array<{
+    code: string | null
+    name: string
+    value: string
+    unit: string | null
+    sort_order: number
+  }>
+> {
+  try {
+    const { isManagedProductSpecCode, formatSpecDisplayValue } = await import(
+      "../../../modules/product-cloud/product-specifications"
+    )
+    const vals = (await productCloud.listAttributeValues({
+      product_version_id: versionId,
+    })) as Array<{ attribute_definition_id: string; value?: string | null }>
+    if (!vals.length) return []
+    const defIds = [...new Set(vals.map((v) => v.attribute_definition_id))]
+    const defs = (await productCloud.listAttributeDefinitions({
+      id: defIds,
+    })) as Array<{
+      id: string
+      code?: string | null
+      name?: string
+      unit?: string | null
+      sort_order?: number | null
+    }>
+    const defById = new Map(defs.map((d) => [d.id, d]))
+    const out: Array<{
+      code: string | null
+      name: string
+      value: string
+      unit: string | null
+      sort_order: number
+    }> = []
+    for (const row of vals) {
+      const value = String(row.value || "").trim()
+      if (!value) continue
+      const def = defById.get(row.attribute_definition_id)
+      const code = def?.code ?? null
+      if (!options?.includeUnlistedCodes && !isManagedProductSpecCode(code)) continue
+      if (options?.includeUnlistedCodes && !code?.trim()) continue
+      out.push({
+        code,
+        name: def?.name || code || row.attribute_definition_id,
+        value: formatSpecDisplayValue({ unit: def?.unit ?? undefined }, value),
+        unit: def?.unit ?? null,
+        sort_order: Number(def?.sort_order ?? 0),
+      })
+    }
+    out.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "nl"))
+    void productId
+    return out
+  } catch {
+    return []
+  }
+}
+
 async function resolvePrimaryImageUrl(
   productCloud: ProductCloudModuleService,
   versionId: string
 ): Promise<string | null> {
   const items = await resolveProductMediaItems(productCloud, versionId)
-  const primary =
-    items.find((m) => m.media_type === "Hoofdafbeelding") ||
-    items.find((m) => m.media_type !== "Video")
-  return primary?.storage_reference ?? null
+  return pickDisplayableMediaReference(items)
 }
 
 export async function resolveProductMediaItems(
@@ -1148,6 +1408,85 @@ async function resolveManufacturerCountry(
   }
 }
 
+async function judgeCatalogOffer(
+  commerce: CommerceCloudModuleService,
+  offer: {
+    id: string
+    seller_id: string
+    region_code?: string | null
+    sales_status?: string | null
+    delivery_days_max?: number | null
+    shipping_profile_id?: string | null
+  },
+  publicationStatus: string,
+  destination: string
+): Promise<{
+  ships: boolean
+  decision: ReturnType<typeof evaluateOfferSellability>
+  total_price: number | null
+  unit_price: number | null
+  offer_id: string
+  seller_id: string
+}> {
+  const [[inventory], [price]] = await Promise.all([
+    commerce.listOfferInventories({ offer_id: offer.id }),
+    commerce.listOfferPrices({ offer_id: offer.id }),
+  ])
+  const profile = offer.shipping_profile_id
+    ? await loadShippingProfile(commerce, offer.shipping_profile_id)
+    : null
+  const facts = shippingProfileFacts({
+    shipping_profile_id: offer.shipping_profile_id,
+    region_code: offer.region_code,
+    profile,
+  })
+  const view =
+    price != null
+      ? buildEffectivePriceView({
+          base_price: Number(price.base_price),
+          shipping_cost: Number(price.shipping_cost),
+          extra_delivery_cost:
+            price.extra_delivery_cost != null ? Number(price.extra_delivery_cost) : null,
+          promo_price: price.promo_price != null ? Number(price.promo_price) : null,
+          promo_starts_at: price.promo_starts_at ?? null,
+          promo_ends_at: price.promo_ends_at ?? null,
+        })
+      : null
+  const destinationCode = destination.trim().toUpperCase()
+  const rates = profile
+    ? normalizeCountryRates(profile.country_rates as Record<string, unknown> | null)
+    : null
+  const destinationRate = rates?.[destinationCode]
+  return {
+    ships: offerShipsToCountry({
+      regionCode: offer.region_code,
+      destinationCountry: destinationCode,
+      shippingProfileId: offer.shipping_profile_id,
+      profileStatus: facts.shipping_profile_status,
+      countryActive: offer.shipping_profile_id
+        ? Boolean(destinationRate && destinationRate.active !== false)
+        : null,
+    }),
+    decision: evaluateOfferSellability({
+      has_offer: true,
+      sales_status: offer.sales_status,
+      base_price: view?.unit_price ?? null,
+      has_inventory: inventory != null,
+      quantity_available: inventory != null ? Number(inventory.quantity_available) : null,
+      delivery_days_max:
+        offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
+      shipping_profile_id: offer.shipping_profile_id,
+      shipping_profile_status: facts.shipping_profile_status,
+      shipping_profile_serves_region: facts.shipping_profile_serves_region,
+      publication_status: publicationStatus,
+    }),
+    total_price: view?.total_customer_price ?? null,
+    unit_price: view?.unit_price ?? null,
+    offer_id: offer.id,
+    seller_id: offer.seller_id,
+  }
+}
+
 async function loadShippingProfile(
   commerce: CommerceCloudModuleService,
   profileId: string
@@ -1162,46 +1501,20 @@ async function minOfferPricing(
   regionCode: string,
   profileCache: Map<string, { status: string; countryActive: boolean } | null> = new Map()
 ): Promise<{ offer_count: number; from_price: number | null }> {
+  void profileCache
   const offers = await commerce.listOffers({
     identifier_id: identifierId,
     region_code: regionCode,
   })
-  const reachable = []
-  for (const offer of offers) {
-    if ((offer.sales_status ?? "active") !== "active") continue
-    if (
-      await offerReachesDestination(
-        offer,
-        regionCode,
-        (id) => loadShippingProfile(commerce, id),
-        profileCache
-      )
-    ) {
-      reachable.push(offer)
-    }
-  }
-  const active = reachable
   const priced = await Promise.all(
-    active.map(async (offer) => {
-      const [[inventory], [price]] = await Promise.all([
-        commerce.listOfferInventories({ offer_id: offer.id }),
-        commerce.listOfferPrices({ offer_id: offer.id }),
-      ])
-      if (!inventory || !price) return null
-      if (Number(inventory.quantity_available) <= 0) return null
-      const view = buildEffectivePriceView({
-        base_price: Number(price.base_price),
-        shipping_cost: Number(price.shipping_cost),
-        extra_delivery_cost:
-          price.extra_delivery_cost != null
-            ? Number(price.extra_delivery_cost)
-            : null,
-        promo_price:
-          price.promo_price != null ? Number(price.promo_price) : null,
-        promo_starts_at: price.promo_starts_at ?? null,
-        promo_ends_at: price.promo_ends_at ?? null,
-      })
-      return view.total_customer_price
+    offers.map(async (offer) => {
+      const judged = await judgeCatalogOffer(
+        commerce,
+        offer,
+        "Gepubliceerd",
+        regionCode
+      )
+      return judged.decision.sellable ? judged.total_price : null
     })
   )
   let from_price: number | null = null
@@ -1229,42 +1542,19 @@ async function listSellableOfferRows(
     identifier_id: identifierId,
     region_code: regionCode,
   })
-  const reachable = []
-  for (const offer of offers) {
-    if ((offer.sales_status ?? "active") !== "active") continue
-    if (
-      await offerReachesDestination(offer, regionCode, (id) =>
-        loadShippingProfile(commerce, id)
-      )
-    ) {
-      reachable.push(offer)
-    }
-  }
-  const active = reachable
   const rows = await Promise.all(
-    active.map(async (offer) => {
-      const [[inventory], [price]] = await Promise.all([
-        commerce.listOfferInventories({ offer_id: offer.id }),
-        commerce.listOfferPrices({ offer_id: offer.id }),
-      ])
-      if (!inventory || !price) return null
-      if (Number(inventory.quantity_available) <= 0) return null
-      const view = buildEffectivePriceView({
-        base_price: Number(price.base_price),
-        shipping_cost: Number(price.shipping_cost),
-        extra_delivery_cost:
-          price.extra_delivery_cost != null
-            ? Number(price.extra_delivery_cost)
-            : null,
-        promo_price:
-          price.promo_price != null ? Number(price.promo_price) : null,
-        promo_starts_at: price.promo_starts_at ?? null,
-        promo_ends_at: price.promo_ends_at ?? null,
-      })
+    offers.map(async (offer) => {
+      const judged = await judgeCatalogOffer(
+        commerce,
+        offer,
+        "Gepubliceerd",
+        regionCode
+      )
+      if (!judged.decision.sellable || judged.unit_price == null) return null
       return {
-        offer_id: offer.id,
-        seller_id: offer.seller_id,
-        unit_price: view.unit_price,
+        offer_id: judged.offer_id,
+        seller_id: judged.seller_id,
+        unit_price: judged.unit_price,
       }
     })
   )
@@ -1380,6 +1670,12 @@ async function enrichRankedOffers(
       base_price: unitPrice,
       shipping_cost: view ? view.shipping_cost + view.extra_delivery_cost : 0,
       total_price: view ? view.total_customer_price : ranked.total_price,
+      regular_total_price: view
+        ? view.regular_price + view.shipping_cost + view.extra_delivery_cost
+        : null,
+      promo_active: Boolean(
+        view?.promo_active && view.regular_price > view.unit_price
+      ),
       quantity_available: ranked.quantity_available,
       rank: ranked.rank,
       is_winner: ranked.is_winner,

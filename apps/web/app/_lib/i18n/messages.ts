@@ -974,6 +974,60 @@ const M = {
     "Mindestens 50 % der wesentlichen Montageschritte müssen in der EU stattfinden. Nur Verpacken oder Etikettieren zählt nicht.",
     "Au moins 50 % des étapes d'assemblage substantielles doivent avoir lieu dans l'UE. L'emballage ou l'étiquetage seuls ne comptent pas."
   ),
+  mieScoreTitle: L(
+    "EuropMade-score",
+    "EuropMade score",
+    "EuropMade-Score",
+    "Score EuropMade"
+  ),
+  mieNotCalculated: L(
+    "Niet berekend",
+    "Not calculated",
+    "Nicht berechnet",
+    "Non calculé"
+  ),
+  mieNotCalculatedBody: L(
+    "Assemblage, onderdelen of materialen ontbreken. Er wordt geen score geschat.",
+    "Assembly, parts or materials are missing. No score is estimated.",
+    "Montage, Teile oder Materialien fehlen. Es wird kein Score geschätzt.",
+    "L'assemblage, les composants ou les matériaux manquent. Aucun score n'est estimé."
+  ),
+  mieProductionCountry: L(
+    "Productieland",
+    "Production country",
+    "Produktionsland",
+    "Pays de production"
+  ),
+  pdpMieInputsTitle: L(
+    "Productiegegevens voor de EuropMade-score",
+    "Production data for the EuropMade score",
+    "Produktionsdaten für den EuropMade-Score",
+    "Données de production pour le score EuropMade"
+  ),
+  pdpMieSaveBands: L(
+    "Gegevens voor de score opslaan",
+    "Save data for the score",
+    "Daten für den Score speichern",
+    "Enregistrer les données du score"
+  ),
+  pdpMieChoose: L(
+    "Kies…",
+    "Choose…",
+    "Wählen…",
+    "Choisir…"
+  ),
+  pdpMieMissing: L(
+    "Ontbreekt",
+    "Missing",
+    "Fehlt",
+    "Manque"
+  ),
+  pdpMieBulkLink: L(
+    "Productielocaties en scores voor meerdere producten",
+    "Production sites and scores for several products",
+    "Produktionsstandorte und Scores für mehrere Produkte",
+    "Sites de production et scores pour plusieurs produits"
+  ),
   mieInfoAria: L(
     "Meer informatie over EU Verified™ en de Made in Europe-score",
     "More information about EU Verified™ and the Made in Europe score",
@@ -1956,6 +2010,18 @@ const M = {
     "Dieser Prozentsatz zeigt den Anteil europäischen Eigentums des relevanten Herstellers/Unternehmens. Er ist unabhängig vom Produktionsort.",
     "Ce pourcentage indique la part de propriété européenne du producteur/entreprise concerné. Il est indépendant du lieu de fabrication."
   ),
+  euOwnershipInfoAria: L(
+    "Uitleg over Europees eigendom van het merk",
+    "Explanation of European brand ownership",
+    "Erklärung zum europäischen Markeneigentum",
+    "Explication sur la propriété européenne de la marque"
+  ),
+  euOwnershipDialogBody: L(
+    "Europees eigendom gaat over wie de onderneming of het merk in eigendom heeft. De Made in Europe-score gaat over waar het product wordt geassembleerd en welke onderdelen en materialen uit Europa komen. Die twee metingen mogen niet door elkaar worden gehaald.",
+    "European ownership is about who owns the company or brand. The Made in Europe score is about where the product is assembled and which parts and materials come from Europe. Do not confuse the two measures.",
+    "Europäisches Eigentum betrifft, wem das Unternehmen oder die Marke gehört. Der Made-in-Europe-Score betrifft, wo das Produkt montiert wird und welche Teile und Materialien aus Europa stammen. Beide Kennzahlen nicht vermischen.",
+    "La propriété européenne concerne qui détient l'entreprise ou la marque. Le score Made in Europe concerne le lieu d'assemblage et la part européenne des composants et matériaux. Ne confondez pas les deux."
+  ),
   euOwnershipVerified: L(
     "Geverifieerd door EuropMade",
     "Verified by EuropMade",
@@ -1977,6 +2043,26 @@ const M = {
     "Add to cart",
     "In den Warenkorb",
     "Ajouter au panier"
+  ),
+  discount: L("Korting", "Discount", "Rabatt", "Promotion"),
+  highDiscount: L("Hoge korting", "High discount", "Hoher Rabatt", "Forte réduction"),
+  productRating: L(
+    "Beoordeling {rating}",
+    "Rating {rating}",
+    "Bewertung {rating}",
+    "Note {rating}"
+  ),
+  addFavorite: L(
+    "{title} aan favorieten toevoegen",
+    "Add {title} to favourites",
+    "{title} zu Favoriten hinzufügen",
+    "Ajouter {title} aux favoris"
+  ),
+  removeFavorite: L(
+    "{title} uit favorieten verwijderen",
+    "Remove {title} from favourites",
+    "{title} aus Favoriten entfernen",
+    "Retirer {title} des favoris"
   ),
   adding: L("Bezig…", "Adding…", "Wird hinzugefügt…", "Ajout…"),
   goToCart: L(
@@ -2134,6 +2220,31 @@ const M = {
     "Récemment consultés"
   ),
   inStock: L("Op voorraad", "In stock", "Auf Lager", "En stock"),
+  conceptProduct: L(
+    "Concept – alleen preview",
+    "Concept – preview only",
+    "Konzept – nur Vorschau",
+    "Concept – aperçu seulement"
+  ),
+  conceptChoiceNotice: L(
+    "Deze keuzehulp gebruikt conceptproducten. Er wordt geen koopadvies gegeven.",
+    "This choice assistant uses concept products. It does not recommend a purchase.",
+    "Diese Auswahlhilfe verwendet Konzeptprodukte. Es wird kein Kauf empfohlen.",
+    "Cette aide au choix utilise des produits concept. Aucun conseil d’achat n’est donné."
+  ),
+  conceptPriceMissing: L(
+    "Prijs nog niet beschikbaar",
+    "Price not available yet",
+    "Preis noch nicht verfügbar",
+    "Prix pas encore disponible"
+  ),
+  conceptImageMissing: L("Geen afbeelding", "No image", "Kein Bild", "Pas d’image"),
+  testProductNotForSale: L(
+    "Testproduct – niet te koop",
+    "Test product – not for sale",
+    "Testprodukt – nicht käuflich",
+    "Produit test – non disponible à l’achat"
+  ),
   addFailed: L(
     "Toevoegen mislukt. De aanbieding is mogelijk nog niet beschikbaar.",
     "Could not add. The offer may not be available yet.",
@@ -3888,6 +3999,12 @@ const M = {
   ),
   sellerNavDashboard: L("Dashboard", "Dashboard", "Dashboard", "Tableau de bord"),
   sellerNavProducts: L("Producten", "Products", "Produkte", "Produits"),
+  sellerNavMadeInEurope: L(
+    "Made in Europe",
+    "Made in Europe",
+    "Made in Europe",
+    "Made in Europe"
+  ),
   sellerNavOrders: L("Orders", "Orders", "Bestellungen", "Commandes"),
   sellerNavMessages: L("Berichten", "Messages", "Nachrichten", "Messages"),
   sellerNavReturns: L("Retouren", "Returns", "Retouren", "Retours"),
@@ -9049,7 +9166,26 @@ const M = {
   saleBlocked: L("Geblokkeerd", "Blocked", "Blockiert", "Bloqué"),
   saleBlockedFull: L("Verkoop geblokkeerd", "Sales blocked", "Verkauf blockiert", "Vente bloquée"),
   saleNeedOffer: L("Nog nodig: verkoopaanbieding aanmaken", "Still needed: create a sales offer", "Noch nötig: Verkaufsangebot erstellen", "Encore nécessaire : créer une offre"),
-  saleNeedPublish: L("Nog nodig: product publiceren", "Still needed: publish the product", "Noch nötig: Produkt veröffentlichen", "Encore nécessaire : publier le produit"),
+  saleNeedPublish: L(
+    "Nog nodig: goedkeuring door EuropMade. Daarna wordt het product gepubliceerd.",
+    "Still needed: EuropMade approval. The product is published at that moment.",
+    "Noch nötig: Freigabe durch EuropMade. Danach wird das Produkt veröffentlicht.",
+    "Encore nécessaire : approbation EuropMade. Le produit est alors publié."
+  ),
+  submitForApproval: L(
+    "Indienen ter goedkeuring",
+    "Submit for approval",
+    "Zur Freigabe einreichen",
+    "Soumettre pour approbation"
+  ),
+  stripApproval: L("Productgoedkeuring", "Product approval", "Produktfreigabe", "Approbation produit"),
+  stripPublication: L("Publicatiestatus", "Publication status", "Veröffentlichungsstatus", "Statut de publication"),
+  stripOffer: L("Aanbodstatus", "Offer status", "Angebotsstatus", "Statut de l'offre"),
+  stripSellability: L("Verkoopbaarheid", "Sellability", "Verkaufbarkeit", "Vendabilité"),
+  stripApprovalPending: L("Nog niet ingediend", "Not submitted", "Noch nicht eingereicht", "Pas encore soumis"),
+  stripArchived: L("Gearchiveerd", "Archived", "Archiviert", "Archivé"),
+  stripOfferActive: L("Actief", "Active", "Aktiv", "Actif"),
+  stripOfferPresent: L("Aanwezig", "Present", "Vorhanden", "Présent"),
   saleBlockedNeedList: L("Nog nodig", "Still needed", "Noch nötig", "Encore nécessaire"),
   vatAutoByMarket: L("BTW automatisch bepaald op basis van markt", "VAT set automatically by market", "MwSt. automatisch anhand des Marktes", "TVA déterminée automatiquement selon le marché"),
   mediaPrimaryBadge: L("primair", "primary", "primär", "principal"),
@@ -9525,7 +9661,7 @@ const M = {
   // —— P2.15.1: Import page ——
   importChooseFile: L("Kies eerst een CSV- of XLSX-bestand.", "Choose a CSV or XLSX file first.", "Wähle zuerst eine CSV- oder XLSX-Datei.", "Choisissez d'abord un fichier CSV ou XLSX."),
   importPreviewFailed: L("Preview mislukt.", "Preview failed.", "Vorschau fehlgeschlagen.", "Échec de l'aperçu."),
-  importBlockedErrors: L("Importeren is geblokkeerd zolang er foute regels zijn.", "Import is blocked while there are invalid rows.", "Import ist blockiert, solange fehlerhafte Zeilen vorhanden sind.", "L'importation est bloquée tant qu'il y a des lignes erronées."),
+  importBlockedErrors: L("Geen enkele regel kan als Concept worden opgeslagen. Alleen technisch onverwerkbare regels blijven staan.", "No row can be stored as a draft. Only technically unusable rows remain.", "Keine Zeile kann als Entwurf gespeichert werden. Nur technisch unverarbeitbare Zeilen bleiben übrig.", "Aucune ligne ne peut être enregistrée comme brouillon. Seules les lignes techniquement inutilisables restent."),
   importFailed: L("Import mislukt.", "Import failed.", "Import fehlgeschlagen.", "Échec de l'importation."),
   importFailedMaybeCreated: L(
     "De import gaf een technische fout, maar het product kan al zijn aangemaakt. Controleer Producten of open het product hieronder als het in de lijst staat.",
@@ -9598,6 +9734,444 @@ const M = {
   importStatusConcept: L("Concept", "Draft", "Entwurf", "Brouillon"),
   importBreadcrumb: L("Importeren", "Import", "Importieren", "Importer"),
   importDownloadFailed: L("Download mislukt.", "Download failed.", "Download fehlgeschlagen.", "Échec du téléchargement."),
+  importTitle: L(
+    "Producten importeren",
+    "Import products",
+    "Produkte importieren",
+    "Importer des produits"
+  ),
+  importIntro: L(
+    "Eén bestand, één brontaal. Vul titel en beschrijving in die taal in — geen aparte Engelse of Duitse kolommen. Na import vertaalt de bestaande AI-flow naar de vereiste doeltalen. Zonder EAN wordt een Concept aangemaakt (titel, merk, categorie verplicht). EAN/GTIN is verplicht vóór indienen, goedkeuring, publicatie en verkoop.",
+    "One file, one source language. Enter title and description in that language — no separate English or German columns. After import, the existing AI flow translates into the required target languages. Without an EAN a Draft is created (title, brand and category required). EAN/GTIN is required before submission, approval, publication and sale.",
+    "Eine Datei, eine Quellsprache. Titel und Beschreibung in dieser Sprache eintragen — keine separaten englischen oder deutschen Spalten. Nach dem Import übersetzt der bestehende KI-Flow in die erforderlichen Zielsprachen. Ohne EAN wird ein Entwurf angelegt (Titel, Marke und Kategorie erforderlich). EAN/GTIN ist vor Einreichung, Freigabe, Veröffentlichung und Verkauf erforderlich.",
+    "Un fichier, une langue source. Saisissez le titre et la description dans cette langue — pas de colonnes anglaise ou allemande séparées. Après l'import, le flux IA existant traduit vers les langues cibles requises. Sans EAN, un brouillon est créé (titre, marque et catégorie obligatoires). L'EAN/GTIN est obligatoire avant soumission, approbation, publication et vente."
+  ),
+  importDownloadXlsx: L(
+    "EuropMade product template.xlsx",
+    "EuropMade product template.xlsx",
+    "EuropMade product template.xlsx",
+    "EuropMade product template.xlsx"
+  ),
+  importDownloadCsv: L(
+    "EuropMade product import.csv (eenvoudig)",
+    "EuropMade product import.csv (simple)",
+    "EuropMade product import.csv (einfach)",
+    "EuropMade product import.csv (simple)"
+  ),
+  importTemplateHelp: L(
+    "De interactieve template met categoriedropdowns en automatische specificaties is uitsluitend het Excel-bestand (.xlsx). CSV is een eenvoudige importoptie zonder dropdowns of formules. Rood = verplicht bij aanmaken, lichtblauw = optioneel, geel = voorwaardelijk verplicht. CE-/MiE-/GPSR-bewijs en handleidingen: via de seller-wizard uploaden, niet via Excel. Categoriekenmerken vul je in stap 2 na de preview.",
+    "The interactive template with category dropdowns and automatic specifications is the Excel file (.xlsx) only. CSV is a simple import option without dropdowns or formulas. Red = required on create, light blue = optional, yellow = conditionally required. CE/MiE/GPSR evidence and manuals: upload via the seller wizard, not via Excel. Fill category attributes in step 2 after the preview.",
+    "Die interaktive Vorlage mit Kategorie-Dropdowns und automatischen Spezifikationen ist ausschließlich die Excel-Datei (.xlsx). CSV ist eine einfache Importoption ohne Dropdowns oder Formeln. Rot = beim Anlegen erforderlich, hellblau = optional, gelb = bedingt erforderlich. CE-/MiE-/GPSR-Nachweise und Handbücher: über den Seller-Wizard hochladen, nicht über Excel. Kategorieattribute füllst du in Schritt 2 nach der Vorschau aus.",
+    "Le modèle interactif avec listes déroulantes de catégories et spécifications automatiques est uniquement le fichier Excel (.xlsx). Le CSV est une option d'import simple sans listes déroulantes ni formules. Rouge = obligatoire à la création, bleu clair = facultatif, jaune = conditionnellement obligatoire. Preuves CE/MiE/GPSR et manuels : téléversez-les via l'assistant vendeur, pas via Excel. Remplissez les attributs de catégorie à l'étape 2 après l'aperçu."
+  ),
+  importLanguagesLoadFailed: L(
+    "Talenlijst kon niet worden geladen.",
+    "Language list could not be loaded.",
+    "Sprachliste konnte nicht geladen werden.",
+    "La liste des langues n'a pas pu être chargée."
+  ),
+  importChooseSourceLanguage: L(
+    "Kies in welke taal de ingevulde productgegevens zijn geschreven.",
+    "Choose the language in which the filled-in product data is written.",
+    "Wähle die Sprache, in der die ausgefüllten Produktdaten geschrieben sind.",
+    "Choisissez la langue dans laquelle les données produit saisies sont rédigées."
+  ),
+  importReusedCount: L(
+    "Centrale producten hergebruikt: {count}. De centrale productinformatie is niet overschreven.",
+    "Central products reused: {count}. Central product information was not overwritten.",
+    "Zentrale Produkte wiederverwendet: {count}. Die zentrale Produktinformation wurde nicht überschrieben.",
+    "Produits centraux réutilisés : {count}. Les informations produit centrales n'ont pas été écrasées."
+  ),
+  importProductName: L("Productnaam", "Product name", "Produktname", "Nom du produit"),
+  importStatusLabel: L("Status", "Status", "Status", "Statut"),
+  importSuggestionsList: L(
+    "Voorstellen: {list}.",
+    "Suggestions: {list}.",
+    "Vorschläge: {list}.",
+    "Suggestions : {list}."
+  ),
+  importSourceLanguageLabel: L(
+    "In welke taal zijn de ingevulde productgegevens geschreven?",
+    "In which language is the filled-in product data written?",
+    "In welcher Sprache sind die ausgefüllten Produktdaten geschrieben?",
+    "Dans quelle langue les données produit saisies sont-elles rédigées ?"
+  ),
+  importSourceLanguagePlaceholder: L(
+    "— kies een taal —",
+    "— choose a language —",
+    "— Sprache wählen —",
+    "— choisissez une langue —"
+  ),
+  importLanguageHelper: L(
+    "De UI-taal bepaalt de taal van deze pagina. Het Excel-producttemplate is altijd Engels. De brontaal hieronder is de taal van jouw productgegevens in het bestand — die kan anders zijn.",
+    "The UI language controls this page. The Excel product template is always English. The source language below is the language of your product data in the file — it can differ.",
+    "Die UI-Sprache steuert diese Seite. Die Excel-Produktvorlage ist immer Englisch. Die Quellsprache unten ist die Sprache deiner Produktdaten in der Datei — sie kann abweichen.",
+    "La langue de l'interface contrôle cette page. Le modèle Excel produit est toujours en anglais. La langue source ci-dessous est celle des données produit dans votre fichier — elle peut différer."
+  ),
+  importFileLabel: L(
+    "Eigen CSV of XLSX",
+    "Your own CSV or XLSX",
+    "Eigene CSV oder XLSX",
+    "Votre propre CSV ou XLSX"
+  ),
+  importBusy: L("Bezig…", "Working…", "Wird ausgeführt…", "En cours…"),
+  importPreviewStep: L(
+    "Stap 1: Preview",
+    "Step 1: Preview",
+    "Schritt 1: Vorschau",
+    "Étape 1 : Aperçu"
+  ),
+  importPreviewSummary: L(
+    "{rows} gegevensregel(s) · {newProducts} nieuw · {existing} bestaand centraal product · {offersCreate} nieuwe offers · {offersUpdate} bij te werken offers · {attention} met aandachtspunten · {newBrands} nieuwe merken · {errors} technisch niet verwerkt · {skipped} lege regel(s) overgeslagen",
+    "{rows} data row(s) · {newProducts} new · {existing} existing central product(s) · {offersCreate} new offer(s) · {offersUpdate} offer(s) to update · {attention} with attention points · {newBrands} new brands · {errors} technically skipped · {skipped} empty row(s) skipped",
+    "{rows} Datensatz/Datensätze · {newProducts} neu · {existing} bestehendes zentrales Produkt · {offersCreate} neue Offer(s) · {offersUpdate} zu aktualisierende Offer(s) · {attention} mit Hinweisen · {newBrands} neue Marken · {errors} technisch übersprungen · {skipped} leere Zeile(n) übersprungen",
+    "{rows} ligne(s) de données · {newProducts} nouveau(x) · {existing} produit(s) central/centraux existant(s) · {offersCreate} nouvelle(s) offre(s) · {offersUpdate} offre(s) à mettre à jour · {attention} avec points d'attention · {newBrands} nouvelles marques · {errors} techniquement ignorée(s) · {skipped} ligne(s) vide(s) ignorée(s)"
+  ),
+  importSourceLanguageSuffix: L(
+    " · brontaal {name}",
+    " · source language {name}",
+    " · Quellsprache {name}",
+    " · langue source {name}"
+  ),
+  importUnknownColumns: L(
+    "Onbekende kolommen (geen extra producten): {columns}",
+    "Unknown columns (no extra products): {columns}",
+    "Unbekannte Spalten (keine zusätzlichen Produkte): {columns}",
+    "Colonnes inconnues (pas de produits supplémentaires) : {columns}"
+  ),
+  importDataRowsHeading: L(
+    "Producten",
+    "Products",
+    "Produkte",
+    "Produits"
+  ),
+  importCategoryStatusLinked: L("Gekoppeld", "Linked", "Verknüpft", "Lié"),
+  importCategoryStatusSuggested: L(
+    "Categorievoorstel beschikbaar",
+    "Category suggestion available",
+    "Kategorievorschlag verfügbar",
+    "Suggestion de catégorie disponible"
+  ),
+  importCategoryStatusUnassigned: L(
+    "Categorie moet worden toegewezen",
+    "Category must be assigned",
+    "Kategorie muss zugewiesen werden",
+    "La catégorie doit être attribuée"
+  ),
+  importExcelRowProduct: L(
+    "Excel-regel {row} → Product {index}",
+    "Excel row {row} → Product {index}",
+    "Excel-Zeile {row} → Produkt {index}",
+    "Ligne Excel {row} → Produit {index}"
+  ),
+  importNoProductName: L(
+    " — geen productnaam gelezen",
+    " — no product name read",
+    " — kein Produktname gelesen",
+    " — aucun nom de produit lu"
+  ),
+  importCategoryInExcel: L(
+    "Categorie in Excel",
+    "Category in Excel",
+    "Kategorie in Excel",
+    "Catégorie dans Excel"
+  ),
+  importEuropMadeCategory: L(
+    "EuropMade-categorie",
+    "EuropMade category",
+    "EuropMade-Kategorie",
+    "Catégorie EuropMade"
+  ),
+  importSuggestions: L("Voorstellen", "Suggestions", "Vorschläge", "Suggestions"),
+  importChooseCategoryLater: L(
+    "Categorie later kiezen",
+    "Choose category later",
+    "Kategorie später wählen",
+    "Choisir la catégorie plus tard"
+  ),
+  importChooseCategoryPlaceholder: L(
+    "— kies een EuropMade-categorie —",
+    "— choose a EuropMade category —",
+    "— EuropMade-Kategorie wählen —",
+    "— choisissez une catégorie EuropMade —"
+  ),
+  importColumnMatching: L(
+    "Kolommatching",
+    "Column matching",
+    "Spaltenzuordnung",
+    "Correspondance des colonnes"
+  ),
+  importNotMapped: L(
+    "— niet gekoppeld —",
+    "— not mapped —",
+    "— nicht zugeordnet —",
+    "— non associé —"
+  ),
+  importRefreshPreview: L(
+    "Preview verversen",
+    "Refresh preview",
+    "Vorschau aktualisieren",
+    "Actualiser l'aperçu"
+  ),
+  importCategoryAttributesStep: L(
+    "Stap 2: Categoriekenmerken",
+    "Step 2: Category attributes",
+    "Schritt 2: Kategorieattribute",
+    "Étape 2 : Attributs de catégorie"
+  ),
+  importCategoryAttributesHelp: L(
+    "Herkend: {categories}. Vul deze velden aan vóór je het product later ter controle indient.",
+    "Detected: {categories}. Complete these fields before you later submit the product for review.",
+    "Erkannt: {categories}. Fülle diese Felder aus, bevor du das Produkt später zur Prüfung einreichst.",
+    "Détecté : {categories}. Complétez ces champs avant de soumettre plus tard le produit pour contrôle."
+  ),
+  importRow: L("Rij", "Row", "Zeile", "Ligne"),
+  importConditionallyRequired: L(
+    "(voorwaardelijk verplicht)",
+    "(conditionally required)",
+    "(bedingt erforderlich)",
+    "(conditionnellement obligatoire)"
+  ),
+  importOptional: L("(optioneel)", "(optional)", "(optional)", "(facultatif)"),
+  importNoCategoryAttributes: L(
+    "Categorie {categories} heeft geen extra cataloguskenmerken in deze algemene import.",
+    "Category {categories} has no extra catalogue attributes in this general import.",
+    "Kategorie {categories} hat in diesem allgemeinen Import keine zusätzlichen Katalogattribute.",
+    "La catégorie {categories} n'a pas d'attributs catalogue supplémentaires dans cet import général."
+  ),
+  importIssueRow: L("Rij {row}", "Row {row}", "Zeile {row}", "Ligne {row}"),
+  importIssueField: L(
+    ", veld {field}",
+    ", field {field}",
+    ", Feld {field}",
+    ", champ {field}"
+  ),
+  importReuseConfirm: L(
+    "Bestaande centrale producten worden hergebruikt. De centrale productinformatie blijft ongewijzigd. Alleen je eigen offers worden aangemaakt of bijgewerkt.",
+    "Existing central products will be reused. Central product information stays unchanged. Only your own offers are created or updated.",
+    "Bestehende zentrale Produkte werden wiederverwendet. Die zentrale Produktinformation bleibt unverändert. Nur deine eigenen Offers werden angelegt oder aktualisiert.",
+    "Les produits centraux existants seront réutilisés. Les informations produit centrales restent inchangées. Seules vos propres offres sont créées ou mises à jour."
+  ),
+  importSubmit: L("Importeren", "Import", "Importieren", "Importer"),
+  importChooseSourceLanguageFirst: L(
+    "Kies eerst de brontaal voordat je importeert.",
+    "Choose the source language before importing.",
+    "Wähle zuerst die Quellsprache, bevor du importierst.",
+    "Choisissez d'abord la langue source avant d'importer."
+  ),
+  importBackToProducts: L(
+    "Terug naar producten",
+    "Back to products",
+    "Zurück zu Produkten",
+    "Retour aux produits"
+  ),
+  importResultTitle: L(
+    "Importresultaat",
+    "Import result",
+    "Importergebnis",
+    "Résultat de l'import"
+  ),
+  importStartNew: L(
+    "Nieuwe import",
+    "New import",
+    "Neuer Import",
+    "Nouvel import"
+  ),
+  importStoredOne: L(
+    "1 product succesvol geïmporteerd",
+    "1 product imported successfully",
+    "1 Produkt erfolgreich importiert",
+    "1 produit importé avec succès"
+  ),
+  importStoredMany: L(
+    "{count} producten succesvol geïmporteerd",
+    "{count} products imported successfully",
+    "{count} Produkte erfolgreich importiert",
+    "{count} produits importés avec succès"
+  ),
+  importToneComplete: L("Groen", "Complete", "Vollständig", "Complet"),
+  importToneAttention: L("Oranje", "Needs attention", "Aufmerksamkeit", "À compléter"),
+  importToneFailed: L("Rood", "Not imported", "Nicht importiert", "Non importé"),
+  importCountComplete: L(
+    "{count} compleet",
+    "{count} complete",
+    "{count} vollständig",
+    "{count} complet(s)"
+  ),
+  importCountAttention: L(
+    "{count} aandacht nodig",
+    "{count} need attention",
+    "{count} mit Aufmerksamkeit",
+    "{count} à compléter"
+  ),
+  importCountFailed: L(
+    "{count} niet geïmporteerd",
+    "{count} not imported",
+    "{count} nicht importiert",
+    "{count} non importé(s)"
+  ),
+  importCountBreakdown: L(
+    "{rows} verwerkte Excel-regels · {created} nieuwe producten · {reused} hergebruikte producten · {updated} bijgewerkte producten · {newOffers} nieuwe aanbiedingen · {updatedOffers} bijgewerkte aanbiedingen · {skipped} overgeslagen regels · {errors} regels met een fout",
+    "{rows} processed Excel rows · {created} new products · {reused} reused products · {updated} updated products · {newOffers} new offers · {updatedOffers} updated offers · {skipped} skipped rows · {errors} rows with an error",
+    "{rows} verarbeitete Excel-Zeilen · {created} neue Produkte · {reused} wiederverwendete Produkte · {updated} aktualisierte Produkte · {newOffers} neue Angebote · {updatedOffers} aktualisierte Angebote · {skipped} übersprungene Zeilen · {errors} Zeilen mit einem Fehler",
+    "{rows} lignes Excel traitées · {created} nouveaux produits · {reused} produits réutilisés · {updated} produits mis à jour · {newOffers} nouvelles offres · {updatedOffers} offres mises à jour · {skipped} lignes ignorées · {errors} lignes en erreur"
+  ),
+  importColEan: L("EAN/GTIN", "EAN/GTIN", "EAN/GTIN", "EAN/GTIN"),
+  importColBrand: L("Merk", "Brand", "Marke", "Marque"),
+  importColCategory: L("Productcategorie", "Product category", "Produktkategorie", "Catégorie de produit"),
+  importColRequired: L(
+    "Ontbrekende verplichte gegevens",
+    "Missing required data",
+    "Fehlende Pflichtangaben",
+    "Données obligatoires manquantes"
+  ),
+  importColOptional: L(
+    "Ontbrekende optionele gegevens",
+    "Missing optional data",
+    "Fehlende optionale Angaben",
+    "Données facultatives manquantes"
+  ),
+  importColDetails: L("Details", "Details", "Details", "Détails"),
+  importExpandRow: L("Uitklappen", "Expand", "Aufklappen", "Déplier"),
+  importNothingRequired: L(
+    "Niets verplichts",
+    "Nothing required",
+    "Nichts Pflicht",
+    "Rien d'obligatoire"
+  ),
+  importRequiredHeading: L(
+    "Ontbrekende verplichte gegevens",
+    "Missing required data",
+    "Fehlende Pflichtangaben",
+    "Données obligatoires manquantes"
+  ),
+  importOptionalHeading: L(
+    "Ontbrekende optionele gegevens",
+    "Missing optional data",
+    "Fehlende optionale Angaben",
+    "Données facultatives manquantes"
+  ),
+  importWarningsHeading: L("Waarschuwingen", "Warnings", "Warnungen", "Avertissements"),
+  importFollowUpHeading: L(
+    "Nader in te stellen",
+    "Still to set",
+    "Noch einzustellen",
+    "À régler ensuite"
+  ),
+  importFollowUpShipping: L(
+    "stel dit in voordat het aanbod verkoopbaar wordt",
+    "set this before the offer can be sold",
+    "stelle dies ein, bevor das Angebot verkaufbar wird",
+    "réglez ceci avant que l'offre puisse être vendue"
+  ),
+  importOptionalEmpty: L(
+    "Geen ontbrekende optionele gegevens",
+    "No missing optional data",
+    "Keine fehlenden optionalen Angaben",
+    "Aucune donnée facultative manquante"
+  ),
+  importWarningsEmpty: L(
+    "Geen waarschuwingen",
+    "No warnings",
+    "Keine Warnungen",
+    "Aucun avertissement"
+  ),
+  importOptionalNotBlocking: L(
+    "Optionele gegevens zijn niet nodig om het product te verwerken.",
+    "Optional data is not required to process the product.",
+    "Optionale Angaben sind nicht nötig, um das Produkt zu verarbeiten.",
+    "Les données facultatives ne sont pas nécessaires pour traiter le produit."
+  ),
+  importGapCreate: L(
+    "Nodig om het product te kunnen aanmaken.",
+    "Required to create the product.",
+    "Nötig, um das Produkt anzulegen.",
+    "Nécessaire pour créer le produit."
+  ),
+  importGapSubmit: L(
+    "Nodig voor indiening of goedkeuring. Het product blijft een Concept.",
+    "Required for submission or approval. The product stays a draft.",
+    "Nötig für Einreichung oder Freigabe. Das Produkt bleibt ein Entwurf.",
+    "Nécessaire pour la soumission ou l'approbation. Le produit reste un brouillon."
+  ),
+  importGapPublication: L(
+    "Nodig voor publicatie. Concept-aanmaak gaat door.",
+    "Required for publication. Draft creation still continues.",
+    "Nötig für die Veröffentlichung. Der Entwurf wird trotzdem angelegt.",
+    "Nécessaire pour la publication. La création du brouillon continue."
+  ),
+  importGapSale: L(
+    "Nodig voor verkoopbaarheid. Concept-aanmaak gaat door.",
+    "Required before the product can be sold. Draft creation still continues.",
+    "Nötig für die Verkaufbarkeit. Der Entwurf wird trotzdem angelegt.",
+    "Nécessaire pour la vente. La création du brouillon continue."
+  ),
+  importOptionalHint: L(
+    "Aanvullen is nuttig, maar niet verplicht om het product te verwerken.",
+    "Useful to complete, but not required to process the product.",
+    "Nützlich zum Ergänzen, aber nicht nötig, um das Produkt zu verarbeiten.",
+    "Utile à compléter, mais pas obligatoire pour traiter le produit."
+  ),
+  importWarningBrand: L(
+    "Dit merk is nieuw en moet nog door een beheerder worden beoordeeld. Het wordt niet automatisch geverifieerd.",
+    "This brand is new and still needs an admin review. It is not verified automatically.",
+    "Diese Marke ist neu und muss noch von einer Verwaltung geprüft werden. Sie wird nicht automatisch verifiziert.",
+    "Cette marque est nouvelle et doit encore être examinée par un administrateur. Elle n'est pas vérifiée automatiquement."
+  ),
+  importWarningCategory: L(
+    "De categorie uit Excel is niet als zekere EuropMade-categorie overgenomen.",
+    "The Excel category was not accepted as a certain EuropMade category.",
+    "Die Excel-Kategorie wurde nicht als sichere EuropMade-Kategorie übernommen.",
+    "La catégorie Excel n'a pas été retenue comme catégorie EuropMade certaine."
+  ),
+  importWarningGeneric: L(
+    "Dit punt vraagt aandacht. Het product is niet afgekeurd door deze waarschuwing.",
+    "This point needs attention. This warning did not reject the product.",
+    "Dieser Punkt braucht Aufmerksamkeit. Diese Warnung hat das Produkt nicht abgelehnt.",
+    "Ce point demande attention. Cet avertissement n'a pas rejeté le produit."
+  ),
+  importRowNotProcessed: L(
+    "Deze regel is niet geïmporteerd.",
+    "This row was not imported.",
+    "Diese Zeile wurde nicht importiert.",
+    "Cette ligne n'a pas été importée."
+  ),
+  importCategoryUnmatched: L(
+    "Niet gekoppeld ({name})",
+    "Not linked ({name})",
+    "Nicht verknüpft ({name})",
+    "Non liée ({name})"
+  ),
+  importViewImportedProduct: L(
+    "Bekijk product",
+    "View product",
+    "Produkt ansehen",
+    "Voir le produit"
+  ),
+  importPreviewPlain: L(
+    "{products} producten · {existing} bestaande centrale producten · {newOffers} nieuwe aanbiedingen · {problems} problemen",
+    "{products} products · {existing} existing central products · {newOffers} new offers · {problems} problems",
+    "{products} Produkte · {existing} bestehende zentrale Produkte · {newOffers} neue Angebote · {problems} Probleme",
+    "{products} produits · {existing} produits centraux existants · {newOffers} nouvelles offres · {problems} problèmes"
+  ),
+  importWillCreate: L(
+    "Deze import maakt {created} nieuwe producten en {newOffers} nieuwe aanbiedingen aan. {reused} bestaande centrale producten worden hergebruikt. {updatedOffers} aanbiedingen worden bijgewerkt.",
+    "This import creates {created} new products and {newOffers} new offers. {reused} existing central products are reused. {updatedOffers} offers are updated.",
+    "Dieser Import legt {created} neue Produkte und {newOffers} neue Angebote an. {reused} bestehende zentrale Produkte werden wiederverwendet. {updatedOffers} Angebote werden aktualisiert.",
+    "Cet import crée {created} nouveaux produits et {newOffers} nouvelles offres. {reused} produits centraux existants sont réutilisés. {updatedOffers} offres sont mises à jour."
+  ),
+  importAdvancedColumns: L(
+    "Geavanceerde kolominstellingen",
+    "Advanced column settings",
+    "Erweiterte Spalteneinstellungen",
+    "Paramètres de colonnes avancés"
+  ),
+  importAdvancedColumnsHelp: L(
+    "Alleen nodig als een kolom uit je bestand niet automatisch is herkend.",
+    "Only needed when a column in your file was not recognised automatically.",
+    "Nur nötig, wenn eine Spalte aus deiner Datei nicht automatisch erkannt wurde.",
+    "Nécessaire seulement si une colonne de votre fichier n'a pas été reconnue automatiquement."
+  ),
 
   // —— P2.15.1: Manufacturer form validation ——
   formNameCountryEmailRequired: L("Naam, land en elektronisch contact zijn verplicht.", "Name, country and electronic contact are required.", "Name, Land und elektronischer Kontakt sind erforderlich.", "Le nom, le pays et le contact électronique sont obligatoires."),

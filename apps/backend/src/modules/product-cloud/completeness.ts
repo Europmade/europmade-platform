@@ -64,6 +64,25 @@ export type CompletenessDocument = {
   rejection_reason?: string | null
 }
 
+export type ValidationCategory =
+  | "submission"
+  | "approval"
+  | "publication"
+  | "sale"
+  | "warning"
+
+export type ProductValidationFinding = {
+  code: string
+  field: string
+  category: ValidationCategory
+  /** Gates this one finding blocks. Sale gaps are not approval or publication. */
+  blocks: ValidationCategory[]
+  severity: "blocker" | "warning"
+  message: string
+  action: string
+  status: "open"
+}
+
 export type CompletenessReport = {
   percent: number
   publishable: boolean
@@ -71,6 +90,7 @@ export type CompletenessReport = {
   information_quality: InformationQuality
   publication_blocked_reasons: string[]
   sale_blocked_reasons: string[]
+  findings: ProductValidationFinding[]
   sections: CompletenessSection[]
   compliance_status:
     | "complete"
@@ -110,6 +130,7 @@ export type OfferGateInput = {
   has_shipping_profile?: boolean
   sales_status?: "active" | "paused" | "mixed" | null
   is_sellable?: boolean
+  sellability_reasons?: string[]
 }
 
 export type CompletenessRulesInput = {
@@ -313,9 +334,6 @@ export function computeProductCompleteness(input: {
       if (!input.offer.has_delivery) {
         publication_blocked_reasons.push("Levertijd/verzending instellen")
       }
-      if (input.offer.has_shipping_profile === false) {
-        publication_blocked_reasons.push("Verzendprofiel koppelen")
-      }
     }
   }
 
@@ -488,6 +506,13 @@ export function computeProductCompleteness(input: {
   else product_gate_status = "not_sellable"
 
   const sale_blocked_reasons = [...publication_blocked_reasons]
+  if (
+    input.offer?.has_offer &&
+    input.offer.has_shipping_profile === false &&
+    !sale_blocked_reasons.includes("Verzendprofiel koppelen")
+  ) {
+    sale_blocked_reasons.push("Verzendprofiel koppelen")
+  }
   let sale_presentation: SalePresentation = "blocked"
   if (!input.offer?.has_offer) {
     sale_presentation = "no_offer"
@@ -499,10 +524,33 @@ export function computeProductCompleteness(input: {
     sale_presentation = "not_published"
   } else if (input.offer.is_sellable === false) {
     sale_presentation = "blocked"
-    sale_blocked_reasons.push("Aanbod is technisch niet verkoopbaar")
+    const extra = (input.offer.sellability_reasons || []).filter(Boolean)
+    if (extra.length === 0) {
+      sale_blocked_reasons.push("Aanbod is technisch niet verkoopbaar")
+    } else {
+      for (const reason of extra) {
+        if (!sale_blocked_reasons.includes(reason)) sale_blocked_reasons.push(reason)
+      }
+    }
   } else {
     sale_presentation = "for_sale"
   }
+
+  const findings = buildValidationFindings({
+    missing_required,
+    manufacturerOutsideEu: Boolean(input.rules?.manufacturer_outside_eu),
+    offer: input.offer,
+    ceBlocked:
+      ceRequiredForCategory && ceValue === "Niet van toepassing",
+    documents,
+    translationDocuments,
+    recommended: [
+      ...basisFields.filter((f) => f.tier === "recommended" && !f.filled),
+      ...recommended.filter((f) => !f.filled),
+    ],
+    offerNotSellable: input.offer?.is_sellable === false,
+    sellabilityReasons: input.offer?.sellability_reasons,
+  })
 
   return {
     percent,
@@ -510,6 +558,7 @@ export function computeProductCompleteness(input: {
     information_quality,
     publication_blocked_reasons,
     sale_blocked_reasons,
+    findings,
     sections,
     compliance_status,
     compliance_review_status,
@@ -518,4 +567,270 @@ export function computeProductCompleteness(input: {
     documents: [...documents, ...translationDocuments],
     missing_required,
   }
+}
+
+function validationFinding(
+  input: Omit<ProductValidationFinding, "status" | "severity"> & {
+    severity?: ProductValidationFinding["severity"]
+  }
+): ProductValidationFinding {
+  return {
+    ...input,
+    severity: input.severity ?? "blocker",
+    status: "open",
+  }
+}
+
+function buildValidationFindings(input: {
+  missing_required: Array<{ code: string; name: string; group: string }>
+  manufacturerOutsideEu: boolean
+  offer?: OfferGateInput | null
+  ceBlocked: boolean
+  documents: CompletenessDocument[]
+  translationDocuments: CompletenessDocument[]
+  recommended: CompletenessField[]
+  offerNotSellable: boolean
+  sellabilityReasons?: string[]
+}): ProductValidationFinding[] {
+  const findings: ProductValidationFinding[] = []
+  const seen = new Set<string>()
+  const add = (finding: ProductValidationFinding) => {
+    if (seen.has(finding.code)) return
+    seen.add(finding.code)
+    findings.push(finding)
+  }
+
+  for (const missing of input.missing_required) {
+    const message =
+      missing.code === "category"
+        ? "Categorie niet herkend — kies een EuropMade-categorie."
+        : `Ontbreekt: ${missing.name}`
+    const action =
+      missing.code === "category"
+        ? "Kies een EuropMade-categorie en sla op."
+        : missing.code === "ean"
+          ? "Vul een geldige EAN/GTIN in en sla op."
+          : missing.code === "primary_image"
+            ? "Upload een hoofdafbeelding en sla op."
+            : `Vul ${missing.name} in en sla op.`
+    add(
+      validationFinding({
+        code: missing.code,
+        field: missing.name,
+        category: "submission",
+        blocks: ["submission", "approval", "publication"],
+        message,
+        action,
+      })
+    )
+  }
+
+  if (input.manufacturerOutsideEu) {
+    add(
+      validationFinding({
+        code: "manufacturer_outside_eu",
+        field: "Fabrikant",
+        category: "approval",
+        blocks: ["approval", "publication"],
+        message: "Fabrikant moet in de EU/EER gevestigd zijn",
+        action: "Koppel een fabrikant die in de EU/EER gevestigd is en sla op.",
+      })
+    )
+  }
+
+  if (input.ceBlocked) {
+    add(
+      validationFinding({
+        code: "ce_marking",
+        field: "CE-markering",
+        category: "approval",
+        blocks: ["approval", "publication"],
+        message:
+          "CE-markering is verplicht voor deze categorie; 'Niet van toepassing' is hier niet toegestaan.",
+        action: "Kies de juiste CE-markering voor deze categorie en sla op.",
+      })
+    )
+  }
+
+  for (const doc of [...input.documents, ...input.translationDocuments]) {
+    if (!doc.required || doc.status === "approved") continue
+    const translation = doc.code.startsWith("translation.")
+    let message = `Ontbreekt: ${doc.name}`
+    let action = `Voeg ${doc.name} toe en sla op.`
+    if (doc.status === "pending_review" || doc.status === "precheck_warning") {
+      message = translation
+        ? `${doc.name} incompleet${doc.rejection_reason ? ` (${doc.rejection_reason})` : ""}`
+        : `${doc.name} wacht op controle (niet goedgekeurd)`
+      action = translation
+        ? `Vul ${doc.name} aan en sla op.`
+        : `Wacht op controle van ${doc.name}, of lever de gevraagde aanvulling aan.`
+    } else if (doc.status === "needs_info") {
+      message = `${doc.name} — aanvulling gevraagd${doc.rejection_reason ? `: ${doc.rejection_reason}` : ""}`
+      action = `Pas ${doc.name} aan zoals gevraagd en sla op.`
+    } else if (doc.status === "rejected") {
+      message = translation
+        ? `${doc.name} mislukt/verouderd${doc.rejection_reason ? `: ${doc.rejection_reason}` : ""}`
+        : `${doc.name} afgekeurd${doc.rejection_reason ? `: ${doc.rejection_reason}` : ""}`
+      action = `Vervang ${doc.name} en sla op.`
+    }
+    add(
+      validationFinding({
+        code: doc.code,
+        field: doc.name,
+        category: translation ? "publication" : "approval",
+        blocks: ["approval", "publication"],
+        message,
+        action,
+      })
+    )
+  }
+
+  if (input.offer) {
+    if (!input.offer.has_offer) {
+      add(
+        validationFinding({
+          code: "offer",
+          field: "Verkoopaanbod",
+          category: "sale",
+          blocks: ["sale"],
+          message: "Geen verkoopaanbod aanwezig",
+          action: "Maak een verkoopaanbod. Dit wijzigt de productgoedkeuring niet.",
+        })
+      )
+    } else {
+      if (!input.offer.has_price) {
+        add(
+          validationFinding({
+            code: "price",
+            field: "Verkoopprijs",
+            category: "sale",
+            blocks: ["sale"],
+            message: "Verkoopprijs invullen",
+            action: "Vul de verkoopprijs in en sla het aanbod op.",
+          })
+        )
+      }
+      if (!input.offer.has_stock_configured) {
+        add(
+          validationFinding({
+            code: "stock",
+            field: "Voorraad",
+            category: "sale",
+            blocks: ["sale"],
+            message: "Voorraad instellen",
+            action: "Stel de voorraad in en sla het aanbod op.",
+          })
+        )
+      }
+      if (!input.offer.has_delivery) {
+        add(
+          validationFinding({
+            code: "delivery",
+            field: "Levertijd",
+            category: "sale",
+            blocks: ["sale"],
+            message: "Levertijd/verzending instellen",
+            action: "Stel de levertijd in en sla het aanbod op.",
+          })
+        )
+      }
+      if (input.offer.has_shipping_profile === false) {
+        add(
+          validationFinding({
+            code: "shipping_profile",
+            field: "Verzendprofiel",
+            category: "sale",
+            blocks: ["sale"],
+            message: "Verzendprofiel koppelen",
+            action: "Koppel een verzendprofiel en sla het aanbod op.",
+          })
+        )
+      }
+      if (input.offerNotSellable) {
+        const provided = input.sellabilityReasons?.filter(Boolean)
+        if (!provided || provided.length === 0) {
+          add(
+            validationFinding({
+              code: "offer_not_sellable",
+              field: "Verkoopaanbod",
+              category: "sale",
+              blocks: ["sale"],
+              message: "Aanbod is technisch niet verkoopbaar",
+              action: "Maak het aanbod verkoopbaar. De productpublicatie blijft staan.",
+            })
+          )
+        } else {
+          provided.forEach((message, index) => {
+            if (findings.some((finding) => finding.message === message)) return
+            add(
+              validationFinding({
+                code: `offer_not_sellable_${index}`,
+                field: "Verkoopaanbod",
+                category: "sale",
+                blocks: ["sale"],
+                message,
+                action: "Maak het aanbod verkoopbaar. De productpublicatie blijft staan.",
+              })
+            )
+          })
+        }
+      }
+    }
+  }
+
+  for (const field of input.recommended) {
+    add(
+      validationFinding({
+        code: field.code,
+        field: field.name,
+        category: "warning",
+        blocks: ["warning"],
+        severity: "warning",
+        message: `Aanbevolen: ${field.name} is nog leeg.`,
+        action: `Vul ${field.name} in als de waarde bekend is. Dit blokkeert indienen niet.`,
+      })
+    )
+  }
+
+  return findings
+}
+
+export type ImportHistoryNote = {
+  id?: string
+  field_code: string
+  field: string
+  detail: string
+}
+
+/** Import notes stay history. They are not a second current validation. */
+export function historicalImportNotes(
+  changes: Array<{
+    id?: string
+    field_code?: string | null
+    field_label?: string | null
+    new_value?: string | null
+    reason?: string | null
+  }>
+): ImportHistoryNote[] {
+  return changes
+    .filter((change) => change.field_code?.startsWith("import.issue."))
+    .map((change) => ({
+      id: change.id,
+      field_code: change.field_code || "",
+      field: change.field_label || change.field_code || "",
+      detail: [change.new_value || "leeg", change.reason || ""]
+        .filter(Boolean)
+        .join(" — "),
+    }))
+}
+
+/**
+ * Current blockers come only from live completeness.
+ * A stored import note is not copied into that list.
+ */
+export function currentValidation(
+  findings: ProductValidationFinding[],
+  notes: ImportHistoryNote[]
+): { current: ProductValidationFinding[]; history: ImportHistoryNote[] } {
+  return { current: findings, history: notes }
 }

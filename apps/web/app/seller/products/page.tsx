@@ -11,6 +11,8 @@ import {
   bulkLinkBrandLocation,
   bulkUpdateProductInformation,
   bulkAssignShippingProfile,
+  bulkOfferCommerce,
+  type BulkOfferCommercePreview,
   listOwnProducts,
   ProductCloudApiError,
   type CatalogProduct,
@@ -58,7 +60,7 @@ type ListFilter =
 
 type ListSort = "newest" | "title" | "stock" | "price"
 
-type BulkAction = "" | "eu_compliance" | "brand_location" | "shipping_profile"
+type BulkAction = "" | "eu_compliance" | "brand_location" | "shipping_profile" | "offer_commerce"
 
 const EU_COMPLIANCE_FIELDS = [
   { code: "gpsr_manufacturer_name", labelKey: "plManufacturerName" as const },
@@ -109,6 +111,7 @@ function qualityLabel(q: CatalogProduct["completeness"], locale: StorefrontLocal
 
 import {
   complianceReviewLabel,
+  productControlStrip,
   salePresentationLabel,
   publicationGateLabel,
 } from "../_lib/product-status-labels"
@@ -183,6 +186,12 @@ export default function SellerProductsPage() {
   const [euPanelOpen, setEuPanelOpen] = useState(false)
   const [brandPanelOpen, setBrandPanelOpen] = useState(false)
   const [shippingPanelOpen, setShippingPanelOpen] = useState(false)
+  const [offerPanelOpen, setOfferPanelOpen] = useState(false)
+  const [bulkDeliveryDays, setBulkDeliveryDays] = useState("")
+  const [bulkStock, setBulkStock] = useState("")
+  const [offerPreview, setOfferPreview] = useState<BulkOfferCommercePreview | null>(null)
+  const [offerResult, setOfferResult] = useState<string | null>(null)
+  const offerConfirmLock = useRef(false)
   const [shippingProfiles, setShippingProfiles] = useState<SellerShippingProfile[]>([])
   const [bulkShippingProfileId, setBulkShippingProfileId] = useState("")
   const [euForm, setEuForm] = useState<EuComplianceForm>(() => emptyEuForm())
@@ -317,21 +326,33 @@ export default function SellerProductsPage() {
       setEuForm(emptyEuForm())
       setEuPanelOpen(true)
       setBrandPanelOpen(false)
+      setShippingPanelOpen(false)
+      setOfferPanelOpen(false)
     } else if (next === "brand_location") {
       setEuPanelOpen(false)
       setBrandPanelOpen(true)
       setShippingPanelOpen(false)
+      setOfferPanelOpen(false)
     } else if (next === "shipping_profile") {
       setEuPanelOpen(false)
       setBrandPanelOpen(false)
       setShippingPanelOpen(true)
+      setOfferPanelOpen(false)
       void listShippingProfiles()
         .then((res) => setShippingProfiles(res.shipping_profiles))
         .catch(() => setShippingProfiles([]))
+    } else if (next === "offer_commerce") {
+      setEuPanelOpen(false)
+      setBrandPanelOpen(false)
+      setShippingPanelOpen(false)
+      setOfferPanelOpen(true)
+      setOfferPreview(null)
+      setOfferResult(null)
     } else {
       setEuPanelOpen(false)
       setBrandPanelOpen(false)
       setShippingPanelOpen(false)
+      setOfferPanelOpen(false)
     }
   }
 
@@ -362,6 +383,89 @@ export default function SellerProductsPage() {
           : "Bulk koppelen mislukt."
       )
     } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  function offerCommerceBody(confirm: boolean) {
+    const body: {
+      product_ids: string[]
+      confirm: boolean
+      delivery_days_max?: string
+      quantity_available?: string
+    } = {
+      product_ids: Array.from(selection),
+      confirm,
+    }
+    if (bulkDeliveryDays.trim() !== "") body.delivery_days_max = bulkDeliveryDays.trim()
+    if (bulkStock.trim() !== "") body.quantity_available = bulkStock.trim()
+    return body
+  }
+
+  async function previewBulkOfferCommerce() {
+    setBulkBusy(true)
+    setActionNotice(null)
+    try {
+      const res = await bulkOfferCommerce(offerCommerceBody(false))
+      setOfferPreview(res)
+      setActionNotice(res.field_error || res.message)
+    } catch (err: unknown) {
+      setOfferPreview(null)
+      setActionNotice(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : "Preview van levertijd en voorraad mislukt."
+      )
+    } finally {
+      setBulkBusy(false)
+    }
+  }
+
+  async function confirmBulkOfferCommerce() {
+    if (offerConfirmLock.current || bulkBusy) return
+    if (!offerPreview) {
+      setOfferResult("Maak eerst een preview. Daarna kun je de wijziging bevestigen.")
+      return
+    }
+    if (!offerPreview.apply_allowed) {
+      const failed = offerPreview.rows.filter((row) => row.status !== "eligible" && row.reason)
+      setOfferResult(
+        offerPreview.field_error ||
+          (failed.length
+            ? failed.map((row) => `${row.product_title || "Aanbod"}: ${row.reason}`).join(" ")
+            : "Geen aanbiedingen kunnen worden bijgewerkt.")
+      )
+      return
+    }
+    offerConfirmLock.current = true
+    setBulkBusy(true)
+    setOfferResult(null)
+    setActionNotice(null)
+    try {
+      const res = await bulkOfferCommerce(offerCommerceBody(true))
+      setOfferPreview(res)
+      const notUpdated = res.rows.filter((row) => row.status !== "eligible")
+      const detail = notUpdated
+        .map((row) => `${row.product_title || "Aanbod"}: ${row.reason || "Bijwerken mislukt."}`)
+        .join(" ")
+      const summary = detail ? `${res.message} ${detail}` : res.message
+      setOfferResult(summary)
+      if ((res.applied_count ?? 0) > 0) load()
+      if (res.applied && notUpdated.length === 0) {
+        setActionNotice(res.message)
+        clearSelection()
+        setOfferPanelOpen(false)
+        setBulkAction("")
+        setOfferPreview(null)
+      }
+    } catch (err: unknown) {
+      setOfferResult(
+        err instanceof ProductCloudApiError
+          ? err.message
+          : "Aanbiedingen bijwerken mislukt."
+      )
+    } finally {
+      offerConfirmLock.current = false
       setBulkBusy(false)
     }
   }
@@ -638,6 +742,7 @@ export default function SellerProductsPage() {
                   <option value="eu_compliance">EU Compliance invullen</option>
                   <option value="brand_location">Merk koppelen</option>
                   <option value="shipping_profile">Verzendprofiel wijzigen</option>
+                  <option value="offer_commerce">Levertijd en voorraad</option>
                   <option value="category" disabled>
                     Categorie wijzigen (niet beschikbaar)
                   </option>
@@ -647,7 +752,7 @@ export default function SellerProductsPage() {
                 {selection.size > 4
                   ? "Koppel 2, 3 of 4 producten. Overige bulkacties blijven beschikbaar."
                   : canOpenProductLinkDialog(selection.size)
-                    ? "Bulkacties: producten koppelen, EU Compliance, merk of verzendprofiel."
+                    ? "Bulkacties: producten koppelen, EU Compliance, merk, verzendprofiel, levertijd of voorraad."
                     : "Selecteer 2, 3 of 4 producten om te koppelen. Overige bulkacties blijven beschikbaar."}
               </p>
             </div>
@@ -872,6 +977,128 @@ export default function SellerProductsPage() {
             </div>
           ) : null}
 
+          {offerPanelOpen ? (
+            <div className="mb-3 rounded-lg border border-wf-300 bg-white p-3">
+              <h2 className="text-sm font-bold text-wf-900">Levertijd en voorraad</h2>
+              <p className="mt-1 text-[11px] text-wf-600">
+                {selection.size} geselecteerde product
+                {selection.size === 1 ? "" : "en"}. Alleen je eigen aanbiedingen worden
+                aangepast, en pas na bevestiging. Productgegevens en publicatie blijven staan.
+              </p>
+              <div className="mt-3 grid gap-3 tablet:grid-cols-2">
+                <label className="block text-xs font-semibold text-wf-700">
+                  Nieuwe levertijd (dagen)
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-400 px-2 text-xs"
+                    value={bulkDeliveryDays}
+                    inputMode="numeric"
+                    placeholder="Ongewijzigd laten"
+                    onChange={(e) => {
+                      setBulkDeliveryDays(e.target.value)
+                      setOfferPreview(null)
+                      setOfferResult(null)
+                    }}
+                  />
+                </label>
+                <label className="block text-xs font-semibold text-wf-700">
+                  Nieuwe voorraad
+                  <input
+                    className="mt-1 h-9 w-full rounded border border-wf-400 px-2 text-xs"
+                    value={bulkStock}
+                    inputMode="numeric"
+                    placeholder="Ongewijzigd laten"
+                    onChange={(e) => {
+                      setBulkStock(e.target.value)
+                      setOfferPreview(null)
+                      setOfferResult(null)
+                    }}
+                  />
+                </label>
+              </div>
+              {offerPreview ? (
+                <div className="mt-3 text-[11px] text-wf-800">
+                  <p>
+                    Geselecteerd: {offerPreview.selected_count} · Geschikt:{" "}
+                    {offerPreview.eligible_count} · Uitgesloten: {offerPreview.excluded_count}
+                  </p>
+                  <ul className="mt-2 space-y-2">
+                    {offerPreview.rows.map((row) => (
+                      <li
+                        key={row.offer_id || row.product_id || row.product_title}
+                        className="rounded border border-wf-200 p-2"
+                      >
+                        <p className="font-semibold">
+                          {row.product_title || "Product"}{" "}
+                          {row.identifier_value ? `· ${row.identifier_value}` : ""}
+                          {row.region_code ? ` · ${row.region_code}` : ""}
+                        </p>
+                        <p>
+                          Levertijd: {row.current_delivery_days_max ?? "—"} →{" "}
+                          {row.next_delivery_days_max ?? "—"} · Voorraad:{" "}
+                          {row.current_quantity_available ?? "—"} →{" "}
+                          {row.next_quantity_available ?? "—"}
+                        </p>
+                        <p>
+                          {row.status === "eligible"
+                            ? "Kan worden aangepast"
+                            : row.status === "failed"
+                              ? "Mislukt"
+                              : "Uitgesloten"}
+                          {row.reason ? ` · ${row.reason}` : ""}
+                          {" · Publicatie: "}
+                          {row.publication_status || "—"}
+                          {" · Verkoopbaar na wijziging: "}
+                          {row.sellable_after ? "ja" : "nee"}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {offerResult ? (
+                <p className="mt-3 text-xs font-semibold text-wf-900" role="status">
+                  {offerResult}
+                </p>
+              ) : null}
+              {bulkBusy ? (
+                <p className="mt-2 text-xs text-wf-600" role="status">
+                  {t("commonBusy", locale)}
+                </p>
+              ) : null}
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center rounded-[5px] border border-wf-400 bg-white px-3 text-xs font-semibold text-wf-800"
+                  disabled={bulkBusy}
+                  onClick={() => {
+                    setOfferPanelOpen(false)
+                    setBulkAction("")
+                    setOfferPreview(null)
+                    setOfferResult(null)
+                  }}
+                >
+                  {t("commonCancel", locale)}
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center rounded-[5px] border border-wf-400 bg-white px-3 text-xs font-semibold text-wf-800 disabled:opacity-50"
+                  disabled={bulkBusy}
+                  onClick={() => void previewBulkOfferCommerce()}
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-8 items-center rounded-[5px] bg-wf-900 px-3 text-xs font-semibold text-white disabled:opacity-50"
+                  disabled={bulkBusy}
+                  onClick={() => void confirmBulkOfferCommerce()}
+                >
+                  {bulkBusy ? t("commonBusy", locale) : "Bevestigen"}
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="mb-2 flex items-center gap-2 rounded-lg border border-wf-200 bg-white px-3 py-2">
             <input
               type="checkbox"
@@ -897,10 +1124,6 @@ export default function SellerProductsPage() {
           <div className="grid gap-3">
             {rows.map((p) => {
               const info = qualityLabel(p.completeness, locale)
-              const sales = salePresentationLabel(p.completeness, {
-                sales_status: p.offers?.sales_status ?? p.offer?.sales_status,
-                has_offer: Boolean(p.offers?.offer_count || p.offer?.has_offer),
-              }, locale)
               const stock = p.offers?.stock_total ?? p.offer?.stock
               const price = p.offers?.price ?? p.offer?.price
               const sku =
@@ -908,7 +1131,7 @@ export default function SellerProductsPage() {
                 p.offer?.seller_sku ??
                 p.sku_hint
               const actions = p.actions || {}
-              const pub = publicationGateLabel(p, locale)
+              const controlStrip = productControlStrip(p, locale)
               const imageSrc = resolveSellerMediaUrl(p.primary_image_url)
               const catalogOwner = isSellerCatalogOwner(p)
               const catalogInformationHref = sellerCatalogInformationHref(p)
@@ -966,12 +1189,14 @@ export default function SellerProductsPage() {
                         {p.title || t("pdpUntitledProduct", locale)}
                       </h3>
                       <div className="mt-2 flex flex-wrap gap-2">
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${pub.className}`}>
-                          {pub.label}
-                        </span>
-                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${sales.className}`}>
-                          {sales.label}
-                        </span>
+                        {controlStrip.map((item) => (
+                          <span
+                            key={item.key}
+                            className="rounded bg-wf-50 px-1.5 py-0.5 text-[10px] font-semibold text-wf-800"
+                          >
+                            {item.label}: {item.value}
+                          </span>
+                        ))}
                         <span className={`text-[10px] font-semibold ${info.className}`}>
                           {info.pct ?? 0}% compleet
                         </span>
@@ -1102,7 +1327,6 @@ export default function SellerProductsPage() {
                     "SKU",
                     t("commonBrand", locale),
                     t("commonCategory", locale),
-                    t("plHeaderVariants", locale),
                     "Info",
                     "Compliance",
                     t("plHeaderStock", locale),
@@ -1137,7 +1361,6 @@ export default function SellerProductsPage() {
                     p.sku_hint
                   const delivery =
                     p.offers?.delivery_days_max ?? p.offer?.delivery_days_max
-                  const variants = p.variant_count ?? 0
                   const actions = p.actions || {}
                   const selected = selection.has(p.id)
                   const imageSrc = resolveSellerMediaUrl(p.primary_image_url)
@@ -1146,7 +1369,6 @@ export default function SellerProductsPage() {
                     p,
                     "information"
                   )
-                  const catalogVariantsHref = sellerCatalogTabHref(p, "variants")
                   const catalogHistoryHref = sellerCatalogTabHref(p, "history")
                   const catalogChangesHref = sellerCatalogTabHref(p, "changes")
                   const catalogMediaHref = sellerCatalogTabHref(p, "media")
@@ -1204,22 +1426,6 @@ export default function SellerProductsPage() {
                       </td>
                       <td className="max-w-[8rem] truncate px-2 py-2">
                         {(p.category_names || []).join(", ") || "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-2 py-2">
-                        {variants > 0 && catalogVariantsHref ? (
-                          <Link
-                            href={catalogVariantsHref}
-                            className="text-wf-800 underline-offset-2 hover:underline"
-                          >
-                            {variants === 1
-                              ? "1 variant"
-                              : `${variants} varianten`}
-                          </Link>
-                        ) : variants > 0 ? (
-                          variants === 1 ? "1 variant" : `${variants} varianten`
-                        ) : (
-                          "—"
-                        )}
                       </td>
                       <td className="px-2 py-2">
                         {catalogInformationHref ? (
@@ -1329,14 +1535,6 @@ export default function SellerProductsPage() {
                                   : canProposeCatalogChange(p)
                                     ? "Productinformatie / verbetering"
                                     : "Productinformatie"}
-                              </Link>
-                            ) : null}
-                            {catalogVariantsHref ? (
-                              <Link
-                                href={catalogVariantsHref}
-                                className="block px-3 py-1.5 hover:bg-wf-50"
-                              >
-                                Varianten
                               </Link>
                             ) : null}
                             {catalogOwner ? (

@@ -92,7 +92,11 @@ export function getBrandPageReview(brandId: string) {
 
 export function decideBrandPageReview(
   brandId: string,
-  body: { action: "approve" | "reject" | "request_info"; note?: string }
+  body: {
+    action: "approve" | "reject" | "request_info" | "merge"
+    note?: string
+    target_brand_id?: string
+  }
 ) {
   return request(`/admin/brand-ownership/pages/${encodeURIComponent(brandId)}`, {
     method: "POST",

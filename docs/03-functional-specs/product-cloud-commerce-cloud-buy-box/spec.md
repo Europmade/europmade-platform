@@ -14,18 +14,18 @@
 Vaste hiërarchie, direct uit H6.6/H7.3–7.6, gemapt op de Next.js + Medusa-architectuur (zie ook UX-Architectuur sectie 0.2):
 
 ```
-Product (uniek, onveranderlijke interne Product-ID)
- └─ Variant (bijv. kleur, maat, vermogen — deelt basisinformatie met het hoofdproduct)
-     └─ EAN / GTIN / MPN (één of méér per variant — meerdere EAN's per land mogelijk, H7.6)
+Product (uniek, onveranderlijke interne Product-ID; één verkoopbaar artikel)
+ └─ Technische variant (precies één; geen commerciële variantas — ADR-0050)
+     └─ EAN / GTIN / MPN (één of méér voor hetzelfde artikel — meerdere EAN's per land mogelijk, H7.6)
          └─ Aanbiedingen / Offers (Commerce Cloud — één per retailer, gekoppeld aan EAN én land/Region)
 ```
 
-- **Product** = Medusa Product-module, uitgebreid met eigenaarschapsvelden, productstatus, Quality/Health Score en compliance-metadata.
-- **Variant** = Medusa Product Variant, uitgebreid met een expliciete `variant_type` (kleur, maat, inhoud, vermogen, spanning, materiaal, uitvoering, bundel — H6.7).
-- **EAN/GTIN/MPN** = custom sub-entiteit onder Variant (niet standaard 1-op-1 in Medusa), met een `country_scope`-veld omdat één variant meerdere landspecifieke EAN's kan hebben die naar dezelfde centrale productinformatie verwijzen (H7.6).
+- **Product** = Medusa Product-module, uitgebreid met eigenaarschapsvelden, productstatus, Quality/Health Score en compliance-metadata. Kleur, maat, inhoud, vermogen, spanning, materiaal, uitvoering, batterij en bundel zijn specificaties van dit product, of een ander zelfstandig product (ADR-0050).
+- **Technische variant** = de interne Medusa-variant van dat ene product. Geen `variant_type` als commerciële as. Seller en Admin beheren deze rij niet.
+- **EAN/GTIN/MPN** = custom sub-entiteit onder die technische variant (niet standaard 1-op-1 in Medusa), met een `country_scope`-veld omdat hetzelfde artikel meerdere landspecifieke EAN's kan hebben (H7.6).
 - **Offer** = het custom Commerce Cloud-datamodel (sectie 2), gekoppeld aan een EAN + Region, nooit aan het Product zelf.
 
-Alle gedeelde informatie (titel, omschrijving, specificaties, media, documentatie) hangt op **Product**-niveau; alleen afwijkende gegevens (bijv. kleurfoto, maatlabel) hangen op **Variant**-niveau. Dit voorkomt duplicatie en is de technische kern van "één productpagina, N aanbieders."
+Titel, omschrijving, specificaties, media en documentatie hangen op **Product**-niveau. "Eén productpagina, N aanbieders" gaat over aanbieders van hetzelfde artikel, niet over kleuren of maten als varianten.
 
 ### 1.2 Rol: Producent
 

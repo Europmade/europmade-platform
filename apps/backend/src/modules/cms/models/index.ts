@@ -3,6 +3,9 @@ import CmsBanner from "./cms-banner"
 import CmsPage from "./cms-page"
 import CmsAsset from "./cms-asset"
 import CmsCategory from "./cms-category"
+import CmsCategoryRevision from "./cms-category-revision"
+import CmsCategoryProposal from "./cms-category-proposal"
+import CmsCategoryProposalCost from "./cms-category-proposal-cost"
 import CmsProduct from "./cms-product"
 import AdCampaign from "./ad-campaign"
 import AdCampaignWeek from "./ad-campaign-week"
@@ -17,6 +20,9 @@ export {
   CmsPage,
   CmsAsset,
   CmsCategory,
+  CmsCategoryRevision,
+  CmsCategoryProposal,
+  CmsCategoryProposalCost,
   CmsProduct,
   AdCampaign,
   AdCampaignWeek,

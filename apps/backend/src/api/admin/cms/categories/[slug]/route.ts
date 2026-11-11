@@ -1,53 +1,64 @@
-import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import type { MedusaResponse } from "@medusajs/framework/http"
 import { CMS_MODULE } from "../../../../../modules/cms"
 import type CmsModuleService from "../../../../../modules/cms/service"
-import { serializeCmsCategory } from "../../../../cms/serialize"
+import { CategoryPdError } from "../../../../../modules/cms/category-published-draft"
+import { withResolvedCategoryMedia } from "../../../../cms/category-asset-urls"
+import { serializeCmsCategoryPd } from "../../../../cms/serialize"
+import { requestBackendOrigin } from "../../../../request-backend-origin"
+import { slugOf, type CatSlugReq } from "../category-pd-http"
+import { requireCategoryProfile } from "../resolve-category-profile"
 
-type CatReq = MedusaRequest & { params: { slug: string } }
-
-function slugOf(req: CatReq) {
-  return decodeURIComponent(req.params.slug ?? "").trim().toLowerCase()
-}
-
-export async function GET(req: CatReq, res: MedusaResponse) {
-  const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
-  const slug = slugOf(req)
-  const rows = await cms.listCmsCategories({ category_slug: slug }, { take: 1 })
-  const row = rows[0] ?? null
-  res.status(200).json({
-    category: row
-      ? serializeCmsCategory(row as unknown as Record<string, unknown>)
-      : {
-          id: null,
-          category_slug: slug,
-          document: {},
-          published: false,
-          i18n_meta: null,
-        },
-  })
-}
-
-export async function PUT(req: CatReq, res: MedusaResponse) {
-  const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
-  const slug = slugOf(req)
-  const body = (req.body ?? {}) as Record<string, unknown>
-  const payload = {
-    category_slug: slug,
-    document:
-      body.document && typeof body.document === "object" ? body.document : {},
-    published: Boolean(body.published),
-    i18n_meta:
-      body.i18n_meta && typeof body.i18n_meta === "object"
-        ? body.i18n_meta
-        : null,
+async function taxonomyProfile(req: CatSlugReq, slug: string) {
+  try {
+    return { profile: await requireCategoryProfile(req.scope, slug), profile_error: null }
+  } catch (err) {
+    if (err instanceof CategoryPdError) {
+      return { profile: null, profile_error: err.code }
+    }
+    throw err
   }
-  const existing = (
-    await cms.listCmsCategories({ category_slug: slug }, { take: 1 })
-  )[0]
-  const row = existing
-    ? await cms.updateCmsCategories({ id: existing.id, ...payload })
-    : await cms.createCmsCategories(payload)
-  res.status(200).json({
-    category: serializeCmsCategory(row as unknown as Record<string, unknown>),
+}
+
+/**
+ * GET /admin/cms/categories/:slug — published + draft metadata.
+ * PUT is deprecated (use draft + publish endpoints).
+ */
+export async function GET(req: CatSlugReq, res: MedusaResponse) {
+  const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
+  const slug = slugOf(req)
+  const row = await cms.getCategoryBySlug(slug)
+  const taxonomy = await taxonomyProfile(req, slug)
+  if (!row) {
+    res.status(200).json({
+      category: {
+        id: null,
+        category_slug: slug,
+        i18n_meta: null,
+        published: null,
+        draft: null,
+        stale_base: false,
+        ...taxonomy,
+      },
+    })
+    return
+  }
+  const serialized = {
+    ...serializeCmsCategoryPd(row as unknown as Record<string, unknown>),
+    ...taxonomy,
+  }
+  const category = await withResolvedCategoryMedia(
+    req.scope,
+    serialized,
+    requestBackendOrigin(req)
+  )
+  res.status(200).json({ category })
+}
+
+/** @deprecated Use POST/PATCH .../draft and POST .../publish */
+export async function PUT(req: CatSlugReq, res: MedusaResponse) {
+  res.status(410).json({
+    type: "deprecated",
+    message:
+      "PUT /admin/cms/categories/:slug is deprecated. Use draft CRUD and POST .../publish.",
   })
 }

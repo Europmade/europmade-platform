@@ -23,6 +23,8 @@ if (process.env.TEST_TYPE === "integration:http") {
 } else if (process.env.TEST_TYPE === "integration:modules") {
   module.exports.testMatch = ["**/src/modules/*/__tests__/**/*.[jt]s"];
 } else if (process.env.TEST_TYPE === "unit") {
+  // Jest only collects tests under roots. The utils glob below is outside apps/backend.
+  module.exports.roots = ["<rootDir>", "<rootDir>/../../packages/utils"];
   module.exports.testMatch = [
     "**/src/**/__tests__/**/*.unit.spec.[jt]s",
     "<rootDir>/../../packages/utils/src/**/__tests__/**/*.unit.spec.[jt]s",

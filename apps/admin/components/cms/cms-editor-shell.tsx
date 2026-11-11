@@ -42,6 +42,11 @@ export function CmsEditorShell({
   onOpenPreview,
   previewScale,
   onPreviewScale,
+  modeTabs,
+  activeModeTab,
+  onModeTab,
+  toolbarActions,
+  settingsReadOnly,
 }: {
   breadcrumb: ReactNode
   title: string
@@ -69,6 +74,12 @@ export function CmsEditorShell({
   onOpenPreview?: () => void
   previewScale?: "fit" | "100"
   onPreviewScale?: (v: "fit" | "100") => void
+  modeTabs?: Array<{ id: string; label: string }>
+  activeModeTab?: string
+  onModeTab?: (id: string) => void
+  /** Replaces default Save/Publish buttons when provided. */
+  toolbarActions?: ReactNode
+  settingsReadOnly?: boolean
 }) {
   return (
     <div className="flex h-[calc(100vh-53px)] min-h-[560px] flex-col bg-wf-100">
@@ -126,14 +137,38 @@ export function CmsEditorShell({
                 Preview in nieuw venster
               </button>
             ) : null}
-            <Button variant="secondary" disabled={busy} onClick={onSaveDraft}>
-              Opslaan als concept
-            </Button>
-            <Button disabled={busy} onClick={onPublish}>
-              Publiceren
-            </Button>
+            {toolbarActions != null ? (
+              toolbarActions
+            ) : (
+              <>
+                <Button variant="secondary" disabled={busy} onClick={onSaveDraft}>
+                  Opslaan als concept
+                </Button>
+                <Button disabled={busy} onClick={onPublish}>
+                  Publiceren
+                </Button>
+              </>
+            )}
           </div>
         </div>
+        {modeTabs && modeTabs.length > 0 && onModeTab ? (
+          <div className="flex gap-1 border-t border-wf-100 px-3 py-2 tablet:px-4">
+            {modeTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onModeTab(tab.id)}
+                className={`rounded-md px-3 py-1.5 text-[12px] font-semibold ${
+                  activeModeTab === tab.id
+                    ? "bg-wf-900 text-white"
+                    : "bg-wf-50 text-wf-700 hover:bg-wf-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="border-t border-wf-100 px-3 py-2 tablet:px-4">
           <CmsLocaleToolbar compact />
         </div>
@@ -255,18 +290,30 @@ export function CmsEditorShell({
           <div className="sticky top-0 border-b border-wf-100 bg-white px-4 py-3">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-wf-400">
               Instellingen
+              {settingsReadOnly ? " · alleen-lezen" : ""}
             </p>
             <p className="text-sm font-bold text-wf-900">
               {structure.find((s) => s.id === selectedId)?.label ?? "Sectie"}
             </p>
           </div>
-          <div className="space-y-4 px-4 py-4">{childrenSettings}</div>
+          <div
+            className={`space-y-4 px-4 py-4 ${
+              settingsReadOnly ? "pointer-events-none opacity-70" : ""
+            }`}
+          >
+            {childrenSettings}
+          </div>
         </aside>
       </div>
 
       <div className="border-t border-wf-200 bg-white p-3 desktop:hidden">
-        <p className="mb-2 text-[10px] font-semibold uppercase text-wf-400">Instellingen</p>
-        {childrenSettings}
+        <p className="mb-2 text-[10px] font-semibold uppercase text-wf-400">
+          Instellingen
+          {settingsReadOnly ? " · alleen-lezen" : ""}
+        </p>
+        <div className={settingsReadOnly ? "pointer-events-none opacity-70" : ""}>
+          {childrenSettings}
+        </div>
         {onAddSection ? (
           <Button type="button" variant="secondary" className="mt-3" onClick={onAddSection}>
             {addLabel}

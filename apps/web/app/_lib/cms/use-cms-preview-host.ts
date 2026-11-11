@@ -10,12 +10,14 @@ import {
 
 export function useCmsPreviewHost() {
   const [draft, setDraft] = useState<CmsPreviewDraftMessage | null>(null)
+  const [draftOrigin, setDraftOrigin] = useState<string | null>(null)
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       const data = event.data as CmsPreviewDraftMessage | undefined
       if (!data || data.source !== CMS_PREVIEW_SOURCE) return
       if (data.type !== "draft") return
+      setDraftOrigin(event.origin)
       setDraft(data)
     }
     window.addEventListener("message", onMessage)
@@ -47,7 +49,7 @@ export function useCmsPreviewHost() {
     ? parseCmsTheme(draft.theme)
     : null
 
-  return { draft, theme }
+  return { draft, draftOrigin, theme }
 }
 
 export function postPreviewSelect(id: string) {

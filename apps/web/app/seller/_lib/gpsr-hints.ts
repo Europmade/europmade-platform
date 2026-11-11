@@ -37,7 +37,7 @@ export const GPSR_HINTS: Record<string, string> = {
   product_languages:
     "Talen waarin de productinformatie (naam, beschrijving, specificaties) wordt aangeboden. Je kunt meerdere talen selecteren.",
   manual_languages:
-    "Talen van de meegeleverde handleiding. Selecteer alle talen die daadwerkelijk in de handleiding voorkomen. Meerdere talen mogelijk.",
+    "Talen van de meegeleverde handleiding. Niet verplicht voor concept, indiening, goedkeuring of publicatie. Meerdere talen mogelijk.",
 }
 
 export function gpsrHint(code: string | null | undefined): string | null {

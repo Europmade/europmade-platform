@@ -1,0 +1,4725 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "nl": "AVI-leesniveau",
+      "en": "AVI reading level"
+    },
+    {
+      "nl": "Aanbevolen kijkafstand",
+      "en": "Recommended viewing distance"
+    },
+    {
+      "nl": "Aanbevolen lichaamslengte",
+      "en": "Recommended body height"
+    },
+    {
+      "nl": "Aanbevolen oppervlakte",
+      "en": "Recommended area"
+    },
+    {
+      "nl": "Aanbevolen voor ruimte tot",
+      "en": "Recommended for room size up to"
+    },
+    {
+      "nl": "Aanbevolen voor sport",
+      "en": "Recommended for sport"
+    },
+    {
+      "nl": "Aandrijving",
+      "en": "Drive"
+    },
+    {
+      "nl": "Aansluiting",
+      "en": "Connection"
+    },
+    {
+      "nl": "Aansluiting op aantal fasen in Nederland",
+      "en": "Connection to number of phases in the Netherlands"
+    },
+    {
+      "nl": "Aansluitingen",
+      "en": "Connections"
+    },
+    {
+      "nl": "Aansluitmaat",
+      "en": "Connection size"
+    },
+    {
+      "nl": "Aansturing",
+      "en": "Control"
+    },
+    {
+      "nl": "Aantal brandmelders",
+      "en": "Number of smoke detectors"
+    },
+    {
+      "nl": "Aantal delen",
+      "en": "Number of parts"
+    },
+    {
+      "nl": "Aantal dieren",
+      "en": "Number of animals"
+    },
+    {
+      "nl": "Aantal discs",
+      "en": "Number of discs"
+    },
+    {
+      "nl": "Aantal fasen",
+      "en": "Number of phases"
+    },
+    {
+      "nl": "Aantal frituurmanden",
+      "en": "Number of fryer baskets"
+    },
+    {
+      "nl": "Aantal intensiteit standen",
+      "en": "Number of intensity settings"
+    },
+    {
+      "nl": "Aantal intensiteitsstanden",
+      "en": "Number of intensity settings"
+    },
+    {
+      "nl": "Aantal kanalen",
+      "en": "Number of channels"
+    },
+    {
+      "nl": "Aantal katten",
+      "en": "Number of cats"
+    },
+    {
+      "nl": "Aantal keukenrollen",
+      "en": "Number of kitchen rolls"
+    },
+    {
+      "nl": "Aantal kleuren / stuks",
+      "en": "Number of colors / pieces"
+    },
+    {
+      "nl": "Aantal koffers in set",
+      "en": "Number of suitcases in set"
+    },
+    {
+      "nl": "Aantal kookzones",
+      "en": "Number of cooking zones"
+    },
+    {
+      "nl": "Aantal kopjes",
+      "en": "Number of cups"
+    },
+    {
+      "nl": "Aantal kraangaten",
+      "en": "Number of tap holes"
+    },
+    {
+      "nl": "Aantal lades",
+      "en": "Number of drawers"
+    },
+    {
+      "nl": "Aantal lagen",
+      "en": "Number of layers"
+    },
+    {
+      "nl": "Aantal lampjes",
+      "en": "Number of lights"
+    },
+    {
+      "nl": "Aantal ligplekken",
+      "en": "Number of sleeping places"
+    },
+    {
+      "nl": "Aantal massagekoppen",
+      "en": "Number of massage heads"
+    },
+    {
+      "nl": "Aantal meegeleverde accu's",
+      "en": "Number of batteries included"
+    },
+    {
+      "nl": "Aantal meegeleverde tandenborstels",
+      "en": "Number of toothbrushes included"
+    },
+    {
+      "nl": "Aantal megapixels",
+      "en": "Number of megapixels"
+    },
+    {
+      "nl": "Aantal melodieën",
+      "en": "Number of melodies"
+    },
+    {
+      "nl": "Aantal onderdelen",
+      "en": "Number of components"
+    },
+    {
+      "nl": "Aantal onderdelen / stenen",
+      "en": "Number of components / bricks"
+    },
+    {
+      "nl": "Aantal pagina's",
+      "en": "Number of pages"
+    },
+    {
+      "nl": "Aantal pagina's / vellen",
+      "en": "Number of pages / sheets"
+    },
+    {
+      "nl": "Aantal pasjes",
+      "en": "Number of card slots"
+    },
+    {
+      "nl": "Aantal per m²",
+      "en": "Number per m²"
+    },
+    {
+      "nl": "Aantal personen",
+      "en": "Number of people"
+    },
+    {
+      "nl": "Aantal personen te onthouden",
+      "en": "Number of people to remember"
+    },
+    {
+      "nl": "Aantal porties",
+      "en": "Number of servings"
+    },
+    {
+      "nl": "Aantal puzzels",
+      "en": "Number of puzzles"
+    },
+    {
+      "nl": "Aantal ringen",
+      "en": "Number of rings"
+    },
+    {
+      "nl": "Aantal schermregels",
+      "en": "Number of screen lines"
+    },
+    {
+      "nl": "Aantal spelers",
+      "en": "Number of players"
+    },
+    {
+      "nl": "Aantal standen",
+      "en": "Number of settings"
+    },
+    {
+      "nl": "Aantal steken",
+      "en": "Number of stitches"
+    },
+    {
+      "nl": "Aantal stelen",
+      "en": "Number of stems"
+    },
+    {
+      "nl": "Aantal stopcontacten",
+      "en": "Number of sockets"
+    },
+    {
+      "nl": "Aantal stukjes",
+      "en": "Number of pieces"
+    },
+    {
+      "nl": "Aantal stuks / doseringen",
+      "en": "Number of pieces / doses"
+    },
+    {
+      "nl": "Aantal stuks in verpakking",
+      "en": "Number of pieces per pack"
+    },
+    {
+      "nl": "Aantal takken",
+      "en": "Number of branches"
+    },
+    {
+      "nl": "Aantal temperatuurstanden",
+      "en": "Number of temperature settings"
+    },
+    {
+      "nl": "Aantal toetsen keyboard",
+      "en": "Number of keyboard keys"
+    },
+    {
+      "nl": "Aantal toiletrollen in verpakking",
+      "en": "Number of toilet rolls per pack"
+    },
+    {
+      "nl": "Aantal vakken",
+      "en": "Number of compartments"
+    },
+    {
+      "nl": "Aantal vellen",
+      "en": "Number of sheets"
+    },
+    {
+      "nl": "Aantal vellen per rol",
+      "en": "Number of sheets per roll"
+    },
+    {
+      "nl": "Aantal versnellingen",
+      "en": "Number of gears"
+    },
+    {
+      "nl": "Aantal wasbeurten",
+      "en": "Number of washes"
+    },
+    {
+      "nl": "Aantal wielen",
+      "en": "Number of wheels"
+    },
+    {
+      "nl": "Aantal zitplekken",
+      "en": "Number of seats"
+    },
+    {
+      "nl": "Aantrekkelijk voor",
+      "en": "Attractive to"
+    },
+    {
+      "nl": "Abonnement nodig voor opslag",
+      "en": "Subscription required for storage"
+    },
+    {
+      "nl": "Abonnement of los nummer",
+      "en": "Subscription or single issue"
+    },
+    {
+      "nl": "Accessoires meegeleverd bij borstkolven",
+      "en": "Accessories included with breast pumps"
+    },
+    {
+      "nl": "Accu platform",
+      "en": "Battery platform"
+    },
+    {
+      "nl": "Accu/batterijspanning",
+      "en": "Battery voltage"
+    },
+    {
+      "nl": "Accucapaciteit",
+      "en": "Battery capacity"
+    },
+    {
+      "nl": "Accupositie",
+      "en": "Battery position"
+    },
+    {
+      "nl": "Accuspanning",
+      "en": "Battery voltage"
+    },
+    {
+      "nl": "Accutype / capaciteit",
+      "en": "Battery type / capacity"
+    },
+    {
+      "nl": "Actieradius",
+      "en": "Range"
+    },
+    {
+      "nl": "Ademend",
+      "en": "Breathable"
+    },
+    {
+      "nl": "Afdruktechnologie",
+      "en": "Print technology"
+    },
+    {
+      "nl": "Afmetingen",
+      "en": "Dimensions"
+    },
+    {
+      "nl": "Afmetingen / diameter",
+      "en": "Dimensions / diameter"
+    },
+    {
+      "nl": "Afmetingen / hoogte",
+      "en": "Dimensions / height"
+    },
+    {
+      "nl": "Afmetingen / rolbreedte",
+      "en": "Dimensions / roll width"
+    },
+    {
+      "nl": "Afmetingen / rollengte",
+      "en": "Dimensions / roll length"
+    },
+    {
+      "nl": "Afmetingen L x B",
+      "en": "Dimensions L x W"
+    },
+    {
+      "nl": "Afmetingen bakplaat",
+      "en": "Baking tray dimensions"
+    },
+    {
+      "nl": "Afmetingen bxl",
+      "en": "Dimensions W x L"
+    },
+    {
+      "nl": "Afmetingen gebouwd model",
+      "en": "Dimensions of built model"
+    },
+    {
+      "nl": "Afwerking",
+      "en": "Finish"
+    },
+    {
+      "nl": "Agendajaar",
+      "en": "Planner year"
+    },
+    {
+      "nl": "All-in-1",
+      "en": "All-in-1"
+    },
+    {
+      "nl": "Allergenen",
+      "en": "Allergens"
+    },
+    {
+      "nl": "Allergievrij / nikkelvrij",
+      "en": "Allergy-free / nickel-free"
+    },
+    {
+      "nl": "Analoog of digitaal",
+      "en": "Analog or digital"
+    },
+    {
+      "nl": "Anti-aanbaklaag",
+      "en": "Non-stick coating"
+    },
+    {
+      "nl": "Anti-colic",
+      "en": "Anti-colic"
+    },
+    {
+      "nl": "Anti-slip",
+      "en": "Anti-slip"
+    },
+    {
+      "nl": "Antikalksysteem",
+      "en": "Anti-limescale system"
+    },
+    {
+      "nl": "Antislip",
+      "en": "Non-slip"
+    },
+    {
+      "nl": "Apart instelbare warmte zones",
+      "en": "Separately adjustable heat zones"
+    },
+    {
+      "nl": "App functies kattenbak",
+      "en": "Litter box app features"
+    },
+    {
+      "nl": "App vereist voor volledige functionaliteit",
+      "en": "App required for full functionality"
+    },
+    {
+      "nl": "App-besturing",
+      "en": "App control"
+    },
+    {
+      "nl": "Aquarium toebehoren",
+      "en": "Aquarium accessories"
+    },
+    {
+      "nl": "Arbo normering",
+      "en": "Occupational health and safety standard"
+    },
+    {
+      "nl": "Artiest",
+      "en": "Artist"
+    },
+    {
+      "nl": "Auteur",
+      "en": "Author"
+    },
+    {
+      "nl": "Auteur / tekenaar",
+      "en": "Author / illustrator"
+    },
+    {
+      "nl": "Automatisch / timer",
+      "en": "Automatic / timer"
+    },
+    {
+      "nl": "Automatisch documentinvoer",
+      "en": "Automatic document feeder"
+    },
+    {
+      "nl": "Automatisch legen",
+      "en": "Automatic emptying"
+    },
+    {
+      "nl": "Automatisch sluitend",
+      "en": "Self-closing"
+    },
+    {
+      "nl": "Automatische wasmiddeldosering",
+      "en": "Automatic detergent dosing"
+    },
+    {
+      "nl": "Autostoelgroep / i-Size",
+      "en": "Car seat group / i-Size"
+    },
+    {
+      "nl": "BPA-vrij",
+      "en": "BPA-free"
+    },
+    {
+      "nl": "Babyfoon met app",
+      "en": "Baby monitor with app"
+    },
+    {
+      "nl": "Babyfoon met camera",
+      "en": "Baby monitor with camera"
+    },
+    {
+      "nl": "Balans",
+      "en": "Balance"
+    },
+    {
+      "nl": "Bandenmaat",
+      "en": "Tire size"
+    },
+    {
+      "nl": "Barbecues geschikt voor",
+      "en": "Barbecues suitable for"
+    },
+    {
+      "nl": "Basisschool groep",
+      "en": "Primary school grade"
+    },
+    {
+      "nl": "Batterij",
+      "en": "Battery"
+    },
+    {
+      "nl": "Batterij code",
+      "en": "Battery code"
+    },
+    {
+      "nl": "Batterij nodig",
+      "en": "Battery required"
+    },
+    {
+      "nl": "Batterij technologie",
+      "en": "Battery technology"
+    },
+    {
+      "nl": "Batterijcapaciteit",
+      "en": "Battery capacity"
+    },
+    {
+      "nl": "Batterijduur",
+      "en": "Battery life"
+    },
+    {
+      "nl": "Batterijen inbegrepen",
+      "en": "Batteries included"
+    },
+    {
+      "nl": "Batterijformaat",
+      "en": "Battery size"
+    },
+    {
+      "nl": "Bediening",
+      "en": "Operation"
+    },
+    {
+      "nl": "Bediening op spuitlans",
+      "en": "Control on spray lance"
+    },
+    {
+      "nl": "Bediening verlichting",
+      "en": "Light control"
+    },
+    {
+      "nl": "Bediening via app",
+      "en": "Control via app"
+    },
+    {
+      "nl": "Bedrade snelheid",
+      "en": "Wired speed"
+    },
+    {
+      "nl": "Bedrukking",
+      "en": "Printing"
+    },
+    {
+      "nl": "Beeldformaat",
+      "en": "Image size"
+    },
+    {
+      "nl": "Beeldkwaliteit",
+      "en": "Image quality"
+    },
+    {
+      "nl": "Beeldstabilisatie",
+      "en": "Image stabilization"
+    },
+    {
+      "nl": "Behandeling",
+      "en": "Treatment"
+    },
+    {
+      "nl": "Behoefte Voedingssupplement",
+      "en": "Dietary supplement need"
+    },
+    {
+      "nl": "Bemesting geschikt voor",
+      "en": "Fertilizer suitable for"
+    },
+    {
+      "nl": "Beoogd gebruik",
+      "en": "Intended use"
+    },
+    {
+      "nl": "Bereiding",
+      "en": "Preparation"
+    },
+    {
+      "nl": "Bereidingstijd",
+      "en": "Preparation time"
+    },
+    {
+      "nl": "Bereidingswijze",
+      "en": "Preparation method"
+    },
+    {
+      "nl": "Bereidingswijze soep",
+      "en": "Soup preparation method"
+    },
+    {
+      "nl": "Bereik / sproeioppervlak",
+      "en": "Range / spray area"
+    },
+    {
+      "nl": "Bereik babyfoon",
+      "en": "Baby monitor range"
+    },
+    {
+      "nl": "Bereik binnenshuis",
+      "en": "Indoor range"
+    },
+    {
+      "nl": "Bereik buitenshuis",
+      "en": "Outdoor range"
+    },
+    {
+      "nl": "Bescherming laptop",
+      "en": "Laptop protection"
+    },
+    {
+      "nl": "Beschikbare apps",
+      "en": "Available apps"
+    },
+    {
+      "nl": "Bestandsformaat",
+      "en": "File format"
+    },
+    {
+      "nl": "Bestendigheid",
+      "en": "Resistance"
+    },
+    {
+      "nl": "Besturingssysteem",
+      "en": "Operating system"
+    },
+    {
+      "nl": "Bestuurbaar via app",
+      "en": "Controllable via app"
+    },
+    {
+      "nl": "Beugelbevestiging",
+      "en": "Bracket mounting"
+    },
+    {
+      "nl": "Bevestigingssysteem",
+      "en": "Fastening system"
+    },
+    {
+      "nl": "Bevestigingswijze",
+      "en": "Fastening method"
+    },
+    {
+      "nl": "Bijsluiter / registratie",
+      "en": "Package leaflet / registration"
+    },
+    {
+      "nl": "Binding",
+      "en": "Binding"
+    },
+    {
+      "nl": "Bindwijze",
+      "en": "Binding method"
+    },
+    {
+      "nl": "Binnen of buiten",
+      "en": "Indoor or outdoor"
+    },
+    {
+      "nl": "Biologisch",
+      "en": "Organic"
+    },
+    {
+      "nl": "Biologisch katoen",
+      "en": "Organic cotton"
+    },
+    {
+      "nl": "Bitversie",
+      "en": "Bit version"
+    },
+    {
+      "nl": "Bloeiperiode",
+      "en": "Flowering period"
+    },
+    {
+      "nl": "Bloemenkaartje",
+      "en": "Flower card"
+    },
+    {
+      "nl": "Bluetooth",
+      "en": "Bluetooth"
+    },
+    {
+      "nl": "Branding",
+      "en": "Branding"
+    },
+    {
+      "nl": "Brandstof",
+      "en": "Fuel"
+    },
+    {
+      "nl": "Branduren",
+      "en": "Burn time"
+    },
+    {
+      "nl": "Breedte",
+      "en": "Width"
+    },
+    {
+      "nl": "Breedte bureaublad",
+      "en": "Desktop width"
+    },
+    {
+      "nl": "Breedte horlogeband-aansluiting",
+      "en": "Watch strap lug width"
+    },
+    {
+      "nl": "Breedte kookplaat",
+      "en": "Hob width"
+    },
+    {
+      "nl": "Breedte ledikant",
+      "en": "Bed width"
+    },
+    {
+      "nl": "Breedte onderbouwkast",
+      "en": "Under-counter cabinet width"
+    },
+    {
+      "nl": "Breedte soundbar",
+      "en": "Soundbar width"
+    },
+    {
+      "nl": "Breedte van de doorgang",
+      "en": "Passage width"
+    },
+    {
+      "nl": "Breedte zitvlak",
+      "en": "Seat width"
+    },
+    {
+      "nl": "CE-markering",
+      "en": "CE marking"
+    },
+    {
+      "nl": "Cafeïne",
+      "en": "Caffeine"
+    },
+    {
+      "nl": "Cafeïnevrij",
+      "en": "Caffeine-free"
+    },
+    {
+      "nl": "Camera",
+      "en": "Camera"
+    },
+    {
+      "nl": "Camera op afstand bestuurbaar",
+      "en": "Remote-controllable camera"
+    },
+    {
+      "nl": "Camerakwaliteit",
+      "en": "Camera quality"
+    },
+    {
+      "nl": "Camerakwaliteit babyfoons",
+      "en": "Baby monitor camera quality"
+    },
+    {
+      "nl": "Capaciteit",
+      "en": "Capacity"
+    },
+    {
+      "nl": "Capuchon",
+      "en": "Hood"
+    },
+    {
+      "nl": "Chocoladesmaak",
+      "en": "Chocolate flavor"
+    },
+    {
+      "nl": "Comforttemperatuur",
+      "en": "Comfort temperature"
+    },
+    {
+      "nl": "Compatibel met besturingssysteem",
+      "en": "Compatible with operating system"
+    },
+    {
+      "nl": "Compatibel met games",
+      "en": "Compatible with games"
+    },
+    {
+      "nl": "Compatibel met smartphone / apps",
+      "en": "Compatible with smartphone / apps"
+    },
+    {
+      "nl": "Competitie",
+      "en": "Competition"
+    },
+    {
+      "nl": "Complete aquarium set",
+      "en": "Complete aquarium set"
+    },
+    {
+      "nl": "Condoommaat",
+      "en": "Condom size"
+    },
+    {
+      "nl": "Connectiviteit",
+      "en": "Connectivity"
+    },
+    {
+      "nl": "Continue stoomkracht",
+      "en": "Continuous steam output"
+    },
+    {
+      "nl": "Cupmaat / BH-maat",
+      "en": "Cup size / bra size"
+    },
+    {
+      "nl": "DRM / watermerk",
+      "en": "DRM / watermark"
+    },
+    {
+      "nl": "Dag/nacht",
+      "en": "Day/night"
+    },
+    {
+      "nl": "Dakbedekking",
+      "en": "Roofing"
+    },
+    {
+      "nl": "Dartpijlgewicht",
+      "en": "Dart weight"
+    },
+    {
+      "nl": "Deel van serie",
+      "en": "Part of series"
+    },
+    {
+      "nl": "Dekking make-up",
+      "en": "Makeup coverage"
+    },
+    {
+      "nl": "Denier",
+      "en": "Denier"
+    },
+    {
+      "nl": "Dermatologisch getest",
+      "en": "Dermatologically tested"
+    },
+    {
+      "nl": "Dessin",
+      "en": "Pattern design"
+    },
+    {
+      "nl": "Details",
+      "en": "Details"
+    },
+    {
+      "nl": "Deursysteem",
+      "en": "Door system"
+    },
+    {
+      "nl": "Diameter",
+      "en": "Diameter"
+    },
+    {
+      "nl": "Diameter horlogekast",
+      "en": "Watch case diameter"
+    },
+    {
+      "nl": "Diameter of breedte",
+      "en": "Diameter or width"
+    },
+    {
+      "nl": "Diameter pannen",
+      "en": "Pan diameter"
+    },
+    {
+      "nl": "Diameter pot",
+      "en": "Pot diameter"
+    },
+    {
+      "nl": "Diameter slang",
+      "en": "Hose diameter"
+    },
+    {
+      "nl": "Dieet",
+      "en": "Diet"
+    },
+    {
+      "nl": "Dieetvoorkeur",
+      "en": "Dietary preference"
+    },
+    {
+      "nl": "Diefstalbeveiliging",
+      "en": "Theft protection"
+    },
+    {
+      "nl": "Diepte",
+      "en": "Depth"
+    },
+    {
+      "nl": "Dier",
+      "en": "Animal"
+    },
+    {
+      "nl": "Diersoort",
+      "en": "Animal species"
+    },
+    {
+      "nl": "Digitaal product",
+      "en": "Digital product"
+    },
+    {
+      "nl": "Dikte",
+      "en": "Thickness"
+    },
+    {
+      "nl": "Directe aandrijving",
+      "en": "Direct drive"
+    },
+    {
+      "nl": "Disc-station of digitaal",
+      "en": "Disc drive or digital"
+    },
+    {
+      "nl": "Discrete verpakking",
+      "en": "Discreet packaging"
+    },
+    {
+      "nl": "Display",
+      "en": "Display"
+    },
+    {
+      "nl": "Doelgroep",
+      "en": "Target group"
+    },
+    {
+      "nl": "Doseervorm",
+      "en": "Dosage form"
+    },
+    {
+      "nl": "Draadloos / bedraad",
+      "en": "Wireless / wired"
+    },
+    {
+      "nl": "Draadloos opladen",
+      "en": "Wireless charging"
+    },
+    {
+      "nl": "Draagbaar",
+      "en": "Portable"
+    },
+    {
+      "nl": "Draagsysteem",
+      "en": "Carrying system"
+    },
+    {
+      "nl": "Draagwijze",
+      "en": "Wearing style"
+    },
+    {
+      "nl": "Draagwijze koptelefoon",
+      "en": "Headphone wearing style"
+    },
+    {
+      "nl": "Draagwijze oordopjes",
+      "en": "Earbud wearing style"
+    },
+    {
+      "nl": "Draaibaar 360°",
+      "en": "Rotatable 360°"
+    },
+    {
+      "nl": "Draaiplateau",
+      "en": "Turntable"
+    },
+    {
+      "nl": "Draairichting deur",
+      "en": "Door swing direction"
+    },
+    {
+      "nl": "Drager",
+      "en": "Carrier"
+    },
+    {
+      "nl": "Drooglengte",
+      "en": "Drying length"
+    },
+    {
+      "nl": "Droogtechniek",
+      "en": "Drying technology"
+    },
+    {
+      "nl": "Drop",
+      "en": "Drop"
+    },
+    {
+      "nl": "Druk / editie",
+      "en": "Print / edition"
+    },
+    {
+      "nl": "Dual SIM",
+      "en": "Dual SIM"
+    },
+    {
+      "nl": "Dubbelzijdig",
+      "en": "Double-sided"
+    },
+    {
+      "nl": "Dubbelzijdig scannen",
+      "en": "Double-sided scanning"
+    },
+    {
+      "nl": "Dweilfunctie",
+      "en": "Mopping function"
+    },
+    {
+      "nl": "Dyslexievriendelijk",
+      "en": "Dyslexia-friendly"
+    },
+    {
+      "nl": "ECE goedkeuring",
+      "en": "ECE approval"
+    },
+    {
+      "nl": "EU verantwoordelijke persoon / economic operator",
+      "en": "EU responsible person / economic operator"
+    },
+    {
+      "nl": "EU verantwoordelijke — adres",
+      "en": "EU responsible person — address"
+    },
+    {
+      "nl": "EU verantwoordelijke — e-mail/telefoon",
+      "en": "EU responsible person — email/phone"
+    },
+    {
+      "nl": "EU verantwoordelijke — land",
+      "en": "EU responsible person — country"
+    },
+    {
+      "nl": "EU verantwoordelijke — postcode + plaats",
+      "en": "EU responsible person — postal code + city"
+    },
+    {
+      "nl": "Effect",
+      "en": "Effect"
+    },
+    {
+      "nl": "Eigenschappen",
+      "en": "Features"
+    },
+    {
+      "nl": "Eigenschappen vogelhuis",
+      "en": "Birdhouse features"
+    },
+    {
+      "nl": "Elektrisch",
+      "en": "Electric"
+    },
+    {
+      "nl": "Elektrisch of handmatig",
+      "en": "Electric or manual"
+    },
+    {
+      "nl": "Elektrisch verstelbaar",
+      "en": "Electrically adjustable"
+    },
+    {
+      "nl": "Elektronisch",
+      "en": "Electronic"
+    },
+    {
+      "nl": "Elementen bakset",
+      "en": "Baking set elements"
+    },
+    {
+      "nl": "Energielabel",
+      "en": "Energy label"
+    },
+    {
+      "nl": "Ergonomisch",
+      "en": "Ergonomic"
+    },
+    {
+      "nl": "Ergonomisch keurmerk",
+      "en": "Ergonomic certification"
+    },
+    {
+      "nl": "Ergonomische greep",
+      "en": "Ergonomic grip"
+    },
+    {
+      "nl": "Extra stoomstoot",
+      "en": "Extra steam burst"
+    },
+    {
+      "nl": "Extra vakken",
+      "en": "Extra compartments"
+    },
+    {
+      "nl": "Extra veiligheid",
+      "en": "Extra safety"
+    },
+    {
+      "nl": "Fabrikant e-mail / elektronisch contact",
+      "en": "Manufacturer email / electronic contact"
+    },
+    {
+      "nl": "Fabrikant land",
+      "en": "Manufacturer country"
+    },
+    {
+      "nl": "Fabrikant postcode + plaats",
+      "en": "Manufacturer postal code + city"
+    },
+    {
+      "nl": "Fabrikantadres (straat + nr)",
+      "en": "Manufacturer address (street + number)"
+    },
+    {
+      "nl": "Fabrikantnaam",
+      "en": "Manufacturer name"
+    },
+    {
+      "nl": "Feestthema",
+      "en": "Party theme"
+    },
+    {
+      "nl": "Film of serie",
+      "en": "Film or series"
+    },
+    {
+      "nl": "Finish",
+      "en": "Finish"
+    },
+    {
+      "nl": "Fitting",
+      "en": "Fitting"
+    },
+    {
+      "nl": "Fles materiaal",
+      "en": "Bottle material"
+    },
+    {
+      "nl": "Fluoride",
+      "en": "Fluoride"
+    },
+    {
+      "nl": "Force feedback",
+      "en": "Force feedback"
+    },
+    {
+      "nl": "Formaat",
+      "en": "Size"
+    },
+    {
+      "nl": "Formaat autoradio",
+      "en": "Car stereo size"
+    },
+    {
+      "nl": "Formaat boeket",
+      "en": "Bouquet size"
+    },
+    {
+      "nl": "Formaat display",
+      "en": "Display size"
+    },
+    {
+      "nl": "Formaat fotoalbum",
+      "en": "Photo album size"
+    },
+    {
+      "nl": "Formaat harde schijf",
+      "en": "Hard drive size"
+    },
+    {
+      "nl": "Formaat hond",
+      "en": "Dog size"
+    },
+    {
+      "nl": "Formaat horlogekast",
+      "en": "Watch case size"
+    },
+    {
+      "nl": "Formaat laptopvak",
+      "en": "Laptop compartment size"
+    },
+    {
+      "nl": "Formaat muis",
+      "en": "Mouse size"
+    },
+    {
+      "nl": "Formaat tablet",
+      "en": "Tablet size"
+    },
+    {
+      "nl": "Formaat tas",
+      "en": "Bag size"
+    },
+    {
+      "nl": "Formaat toilettas",
+      "en": "Toiletry bag size"
+    },
+    {
+      "nl": "Formaat waterbak",
+      "en": "Water bowl size"
+    },
+    {
+      "nl": "Formaat wenskaart",
+      "en": "Greeting card size"
+    },
+    {
+      "nl": "Fosfaatvrij",
+      "en": "Phosphate-free"
+    },
+    {
+      "nl": "Fotoformaat",
+      "en": "Photo size"
+    },
+    {
+      "nl": "Fotopapier afwerking",
+      "en": "Photo paper finish"
+    },
+    {
+      "nl": "Framemaat",
+      "en": "Frame size"
+    },
+    {
+      "nl": "Frames per seconde in Full HD",
+      "en": "Frames per second in Full HD"
+    },
+    {
+      "nl": "Frametype",
+      "en": "Frame type"
+    },
+    {
+      "nl": "Functies en programma's",
+      "en": "Functions and programs"
+    },
+    {
+      "nl": "Functies friteuse",
+      "en": "Fryer functions"
+    },
+    {
+      "nl": "GPS",
+      "en": "GPS"
+    },
+    {
+      "nl": "GPSR-fabrikantnaam (etiket)",
+      "en": "GPSR manufacturer name (label)"
+    },
+    {
+      "nl": "Gamegenre",
+      "en": "Game genre"
+    },
+    {
+      "nl": "Gameserie",
+      "en": "Game series"
+    },
+    {
+      "nl": "Gang",
+      "en": "Gear"
+    },
+    {
+      "nl": "Garantie",
+      "en": "Warranty"
+    },
+    {
+      "nl": "Gazonoppervlakte",
+      "en": "Lawn area"
+    },
+    {
+      "nl": "Gebiedsafbakening / app",
+      "en": "Area limitation / app"
+    },
+    {
+      "nl": "Gebiedsafbakening / navigatie",
+      "en": "Area limitation / navigation"
+    },
+    {
+      "nl": "Gebruik",
+      "en": "Use"
+    },
+    {
+      "nl": "Gebruik drone",
+      "en": "Drone use"
+    },
+    {
+      "nl": "Gebruik in type voertuig",
+      "en": "Use in vehicle type"
+    },
+    {
+      "nl": "Gebruiksdoel",
+      "en": "Purpose of use"
+    },
+    {
+      "nl": "Gebruiksgemak",
+      "en": "Ease of use"
+    },
+    {
+      "nl": "Gebruikslocatie",
+      "en": "Place of use"
+    },
+    {
+      "nl": "Gebruikssituatie",
+      "en": "Usage situation"
+    },
+    {
+      "nl": "Geformatteerd voor",
+      "en": "Formatted for"
+    },
+    {
+      "nl": "Geheugen",
+      "en": "Memory"
+    },
+    {
+      "nl": "Geheugenkaart capaciteit",
+      "en": "Memory card capacity"
+    },
+    {
+      "nl": "Geheugenkaart toepassing",
+      "en": "Memory card use"
+    },
+    {
+      "nl": "Geheugensnelheid",
+      "en": "Memory speed"
+    },
+    {
+      "nl": "Geheugentype",
+      "en": "Memory type"
+    },
+    {
+      "nl": "Gelegenheid",
+      "en": "Occasion"
+    },
+    {
+      "nl": "Geluidsformaat",
+      "en": "Audio format"
+    },
+    {
+      "nl": "Geluidsniveau",
+      "en": "Noise level"
+    },
+    {
+      "nl": "Geluidsweergave",
+      "en": "Sound reproduction"
+    },
+    {
+      "nl": "Gemaakt voor het plezier van",
+      "en": "Made for the enjoyment of"
+    },
+    {
+      "nl": "Gemiddelde speeltijd",
+      "en": "Average play time"
+    },
+    {
+      "nl": "Genre",
+      "en": "Genre"
+    },
+    {
+      "nl": "Gerecycled",
+      "en": "Recycled"
+    },
+    {
+      "nl": "Geschikt voor",
+      "en": "Suitable for"
+    },
+    {
+      "nl": "Geschikt voor LP formaat",
+      "en": "Suitable for LP size"
+    },
+    {
+      "nl": "Geschikt voor aantal fietsen",
+      "en": "Suitable for number of bikes"
+    },
+    {
+      "nl": "Geschikt voor aantal foto's",
+      "en": "Suitable for number of photos"
+    },
+    {
+      "nl": "Geschikt voor aantal kinderen",
+      "en": "Suitable for number of children"
+    },
+    {
+      "nl": "Geschikt voor aantal porties",
+      "en": "Suitable for number of servings"
+    },
+    {
+      "nl": "Geschikt voor aantal spelers",
+      "en": "Suitable for number of players"
+    },
+    {
+      "nl": "Geschikt voor automodel",
+      "en": "Suitable for car model"
+    },
+    {
+      "nl": "Geschikt voor diameter tak",
+      "en": "Suitable for branch diameter"
+    },
+    {
+      "nl": "Geschikt voor doven en slechthorenden",
+      "en": "Suitable for deaf and hard of hearing"
+    },
+    {
+      "nl": "Geschikt voor e-reader",
+      "en": "Suitable for e-reader"
+    },
+    {
+      "nl": "Geschikt voor elektrische fiets",
+      "en": "Suitable for electric bike"
+    },
+    {
+      "nl": "Geschikt voor gevoelige huid",
+      "en": "Suitable for sensitive skin"
+    },
+    {
+      "nl": "Geschikt voor haartype",
+      "en": "Suitable for hair type"
+    },
+    {
+      "nl": "Geschikt voor inductiekookplaat",
+      "en": "Suitable for induction hob"
+    },
+    {
+      "nl": "Geschikt voor kittens",
+      "en": "Suitable for kittens"
+    },
+    {
+      "nl": "Geschikt voor koffiesysteem",
+      "en": "Suitable for coffee system"
+    },
+    {
+      "nl": "Geschikt voor leeftijd",
+      "en": "Suitable for age"
+    },
+    {
+      "nl": "Geschikt voor levensfase",
+      "en": "Suitable for life stage"
+    },
+    {
+      "nl": "Geschikt voor lichaamsdeel",
+      "en": "Suitable for body part"
+    },
+    {
+      "nl": "Geschikt voor locatie",
+      "en": "Suitable for location"
+    },
+    {
+      "nl": "Geschikt voor matras met lengte",
+      "en": "Suitable for mattress length"
+    },
+    {
+      "nl": "Geschikt voor merk",
+      "en": "Suitable for brand"
+    },
+    {
+      "nl": "Geschikt voor merk cv-ketel",
+      "en": "Suitable for central heating boiler brand"
+    },
+    {
+      "nl": "Geschikt voor model",
+      "en": "Suitable for model"
+    },
+    {
+      "nl": "Geschikt voor model motor",
+      "en": "Suitable for motorcycle model"
+    },
+    {
+      "nl": "Geschikt voor model motor/scooter",
+      "en": "Suitable for motorcycle/scooter model"
+    },
+    {
+      "nl": "Geschikt voor m²",
+      "en": "Suitable for m²"
+    },
+    {
+      "nl": "Geschikt voor ondergrond",
+      "en": "Suitable for surface"
+    },
+    {
+      "nl": "Geschikt voor oppervlak",
+      "en": "Suitable for surface area"
+    },
+    {
+      "nl": "Geschikt voor papierformaat",
+      "en": "Suitable for paper size"
+    },
+    {
+      "nl": "Geschikt voor printer",
+      "en": "Suitable for printer"
+    },
+    {
+      "nl": "Geschikt voor printertype",
+      "en": "Suitable for printer type"
+    },
+    {
+      "nl": "Geschikt voor ruimte",
+      "en": "Suitable for room"
+    },
+    {
+      "nl": "Geschikt voor ruimte tot",
+      "en": "Suitable for room size up to"
+    },
+    {
+      "nl": "Geschikt voor scheren/trimmen van",
+      "en": "Suitable for shaving/trimming"
+    },
+    {
+      "nl": "Geschikt voor schermafmeting TV",
+      "en": "Suitable for TV screen size"
+    },
+    {
+      "nl": "Geschikt voor terrein",
+      "en": "Suitable for terrain"
+    },
+    {
+      "nl": "Geschikt voor thuisbatterij",
+      "en": "Suitable for home battery"
+    },
+    {
+      "nl": "Geschikt voor toilettype",
+      "en": "Suitable for toilet type"
+    },
+    {
+      "nl": "Geschikt voor type MacBook",
+      "en": "Suitable for MacBook type"
+    },
+    {
+      "nl": "Geschikt voor type baardgroei",
+      "en": "Suitable for beard growth type"
+    },
+    {
+      "nl": "Geschikt voor type camera",
+      "en": "Suitable for camera type"
+    },
+    {
+      "nl": "Geschikt voor type dier",
+      "en": "Suitable for animal type"
+    },
+    {
+      "nl": "Geschikt voor type fiets",
+      "en": "Suitable for bike type"
+    },
+    {
+      "nl": "Geschikt voor type gebit",
+      "en": "Suitable for dentition type"
+    },
+    {
+      "nl": "Geschikt voor type stof",
+      "en": "Suitable for fabric type"
+    },
+    {
+      "nl": "Geschikt voor type vloer",
+      "en": "Suitable for floor type"
+    },
+    {
+      "nl": "Geschikt voor type voertuig",
+      "en": "Suitable for vehicle type"
+    },
+    {
+      "nl": "Geschikt voor vloerverwarming",
+      "en": "Suitable for underfloor heating"
+    },
+    {
+      "nl": "Geschikt voor warmtebron",
+      "en": "Suitable for heat source"
+    },
+    {
+      "nl": "Geschikt voor woonruimte",
+      "en": "Suitable for living space"
+    },
+    {
+      "nl": "Geslacht",
+      "en": "Gender"
+    },
+    {
+      "nl": "Gesproken taal",
+      "en": "Spoken language"
+    },
+    {
+      "nl": "Geur",
+      "en": "Scent"
+    },
+    {
+      "nl": "Geurduur",
+      "en": "Scent duration"
+    },
+    {
+      "nl": "Geurfamilie",
+      "en": "Fragrance family"
+    },
+    {
+      "nl": "Geurloos",
+      "en": "Fragrance-free"
+    },
+    {
+      "nl": "Geursoort",
+      "en": "Scent type"
+    },
+    {
+      "nl": "Gevoerd",
+      "en": "Lined"
+    },
+    {
+      "nl": "Gewenst effect",
+      "en": "Desired effect"
+    },
+    {
+      "nl": "Gewicht",
+      "en": "Weight"
+    },
+    {
+      "nl": "Gewicht heggenschaar",
+      "en": "Hedge trimmer weight"
+    },
+    {
+      "nl": "Gewicht kind",
+      "en": "Child weight"
+    },
+    {
+      "nl": "Gewicht kinderwagen",
+      "en": "Stroller weight"
+    },
+    {
+      "nl": "Gewicht per m²",
+      "en": "Weight per m²"
+    },
+    {
+      "nl": "Gewicht racket",
+      "en": "Racket weight"
+    },
+    {
+      "nl": "Gewicht strijkijzer",
+      "en": "Iron weight"
+    },
+    {
+      "nl": "Gewicht verpakking",
+      "en": "Packaging weight"
+    },
+    {
+      "nl": "Gewichtscategorie",
+      "en": "Weight category"
+    },
+    {
+      "nl": "Gewichtsmaat",
+      "en": "Weight size"
+    },
+    {
+      "nl": "Gezongen taal",
+      "en": "Sung language"
+    },
+    {
+      "nl": "Geïntegreerde Bluetooth carkit",
+      "en": "Integrated Bluetooth car kit"
+    },
+    {
+      "nl": "Gitaarmaat",
+      "en": "Guitar size"
+    },
+    {
+      "nl": "Graanvrij",
+      "en": "Grain-free"
+    },
+    {
+      "nl": "Grafisch display",
+      "en": "Graphic display"
+    },
+    {
+      "nl": "Gramsgewicht",
+      "en": "Grammage"
+    },
+    {
+      "nl": "Groen of bloeiend",
+      "en": "Green or flowering"
+    },
+    {
+      "nl": "Grootte erotische giftset",
+      "en": "Erotic gift set size"
+    },
+    {
+      "nl": "Grootte van koffer",
+      "en": "Suitcase size"
+    },
+    {
+      "nl": "HDMI-versie",
+      "en": "HDMI version"
+    },
+    {
+      "nl": "HEPA-filter",
+      "en": "HEPA filter"
+    },
+    {
+      "nl": "Haartype",
+      "en": "Hair type"
+    },
+    {
+      "nl": "Hakhoogte",
+      "en": "Heel height"
+    },
+    {
+      "nl": "Hakvorm",
+      "en": "Heel shape"
+    },
+    {
+      "nl": "Handbagage afmetingen",
+      "en": "Carry-on luggage dimensions"
+    },
+    {
+      "nl": "Handgemaakt",
+      "en": "Handmade"
+    },
+    {
+      "nl": "Handige extra's",
+      "en": "Handy extras"
+    },
+    {
+      "nl": "Handige functies",
+      "en": "Handy features"
+    },
+    {
+      "nl": "Hardcase of softcase",
+      "en": "Hard case or soft case"
+    },
+    {
+      "nl": "Haspel hogedrukslang",
+      "en": "High-pressure hose reel"
+    },
+    {
+      "nl": "Helmconstructie",
+      "en": "Helmet construction"
+    },
+    {
+      "nl": "Herbruikbaar",
+      "en": "Reusable"
+    },
+    {
+      "nl": "Herkomst / maker",
+      "en": "Origin / maker"
+    },
+    {
+      "nl": "Hi-res audio",
+      "en": "Hi-res audio"
+    },
+    {
+      "nl": "Hoes opdruk",
+      "en": "Cover print"
+    },
+    {
+      "nl": "Hoofdmateriaal",
+      "en": "Main material"
+    },
+    {
+      "nl": "Hoofdomtrek",
+      "en": "Head circumference"
+    },
+    {
+      "nl": "Hoofdtelefoon aansluiting",
+      "en": "Headphone connection"
+    },
+    {
+      "nl": "Hoogte",
+      "en": "Height"
+    },
+    {
+      "nl": "Hoogte bak / pot",
+      "en": "Container / pot height"
+    },
+    {
+      "nl": "Hoogte boeket",
+      "en": "Bouquet height"
+    },
+    {
+      "nl": "Hoogte instelbaar",
+      "en": "Adjustable height"
+    },
+    {
+      "nl": "Hoogte kerstboom",
+      "en": "Christmas tree height"
+    },
+    {
+      "nl": "Hoogte koffer",
+      "en": "Suitcase height"
+    },
+    {
+      "nl": "Hoogte krabpaal",
+      "en": "Scratching post height"
+    },
+    {
+      "nl": "Hoogte robotstofzuiger",
+      "en": "Robot vacuum cleaner height"
+    },
+    {
+      "nl": "Hoogte van de nis",
+      "en": "Niche height"
+    },
+    {
+      "nl": "Hoogtemeter",
+      "en": "Altimeter"
+    },
+    {
+      "nl": "Houdbaarheid",
+      "en": "Shelf life"
+    },
+    {
+      "nl": "Houdbaarheid / vaasleven",
+      "en": "Shelf life / vase life"
+    },
+    {
+      "nl": "Huidprobleem",
+      "en": "Skin concern"
+    },
+    {
+      "nl": "Huidskleur",
+      "en": "Skin color"
+    },
+    {
+      "nl": "Huidtype",
+      "en": "Skin type"
+    },
+    {
+      "nl": "IP-waarde",
+      "en": "IP rating"
+    },
+    {
+      "nl": "ISBN",
+      "en": "ISBN"
+    },
+    {
+      "nl": "ISOFIX",
+      "en": "ISOFIX"
+    },
+    {
+      "nl": "In een set",
+      "en": "In a set"
+    },
+    {
+      "nl": "Inbouw of vrijstaand",
+      "en": "Built-in or freestanding"
+    },
+    {
+      "nl": "Inbouwafmeting",
+      "en": "Built-in dimensions"
+    },
+    {
+      "nl": "Inclusief accessoires",
+      "en": "Accessories included"
+    },
+    {
+      "nl": "Inclusief controller",
+      "en": "Controller included"
+    },
+    {
+      "nl": "Inclusief eetblad",
+      "en": "Tray included"
+    },
+    {
+      "nl": "Inclusief envelop",
+      "en": "Envelope included"
+    },
+    {
+      "nl": "Inclusief game",
+      "en": "Game included"
+    },
+    {
+      "nl": "Inclusief gereedschap",
+      "en": "Tools included"
+    },
+    {
+      "nl": "Inclusief kabels / accessoires",
+      "en": "Cables / accessories included"
+    },
+    {
+      "nl": "Inclusief kussens",
+      "en": "Cushions included"
+    },
+    {
+      "nl": "Inclusief onderstel",
+      "en": "Base included"
+    },
+    {
+      "nl": "Inclusief palen",
+      "en": "Poles included"
+    },
+    {
+      "nl": "Inclusief passe-partout",
+      "en": "Mount included"
+    },
+    {
+      "nl": "Inclusief type accessoires",
+      "en": "Included accessory type"
+    },
+    {
+      "nl": "Inclusief verschoonmatje",
+      "en": "Changing mat included"
+    },
+    {
+      "nl": "Inclusief vislijn",
+      "en": "Fishing line included"
+    },
+    {
+      "nl": "Inclusief vloer",
+      "en": "Floor included"
+    },
+    {
+      "nl": "Inclusief zand / lijm",
+      "en": "Sand / glue included"
+    },
+    {
+      "nl": "Indeling agendavulling",
+      "en": "Planner refill layout"
+    },
+    {
+      "nl": "Indeling kast",
+      "en": "Cabinet layout"
+    },
+    {
+      "nl": "Indeling kinderwagen",
+      "en": "Stroller layout"
+    },
+    {
+      "nl": "Ingebouwde speakers",
+      "en": "Built-in speakers"
+    },
+    {
+      "nl": "Ingebouwde voorversterker",
+      "en": "Built-in preamplifier"
+    },
+    {
+      "nl": "Ingrediënten",
+      "en": "Ingredients"
+    },
+    {
+      "nl": "Inhoud",
+      "en": "Volume"
+    },
+    {
+      "nl": "Inhoud / gewicht",
+      "en": "Volume / weight"
+    },
+    {
+      "nl": "Inhoud / rollengte",
+      "en": "Volume / roll length"
+    },
+    {
+      "nl": "Inhoud aquarium",
+      "en": "Aquarium volume"
+    },
+    {
+      "nl": "Inhoud dakkoffer",
+      "en": "Roof box volume"
+    },
+    {
+      "nl": "Inhoud fietstas",
+      "en": "Bike bag volume"
+    },
+    {
+      "nl": "Inhoud fles",
+      "en": "Bottle volume"
+    },
+    {
+      "nl": "Inhoud geschenkset",
+      "en": "Gift set contents"
+    },
+    {
+      "nl": "Inhoud set",
+      "en": "Set contents"
+    },
+    {
+      "nl": "Inhoud vriesruimte",
+      "en": "Freezer volume"
+    },
+    {
+      "nl": "Inhoud waterreservoir",
+      "en": "Water tank volume"
+    },
+    {
+      "nl": "Inklapbaar",
+      "en": "Foldable"
+    },
+    {
+      "nl": "Isolerend",
+      "en": "Insulating"
+    },
+    {
+      "nl": "Jaar uitgave tijdschrift",
+      "en": "Magazine publication year"
+    },
+    {
+      "nl": "Kaartdekking",
+      "en": "Map coverage"
+    },
+    {
+      "nl": "Kaartupdates",
+      "en": "Map updates"
+    },
+    {
+      "nl": "Kabellengte",
+      "en": "Cable length"
+    },
+    {
+      "nl": "Kalenderjaar",
+      "en": "Calendar year"
+    },
+    {
+      "nl": "Karaat / gehalte",
+      "en": "Carat / purity"
+    },
+    {
+      "nl": "Kenmerken plant",
+      "en": "Plant characteristics"
+    },
+    {
+      "nl": "Keuken",
+      "en": "Kitchen"
+    },
+    {
+      "nl": "Keurmerk",
+      "en": "Quality mark"
+    },
+    {
+      "nl": "Kijkrichting kind",
+      "en": "Child facing direction"
+    },
+    {
+      "nl": "Kijkwijzerleeftijd",
+      "en": "Age rating"
+    },
+    {
+      "nl": "Kledinglengte",
+      "en": "Clothing length"
+    },
+    {
+      "nl": "Kleur",
+      "en": "Color"
+    },
+    {
+      "nl": "Kleur / afwerking",
+      "en": "Color / finish"
+    },
+    {
+      "nl": "Kleur glazen",
+      "en": "Lens color"
+    },
+    {
+      "nl": "Kleur hardware",
+      "en": "Hardware color"
+    },
+    {
+      "nl": "Kleur kastwerk",
+      "en": "Cabinet color"
+    },
+    {
+      "nl": "Kleur montuur",
+      "en": "Frame color"
+    },
+    {
+      "nl": "Kleur wijzerplaat",
+      "en": "Dial color"
+    },
+    {
+      "nl": "Kleurdiepte",
+      "en": "Color depth"
+    },
+    {
+      "nl": "Kleurenprinter",
+      "en": "Color printer"
+    },
+    {
+      "nl": "Kleurruimte",
+      "en": "Color space"
+    },
+    {
+      "nl": "Kleurtemperatuur",
+      "en": "Color temperature"
+    },
+    {
+      "nl": "Kloksnelheid",
+      "en": "Clock speed"
+    },
+    {
+      "nl": "Knuffelfunctie",
+      "en": "Cuddle function"
+    },
+    {
+      "nl": "Knuffelthema",
+      "en": "Plush toy theme"
+    },
+    {
+      "nl": "Koelbaar",
+      "en": "Coolable"
+    },
+    {
+      "nl": "Koelvermogen",
+      "en": "Cooling capacity"
+    },
+    {
+      "nl": "Koffiezetapparaat inclusief",
+      "en": "Coffee maker includes"
+    },
+    {
+      "nl": "Koppelbaar met mobiele app",
+      "en": "Pairable with mobile app"
+    },
+    {
+      "nl": "Koppelmogelijkheden",
+      "en": "Pairing options"
+    },
+    {
+      "nl": "Kracht van stoomstoot",
+      "en": "Steam burst power"
+    },
+    {
+      "nl": "Kwaliteit verzenddoos",
+      "en": "Shipping box quality"
+    },
+    {
+      "nl": "Laadtijd",
+      "en": "Charging time"
+    },
+    {
+      "nl": "Laarshoogte",
+      "en": "Boot height"
+    },
+    {
+      "nl": "Label",
+      "en": "Label"
+    },
+    {
+      "nl": "Lactosevrij",
+      "en": "Lactose-free"
+    },
+    {
+      "nl": "Lamptype / fitting",
+      "en": "Bulb type / fitting"
+    },
+    {
+      "nl": "Laptopformaat",
+      "en": "Laptop size"
+    },
+    {
+      "nl": "Leeftijd",
+      "en": "Age"
+    },
+    {
+      "nl": "Leeftijd 18+",
+      "en": "Age 18+"
+    },
+    {
+      "nl": "Leeftijd dier",
+      "en": "Animal age"
+    },
+    {
+      "nl": "Leeftijd hond",
+      "en": "Dog age"
+    },
+    {
+      "nl": "Leeftijd kind",
+      "en": "Child age"
+    },
+    {
+      "nl": "Leerthema",
+      "en": "Learning theme"
+    },
+    {
+      "nl": "Lengte",
+      "en": "Length"
+    },
+    {
+      "nl": "Lengte aquarium",
+      "en": "Aquarium length"
+    },
+    {
+      "nl": "Lengte baby",
+      "en": "Baby length"
+    },
+    {
+      "nl": "Lengte badjas",
+      "en": "Bathrobe length"
+    },
+    {
+      "nl": "Lengte hengel",
+      "en": "Rod length"
+    },
+    {
+      "nl": "Lengte ketting",
+      "en": "Necklace length"
+    },
+    {
+      "nl": "Lengte kind",
+      "en": "Child height"
+    },
+    {
+      "nl": "Lengte ledikant",
+      "en": "Bed length"
+    },
+    {
+      "nl": "Lengte ruitenwisser",
+      "en": "Wiper blade length"
+    },
+    {
+      "nl": "Lengte slinger",
+      "en": "Garland length"
+    },
+    {
+      "nl": "Lengte tuinslang",
+      "en": "Garden hose length"
+    },
+    {
+      "nl": "Lensvatting",
+      "en": "Lens mount"
+    },
+    {
+      "nl": "Levensduur batterij in jaren",
+      "en": "Battery lifespan in years"
+    },
+    {
+      "nl": "Levensduur plant",
+      "en": "Plant lifespan"
+    },
+    {
+      "nl": "Levensduur sensor in jaren",
+      "en": "Sensor lifespan in years"
+    },
+    {
+      "nl": "Levermethode",
+      "en": "Delivery method"
+    },
+    {
+      "nl": "Levertijd personalisatie",
+      "en": "Personalization lead time"
+    },
+    {
+      "nl": "Lichaamslengte",
+      "en": "Body height"
+    },
+    {
+      "nl": "Ligcomfort",
+      "en": "Sleeping comfort"
+    },
+    {
+      "nl": "Lijm/verf inbegrepen",
+      "en": "Glue/paint included"
+    },
+    {
+      "nl": "Lijntype",
+      "en": "Line type"
+    },
+    {
+      "nl": "Looptijd",
+      "en": "Duration"
+    },
+    {
+      "nl": "Losse pan of pannenset",
+      "en": "Single pan or pan set"
+    },
+    {
+      "nl": "Luchtdicht",
+      "en": "Airtight"
+    },
+    {
+      "nl": "Luchtkwaliteitssensor",
+      "en": "Air quality sensor"
+    },
+    {
+      "nl": "Luiermaat",
+      "en": "Diaper size"
+    },
+    {
+      "nl": "Lumen",
+      "en": "Lumen"
+    },
+    {
+      "nl": "Maaibreedte",
+      "en": "Cutting width"
+    },
+    {
+      "nl": "Maaihoogte",
+      "en": "Cutting height"
+    },
+    {
+      "nl": "Maaihoogte instelbaar",
+      "en": "Adjustable cutting height"
+    },
+    {
+      "nl": "Maand uitgave tijdschrift",
+      "en": "Magazine publication month"
+    },
+    {
+      "nl": "Maat",
+      "en": "Size"
+    },
+    {
+      "nl": "Maat / afmetingen",
+      "en": "Size / dimensions"
+    },
+    {
+      "nl": "Maat / verstelbaar",
+      "en": "Size / adjustable"
+    },
+    {
+      "nl": "Maat dekbed",
+      "en": "Duvet size"
+    },
+    {
+      "nl": "Maat handdoek",
+      "en": "Towel size"
+    },
+    {
+      "nl": "Maatcollectie",
+      "en": "Size collection"
+    },
+    {
+      "nl": "Magnetisch / MagSafe",
+      "en": "Magnetic / MagSafe"
+    },
+    {
+      "nl": "Magnetronfuncties",
+      "en": "Microwave functions"
+    },
+    {
+      "nl": "Manier van lengteinstelling",
+      "en": "Length adjustment method"
+    },
+    {
+      "nl": "Mate van verduistering",
+      "en": "Blackout level"
+    },
+    {
+      "nl": "Materiaal",
+      "en": "Material"
+    },
+    {
+      "nl": "Materiaal behuizing",
+      "en": "Housing material"
+    },
+    {
+      "nl": "Materiaal doek",
+      "en": "Cloth material"
+    },
+    {
+      "nl": "Materiaal drinkbeker",
+      "en": "Drinking cup material"
+    },
+    {
+      "nl": "Materiaal frame",
+      "en": "Frame material"
+    },
+    {
+      "nl": "Materiaal glas",
+      "en": "Glass material"
+    },
+    {
+      "nl": "Materiaal horlogeband",
+      "en": "Watch strap material"
+    },
+    {
+      "nl": "Materiaal kast",
+      "en": "Cabinet material"
+    },
+    {
+      "nl": "Materiaal mengkom",
+      "en": "Mixing bowl material"
+    },
+    {
+      "nl": "Materiaal onderstel",
+      "en": "Base material"
+    },
+    {
+      "nl": "Materiaal rugleuning",
+      "en": "Backrest material"
+    },
+    {
+      "nl": "Materiaal steel",
+      "en": "Handle material"
+    },
+    {
+      "nl": "Materiaal step",
+      "en": "Scooter material"
+    },
+    {
+      "nl": "Materiaal tafelblad",
+      "en": "Tabletop material"
+    },
+    {
+      "nl": "Materiaal tang",
+      "en": "Pliers material"
+    },
+    {
+      "nl": "Materiaal tijk",
+      "en": "Ticking material"
+    },
+    {
+      "nl": "Materiaal vulling",
+      "en": "Filling material"
+    },
+    {
+      "nl": "Materiaal vulling dekbed",
+      "en": "Duvet filling material"
+    },
+    {
+      "nl": "Materiaal waterkoker kan",
+      "en": "Kettle jug material"
+    },
+    {
+      "nl": "Materiaal zitting",
+      "en": "Seat material"
+    },
+    {
+      "nl": "Matras",
+      "en": "Mattress"
+    },
+    {
+      "nl": "Max. hellingshoek",
+      "en": "Max. incline angle"
+    },
+    {
+      "nl": "Max. hellingspercentage",
+      "en": "Max. incline percentage"
+    },
+    {
+      "nl": "Maximaal gewicht kind",
+      "en": "Maximum child weight"
+    },
+    {
+      "nl": "Maximaal koppel",
+      "en": "Maximum torque"
+    },
+    {
+      "nl": "Maximaal te reinigen oppervlakte volgens Coolblue test",
+      "en": "Maximum cleanable area according to Coolblue test"
+    },
+    {
+      "nl": "Maximaal verwarmingsbereik",
+      "en": "Maximum heating range"
+    },
+    {
+      "nl": "Maximaal weegvermogen",
+      "en": "Maximum weighing capacity"
+    },
+    {
+      "nl": "Maximale belastbaarheid in watt",
+      "en": "Maximum load capacity in watts"
+    },
+    {
+      "nl": "Maximale belasting",
+      "en": "Maximum load"
+    },
+    {
+      "nl": "Maximale gebruikerslengte",
+      "en": "Maximum user height"
+    },
+    {
+      "nl": "Maximale oppervlakte",
+      "en": "Maximum area"
+    },
+    {
+      "nl": "Maximale resolutie",
+      "en": "Maximum resolution"
+    },
+    {
+      "nl": "Maximale snelheid",
+      "en": "Maximum speed"
+    },
+    {
+      "nl": "Maximale stuurhoogte",
+      "en": "Maximum handlebar height"
+    },
+    {
+      "nl": "Maximale vliegafstand",
+      "en": "Maximum flight distance"
+    },
+    {
+      "nl": "Maximale watertemperatuurtoevoer",
+      "en": "Maximum water supply temperature"
+    },
+    {
+      "nl": "Maximale werkhoogte",
+      "en": "Maximum working height"
+    },
+    {
+      "nl": "Maximum oppervlakte bij goede isolatie",
+      "en": "Maximum area with good insulation"
+    },
+    {
+      "nl": "Meegeleverde accessoires",
+      "en": "Included accessories"
+    },
+    {
+      "nl": "Meegeleverde hogedrukreiniger accessoires",
+      "en": "Included pressure washer accessories"
+    },
+    {
+      "nl": "Meegeleverde lichtbron",
+      "en": "Included light source"
+    },
+    {
+      "nl": "Meegroeistoel",
+      "en": "Growing chair"
+    },
+    {
+      "nl": "Meetwaarden",
+      "en": "Measured values"
+    },
+    {
+      "nl": "Merk",
+      "en": "Brand"
+    },
+    {
+      "nl": "Met deksel / sluiting",
+      "en": "With lid / closure"
+    },
+    {
+      "nl": "Met muziek/geluid",
+      "en": "With music/sound"
+    },
+    {
+      "nl": "Met of zonder accu",
+      "en": "With or without battery"
+    },
+    {
+      "nl": "Met of zonder stofzak",
+      "en": "With or without dust bag"
+    },
+    {
+      "nl": "Met patroon of effen",
+      "en": "Patterned or plain"
+    },
+    {
+      "nl": "Met slot",
+      "en": "With lock"
+    },
+    {
+      "nl": "Met structuur of glad",
+      "en": "Textured or smooth"
+    },
+    {
+      "nl": "Microfoon",
+      "en": "Microphone"
+    },
+    {
+      "nl": "Mijlpaal jaar",
+      "en": "Milestone year"
+    },
+    {
+      "nl": "Milieuvriendelijk",
+      "en": "Eco-friendly"
+    },
+    {
+      "nl": "Minimale zithoogte",
+      "en": "Minimum seat height"
+    },
+    {
+      "nl": "Model",
+      "en": "Model"
+    },
+    {
+      "nl": "Model desktop",
+      "en": "Desktop model"
+    },
+    {
+      "nl": "Model kerstboom",
+      "en": "Christmas tree model"
+    },
+    {
+      "nl": "Model rekenmachine",
+      "en": "Calculator model"
+    },
+    {
+      "nl": "Model tas",
+      "en": "Bag model"
+    },
+    {
+      "nl": "Moeilijkheidsgraad",
+      "en": "Difficulty level"
+    },
+    {
+      "nl": "Mogelijkheden autoradio",
+      "en": "Car stereo features"
+    },
+    {
+      "nl": "Montage",
+      "en": "Assembly"
+    },
+    {
+      "nl": "Montage / bevestiging",
+      "en": "Assembly / mounting"
+    },
+    {
+      "nl": "Montage oppervlak",
+      "en": "Mounting surface"
+    },
+    {
+      "nl": "Montageplaats",
+      "en": "Mounting location"
+    },
+    {
+      "nl": "Montagewijze",
+      "en": "Mounting method"
+    },
+    {
+      "nl": "Montuurvorm",
+      "en": "Frame shape"
+    },
+    {
+      "nl": "Motorvermogen",
+      "en": "Motor power"
+    },
+    {
+      "nl": "Mouwlengte",
+      "en": "Sleeve length"
+    },
+    {
+      "nl": "Muisvorm",
+      "en": "Mouse shape"
+    },
+    {
+      "nl": "Multipoint pairing",
+      "en": "Multipoint pairing"
+    },
+    {
+      "nl": "Multiroom",
+      "en": "Multiroom"
+    },
+    {
+      "nl": "Muntvak",
+      "en": "Coin compartment"
+    },
+    {
+      "nl": "Muziek periode",
+      "en": "Music period"
+    },
+    {
+      "nl": "Muziekfunctie",
+      "en": "Music function"
+    },
+    {
+      "nl": "Muziekstijl",
+      "en": "Music style"
+    },
+    {
+      "nl": "Nachtmodus",
+      "en": "Night mode"
+    },
+    {
+      "nl": "Nachtzicht",
+      "en": "Night vision"
+    },
+    {
+      "nl": "Natuurlijke / biologische ingrediënten",
+      "en": "Natural / organic ingredients"
+    },
+    {
+      "nl": "Natuurlijke ingrediënten",
+      "en": "Natural ingredients"
+    },
+    {
+      "nl": "Nauwkeurigheid",
+      "en": "Accuracy"
+    },
+    {
+      "nl": "Navigatiemethode",
+      "en": "Navigation method"
+    },
+    {
+      "nl": "Navigatietype",
+      "en": "Navigation type"
+    },
+    {
+      "nl": "Navulbaar",
+      "en": "Refillable"
+    },
+    {
+      "nl": "Nisbreedte",
+      "en": "Niche width"
+    },
+    {
+      "nl": "Niveau",
+      "en": "Level"
+    },
+    {
+      "nl": "Niveau gebruiker",
+      "en": "User level"
+    },
+    {
+      "nl": "Noise cancelling",
+      "en": "Noise cancelling"
+    },
+    {
+      "nl": "Norm / certificering",
+      "en": "Standard / certification"
+    },
+    {
+      "nl": "Nutri-Score",
+      "en": "Nutri-Score"
+    },
+    {
+      "nl": "Obstakeldetectie",
+      "en": "Obstacle detection"
+    },
+    {
+      "nl": "Office programma's",
+      "en": "Office programs"
+    },
+    {
+      "nl": "Ondergrond",
+      "en": "Surface"
+    },
+    {
+      "nl": "Onderhoud plant",
+      "en": "Plant care"
+    },
+    {
+      "nl": "Onderhoudsadvies",
+      "en": "Maintenance advice"
+    },
+    {
+      "nl": "Onderlegd met fleece/wol",
+      "en": "Lined with fleece/wool"
+    },
+    {
+      "nl": "Ondersteunt Matter",
+      "en": "Supports Matter"
+    },
+    {
+      "nl": "Ondertoon",
+      "en": "Undertone"
+    },
+    {
+      "nl": "Onderwerp",
+      "en": "Subject"
+    },
+    {
+      "nl": "Op afstand bestuurbaar",
+      "en": "Remote-controlled"
+    },
+    {
+      "nl": "Opbergruimte",
+      "en": "Storage space"
+    },
+    {
+      "nl": "Opbergsysteem",
+      "en": "Storage system"
+    },
+    {
+      "nl": "Opblaasbaar",
+      "en": "Inflatable"
+    },
+    {
+      "nl": "Opbrengst / capaciteit",
+      "en": "Yield / capacity"
+    },
+    {
+      "nl": "Opdruk",
+      "en": "Print"
+    },
+    {
+      "nl": "Open of dichte kast",
+      "en": "Open or closed cabinet"
+    },
+    {
+      "nl": "Ophangbaar",
+      "en": "Hangable"
+    },
+    {
+      "nl": "Ophangbaar / staand",
+      "en": "Hangable / standing"
+    },
+    {
+      "nl": "Ophangmethode",
+      "en": "Hanging method"
+    },
+    {
+      "nl": "Ophangsysteem",
+      "en": "Hanging system"
+    },
+    {
+      "nl": "Oplaadbaar",
+      "en": "Rechargeable"
+    },
+    {
+      "nl": "Oplaadbaar / batterij",
+      "en": "Rechargeable / battery"
+    },
+    {
+      "nl": "Oplaadsysteem",
+      "en": "Charging system"
+    },
+    {
+      "nl": "Opleidingsniveau",
+      "en": "Education level"
+    },
+    {
+      "nl": "Opslag",
+      "en": "Storage"
+    },
+    {
+      "nl": "Opslag type",
+      "en": "Storage type"
+    },
+    {
+      "nl": "Opslagcapaciteit",
+      "en": "Storage capacity"
+    },
+    {
+      "nl": "Opstelling",
+      "en": "Setup"
+    },
+    {
+      "nl": "Optische zoom",
+      "en": "Optical zoom"
+    },
+    {
+      "nl": "Opvangbak",
+      "en": "Collection tray"
+    },
+    {
+      "nl": "Opvangbak uitneembaar",
+      "en": "Removable collection tray"
+    },
+    {
+      "nl": "Opvouwbaar of niet opvouwbaar",
+      "en": "Foldable or non-foldable"
+    },
+    {
+      "nl": "Opzetmechanisme",
+      "en": "Setup mechanism"
+    },
+    {
+      "nl": "Ovenbestendig tot",
+      "en": "Oven-safe up to"
+    },
+    {
+      "nl": "PEGI",
+      "en": "PEGI"
+    },
+    {
+      "nl": "PFAS-vrij",
+      "en": "PFAS-free"
+    },
+    {
+      "nl": "Paginaformaat",
+      "en": "Page size"
+    },
+    {
+      "nl": "Pakformaat",
+      "en": "Pack size"
+    },
+    {
+      "nl": "Paneeltype",
+      "en": "Panel type"
+    },
+    {
+      "nl": "Papierformaat",
+      "en": "Paper size"
+    },
+    {
+      "nl": "Parfumvrij",
+      "en": "Fragrance-free"
+    },
+    {
+      "nl": "Parfumvrij / natuurlijk",
+      "en": "Fragrance-free / natural"
+    },
+    {
+      "nl": "Pasvorm",
+      "en": "Fit"
+    },
+    {
+      "nl": "Patroon",
+      "en": "Pattern"
+    },
+    {
+      "nl": "Pedaal / sensor",
+      "en": "Pedal / sensor"
+    },
+    {
+      "nl": "Per stuk verpakt",
+      "en": "Individually wrapped"
+    },
+    {
+      "nl": "Periodieke indeling",
+      "en": "Periodic layout"
+    },
+    {
+      "nl": "Personage / licentie",
+      "en": "Character / license"
+    },
+    {
+      "nl": "Personalisatie",
+      "en": "Personalization"
+    },
+    {
+      "nl": "Personaliseerbaar",
+      "en": "Personalizable"
+    },
+    {
+      "nl": "Pittigheid",
+      "en": "Spiciness"
+    },
+    {
+      "nl": "Plaats in de tuin",
+      "en": "Place in the garden"
+    },
+    {
+      "nl": "Plaats sluiting",
+      "en": "Closure position"
+    },
+    {
+      "nl": "Plaatsing",
+      "en": "Placement"
+    },
+    {
+      "nl": "Plaatsing magnetron",
+      "en": "Microwave placement"
+    },
+    {
+      "nl": "Plaatsing terrasverwarmer",
+      "en": "Patio heater placement"
+    },
+    {
+      "nl": "Plantnaam",
+      "en": "Plant name"
+    },
+    {
+      "nl": "Platform",
+      "en": "Platform"
+    },
+    {
+      "nl": "Poolhoogte",
+      "en": "Pile height"
+    },
+    {
+      "nl": "Positie motor",
+      "en": "Motor position"
+    },
+    {
+      "nl": "Precisie lengteinstelling",
+      "en": "Precision length adjustment"
+    },
+    {
+      "nl": "Print",
+      "en": "Print"
+    },
+    {
+      "nl": "Printerfuncties",
+      "en": "Printer functions"
+    },
+    {
+      "nl": "Printtechnologie",
+      "en": "Print technology"
+    },
+    {
+      "nl": "Processor",
+      "en": "Processor"
+    },
+    {
+      "nl": "Producttaal",
+      "en": "Product language"
+    },
+    {
+      "nl": "Puzzelthema",
+      "en": "Puzzle theme"
+    },
+    {
+      "nl": "RFID-bescherming",
+      "en": "RFID protection"
+    },
+    {
+      "nl": "Reactietijd",
+      "en": "Response time"
+    },
+    {
+      "nl": "Rechts- of linkshandig",
+      "en": "Right- or left-handed"
+    },
+    {
+      "nl": "Recyclebaar",
+      "en": "Recyclable"
+    },
+    {
+      "nl": "Reflecterend",
+      "en": "Reflective"
+    },
+    {
+      "nl": "Reflecterende accenten",
+      "en": "Reflective accents"
+    },
+    {
+      "nl": "Regelbare naalddruk",
+      "en": "Adjustable needle pressure"
+    },
+    {
+      "nl": "Regio van herkomst",
+      "en": "Region of origin"
+    },
+    {
+      "nl": "Reinigingsstation",
+      "en": "Cleaning station"
+    },
+    {
+      "nl": "Resolutie",
+      "en": "Resolution"
+    },
+    {
+      "nl": "Rijbewijs/kenteken vereist",
+      "en": "Driver's license/registration required"
+    },
+    {
+      "nl": "Rijstijl",
+      "en": "Riding style"
+    },
+    {
+      "nl": "Ringmaat",
+      "en": "Ring size"
+    },
+    {
+      "nl": "Roestvrij",
+      "en": "Rust-resistant"
+    },
+    {
+      "nl": "Ruimte",
+      "en": "Room"
+    },
+    {
+      "nl": "SNR-waarde",
+      "en": "SNR value"
+    },
+    {
+      "nl": "SPF",
+      "en": "SPF"
+    },
+    {
+      "nl": "Samenstelling geheugen",
+      "en": "Memory configuration"
+    },
+    {
+      "nl": "Schaal",
+      "en": "Scale"
+    },
+    {
+      "nl": "Scheerwijze",
+      "en": "Shaving method"
+    },
+    {
+      "nl": "Scherm",
+      "en": "Screen"
+    },
+    {
+      "nl": "Schermformaat",
+      "en": "Screen size"
+    },
+    {
+      "nl": "Schermgrootte",
+      "en": "Screen size"
+    },
+    {
+      "nl": "Schermkwaliteit",
+      "en": "Screen quality"
+    },
+    {
+      "nl": "Schermtype",
+      "en": "Screen type"
+    },
+    {
+      "nl": "Seizoen",
+      "en": "Season"
+    },
+    {
+      "nl": "Sensatie",
+      "en": "Sensation"
+    },
+    {
+      "nl": "Sensor formaat",
+      "en": "Sensor size"
+    },
+    {
+      "nl": "Serviesstijl",
+      "en": "Tableware style"
+    },
+    {
+      "nl": "Set bestaat uit",
+      "en": "Set consists of"
+    },
+    {
+      "nl": "Set of los",
+      "en": "Set or single"
+    },
+    {
+      "nl": "Sierpot",
+      "en": "Decorative pot"
+    },
+    {
+      "nl": "Slanglengte",
+      "en": "Hose length"
+    },
+    {
+      "nl": "Sluiting",
+      "en": "Closure"
+    },
+    {
+      "nl": "Smaak",
+      "en": "Flavor"
+    },
+    {
+      "nl": "Smaak / hoofdingrediënt",
+      "en": "Flavor / main ingredient"
+    },
+    {
+      "nl": "Smaakintensiteit",
+      "en": "Flavor intensity"
+    },
+    {
+      "nl": "Smaakprofiel",
+      "en": "Flavor profile"
+    },
+    {
+      "nl": "Smart TV",
+      "en": "Smart TV"
+    },
+    {
+      "nl": "Smart home platform",
+      "en": "Smart home platform"
+    },
+    {
+      "nl": "Snelheid",
+      "en": "Speed"
+    },
+    {
+      "nl": "Snoeitechniek",
+      "en": "Pruning technique"
+    },
+    {
+      "nl": "Snoerlengte",
+      "en": "Cord length"
+    },
+    {
+      "nl": "Software",
+      "en": "Software"
+    },
+    {
+      "nl": "Soort chips",
+      "en": "Chip type"
+    },
+    {
+      "nl": "Soort drank",
+      "en": "Drink type"
+    },
+    {
+      "nl": "Soort groente",
+      "en": "Vegetable type"
+    },
+    {
+      "nl": "Soort kinderboek",
+      "en": "Children's book type"
+    },
+    {
+      "nl": "Soort kleed",
+      "en": "Cloth type"
+    },
+    {
+      "nl": "Soort klus",
+      "en": "Job type"
+    },
+    {
+      "nl": "Soort knoopsgat",
+      "en": "Buttonhole type"
+    },
+    {
+      "nl": "Soort koffiebonen",
+      "en": "Coffee bean type"
+    },
+    {
+      "nl": "Soort massage",
+      "en": "Massage type"
+    },
+    {
+      "nl": "Soort noedels",
+      "en": "Noodle type"
+    },
+    {
+      "nl": "Soort omslag",
+      "en": "Cover type"
+    },
+    {
+      "nl": "Soort pepernoten of kruidnoten",
+      "en": "Pepernoten or kruidnoten type"
+    },
+    {
+      "nl": "Soort platenspeler",
+      "en": "Turntable type"
+    },
+    {
+      "nl": "Soort rijst",
+      "en": "Rice type"
+    },
+    {
+      "nl": "Soort soep",
+      "en": "Soup type"
+    },
+    {
+      "nl": "Soort stoomfunctie",
+      "en": "Steam function type"
+    },
+    {
+      "nl": "Soort superfood",
+      "en": "Superfood type"
+    },
+    {
+      "nl": "Soort tussendoortje",
+      "en": "Snack type"
+    },
+    {
+      "nl": "Soort verpakking",
+      "en": "Packaging type"
+    },
+    {
+      "nl": "Soort vis",
+      "en": "Fish type"
+    },
+    {
+      "nl": "Soort water",
+      "en": "Water type"
+    },
+    {
+      "nl": "Soort zaad of pit",
+      "en": "Seed or kernel type"
+    },
+    {
+      "nl": "Spanning",
+      "en": "Voltage"
+    },
+    {
+      "nl": "Speciaal geschikt voor lichaamsdeel",
+      "en": "Specially suitable for body part"
+    },
+    {
+      "nl": "Speciale verzorging",
+      "en": "Special care"
+    },
+    {
+      "nl": "Specificatie / norm",
+      "en": "Specification / standard"
+    },
+    {
+      "nl": "Speelboog / speeltjes",
+      "en": "Play arch / toys"
+    },
+    {
+      "nl": "Speelduur",
+      "en": "Playing time"
+    },
+    {
+      "nl": "Speelgoedthema",
+      "en": "Toy theme"
+    },
+    {
+      "nl": "Speelniveau",
+      "en": "Playing level"
+    },
+    {
+      "nl": "Speelt van usb-geheugen",
+      "en": "Plays from USB memory"
+    },
+    {
+      "nl": "Speeltoestel met",
+      "en": "Play equipment with"
+    },
+    {
+      "nl": "Spelsoort",
+      "en": "Game type"
+    },
+    {
+      "nl": "Sport",
+      "en": "Sport"
+    },
+    {
+      "nl": "Sportteam",
+      "en": "Sports team"
+    },
+    {
+      "nl": "Spraakassistent",
+      "en": "Voice assistant"
+    },
+    {
+      "nl": "Staand of hangend",
+      "en": "Standing or hanging"
+    },
+    {
+      "nl": "Stahoogte",
+      "en": "Standing height"
+    },
+    {
+      "nl": "Standaard toerental instelbaar",
+      "en": "Adjustable default speed"
+    },
+    {
+      "nl": "Standplaats",
+      "en": "Stand location"
+    },
+    {
+      "nl": "Stapelbaar / inklapbaar",
+      "en": "Stackable / foldable"
+    },
+    {
+      "nl": "Startstroom",
+      "en": "Starting current"
+    },
+    {
+      "nl": "Steellengte",
+      "en": "Handle length"
+    },
+    {
+      "nl": "Steensoort",
+      "en": "Stone type"
+    },
+    {
+      "nl": "Sterkte lens",
+      "en": "Lens strength"
+    },
+    {
+      "nl": "Sticklengte",
+      "en": "Stick length"
+    },
+    {
+      "nl": "Stijl",
+      "en": "Style"
+    },
+    {
+      "nl": "Stijl en sentiment",
+      "en": "Style and sentiment"
+    },
+    {
+      "nl": "Stijl tegel",
+      "en": "Tile style"
+    },
+    {
+      "nl": "Stofconstructie",
+      "en": "Fabric construction"
+    },
+    {
+      "nl": "Stofreservoir",
+      "en": "Dust container"
+    },
+    {
+      "nl": "Streamingdiensten",
+      "en": "Streaming services"
+    },
+    {
+      "nl": "Stroomvoorziening",
+      "en": "Power supply"
+    },
+    {
+      "nl": "Submateriaal",
+      "en": "Sub-material"
+    },
+    {
+      "nl": "Substantie",
+      "en": "Substance"
+    },
+    {
+      "nl": "Suikervrij",
+      "en": "Sugar-free"
+    },
+    {
+      "nl": "Suikervrij / light",
+      "en": "Sugar-free / light"
+    },
+    {
+      "nl": "Sulfaatvrij",
+      "en": "Sulfate-free"
+    },
+    {
+      "nl": "TOG waarde",
+      "en": "TOG value"
+    },
+    {
+      "nl": "Taal",
+      "en": "Language"
+    },
+    {
+      "nl": "Taal bedieningspaneel",
+      "en": "Control panel language"
+    },
+    {
+      "nl": "Taal handleiding",
+      "en": "Manual language"
+    },
+    {
+      "nl": "Taal spel",
+      "en": "Game language"
+    },
+    {
+      "nl": "Tape breedte",
+      "en": "Tape width"
+    },
+    {
+      "nl": "Te bereiken effect",
+      "en": "Effect to achieve"
+    },
+    {
+      "nl": "Te gebruiken",
+      "en": "Usable"
+    },
+    {
+      "nl": "Te gebruiken met",
+      "en": "Usable with"
+    },
+    {
+      "nl": "Telescopisch",
+      "en": "Telescopic"
+    },
+    {
+      "nl": "Temperatuur- en stoomkeuze",
+      "en": "Temperature and steam selection"
+    },
+    {
+      "nl": "Textuur",
+      "en": "Texture"
+    },
+    {
+      "nl": "Thee variant",
+      "en": "Tea variety"
+    },
+    {
+      "nl": "Theesmaak",
+      "en": "Tea flavor"
+    },
+    {
+      "nl": "Thema",
+      "en": "Theme"
+    },
+    {
+      "nl": "Thema / gelegenheid",
+      "en": "Theme / occasion"
+    },
+    {
+      "nl": "Thema fotoalbum",
+      "en": "Photo album theme"
+    },
+    {
+      "nl": "Thema kalender",
+      "en": "Calendar theme"
+    },
+    {
+      "nl": "Thema kerstbal",
+      "en": "Christmas ornament theme"
+    },
+    {
+      "nl": "Thema kerstpakket",
+      "en": "Christmas hamper theme"
+    },
+    {
+      "nl": "Thema schoolspullen",
+      "en": "School supplies theme"
+    },
+    {
+      "nl": "Thema tijdschrift",
+      "en": "Magazine theme"
+    },
+    {
+      "nl": "Thermometer",
+      "en": "Thermometer"
+    },
+    {
+      "nl": "Thermostatisch",
+      "en": "Thermostatic"
+    },
+    {
+      "nl": "Toedieningsvorm",
+      "en": "Administration form"
+    },
+    {
+      "nl": "Toegangsbeveiliging",
+      "en": "Access security"
+    },
+    {
+      "nl": "Toegestaan tijdens examen",
+      "en": "Permitted during exams"
+    },
+    {
+      "nl": "Toepasbaar op",
+      "en": "Applicable to"
+    },
+    {
+      "nl": "Toepassing",
+      "en": "Application"
+    },
+    {
+      "nl": "Toepassing / oppervlak",
+      "en": "Application / surface"
+    },
+    {
+      "nl": "Toepassing drone",
+      "en": "Drone application"
+    },
+    {
+      "nl": "Toepassing isolatie",
+      "en": "Insulation application"
+    },
+    {
+      "nl": "Toepassing kabel",
+      "en": "Cable application"
+    },
+    {
+      "nl": "Toerental",
+      "en": "Rotational speed"
+    },
+    {
+      "nl": "Toetsenbordindeling",
+      "en": "Keyboard layout"
+    },
+    {
+      "nl": "Totale kookoppervlakte",
+      "en": "Total cooking area"
+    },
+    {
+      "nl": "Trilfunctie / muziek",
+      "en": "Vibration function / music"
+    },
+    {
+      "nl": "Type BH",
+      "en": "Bra type"
+    },
+    {
+      "nl": "Type Compactcamera",
+      "en": "Compact camera type"
+    },
+    {
+      "nl": "Type Kerstpakket",
+      "en": "Christmas hamper type"
+    },
+    {
+      "nl": "Type aandrijving",
+      "en": "Drive type"
+    },
+    {
+      "nl": "Type aansluiting",
+      "en": "Connection type"
+    },
+    {
+      "nl": "Type aarding",
+      "en": "Grounding type"
+    },
+    {
+      "nl": "Type additief",
+      "en": "Additive type"
+    },
+    {
+      "nl": "Type adventskalender",
+      "en": "Advent calendar type"
+    },
+    {
+      "nl": "Type afwerking",
+      "en": "Finish type"
+    },
+    {
+      "nl": "Type airco",
+      "en": "Air conditioner type"
+    },
+    {
+      "nl": "Type airfryer",
+      "en": "Air fryer type"
+    },
+    {
+      "nl": "Type allesreiniger",
+      "en": "All-purpose cleaner type"
+    },
+    {
+      "nl": "Type antikalksysteem",
+      "en": "Anti-limescale system type"
+    },
+    {
+      "nl": "Type babygeschenkset",
+      "en": "Baby gift set type"
+    },
+    {
+      "nl": "Type babyvoeding",
+      "en": "Baby food type"
+    },
+    {
+      "nl": "Type badspeelgoed",
+      "en": "Bath toy type"
+    },
+    {
+      "nl": "Type bagage",
+      "en": "Luggage type"
+    },
+    {
+      "nl": "Type baklaag",
+      "en": "Baking layer type"
+    },
+    {
+      "nl": "Type bakvorm",
+      "en": "Baking tin type"
+    },
+    {
+      "nl": "Type ballon",
+      "en": "Balloon type"
+    },
+    {
+      "nl": "Type banden",
+      "en": "Tire type"
+    },
+    {
+      "nl": "Type barbecue",
+      "en": "Barbecue type"
+    },
+    {
+      "nl": "Type beker",
+      "en": "Cup type"
+    },
+    {
+      "nl": "Type bevestiging",
+      "en": "Mounting type"
+    },
+    {
+      "nl": "Type bewerkingssoftware",
+      "en": "Editing software type"
+    },
+    {
+      "nl": "Type bikinibroekje",
+      "en": "Bikini bottom type"
+    },
+    {
+      "nl": "Type bikinitopje",
+      "en": "Bikini top type"
+    },
+    {
+      "nl": "Type bloem",
+      "en": "Flower type"
+    },
+    {
+      "nl": "Type boekenkaft",
+      "en": "Book cover type"
+    },
+    {
+      "nl": "Type boeket",
+      "en": "Bouquet type"
+    },
+    {
+      "nl": "Type borstkolf",
+      "en": "Breast pump type"
+    },
+    {
+      "nl": "Type buggy",
+      "en": "Stroller type"
+    },
+    {
+      "nl": "Type bureau",
+      "en": "Desk type"
+    },
+    {
+      "nl": "Type cadeau",
+      "en": "Gift type"
+    },
+    {
+      "nl": "Type camera",
+      "en": "Camera type"
+    },
+    {
+      "nl": "Type chocolade",
+      "en": "Chocolate type"
+    },
+    {
+      "nl": "Type console",
+      "en": "Console type"
+    },
+    {
+      "nl": "Type dartbord",
+      "en": "Dartboard type"
+    },
+    {
+      "nl": "Type dartpijl",
+      "en": "Dart type"
+    },
+    {
+      "nl": "Type decoratie",
+      "en": "Decoration type"
+    },
+    {
+      "nl": "Type dekbed",
+      "en": "Duvet type"
+    },
+    {
+      "nl": "Type demping",
+      "en": "Damping type"
+    },
+    {
+      "nl": "Type deur",
+      "en": "Door type"
+    },
+    {
+      "nl": "Type deurbelset",
+      "en": "Doorbell set type"
+    },
+    {
+      "nl": "Type dier",
+      "en": "Animal type"
+    },
+    {
+      "nl": "Type dispenser",
+      "en": "Dispenser type"
+    },
+    {
+      "nl": "Type draagdoek",
+      "en": "Baby wrap type"
+    },
+    {
+      "nl": "Type draagzak",
+      "en": "Baby carrier type"
+    },
+    {
+      "nl": "Type droogrek",
+      "en": "Drying rack type"
+    },
+    {
+      "nl": "Type elektrische kachel",
+      "en": "Electric heater type"
+    },
+    {
+      "nl": "Type fietsendrager",
+      "en": "Bike carrier type"
+    },
+    {
+      "nl": "Type fietstas",
+      "en": "Bike bag type"
+    },
+    {
+      "nl": "Type filter",
+      "en": "Filter type"
+    },
+    {
+      "nl": "Type fopspeen",
+      "en": "Pacifier type"
+    },
+    {
+      "nl": "Type fotoalbum",
+      "en": "Photo album type"
+    },
+    {
+      "nl": "Type gamestoel",
+      "en": "Gaming chair type"
+    },
+    {
+      "nl": "Type gebruiker",
+      "en": "User type"
+    },
+    {
+      "nl": "Type gereedschap",
+      "en": "Tool type"
+    },
+    {
+      "nl": "Type geschenkset",
+      "en": "Gift set type"
+    },
+    {
+      "nl": "Type glijmiddel",
+      "en": "Lubricant type"
+    },
+    {
+      "nl": "Type gourmet",
+      "en": "Gourmet set type"
+    },
+    {
+      "nl": "Type graan",
+      "en": "Grain type"
+    },
+    {
+      "nl": "Type hartslagmeting",
+      "en": "Heart rate monitoring type"
+    },
+    {
+      "nl": "Type hengel",
+      "en": "Fishing rod type"
+    },
+    {
+      "nl": "Type hobby",
+      "en": "Hobby type"
+    },
+    {
+      "nl": "Type hoesje",
+      "en": "Case type"
+    },
+    {
+      "nl": "Type horloge",
+      "en": "Watch type"
+    },
+    {
+      "nl": "Type horlogeband",
+      "en": "Watch strap type"
+    },
+    {
+      "nl": "Type huidverzorging",
+      "en": "Skincare type"
+    },
+    {
+      "nl": "Type isolatie",
+      "en": "Insulation type"
+    },
+    {
+      "nl": "Type jas",
+      "en": "Jacket type"
+    },
+    {
+      "nl": "Type kaars",
+      "en": "Candle type"
+    },
+    {
+      "nl": "Type kalender",
+      "en": "Calendar type"
+    },
+    {
+      "nl": "Type kattenbak",
+      "en": "Litter box type"
+    },
+    {
+      "nl": "Type kerstdorp",
+      "en": "Christmas village type"
+    },
+    {
+      "nl": "Type kinderstoel",
+      "en": "High chair type"
+    },
+    {
+      "nl": "Type kledingstuk",
+      "en": "Garment type"
+    },
+    {
+      "nl": "Type klei",
+      "en": "Clay type"
+    },
+    {
+      "nl": "Type klus / machine",
+      "en": "Job / machine type"
+    },
+    {
+      "nl": "Type klusser",
+      "en": "DIY user type"
+    },
+    {
+      "nl": "Type koek",
+      "en": "Biscuit type"
+    },
+    {
+      "nl": "Type koelkast",
+      "en": "Refrigerator type"
+    },
+    {
+      "nl": "Type koffie",
+      "en": "Coffee type"
+    },
+    {
+      "nl": "Type koffiekan",
+      "en": "Coffee pot type"
+    },
+    {
+      "nl": "Type koptelefoon",
+      "en": "Headphone type"
+    },
+    {
+      "nl": "Type kraal",
+      "en": "Bead type"
+    },
+    {
+      "nl": "Type krabpaal",
+      "en": "Scratching post type"
+    },
+    {
+      "nl": "Type kruiden of specerijen",
+      "en": "Herb or spice type"
+    },
+    {
+      "nl": "Type kruik",
+      "en": "Hot water bottle type"
+    },
+    {
+      "nl": "Type laarzen",
+      "en": "Boot type"
+    },
+    {
+      "nl": "Type leer product",
+      "en": "Leather product type"
+    },
+    {
+      "nl": "Type lendensteun",
+      "en": "Lumbar support type"
+    },
+    {
+      "nl": "Type lens",
+      "en": "Lens type"
+    },
+    {
+      "nl": "Type licentie",
+      "en": "License type"
+    },
+    {
+      "nl": "Type luier",
+      "en": "Diaper type"
+    },
+    {
+      "nl": "Type maaier",
+      "en": "Mower type"
+    },
+    {
+      "nl": "Type magnetron",
+      "en": "Microwave type"
+    },
+    {
+      "nl": "Type mascaraborstel",
+      "en": "Mascara brush type"
+    },
+    {
+      "nl": "Type masker of strip",
+      "en": "Mask or strip type"
+    },
+    {
+      "nl": "Type massage",
+      "en": "Massage type"
+    },
+    {
+      "nl": "Type massage apparaat",
+      "en": "Massager type"
+    },
+    {
+      "nl": "Type matras",
+      "en": "Mattress type"
+    },
+    {
+      "nl": "Type model",
+      "en": "Model type"
+    },
+    {
+      "nl": "Type molen / reel",
+      "en": "Reel type"
+    },
+    {
+      "nl": "Type montageset",
+      "en": "Mounting kit type"
+    },
+    {
+      "nl": "Type motorbroek",
+      "en": "Motorcycle trousers type"
+    },
+    {
+      "nl": "Type motorhelm",
+      "en": "Motorcycle helmet type"
+    },
+    {
+      "nl": "Type motorjas",
+      "en": "Motorcycle jacket type"
+    },
+    {
+      "nl": "Type motorolie",
+      "en": "Motor oil type"
+    },
+    {
+      "nl": "Type mouw",
+      "en": "Sleeve type"
+    },
+    {
+      "nl": "Type naaimachine",
+      "en": "Sewing machine type"
+    },
+    {
+      "nl": "Type onderstel",
+      "en": "Base type"
+    },
+    {
+      "nl": "Type oordopjes",
+      "en": "Earbud type"
+    },
+    {
+      "nl": "Type opberger",
+      "en": "Organizer type"
+    },
+    {
+      "nl": "Type oplader",
+      "en": "Charger type"
+    },
+    {
+      "nl": "Type pan",
+      "en": "Pan type"
+    },
+    {
+      "nl": "Type papier",
+      "en": "Paper type"
+    },
+    {
+      "nl": "Type parfum",
+      "en": "Perfume type"
+    },
+    {
+      "nl": "Type partytent",
+      "en": "Party tent type"
+    },
+    {
+      "nl": "Type pinda's of noten",
+      "en": "Peanut or nut type"
+    },
+    {
+      "nl": "Type plaat",
+      "en": "Plate type"
+    },
+    {
+      "nl": "Type plant",
+      "en": "Plant type"
+    },
+    {
+      "nl": "Type plaspotje",
+      "en": "Potty type"
+    },
+    {
+      "nl": "Type pool",
+      "en": "Pool type"
+    },
+    {
+      "nl": "Type popcorn",
+      "en": "Popcorn type"
+    },
+    {
+      "nl": "Type printer",
+      "en": "Printer type"
+    },
+    {
+      "nl": "Type product",
+      "en": "Product type"
+    },
+    {
+      "nl": "Type profiel",
+      "en": "Profile type"
+    },
+    {
+      "nl": "Type puzzel",
+      "en": "Puzzle type"
+    },
+    {
+      "nl": "Type racestoel",
+      "en": "Racing seat type"
+    },
+    {
+      "nl": "Type radiatorknop",
+      "en": "Radiator valve type"
+    },
+    {
+      "nl": "Type reistas",
+      "en": "Travel bag type"
+    },
+    {
+      "nl": "Type rekenmachine",
+      "en": "Calculator type"
+    },
+    {
+      "nl": "Type rem",
+      "en": "Brake type"
+    },
+    {
+      "nl": "Type rollenspel",
+      "en": "Role-play type"
+    },
+    {
+      "nl": "Type router",
+      "en": "Router type"
+    },
+    {
+      "nl": "Type sandaal",
+      "en": "Sandal type"
+    },
+    {
+      "nl": "Type scheerapparaat",
+      "en": "Shaver type"
+    },
+    {
+      "nl": "Type schoen",
+      "en": "Shoe type"
+    },
+    {
+      "nl": "Type schommelzitje",
+      "en": "Swing seat type"
+    },
+    {
+      "nl": "Type schoonmaakdoek",
+      "en": "Cleaning cloth type"
+    },
+    {
+      "nl": "Type sensor",
+      "en": "Sensor type"
+    },
+    {
+      "nl": "Type sieraad",
+      "en": "Jewelry type"
+    },
+    {
+      "nl": "Type sjaal",
+      "en": "Scarf type"
+    },
+    {
+      "nl": "Type slaaptrainer",
+      "en": "Sleep trainer type"
+    },
+    {
+      "nl": "Type slabbetje",
+      "en": "Bib type"
+    },
+    {
+      "nl": "Type slinger",
+      "en": "Garland type"
+    },
+    {
+      "nl": "Type slot",
+      "en": "Lock type"
+    },
+    {
+      "nl": "Type sluiting",
+      "en": "Closure type"
+    },
+    {
+      "nl": "Type sneakers",
+      "en": "Sneaker type"
+    },
+    {
+      "nl": "Type socket",
+      "en": "Socket type"
+    },
+    {
+      "nl": "Type sok",
+      "en": "Sock type"
+    },
+    {
+      "nl": "Type stijltang",
+      "en": "Hair straightener type"
+    },
+    {
+      "nl": "Type stofzuiger",
+      "en": "Vacuum cleaner type"
+    },
+    {
+      "nl": "Type stofzuigeraccessoire",
+      "en": "Vacuum cleaner accessory type"
+    },
+    {
+      "nl": "Type strijkijzer",
+      "en": "Iron type"
+    },
+    {
+      "nl": "Type subwoofer",
+      "en": "Subwoofer type"
+    },
+    {
+      "nl": "Type tang",
+      "en": "Pliers type"
+    },
+    {
+      "nl": "Type terrasverwarmer",
+      "en": "Patio heater type"
+    },
+    {
+      "nl": "Type thermostaat",
+      "en": "Thermostat type"
+    },
+    {
+      "nl": "Type tijdschrift",
+      "en": "Magazine type"
+    },
+    {
+      "nl": "Type toetsaanslag",
+      "en": "Key switch type"
+    },
+    {
+      "nl": "Type tuinmeubel",
+      "en": "Garden furniture type"
+    },
+    {
+      "nl": "Type tuinslang",
+      "en": "Garden hose type"
+    },
+    {
+      "nl": "Type uurwerk",
+      "en": "Movement type"
+    },
+    {
+      "nl": "Type vaatwasser",
+      "en": "Dishwasher type"
+    },
+    {
+      "nl": "Type verbrandingsmotor",
+      "en": "Combustion engine type"
+    },
+    {
+      "nl": "Type verkleedkleding",
+      "en": "Costume type"
+    },
+    {
+      "nl": "Type verpakking",
+      "en": "Packaging type"
+    },
+    {
+      "nl": "Type verwarming",
+      "en": "Heating type"
+    },
+    {
+      "nl": "Type verzenddoos",
+      "en": "Shipping box type"
+    },
+    {
+      "nl": "Type vizier",
+      "en": "Visor type"
+    },
+    {
+      "nl": "Type voertuig",
+      "en": "Vehicle type"
+    },
+    {
+      "nl": "Type vogel",
+      "en": "Bird type"
+    },
+    {
+      "nl": "Type vogelvoer",
+      "en": "Bird food type"
+    },
+    {
+      "nl": "Type was",
+      "en": "Wax type"
+    },
+    {
+      "nl": "Type waterkoker",
+      "en": "Kettle type"
+    },
+    {
+      "nl": "Type weegschaal",
+      "en": "Scale type"
+    },
+    {
+      "nl": "Type wielen",
+      "en": "Wheel type"
+    },
+    {
+      "nl": "Type zonnepaneel",
+      "en": "Solar panel type"
+    },
+    {
+      "nl": "Type zwembroek",
+      "en": "Swim trunks type"
+    },
+    {
+      "nl": "USB-C",
+      "en": "USB-C"
+    },
+    {
+      "nl": "UV-beschermingswaarde",
+      "en": "UV protection value"
+    },
+    {
+      "nl": "UV-garantie",
+      "en": "UV warranty"
+    },
+    {
+      "nl": "Uitdeelzakjes",
+      "en": "Party favor bags"
+    },
+    {
+      "nl": "Uitgever",
+      "en": "Publisher"
+    },
+    {
+      "nl": "Uitloophoogte",
+      "en": "Spout height"
+    },
+    {
+      "nl": "Uitneembare zool",
+      "en": "Removable insole"
+    },
+    {
+      "nl": "Uitstroomsnelheid",
+      "en": "Flow rate"
+    },
+    {
+      "nl": "Uitvoering",
+      "en": "Version"
+    },
+    {
+      "nl": "Underseater afmetingen",
+      "en": "Under-seat dimensions"
+    },
+    {
+      "nl": "Usb-aansluiting",
+      "en": "USB connection"
+    },
+    {
+      "nl": "Vaatwasmachinebestendig",
+      "en": "Dishwasher-safe"
+    },
+    {
+      "nl": "Vaatwasserbestendig",
+      "en": "Dishwasher-safe"
+    },
+    {
+      "nl": "Vakgebied",
+      "en": "Subject area"
+    },
+    {
+      "nl": "Valbescherming",
+      "en": "Drop protection"
+    },
+    {
+      "nl": "Veiligheidsklasse",
+      "en": "Safety class"
+    },
+    {
+      "nl": "Veiligheidswaarschuwingen",
+      "en": "Safety warnings"
+    },
+    {
+      "nl": "Veld- of zaalhockey",
+      "en": "Field or indoor hockey"
+    },
+    {
+      "nl": "Velgrootte",
+      "en": "Rim size"
+    },
+    {
+      "nl": "Ventilatie",
+      "en": "Ventilation"
+    },
+    {
+      "nl": "Verbinding",
+      "en": "Connection"
+    },
+    {
+      "nl": "Verbindingen",
+      "en": "Connections"
+    },
+    {
+      "nl": "Verfsoort",
+      "en": "Paint type"
+    },
+    {
+      "nl": "Verjaardag leeftijd",
+      "en": "Birthday age"
+    },
+    {
+      "nl": "Verkleden als",
+      "en": "Dress up as"
+    },
+    {
+      "nl": "Verkleedthema",
+      "en": "Costume theme"
+    },
+    {
+      "nl": "Verlichte Lengte",
+      "en": "Illuminated length"
+    },
+    {
+      "nl": "Verlichting",
+      "en": "Lighting"
+    },
+    {
+      "nl": "Verlichting / zonne-energie",
+      "en": "Lighting / solar power"
+    },
+    {
+      "nl": "Vermogen",
+      "en": "Power"
+    },
+    {
+      "nl": "Verpakking",
+      "en": "Packaging"
+    },
+    {
+      "nl": "Verpakkingsvorm",
+      "en": "Packaging form"
+    },
+    {
+      "nl": "Verpakt als cadeau",
+      "en": "Gift-wrapped"
+    },
+    {
+      "nl": "Verschijningsdatum",
+      "en": "Release date"
+    },
+    {
+      "nl": "Verschijningsfrequentie",
+      "en": "Publication frequency"
+    },
+    {
+      "nl": "Verschijningsjaar",
+      "en": "Release year"
+    },
+    {
+      "nl": "Versiering",
+      "en": "Decoration"
+    },
+    {
+      "nl": "Verstelbaar",
+      "en": "Adjustable"
+    },
+    {
+      "nl": "Verstelbaarheid armleuning",
+      "en": "Armrest adjustability"
+    },
+    {
+      "nl": "Verstelbare zithoogte",
+      "en": "Adjustable seat height"
+    },
+    {
+      "nl": "Verteller",
+      "en": "Narrator"
+    },
+    {
+      "nl": "Verversingssnelheid",
+      "en": "Refresh rate"
+    },
+    {
+      "nl": "Verwerkt dit product gegevens van gebruikers?",
+      "en": "Does this product process user data?"
+    },
+    {
+      "nl": "Videokaart",
+      "en": "Graphics card"
+    },
+    {
+      "nl": "Videokaartgeheugen",
+      "en": "Graphics card memory"
+    },
+    {
+      "nl": "Videoresolutie",
+      "en": "Video resolution"
+    },
+    {
+      "nl": "Viscositeit",
+      "en": "Viscosity"
+    },
+    {
+      "nl": "Vizier",
+      "en": "Visor"
+    },
+    {
+      "nl": "Vliegbewijs nodig",
+      "en": "Pilot license required"
+    },
+    {
+      "nl": "Vliegduur",
+      "en": "Flight time"
+    },
+    {
+      "nl": "Voedingsfocus",
+      "en": "Nutritional focus"
+    },
+    {
+      "nl": "Voedingsfunctie",
+      "en": "Nutritional function"
+    },
+    {
+      "nl": "Voedingstype",
+      "en": "Power type"
+    },
+    {
+      "nl": "Voltage",
+      "en": "Voltage"
+    },
+    {
+      "nl": "Voor binnen of buiten",
+      "en": "For indoor or outdoor use"
+    },
+    {
+      "nl": "Voor buggy of kinderwagen",
+      "en": "For stroller or pram"
+    },
+    {
+      "nl": "Voor of achter",
+      "en": "Front or rear"
+    },
+    {
+      "nl": "Voor wie",
+      "en": "For whom"
+    },
+    {
+      "nl": "Voorgeprogrammeerde bakprogramma's",
+      "en": "Preset baking programs"
+    },
+    {
+      "nl": "Vorm",
+      "en": "Shape"
+    },
+    {
+      "nl": "Vorm racket",
+      "en": "Racket shape"
+    },
+    {
+      "nl": "Vorst- en slijtvast",
+      "en": "Frost- and wear-resistant"
+    },
+    {
+      "nl": "Vriesgedeelte",
+      "en": "Freezer compartment"
+    },
+    {
+      "nl": "Vrij van",
+      "en": "Free from"
+    },
+    {
+      "nl": "Vrij van parabenen",
+      "en": "Paraben-free"
+    },
+    {
+      "nl": "Vulgewicht",
+      "en": "Fill weight"
+    },
+    {
+      "nl": "Vulling",
+      "en": "Filling"
+    },
+    {
+      "nl": "Wanddikte",
+      "en": "Wall thickness"
+    },
+    {
+      "nl": "Warmte bron",
+      "en": "Heat source"
+    },
+    {
+      "nl": "Warmte functie",
+      "en": "Heating function"
+    },
+    {
+      "nl": "Wasbaar",
+      "en": "Washable"
+    },
+    {
+      "nl": "Wasvoorschrift",
+      "en": "Care instructions"
+    },
+    {
+      "nl": "Waterafstotend",
+      "en": "Water-repellent"
+    },
+    {
+      "nl": "Waterafvoergat",
+      "en": "Drain hole"
+    },
+    {
+      "nl": "Waterbesparend",
+      "en": "Water-saving"
+    },
+    {
+      "nl": "Waterbestendig",
+      "en": "Water-resistant"
+    },
+    {
+      "nl": "Waterdicht",
+      "en": "Waterproof"
+    },
+    {
+      "nl": "Waterdicht / waterkolom",
+      "en": "Waterproof / water column"
+    },
+    {
+      "nl": "Waterdichtheid",
+      "en": "Waterproofing"
+    },
+    {
+      "nl": "Waterdoorlatend",
+      "en": "Water-permeable"
+    },
+    {
+      "nl": "Waterkolom",
+      "en": "Water column"
+    },
+    {
+      "nl": "Waterproof",
+      "en": "Waterproof"
+    },
+    {
+      "nl": "Watertank",
+      "en": "Water tank"
+    },
+    {
+      "nl": "Weerbestendig",
+      "en": "Weather-resistant"
+    },
+    {
+      "nl": "Weergave",
+      "en": "Display mode"
+    },
+    {
+      "nl": "Weerstation functionaliteiten",
+      "en": "Weather station features"
+    },
+    {
+      "nl": "Wendbaarheid beugel",
+      "en": "Bracket reversibility"
+    },
+    {
+      "nl": "Werkdruk / maximale druk",
+      "en": "Working pressure / maximum pressure"
+    },
+    {
+      "nl": "Werkduur",
+      "en": "Operating time"
+    },
+    {
+      "nl": "Werkgeheugen",
+      "en": "RAM"
+    },
+    {
+      "nl": "Werking",
+      "en": "Operation"
+    },
+    {
+      "nl": "Werkingsduur",
+      "en": "Duration of action"
+    },
+    {
+      "nl": "Werkt op",
+      "en": "Powered by"
+    },
+    {
+      "nl": "Werktijd",
+      "en": "Working time"
+    },
+    {
+      "nl": "Werkzame stof",
+      "en": "Active ingredient"
+    },
+    {
+      "nl": "Werkzame stof / dosering",
+      "en": "Active ingredient / dosage"
+    },
+    {
+      "nl": "Werkzame stoffen",
+      "en": "Active ingredients"
+    },
+    {
+      "nl": "Werpgewicht",
+      "en": "Casting weight"
+    },
+    {
+      "nl": "WiFi",
+      "en": "Wi-Fi"
+    },
+    {
+      "nl": "Wielen",
+      "en": "Wheels"
+    },
+    {
+      "nl": "Wielmaat",
+      "en": "Wheel size"
+    },
+    {
+      "nl": "Wifi ingebouwd",
+      "en": "Built-in Wi-Fi"
+    },
+    {
+      "nl": "Wifi-standaard",
+      "en": "Wi-Fi standard"
+    },
+    {
+      "nl": "Wit / helderheid",
+      "en": "White / brightness"
+    },
+    {
+      "nl": "Woon thema",
+      "en": "Home theme"
+    },
+    {
+      "nl": "Woonstijl",
+      "en": "Interior style"
+    },
+    {
+      "nl": "Zaagbladlengte",
+      "en": "Saw blade length"
+    },
+    {
+      "nl": "Zaaiperiode",
+      "en": "Sowing period"
+    },
+    {
+      "nl": "Zetmethode thee",
+      "en": "Tea brewing method"
+    },
+    {
+      "nl": "Zit-sta mogelijkheid",
+      "en": "Sit-stand option"
+    },
+    {
+      "nl": "Zitdiepte",
+      "en": "Seat depth"
+    },
+    {
+      "nl": "Zithoogte",
+      "en": "Seat height"
+    },
+    {
+      "nl": "Zoetkracht",
+      "en": "Sweetness"
+    },
+    {
+      "nl": "Zonnecel",
+      "en": "Solar cell"
+    },
+    {
+      "nl": "Zonnepanelen set",
+      "en": "Solar panel set"
+    },
+    {
+      "nl": "Zooltype",
+      "en": "Sole type"
+    },
+    {
+      "nl": "Zoom- of primelens",
+      "en": "Zoom or prime lens"
+    },
+    {
+      "nl": "Zoombereik",
+      "en": "Zoom range"
+    },
+    {
+      "nl": "Zuigkracht",
+      "en": "Suction power"
+    },
+    {
+      "nl": "pH-neutraal",
+      "en": "pH-neutral"
+    }
+  ]
+}

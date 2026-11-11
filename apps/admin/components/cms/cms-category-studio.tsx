@@ -1,27 +1,44 @@
 "use client"
 
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Button } from "@europmade/ui"
-import { suggestCategoryCopy, type CategoryCopySuggestion } from "@europmade/utils"
 import {
-  emptyLocalized,
-  fetchPublicCatalogProducts,
-  fetchPublicCategoryAttributes,
+  categoryCmsListExclusion,
+  getBlock,
+  syncLegacyMirrors,
+  type CategoryCmsDocumentV2,
+  type CategoryCmsProfile,
+  type CategoryPreviewConceptProduct,
+} from "@europmade/utils"
+import {
+  CmsAdminApiError,
+  createCmsCategoryDraft,
+  deleteCmsCategoryDraft,
+  fetchCategoryPreviewProducts,
+  generateCmsCategoryProposals,
   getCmsEditorialCategory,
   listCmsBanners,
-  putCmsEditorialCategory,
+  publishCmsCategoryDraft,
+  rebaseCmsCategoryDraft,
+  saveCmsCategoryDraft,
   type CmsBannerDto,
-  type LocalizedCms,
+  type CmsCategoryPdDto,
 } from "../../lib/cms-admin-api"
 import {
-  emptyCategoryEditorial,
-  parseCategoryEditorial,
-  type CmsCategoryEditorial,
-} from "../../lib/cms-category-editorial"
+  CATEGORY_CMS_BLOCK_LABEL,
+  CATEGORY_CMS_PROFILE_LABEL,
+  blockIdForPreviewSection,
+  editorDocumentFromStored,
+  isRequiredCategoryBlock,
+  moveOptionalCategoryBlock,
+  optionalBlocksToAdd,
+  previewSectionForBlock,
+  removeOptionalCategoryBlock,
+  updateCategoryBlock,
+} from "../../lib/cms-category-blocks"
 import type { CmsI18nMeta } from "../../lib/cms-i18n"
-import { CmsLocalizedField } from "./cms-localized-field"
-import { CmsImageField } from "./cms-image-field"
-import { CmsSeoFields } from "./cms-seo-fields"
+import { CmsCategoryBlockSettings } from "./cms-category-block-settings"
+import { CmsCategoryProposals } from "./cms-category-proposals"
 import {
   CmsBreadcrumb,
   CmsEditorShell,
@@ -30,86 +47,18 @@ import {
 import { CmsLivePreview } from "./cms-live-preview"
 import { CmsLocaleProvider, useCmsLocale } from "./cms-locale-toolbar"
 
-function FaqEditor(props: {
-  doc: CmsCategoryEditorial
-  setDoc: Dispatch<SetStateAction<CmsCategoryEditorial>>
-  meta: CmsI18nMeta
-  setMeta: Dispatch<SetStateAction<CmsI18nMeta>>
-}) {
-  const { doc, setDoc, meta, setMeta } = props
-  return (
-    <div className="space-y-3">
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={() =>
-          setDoc((d) => ({
-            ...d,
-            faq: [
-              ...d.faq,
-              {
-                id: `faq_${Date.now()}`,
-                question: emptyLocalized(),
-                answer: emptyLocalized(),
-              },
-            ],
-          }))
-        }
-      >
-        Vraag toevoegen
-      </Button>
-      {doc.faq.map((faq) => (
-        <div key={faq.id} className="rounded-lg border border-wf-100 p-2">
-          <CmsLocalizedField
-            label="Vraag"
-            field={`faq.${faq.id}.q`}
-            value={faq.question}
-            onChange={(question) =>
-              setDoc((d) => ({
-                ...d,
-                faq: d.faq.map((f) =>
-                  f.id === faq.id ? { ...f, question } : f
-                ),
-              }))
-            }
-            meta={meta}
-            onMetaChange={setMeta}
-          />
-          <CmsLocalizedField
-            label="Antwoord"
-            field={`faq.${faq.id}.a`}
-            value={faq.answer}
-            onChange={(answer) =>
-              setDoc((d) => ({
-                ...d,
-                faq: d.faq.map((f) =>
-                  f.id === faq.id ? { ...f, answer } : f
-                ),
-              }))
-            }
-            meta={meta}
-            onMetaChange={setMeta}
-            multiline
-          />
-          <button
-            type="button"
-            className="mt-1 text-[11px] text-red-700 underline"
-            onClick={() =>
-              setDoc((d) => ({
-                ...d,
-                faq: d.faq.filter((f) => f.id !== faq.id),
-              }))
-            }
-          >
-            Verwijderen
-          </button>
-        </div>
-      ))}
-      <p className="text-[11px] text-wf-500">
-        Lege FAQ wordt niet op de storefront getoond.
-      </p>
-    </div>
-  )
+type ViewMode = "published" | "draft"
+
+function draftStatusLabel(category: CmsCategoryPdDto): string {
+  if (!category.draft) return "Geen draft"
+  const sync =
+    category.draft.sync_state === "in_sync"
+      ? "Draft – gelijk aan live"
+      : "Draft – niet gepubliceerd"
+  const review = (category.draft?.document as { editorial_review?: { needed?: boolean } } | null)
+    ?.editorial_review
+  const base = category.stale_base ? `${sync} · Verouderde basisversie` : sync
+  return review?.needed ? `${base} · Assortiment gewijzigd, tekst controleren` : base
 }
 
 function Inner({ slug }: { slug: string }) {
@@ -117,608 +66,355 @@ function Inner({ slug }: { slug: string }) {
   const [error, setError] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [published, setPublished] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>("draft")
+  const [pd, setPd] = useState<CmsCategoryPdDto | null>(null)
   const [viewport, setViewport] = useState<CmsViewport>("desktop")
-  const [doc, setDoc] = useState<CmsCategoryEditorial>(emptyCategoryEditorial())
+  const [doc, setDoc] = useState<CategoryCmsDocumentV2 | null>(null)
   const [meta, setMeta] = useState<CmsI18nMeta>({})
-  const [selectedId, setSelectedId] = useState("hero")
+  const [selectedId, setSelectedId] = useState("seo")
   const [banners, setBanners] = useState<CmsBannerDto[]>([])
-  const [proposal, setProposal] = useState<CategoryCopySuggestion | null>(null)
-  const [proposalError, setProposalError] = useState<string | null>(null)
+  const [proposalRefresh, setProposalRefresh] = useState(0)
+  const [showConcepts, setShowConcepts] = useState(false)
+  const [conceptProducts, setConceptProducts] = useState<CategoryPreviewConceptProduct[] | null>(
+    null
+  )
 
-  useEffect(() => {
-    getCmsEditorialCategory(slug)
-      .then(({ category }) => {
-        setDoc(parseCategoryEditorial(category.document))
-        setPublished(category.published)
-        setMeta((category.i18n_meta as CmsI18nMeta) ?? {})
-      })
-      .catch((e: Error) => setError(e.message))
-    listCmsBanners()
-      .then((r) => setBanners(r.banners ?? []))
-      .catch(() => setBanners([]))
-  }, [slug])
+  const profile = (pd?.profile ?? null) as CategoryCmsProfile | null
 
-  async function generateProposal() {
-    setProposalError(null)
-    try {
-      const [catalog, attributes] = await Promise.all([
-        fetchPublicCatalogProducts({ category: slug, limit: 40 }),
-        fetchPublicCategoryAttributes(slug),
-      ])
-      const brands = catalog.products
-        .map((product) =>
-          typeof product.brand_name === "string" ? product.brand_name : ""
-        )
-        .filter(Boolean)
-      const suggestion = suggestCategoryCopy({
-        title: doc.title.nl || doc.title.en || slug,
-        productCount: catalog.products.length,
-        brands,
-        attributes: attributes.map((attribute) => attribute.name),
-      })
-      if (suggestion.usps.length === 0 && suggestion.faq.length === 0) {
-        setProposal(null)
-        setProposalError("Er zijn geen betrouwbare categoriegegevens om een voorstel van te maken.")
-        return
-      }
-      setProposal(suggestion)
-    } catch (err) {
-      setProposal(null)
-      setProposalError(err instanceof Error ? err.message : "Voorstel genereren mislukt.")
+  function showDocument(category: CmsCategoryPdDto, mode: ViewMode) {
+    const source =
+      mode === "published"
+        ? category.published?.document
+        : category.draft?.document ?? null
+    if (source == null || !category.profile) {
+      setDoc(null)
+      return
+    }
+    const next = editorDocumentFromStored(source, {
+      slug,
+      profile: category.profile,
+    })
+    setDoc(next)
+    if (!next) {
+      setError("Het opgeslagen document heeft een ander profiel dan de taxonomie.")
     }
   }
 
-  function applyText(current: LocalizedCms, value: string): LocalizedCms {
-    return { ...current, [locale]: value }
+  function applyCategory(category: CmsCategoryPdDto, preferredMode?: ViewMode) {
+    const profileWasSent = category.profile !== undefined
+    const merged: CmsCategoryPdDto = {
+      ...category,
+      profile: profileWasSent ? category.profile : pd?.profile ?? null,
+      profile_error: profileWasSent
+        ? category.profile_error ?? null
+        : pd?.profile_error ?? null,
+    }
+    setPd(merged)
+    setMeta((category.i18n_meta as CmsI18nMeta) ?? {})
+    const nextMode: ViewMode =
+      preferredMode ??
+      (category.draft ? "draft" : category.published ? "published" : "draft")
+    setViewMode(nextMode)
+    if (merged.profile_error) {
+      setError(`Geen categorieprofiel: ${merged.profile_error}`)
+    }
+    showDocument(merged, nextMode)
   }
 
-  const structure = useMemo(
-    () => [
-      { id: "chrome_header", label: "Header", hint: "Centraal beheerd", locked: true },
-      { id: "hero", label: "Hero / titel", locked: true },
-      { id: "intro", label: "Intro", locked: true },
-      { id: "banner", label: "Banner", locked: true },
-      { id: "products", label: "Producten (Product Cloud)", locked: true },
-      { id: "filters", label: "Filters", hint: "Tonen, naam en volgorde", locked: true },
-      { id: "usps", label: "USP's", locked: true },
-      { id: "faq", label: "FAQ", locked: true },
-      { id: "chrome_footer", label: "Footer", hint: "Centraal beheerd", locked: true },
-      { id: "seo", label: "SEO", locked: true },
-    ],
-    []
-  )
+  async function reload(preferredMode?: ViewMode) {
+    const { category } = await getCmsEditorialCategory(slug)
+    applyCategory(category, preferredMode)
+  }
 
-  async function save(nextPublished: boolean) {
+  useEffect(() => {
+    reload().catch((e: Error) => setError(e.message))
+    listCmsBanners()
+      .then((result) => setBanners(result.banners ?? []))
+      .catch(() => setBanners([]))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug])
+
+  useEffect(() => {
+    setShowConcepts(false)
+  }, [slug])
+
+  useEffect(() => {
+    if (viewMode !== "draft" || !showConcepts) {
+      setConceptProducts(null)
+      return
+    }
+    let cancelled = false
+    setConceptProducts(null)
+    fetchCategoryPreviewProducts(slug)
+      .then((products) => {
+        if (!cancelled) setConceptProducts(products)
+      })
+      .catch(() => {
+        if (!cancelled) setConceptProducts([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [showConcepts, slug, viewMode])
+
+  function switchMode(mode: ViewMode) {
+    if (!pd) return
+    setError(null)
+    setOk(null)
+    if (mode !== "draft") setShowConcepts(false)
+    setViewMode(mode)
+    if (mode === "published" && !pd.published) {
+      setError("Er is nog geen gepubliceerde versie.")
+      setDoc(null)
+      return
+    }
+    if (mode === "draft" && !pd.draft) {
+      setDoc(null)
+      return
+    }
+    showDocument(pd, mode)
+  }
+
+  async function runAction(label: string, fn: () => Promise<void>) {
     setBusy(true)
     setError(null)
     setOk(null)
     try {
-      await putCmsEditorialCategory(slug, {
-        document: doc,
-        published: nextPublished,
-        i18n_meta: meta,
-      })
-      setPublished(nextPublished)
-      setOk(
-        nextPublished
-          ? "Categoriecontent gepubliceerd."
-          : "Concept opgeslagen."
-      )
+      await fn()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Opslaan mislukt")
+      if (e instanceof CmsAdminApiError) {
+        if (e.type === "stale_draft_base") {
+          setError(
+            `${e.message} Rebase eerst: behoud draft of vervang door live. Geen automatische merge.`
+          )
+        } else {
+          setError(e.message)
+        }
+      } else {
+        setError(e instanceof Error ? e.message : label)
+      }
     } finally {
       setBusy(false)
     }
   }
 
-  const title = doc.title[locale] || doc.title.nl || slug
-
-  function settingsPanel() {
-    if (selectedId === "chrome_header" || selectedId === "chrome_footer") {
-      return (
-        <p className="text-sm text-wf-600">
-          Dit onderdeel is sitebreed beheerd — niet per categorie.
-        </p>
-      )
+  async function saveDraft() {
+    if (!pd?.draft || !doc) {
+      setError("Geen draft om op te slaan. Maak eerst een draft aan.")
+      return
     }
-    if (selectedId === "seo") {
-      return (
-        <CmsSeoFields
-          title={doc.seoTitle}
-          description={doc.seoDescription}
-          canonical={`/categorie/${slug}`}
-          onTitle={(seoTitle) => setDoc((d) => ({ ...d, seoTitle }))}
-          onDescription={(seoDescription) =>
-            setDoc((d) => ({ ...d, seoDescription }))
-          }
-          onCanonical={() => undefined}
-          meta={meta}
-          onMeta={setMeta}
-        />
-      )
-    }
-    if (selectedId === "hero") {
-      return (
-        <div className="space-y-4">
-          <CmsLocalizedField
-            label="H1 / titel"
-            field="title"
-            value={doc.title}
-            onChange={(next) => setDoc((d) => ({ ...d, title: next }))}
-            meta={meta}
-            onMetaChange={setMeta}
-          />
-          <CmsLocalizedField
-            label="Subtitel"
-            field="subtitle"
-            value={doc.subtitle}
-            onChange={(subtitle) => setDoc((d) => ({ ...d, subtitle }))}
-            meta={meta}
-            onMetaChange={setMeta}
-          />
-          <CmsImageField
-            label="Categorie-afbeelding / hero"
-            url={doc.heroImage}
-            large
-            placement="homepage_hero"
-            onChange={(heroImage) => setDoc((d) => ({ ...d, heroImage }))}
-            onError={setError}
-          />
-          <label className="flex items-center gap-2 text-sm text-wf-800">
-            <input
-              type="checkbox"
-              checked={doc.heroVisible}
-              onChange={(e) =>
-                setDoc((d) => ({ ...d, heroVisible: e.target.checked }))
-              }
-            />
-            Hero zichtbaar
-          </label>
-        </div>
-      )
-    }
-    if (selectedId === "intro") {
-      return (
-        <div className="space-y-4">
-          <CmsLocalizedField
-            label="Intro"
-            field="intro"
-            value={doc.intro}
-            onChange={(intro) => setDoc((d) => ({ ...d, intro }))}
-            meta={meta}
-            onMetaChange={setMeta}
-            multiline
-          />
-          <CmsLocalizedField
-            label="Beschrijving"
-            field="description"
-            value={doc.description}
-            onChange={(description) => setDoc((d) => ({ ...d, description }))}
-            meta={meta}
-            onMetaChange={setMeta}
-            multiline
-          />
-          <CmsLocalizedField
-            label="Made in Europe / USP-tekst"
-            field="madeInEurope"
-            value={doc.madeInEurope}
-            onChange={(madeInEurope) =>
-              setDoc((d) => ({ ...d, madeInEurope }))
-            }
-            meta={meta}
-            onMetaChange={setMeta}
-            multiline
-          />
-        </div>
-      )
-    }
-    if (selectedId === "banner") {
-      const selectedBannerId = doc.bannerId || doc.banner?.id || ""
-      return (
-        <div className="space-y-4">
-          <label className="block text-sm font-semibold">
-            Banner uit bibliotheek
-            <select
-              className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
-              value={selectedBannerId}
-              onChange={(e) => {
-                const id = e.target.value
-                const banner = banners.find((b) => b.id === id)
-                setDoc((d) => ({
-                  ...d,
-                  bannerId: id || null,
-                  banner: banner
-                    ? {
-                        id: banner.id,
-                        title: banner.title,
-                        subtitle: banner.subtitle,
-                        cta_label: banner.cta_label,
-                        image_url: banner.image_url,
-                        destination_url: banner.destination_url,
-                        background: banner.background,
-                        presentation: banner.presentation ?? null,
-                        published: banner.published,
-                      }
-                    : null,
-                }))
-              }}
-            >
-              <option value="">— Geen banner —</option>
-              {banners.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {(b.title.nl || b.id).slice(0, 40)} ·{" "}
-                  {b.published ? "Live" : "Concept"} · pos {b.position}
-                </option>
-              ))}
-            </select>
-          </label>
-          {doc.banner?.image_url ? (
-            <div className="relative aspect-[4/1] w-full overflow-hidden rounded-2xl border border-wf-200 bg-wf-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={doc.banner.image_url}
-                alt=""
-                className="absolute inset-0 h-full w-full"
-                style={{
-                  objectFit: doc.banner.presentation?.fit === "contain" ? "contain" : "cover",
-                  objectPosition: `${doc.banner.presentation?.positionX ?? 50}% ${doc.banner.presentation?.positionY ?? 50}%`,
-                }}
-              />
-            </div>
-          ) : null}
-          {doc.banner ? (
-            <div className="rounded-lg border border-wf-200 bg-wf-50 p-3 text-[12px] text-wf-700">
-              <p className="font-semibold">{doc.banner.title.nl || doc.banner.id}</p>
-              <p className="mt-1 break-all">{doc.banner.destination_url}</p>
-              <p className="mt-1">
-                {doc.banner.published ? "Gepubliceerd" : "Concept"}
-              </p>
-            </div>
-          ) : null}
-          <label className="flex items-center gap-2 text-sm text-wf-800">
-            <input
-              type="checkbox"
-              checked={doc.bannerVisible}
-              onChange={(e) =>
-                setDoc((d) => ({ ...d, bannerVisible: e.target.checked }))
-              }
-            />
-            Banner zichtbaar
-          </label>
-          <a
-            href="/cms/banners"
-            className="inline-block text-sm font-semibold text-sky-700 hover:underline"
-          >
-            Bannerbibliotheek openen
-          </a>
-        </div>
-      )
-    }
-    if (selectedId === "products") {
-      return (
-        <div className="space-y-4">
-          <div className="rounded-lg border border-wf-200 bg-wf-50 p-3 text-[12px] text-wf-700">
-            Producten komen dynamisch uit Product Cloud. CMS bepaalt presentatie,
-            niet prijzen of voorraad.
-          </div>
-          <CmsLocalizedField
-            label="Sectietitel (optioneel)"
-            field="productsTitle"
-            value={doc.productsTitle}
-            onChange={(productsTitle) =>
-              setDoc((d) => ({ ...d, productsTitle }))
-            }
-            meta={meta}
-            onMetaChange={setMeta}
-          />
-          <label className="block text-sm font-semibold">
-            Sortering
-            <select
-              className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-xs"
-              value={doc.productsSort}
-              onChange={(e) =>
-                setDoc((d) => ({
-                  ...d,
-                  productsSort: e.target.value as CmsCategoryEditorial["productsSort"],
-                }))
-              }
-            >
-              <option value="relevance">Relevantie</option>
-              <option value="newest">Nieuwste</option>
-              <option value="price_asc">Prijs oplopend</option>
-              <option value="price_desc">Prijs aflopend</option>
-            </select>
-          </label>
-          <label className="block text-sm font-semibold">
-            Aantal tonen
-            <input
-              className="mt-1 h-9 w-full rounded border border-wf-400 bg-white px-2 text-sm"
-              type="number"
-              min={4}
-              max={96}
-              value={String(doc.productsLimit)}
-              onChange={(e) =>
-                setDoc((d) => ({
-                  ...d,
-                  productsLimit: Number(e.target.value) || 24,
-                }))
-              }
-            />
-          </label>
-          <p className="text-[11px] text-wf-500">
-            Limiet en sortering worden toegepast op de storefront-productlijst.
-            Productdata blijft uit Product Cloud komen.
-          </p>
-        </div>
-      )
-    }
-    if (selectedId === "filters") {
-      return (
-        <div className="space-y-3">
-          <p className="text-[12px] text-wf-600">
-            Alleen filters die bij echte productattributen horen worden getoond.
-            Verborgen filters en filters zonder producten verdwijnen.
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              void fetchPublicCategoryAttributes(slug).then((attributes) => {
-                setDoc((current) => {
-                  const known = new Set(current.filterControls.map((row) => row.attributeKey))
-                  const extra = [
-                    { code: "brand", name: "Merk" },
-                    ...attributes,
-                  ].filter((attribute) => attribute.code && !known.has(attribute.code))
-                  return {
-                    ...current,
-                    filterControls: [
-                      ...current.filterControls,
-                      ...extra.map((attribute, index) => ({
-                        attributeKey: attribute.code,
-                        visible: true,
-                        label: {
-                          ...emptyLocalized(),
-                          nl: attribute.name,
-                        },
-                        sortOrder: current.filterControls.length + index,
-                      })),
-                    ],
-                  }
-                })
-              })
-            }}
-          >
-            Filters uit productgegevens laden
-          </Button>
-          {doc.filterControls.map((control, index) => (
-            <div key={control.attributeKey} className="rounded-lg border border-wf-100 p-2">
-              <p className="text-[11px] text-wf-500">{control.attributeKey}</p>
-              <label className="mt-1 flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={control.visible}
-                  onChange={(e) =>
-                    setDoc((d) => ({
-                      ...d,
-                      filterControls: d.filterControls.map((row) =>
-                        row.attributeKey === control.attributeKey
-                          ? { ...row, visible: e.target.checked }
-                          : row
-                      ),
-                    }))
-                  }
-                />
-                Tonen
-              </label>
-              <CmsLocalizedField
-                label="Naam"
-                field={`filter.${control.attributeKey}`}
-                value={control.label}
-                onChange={(label) =>
-                  setDoc((d) => ({
-                    ...d,
-                    filterControls: d.filterControls.map((row) =>
-                      row.attributeKey === control.attributeKey ? { ...row, label } : row
-                    ),
-                  }))
-                }
-                meta={meta}
-                onMetaChange={setMeta}
-              />
-              <div className="mt-1 flex gap-2 text-[11px]">
-                <button
-                  type="button"
-                  className="underline"
-                  onClick={() =>
-                    setDoc((d) => {
-                      const rows = [...d.filterControls]
-                      if (index === 0) return d
-                      const previous = rows[index - 1]
-                      const current = rows[index]
-                      if (!previous || !current) return d
-                      rows[index - 1] = { ...current, sortOrder: index - 1 }
-                      rows[index] = { ...previous, sortOrder: index }
-                      return { ...d, filterControls: rows }
-                    })
-                  }
-                >
-                  Omhoog
-                </button>
-                <button
-                  type="button"
-                  className="underline"
-                  onClick={() =>
-                    setDoc((d) => {
-                      const rows = [...d.filterControls]
-                      if (index >= rows.length - 1) return d
-                      const next = rows[index + 1]
-                      const current = rows[index]
-                      if (!next || !current) return d
-                      rows[index + 1] = { ...current, sortOrder: index + 1 }
-                      rows[index] = { ...next, sortOrder: index }
-                      return { ...d, filterControls: rows }
-                    })
-                  }
-                >
-                  Omlaag
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )
-    }
-    if (selectedId === "usps") {
-      return (
-        <div className="space-y-3">
-          <p className="text-[12px] text-wf-600">
-            Een voorstel gebruikt alleen productaantallen, merknamen en filterbare
-            eigenschappen van deze categorie. Overnemen voegt een nieuw item toe
-            en overschrijft bestaande tekst niet.
-          </p>
-          <Button type="button" variant="secondary" onClick={() => void generateProposal()}>
-            Genereer nieuw voorstel
-          </Button>
-          {proposalError ? <p className="text-[12px] text-amber-800">{proposalError}</p> : null}
-          {proposal?.usps.map((item, index) => (
-            <div key={`usp-proposal-${index}`} className="rounded-lg border border-dashed border-wf-300 p-2">
-              <p className="text-sm font-semibold">{item.title}</p>
-              <p className="text-[12px] text-wf-700">{item.body}</p>
-              <button
-                type="button"
-                className="mt-1 text-[12px] font-semibold underline"
-                onClick={() =>
-                  setDoc((d) => ({
-                    ...d,
-                    usps: [
-                      ...d.usps,
-                      {
-                        id: `usp_${Date.now()}_${index}`,
-                        title: applyText(emptyLocalized(), item.title),
-                        body: applyText(emptyLocalized(), item.body),
-                      },
-                    ],
-                  }))
-                }
-              >
-                Overnemen
-              </button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() =>
-              setDoc((d) => ({
-                ...d,
-                usps: [
-                  ...d.usps,
-                  {
-                    id: `usp_${Date.now()}`,
-                    title: emptyLocalized(),
-                    body: emptyLocalized(),
-                  },
-                ],
-              }))
-            }
-          >
-            USP toevoegen
-          </Button>
-          {doc.usps.map((usp) => (
-            <div key={usp.id} className="rounded-lg border border-wf-100 p-2">
-              <CmsLocalizedField
-                label="Titel"
-                field={`usp.${usp.id}.title`}
-                value={usp.title}
-                onChange={(nextTitle) =>
-                  setDoc((d) => ({
-                    ...d,
-                    usps: d.usps.map((u) =>
-                      u.id === usp.id ? { ...u, title: nextTitle } : u
-                    ),
-                  }))
-                }
-                meta={meta}
-                onMetaChange={setMeta}
-              />
-              <CmsLocalizedField
-                label="Tekst"
-                field={`usp.${usp.id}.body`}
-                value={usp.body}
-                onChange={(body) =>
-                  setDoc((d) => ({
-                    ...d,
-                    usps: d.usps.map((u) =>
-                      u.id === usp.id ? { ...u, body } : u
-                    ),
-                  }))
-                }
-                meta={meta}
-                onMetaChange={setMeta}
-                multiline
-              />
-              <button
-                type="button"
-                className="mt-1 text-[11px] text-red-700 underline"
-                onClick={() =>
-                  setDoc((d) => ({
-                    ...d,
-                    usps: d.usps.filter((u) => u.id !== usp.id),
-                  }))
-                }
-              >
-                Verwijderen
-              </button>
-            </div>
-          ))}
-        </div>
-      )
-    }
-    if (selectedId === "faq") {
-      return (
-        <div className="space-y-3">
-          <p className="text-[12px] text-wf-600">
-            Een voorstel gebruikt alleen productaantallen, merknamen en filterbare
-            eigenschappen van deze categorie. Overnemen voegt een nieuwe vraag toe
-            en overschrijft bestaande tekst niet.
-          </p>
-          <Button type="button" variant="secondary" onClick={() => void generateProposal()}>
-            Genereer nieuw voorstel
-          </Button>
-          {proposalError ? <p className="text-[12px] text-amber-800">{proposalError}</p> : null}
-          {proposal?.faq.map((item, index) => (
-            <div key={`faq-proposal-${index}`} className="rounded-lg border border-dashed border-wf-300 p-2">
-              <p className="text-sm font-semibold">{item.question}</p>
-              <p className="text-[12px] text-wf-700">{item.answer}</p>
-              <button
-                type="button"
-                className="mt-1 text-[12px] font-semibold underline"
-                onClick={() =>
-                  setDoc((d) => ({
-                    ...d,
-                    faq: [
-                      ...d.faq,
-                      {
-                        id: `faq_${Date.now()}_${index}`,
-                        question: applyText(emptyLocalized(), item.question),
-                        answer: applyText(emptyLocalized(), item.answer),
-                      },
-                    ],
-                  }))
-                }
-              >
-                Overnemen
-              </button>
-            </div>
-          ))}
-          <FaqEditor doc={doc} setDoc={setDoc} meta={meta} setMeta={setMeta} />
-        </div>
-      )
-    }
-    return <p className="text-sm text-wf-500">Selecteer een sectie.</p>
+    await runAction("Opslaan mislukt", async () => {
+      const { category } = await saveCmsCategoryDraft(slug, {
+        document: doc,
+        expected_draft_revision: pd.draft!.revision,
+        i18n_meta: meta,
+      })
+      applyCategory(category, "draft")
+      setOk("Draft opgeslagen.")
+    })
   }
+
+  async function removeDraft() {
+    if (!pd?.draft) return
+    if (
+      !window.confirm(
+        "Draft verwijderen? De gepubliceerde liveversie blijft intact."
+      )
+    ) {
+      return
+    }
+    await runAction("Draft verwijderen mislukt", async () => {
+      const { category } = await deleteCmsCategoryDraft(slug)
+      applyCategory(category, category.published ? "published" : "draft")
+      setOk("Draft verwijderd. Liveversie ongewijzigd.")
+    })
+  }
+
+  async function publishDraft() {
+    if (!pd?.draft) {
+      setError("Publiceren kan alleen vanuit Draft.")
+      return
+    }
+    if (pd.stale_base) {
+      setError(
+        `Verouderde basisversie: draft baseert op v${pd.draft.base_version}, live is v${pd.published?.version ?? "?"}. Rebase eerst — geen automatische merge of overschrijving.`
+      )
+      return
+    }
+    if (
+      !window.confirm(
+        `Draft publiceren als live v${(pd.published?.version ?? 0) + 1}? De huidige liveversie wordt vervangen.`
+      )
+    ) {
+      return
+    }
+    await runAction("Publiceren mislukt", async () => {
+      const { category } = await publishCmsCategoryDraft(slug, {
+        confirm: true,
+        expected_draft_revision: pd.draft!.revision,
+      })
+      applyCategory(category, "draft")
+      setOk("Gepubliceerd. Status: Draft – gelijk aan live.")
+    })
+  }
+
+  async function rebaseDraft(mode: "keep_draft_content" | "replace_with_live") {
+    if (!pd?.draft || !pd.published) return
+    const liveV = pd.published.version
+    const baseV = pd.draft.base_version
+    if (mode === "keep_draft_content") {
+      if (
+        !window.confirm(
+          `Rebase: draft behouden, basis bijwerken van v${baseV} naar live v${liveV}. Live-wijzigingen sinds v${baseV} worden niet gemerged.`
+        )
+      ) {
+        return
+      }
+    } else if (
+      !window.confirm(
+        `Let op: draftinhoud wordt vervangen door live v${liveV}. Huidige draftwijzigingen gaan verloren.`
+      )
+    ) {
+      return
+    }
+    await runAction("Rebase mislukt", async () => {
+      const { category } = await rebaseCmsCategoryDraft(slug, {
+        mode,
+        expected_draft_revision: pd.draft!.revision,
+        acknowledge_unmerged_live: mode === "keep_draft_content",
+        confirm_destroy_draft_changes: mode === "replace_with_live",
+      })
+      applyCategory(category, "draft")
+      setOk(
+        mode === "keep_draft_content"
+          ? `Draft behouden; basis nu v${liveV}.`
+          : `Draft vervangen door live v${liveV}.`
+      )
+    })
+  }
+
+  async function createDraftFromLiveOrEmpty() {
+    await runAction("Draft aanmaken mislukt", async () => {
+      const hasDraft = Boolean(pd?.draft)
+      if (hasDraft) {
+        if (
+          !window.confirm(
+            "Er bestaat al een draft. Overschrijven met de huidige liveversie? Huidige draftwijzigingen gaan verloren."
+          )
+        ) {
+          return
+        }
+      }
+      const from = pd?.published ? "published" : "empty"
+      const { category } = await createCmsCategoryDraft(slug, {
+        from,
+        overwrite: hasDraft,
+      })
+      applyCategory(category, "draft")
+      setOk(
+        from === "published"
+          ? "Draft aangemaakt vanuit live."
+          : "Lege draft aangemaakt."
+      )
+    })
+  }
+
+  const hasLive = Boolean(pd?.published)
+  const hasDraft = Boolean(pd?.draft)
+  const readOnly = viewMode === "published" || !hasDraft
+  const statusExtra = pd
+    ? [
+        viewMode === "published" ? "Bekijkt gepubliceerd" : "Bekijkt draft",
+        hasLive ? `Live v${pd.published!.version}` : "Geen live",
+        draftStatusLabel(pd),
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : undefined
+  const hero = doc ? getBlock(doc, "hero") : null
+  const title = hero?.title[locale] || hero?.title.nl || slug
+  const remaining = doc && profile ? optionalBlocksToAdd(doc, profile) : []
+
+  const structure = useMemo(() => {
+    if (!doc || !profile) {
+      return [
+        { id: "chrome_header", label: "Header", hint: "Centraal beheerd", locked: true },
+        { id: "chrome_footer", label: "Footer", hint: "Centraal beheerd", locked: true },
+      ]
+    }
+    return [
+      { id: "chrome_header", label: "Header", hint: "Centraal beheerd", locked: true },
+      ...doc.blocks.map((block) => ({
+        id: block.id,
+        label: CATEGORY_CMS_BLOCK_LABEL[block.type],
+        hint: isRequiredCategoryBlock(profile, block.type) ? "Vast blok" : "Optioneel",
+        visible: block.visible,
+        locked: isRequiredCategoryBlock(profile, block.type),
+      })),
+      { id: "chrome_footer", label: "Footer", hint: "Centraal beheerd", locked: true },
+      { id: "seo", label: "SEO", hint: "Metadata", locked: true },
+    ]
+  }, [doc, profile])
+
+  const previewDocument = useMemo(() => {
+    if (!doc) return {}
+    return syncLegacyMirrors(doc, doc as unknown as Record<string, unknown>)
+  }, [doc])
+
+  const toolbarActions = (
+    <>
+      {viewMode === "published" ? (
+        <Button variant="secondary" disabled={busy || !profile} onClick={() => void createDraftFromLiveOrEmpty()}>
+          {hasDraft ? "Draft opnieuw vanuit live" : "Draft aanmaken vanuit live"}
+        </Button>
+      ) : (
+        <>
+          {!hasDraft ? (
+            <Button variant="secondary" disabled={busy || !profile} onClick={() => void createDraftFromLiveOrEmpty()}>
+              Draft aanmaken
+            </Button>
+          ) : (
+            <>
+              <Button variant="secondary" disabled={busy || !doc} onClick={() => void saveDraft()}>
+                Draft opslaan
+              </Button>
+              <Button disabled={busy} onClick={() => void publishDraft()}>
+                Publiceren
+              </Button>
+              <Button variant="secondary" disabled={busy} onClick={() => void removeDraft()}>
+                Draft verwijderen
+              </Button>
+            </>
+          )}
+          {hasDraft ? (
+            <Button
+              variant="secondary"
+              disabled={busy || !profile}
+              onClick={() =>
+                void runAction("Voorstellen genereren mislukt", async () => {
+                  await generateCmsCategoryProposals(slug)
+                  setProposalRefresh((value) => value + 1)
+                  setOk("Voorstellen bijgewerkt. De draft is niet gepubliceerd.")
+                })
+              }
+            >
+              Voorstellen genereren
+            </Button>
+          ) : null}
+          {pd?.stale_base && hasDraft && hasLive ? (
+            <>
+              <Button variant="secondary" disabled={busy} onClick={() => void rebaseDraft("keep_draft_content")}>
+                Rebase: draft behouden
+              </Button>
+              <Button variant="secondary" disabled={busy} onClick={() => void rebaseDraft("replace_with_live")}>
+                Rebase: vervang door live
+              </Button>
+            </>
+          ) : null}
+        </>
+      )}
+    </>
+  )
 
   return (
     <CmsEditorShell
@@ -732,38 +428,152 @@ function Inner({ slug }: { slug: string }) {
         />
       }
       title={title}
-      templateLabel="Categoriepagina"
-      published={published}
+      templateLabel={profile ? CATEGORY_CMS_PROFILE_LABEL[profile] : "Categoriepagina"}
+      published={viewMode === "published" && hasLive}
+      statusExtra={statusExtra}
       busy={busy}
-      error={error}
+      error={
+        pd?.stale_base && viewMode === "draft"
+          ? [
+              error,
+              `Verouderde basis: draft v${pd.draft?.base_version ?? "—"} vs live v${pd.published?.version ?? "—"}. Publiceren geblokkeerd tot rebase.`,
+            ]
+              .filter(Boolean)
+              .join(" ")
+          : error
+      }
       ok={ok}
       viewport={viewport}
       onViewport={setViewport}
-      onSaveDraft={() => void save(false)}
-      onPublish={() => void save(true)}
+      onSaveDraft={() => void saveDraft()}
+      onPublish={() => void publishDraft()}
+      modeTabs={[
+        { id: "published", label: "Gepubliceerd" },
+        { id: "draft", label: "Draft" },
+      ]}
+      activeModeTab={viewMode}
+      onModeTab={(id) => switchMode(id as ViewMode)}
+      toolbarActions={toolbarActions}
+      settingsReadOnly={readOnly}
       structure={structure}
       selectedId={selectedId}
       onSelect={setSelectedId}
-      childrenPreview={
-        <CmsLivePreview
-          kind="category"
-          path={`/cms-preview/category/${encodeURIComponent(slug)}`}
-          viewport={viewport}
-          locale={locale}
-          selectedId={selectedId}
-          document={doc}
-          slug={slug}
-          banners={banners}
-          theme={null}
-          onSelect={setSelectedId}
-        />
+      onMove={
+        readOnly || !doc || !profile
+          ? undefined
+          : (id, direction) => setDoc(moveOptionalCategoryBlock(doc, id, direction, profile))
       }
-      childrenSettings={settingsPanel()}
+      onToggleVisible={
+        readOnly || !doc
+          ? undefined
+          : (id) => {
+              const block = doc.blocks.find((item) => item.id === id)
+              if (!block) return
+              setDoc(updateCategoryBlock(doc, id, { visible: !block.visible }))
+            }
+      }
+      onRemove={
+        readOnly || !doc || !profile
+          ? undefined
+          : (id) => setDoc(removeOptionalCategoryBlock(doc, id, profile))
+      }
+      onAddSection={
+        readOnly || remaining.length === 0 ? undefined : () => setSelectedId("__add")
+      }
+      addLabel="Optioneel blok toevoegen"
+      childrenPreview={
+        <div className="flex h-full min-h-0 flex-col">
+          <p className="mb-2 text-[11px] text-wf-600">
+            {viewMode === "published" ? "Gepubliceerde preview" : "Draft-preview"} ·{" "}
+            {viewport === "desktop" ? "Desktop" : viewport === "tablet" ? "Tablet" : "Mobiel"}.
+            De openbare site blijft beperkt tot gepubliceerde producten met een verkoopbaar aanbod.
+          </p>
+          {viewMode === "draft" ? (
+            <label className="mb-2 flex items-center gap-2 text-[11px] text-wf-700">
+              <input
+                type="checkbox"
+                checked={showConcepts}
+                onChange={(event) => setShowConcepts(event.target.checked)}
+              />
+              Toon conceptproducten
+            </label>
+          ) : null}
+          <div className="min-h-0 flex-1">
+            <CmsLivePreview
+              kind="category"
+              path={`/cms-preview/category/${encodeURIComponent(slug)}`}
+              viewport={viewport}
+              locale={locale}
+              selectedId={doc ? previewSectionForBlock(doc, selectedId) : selectedId}
+              document={previewDocument}
+              slug={slug}
+              previewProducts={
+                viewMode === "draft" && showConcepts ? conceptProducts ?? [] : viewMode === "draft" ? [] : undefined
+              }
+              banners={banners}
+              theme={null}
+              onSelect={(sectionId) => {
+                if (!doc) return
+                setSelectedId(blockIdForPreviewSection(doc, sectionId))
+              }}
+            />
+          </div>
+        </div>
+      }
+      childrenSettings={
+        doc ? (
+          <>
+            <CmsCategoryBlockSettings
+              slug={slug}
+              doc={doc}
+              selectedId={selectedId}
+              meta={meta}
+              setMeta={setMeta}
+              banners={banners}
+              onDoc={setDoc}
+              onError={setError}
+            />
+            <CmsCategoryProposals
+              slug={slug}
+              doc={doc}
+              selectedId={selectedId}
+              locale={locale}
+              readOnly={readOnly}
+              draftRevision={pd?.draft?.revision ?? null}
+              refreshKey={proposalRefresh}
+              onError={setError}
+              onAccepted={async () => {
+                await reload("draft")
+                setProposalRefresh((value) => value + 1)
+                setOk("Voorstel in de draft gezet. Nog niet gepubliceerd.")
+              }}
+            />
+          </>
+        ) : (
+          <p className="text-sm text-wf-600">
+            {profile
+              ? "Maak een draft aan om de blokken van dit profiel te bewerken."
+              : "Deze slug heeft geen bruikbaar categorieprofiel in de taxonomie."}
+          </p>
+        )
+      }
     />
   )
 }
 
 export function CmsCategoryStudio({ slug }: { slug: string }) {
+  const excluded = categoryCmsListExclusion({ slug, name: slug })
+  if (excluded) {
+    return (
+      <div className="mx-auto max-w-xl space-y-3 p-6">
+        <h1 className="text-xl font-bold text-wf-950">{slug}</h1>
+        <p className="text-sm text-wf-700">{excluded}</p>
+        <a href="/cms/categories" className="text-sm font-semibold text-sky-800 underline">
+          Terug naar de actieve lijst
+        </a>
+      </div>
+    )
+  }
   return (
     <CmsLocaleProvider>
       <Inner slug={slug} />

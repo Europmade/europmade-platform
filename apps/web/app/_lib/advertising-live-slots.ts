@@ -37,11 +37,13 @@ export type AdPreviewResult = {
 
 export async function fetchLiveAdSlots(
   placement: string,
-  market: EuMarketCode | null
+  market: EuMarketCode | null,
+  target?: string | null
 ): Promise<LiveAdSlot[]> {
   try {
     const qs = new URLSearchParams({ placement })
     if (market) qs.set("market", market)
+    if (target?.trim()) qs.set("target", target.trim())
     const res = await fetch(`${medusaBackendUrl()}/store/advertising/live-slots?${qs}`, {
       cache: "no-store",
       headers: {

@@ -215,6 +215,9 @@ describe("PDP product link selector", () => {
       usesImageSwatchForDimension("Kleur", [{ image_url: null }])
     ).toBe(false)
     expect(selectorSrc).toContain("usesImageSwatchForDimension")
+    expect(selectorSrc).toContain("data-related-products")
+    expect(selectorSrc).not.toContain("Deze combinatie bestaat niet")
+    expect(selectorSrc).not.toContain("listbox")
     expect(selectorSrc).toContain("<img")
     expect(optionsForDimension(oneDim, "prod_black", "Kleur")[0].image_url).toBe(
       "https://cdn.example/black.jpg"
@@ -226,7 +229,8 @@ describe("PDP product link selector", () => {
     const maat = optionsForDimension(twoDim, "prod_zm", "Maat")
     expect(kleur.map((o) => o.value).sort()).toEqual(["Wit", "Zwart"])
     expect(maat.map((o) => o.value).sort()).toEqual(["L", "M"])
-    expect(selectorSrc).toContain("group.dimensions.map")
+    expect(selectorSrc).toContain("group.dimensions")
+    expect(selectorSrc).toContain("storefrontProductHref")
   })
 
   it("keeps offer data on the standalone product page", () => {

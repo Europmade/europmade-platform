@@ -5,6 +5,7 @@ import {
 } from "../../_lib/i18n/locales"
 import { PublicHeader } from "./public-header"
 import { SiteFooter } from "./site-footer"
+import { StorefrontNavProgress } from "./storefront-nav-progress"
 
 /**
  * Gedeelde publieke chrome (CMP-001 header + CMP-002 footer).
@@ -22,7 +23,8 @@ export function PublicStorefrontChrome({
 }) {
   return (
     <div className="min-h-screen bg-wf-100 text-wf-800">
-      <div className="mx-auto max-w-[1160px] border border-wf-200 bg-white shadow-sm">
+      <StorefrontNavProgress />
+      <div className="mx-auto min-w-0 max-w-[1160px] border border-wf-200 bg-white shadow-sm">
         <PublicHeader
           searchQuery={searchQuery}
           alwaysShowSearch

@@ -422,10 +422,12 @@ Laptop A,Merk A,Elektronica,SKU-9,ARM,45 W`
       [2],
       [{ title: "kolomindex 9 valt buiten de gegevensregel (4 cellen)" }]
     )
-    expect(result.preview[0].issues[0].message).toMatch(/uitlezen of mappen/)
-    expect(result.preview[0].issues[0].message).not.toMatch(
-      /waarde ontbreekt\.$/
-    )
+    expect(
+      result.preview[0].issues.find((issue) => issue.field === "title")?.message
+    ).toMatch(/uitlezen of mappen/)
+    expect(
+      result.preview[0].issues.find((issue) => issue.field === "title")?.message
+    ).not.toMatch(/waarde ontbreekt\.$/)
   })
 
   it("keeps preview values identical to a second materialize pass (commit)", () => {

@@ -15,6 +15,7 @@ export default function BrandPageReviewDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState("")
+  const [targetBrandId, setTargetBrandId] = useState("")
   const [data, setData] = useState<{
     brand: Record<string, unknown>
     draft: Record<string, unknown>
@@ -38,11 +39,17 @@ export default function BrandPageReviewDetailPage() {
     })()
   }, [brandId])
 
-  async function decide(action: "approve" | "reject" | "request_info") {
+  async function decide(
+    action: "approve" | "reject" | "request_info" | "merge"
+  ) {
     setBusy(true)
     setError(null)
     try {
-      await decideBrandPageReview(brandId, { action, note })
+      await decideBrandPageReview(brandId, {
+        action,
+        note,
+        target_brand_id: action === "merge" ? targetBrandId.trim() : undefined,
+      })
       router.push("/partners/brand-ownership")
     } catch (err) {
       setError(
@@ -89,6 +96,20 @@ export default function BrandPageReviewDetailPage() {
           <p className="text-sm text-wf-800">
             <b>Eerdere opmerking:</b> {data.page_review_note || "—"}
           </p>
+          <p className="text-xs text-wf-600">
+            Een merk uit de productimport is niet geverifieerd. Goedkeuren
+            publiceert alleen de merkpagina. Samenvoegen koppelt de producten
+            aan een bestaand merk en laat dit merkrecord staan.
+          </p>
+          <label className="block text-xs font-semibold text-wf-700">
+            Bestaand merk-id voor samenvoegen
+            <input
+              className="mt-1 w-full rounded border border-wf-400 px-3 py-2 text-[12.5px]"
+              value={targetBrandId}
+              onChange={(e) => setTargetBrandId(e.target.value)}
+              placeholder="brand_…"
+            />
+          </label>
           <label className="block text-xs font-semibold text-wf-700">
             Opmerking / audit
             <textarea
@@ -114,6 +135,13 @@ export default function BrandPageReviewDetailPage() {
               onClick={() => void decide("reject")}
             >
               Afwijzen
+            </Button>
+            <Button
+              disabled={busy || !targetBrandId.trim()}
+              variant="secondary"
+              onClick={() => void decide("merge")}
+            >
+              Samenvoegen met bestaand merk
             </Button>
           </div>
         </div>

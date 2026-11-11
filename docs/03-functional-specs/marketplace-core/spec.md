@@ -17,9 +17,9 @@
 
 ## 2. Controle of product al bestaat
 
-Systeem zoekt de ingevoerde EAN/GTIN in de Product Cloud. **Belangrijk:** de zoekactie moet over **alle landspecifieke EAN's van een variant** heen zoeken (functionele spec sectie 1.6: "meerdere EAN's per land"), niet alleen op exacte match van het ingevoerde nummer — anders ontstaan onbedoeld dubbele Product Cloud-records voor hetzelfde fysieke product in verschillende landen.
+Systeem zoekt de ingevoerde EAN/GTIN in de Product Cloud. **Belangrijk:** de zoekactie moet over **alle landspecifieke EAN's van hetzelfde artikel** heen zoeken (functionele spec sectie 1.6: "meerdere EAN's per land"), niet alleen op exacte match van het ingevoerde nummer — anders ontstaan onbedoeld dubbele Product Cloud-records voor hetzelfde fysieke product in verschillende landen. Een EAN groepeert geen commerciële varianten (ADR-0050).
 
-**Beslispunt:** bestaat er al een Product Cloud-record voor deze EAN (of een gekoppelde landvariant ervan)?
+**Beslispunt:** bestaat er al een Product Cloud-record voor deze EAN (of een landspecifieke EAN van hetzelfde artikel)?
 - Nee → sectie 3–7.
 - Ja → sectie 8–11.
 
@@ -112,13 +112,13 @@ Vier concrete interventiepunten in deze flow:
 
 - **Twee retailers maken bijna gelijktijdig hetzelfde nieuwe product aan** (zelfde EAN, race condition) → de eerste succesvolle aanmaak wint; de tweede poging wordt door de EAN-controle (sectie 2) alsnog herkend en automatisch omgeleid naar "voeg een aanbod toe aan het bestaande product" (sectie 11), niet naar een dubbel Product Cloud-record.
 - **Retailer die het enige Offer van een niet-geclaimd product is, wordt geschorst** → Product Cloud-record blijft bestaan (informatie gaat niet verloren), maar er is geen enkele actieve aanbieder meer → product-status behoeft een vastgestelde regel (zie Openstaande beslissingen — nog niet expliciet vastgelegd in H7.9 welke status dit precies wordt).
-- **Ingevoerde EAN blijkt achteraf een variant/bundel van een reeds bestaand product te zijn**, geen nieuw product → valt onder de "nieuwe versie vs. nieuw product"-afweging (functionele spec sectie 1.9) — al als open beslissing bekend, hier herbevestigd als relevant edge case binnen déze flow.
+- **Een bundel of andere zelfstandig verkoopbare uitvoering** is een eigen Product Cloud-product met een eigen EAN (ADR-0050). Een landspecifieke EAN van hetzelfde artikel blijft het bestaande product. Een EAN maakt geen commerciële variantgroep.
 - **Claim vindt plaats terwijl een retailer net een wijzigingsvoorstel had openstaan** → al opgelost (sectie 9, stap 6: automatische omzetting), hier herbevestigd.
 - **Product met precies één aanbieder die zijn Offer deactiveert** (niet geschorst, eigen keuze) → zelfde vraagstuk als bovenstaande schorsingscasus, zelfde open status-vraag.
 
 ## 17. Acceptatiecriteria
 
-- [ ] Een EAN-zoekactie doorzoekt alle landspecifieke EAN-varianten van een product, niet alleen exacte invoer.
+- [ ] Een EAN-zoekactie doorzoekt alle landspecifieke EAN's van hetzelfde artikel, niet alleen exacte invoer. Een EAN groepeert geen kleur, maat of bundel.
 - [ ] Een nieuw Product Cloud-record krijgt altijd de status Retailer Created bij aanmaak, nooit direct Actief.
 - [ ] Een Offer wordt voor elk nieuw product aangemaakt vóórdat de Buy Box-berekening plaatsvindt — nooit een product zonder minimaal één Offer dat toch een Buy Box-resultaat toont.
 - [ ] De Buy Box-berekening bij precies één aanbieder gebruikt exact dezelfde code-/logicapad als bij meerdere aanbieders.
@@ -144,11 +144,11 @@ Vier concrete interventiepunten in deze flow:
 
 ## 19. Database-objecten die geraakt worden
 
-`Product`, `ProductVariant`, `ProductIdentifier` (EAN/GTIN, meervoudig/landspecifiek — custom), `Offer` (custom, Commerce Cloud-kernentiteit), `Region`, `Store`/Retailer-account, `ProductOwnershipRecord` (custom — legt vast wie Product Cloud-velden mag wijzigen), `ChangeProposal` (custom — wijzigingsvoorstel), `ProductQualityScore` / `ProductHealthScore` (custom), `VerifiedStatus` (custom), `BuyBoxResult` (custom, per Variant × Region gecachet resultaat), `AuditLogEntry` (custom), `Notification`.
+`Product`, `ProductVariant` (technische variant, ADR-0050), `ProductIdentifier` (EAN/GTIN, meervoudig/landspecifiek voor hetzelfde artikel — custom), `Offer` (custom, Commerce Cloud-kernentiteit), `Region`, `Store`/Retailer-account, `ProductOwnershipRecord` (custom — legt vast wie Product Cloud-velden mag wijzigen), `ChangeProposal` (custom — wijzigingsvoorstel), `ProductQualityScore` / `ProductHealthScore` (custom), `VerifiedStatus` (custom), `BuyBoxResult` (custom, per technische variant × regio), `AuditLogEntry` (custom), `Notification`.
 
 ## 20. API's die geraakt worden
 
-- **Product Cloud API** (custom module): product aanmaken/wijzigen, EAN-lookup over landvarianten.
+- **Product Cloud API** (custom module): product aanmaken/wijzigen, EAN-lookup over landspecifieke EAN's van hetzelfde artikel.
 - **Commerce Cloud/Offer API** (custom module): Offer aanmaken/wijzigen.
 - **Buy Box-berekeningsservice** (custom, uitsluitend server-side aanroepbaar — ADR 0005, nooit vanaf de client).
 - **Claim-/eigenaarschap-API** (custom): claim indienen, verificatie, overdracht.
@@ -211,7 +211,7 @@ Conform H13.11: elke ownership-wijziging (claim), elke statusovergang (Retailer 
 Retailer klikt "Nieuw product toevoegen" (§1)
         │
         ▼
-EAN/GTIN-invoer → Product Cloud-lookup over alle landvarianten (§2)
+EAN/GTIN-invoer → Product Cloud-lookup over landspecifieke EAN's van hetzelfde artikel (§2)
         │
         ├── Product bestaat NIET ──────────────────────────────────────┐
         │                                                              │

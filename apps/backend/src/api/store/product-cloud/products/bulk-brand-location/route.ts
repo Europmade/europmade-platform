@@ -83,11 +83,11 @@ export async function POST(
         manufacturer_id: updatedProduct.manufacturer_id,
         input: {
           production_facility_id: body.production_facility_id,
-          assembly_eu_band: facility.assembly_eu_band ?? "eu_100",
-          parts_eu_level: facility.parts_eu_level ?? "eu_majority",
-          materials_eu_level: facility.materials_eu_level ?? "eu_majority",
+          assembly_eu_band: facility.assembly_eu_band ?? undefined,
+          parts_eu_level: facility.parts_eu_level ?? undefined,
+          materials_eu_level: facility.materials_eu_level ?? undefined,
           primary_assembly_country:
-            facility.primary_assembly_country ?? facility.country_code ?? "NL",
+            facility.primary_assembly_country ?? facility.country_code ?? undefined,
         },
       })
       results.push({ product_id: productId, ok: true })

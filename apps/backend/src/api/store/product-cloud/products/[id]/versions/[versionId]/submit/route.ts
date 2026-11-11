@@ -58,7 +58,7 @@ export async function POST(
   if (!detail?.completeness.publishable) {
     throw new MedusaError(
       MedusaError.Types.NOT_ALLOWED,
-      detail?.completeness.publication_blocked_reasons?.[0] ||
+      detail?.completeness.publication_blocked_reasons?.join(" ") ||
         "Product is niet compleet genoeg om ter goedkeuring aan te bieden."
     )
   }

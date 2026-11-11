@@ -78,13 +78,52 @@ const info = {
   manufacturer_id: "manu_1",
   ean: BOSCH,
   mpn: "",
-  variant_type: "Kleur",
-  variant_value: "Rood",
   category_ids: [],
   attributes: [],
 }
 
 describe("admin central section save", () => {
+  it("persists categories only without rewriting attributes or product fields", async () => {
+    const links: Array<{ id: string; category_id: string }> = [
+      { id: "link_old", category_id: "cat_old" },
+    ]
+    const store = deps({
+      listProductCategories: async () => links,
+      listCategories: async () =>
+        [
+          { id: "cat_l1", name: "Elektronica", slug: "elektronika", parent_category_id: null },
+          {
+            id: "cat_l2",
+            name: "Audio",
+            slug: "audio",
+            parent_category_id: "cat_l1",
+          },
+        ] as unknown as Array<{ id: string }>,
+      deleteProductCategories: async (id) => {
+        store.calls.push(`delete-category:${id}`)
+        links.splice(
+          links.findIndex((row) => row.id === id),
+          1
+        )
+      },
+      createProductCategories: async (row) => {
+        store.calls.push(`category:${row.category_id}`)
+        links.push({ id: `link_${row.category_id}`, category_id: row.category_id })
+      },
+    })
+    await applyAdminCentralSection(
+      store,
+      "prod_1",
+      { section: "categories", category_ids: ["cat_l1", "cat_l2"] },
+      "admin"
+    )
+    expect(store.calls).toContain("delete-category:link_old")
+    expect(store.calls).toContain("category:cat_l1")
+    expect(store.calls).toContain("category:cat_l2")
+    expect(store.calls.some((call) => call === "attributes")).toBe(false)
+    expect(store.calls.some((call) => call === "product")).toBe(false)
+  })
+
   it("links a unique manufacturer name and does not create a manufacturer", async () => {
     let written = ""
     const store = deps({
@@ -306,24 +345,22 @@ describe("admin central section save", () => {
     expect(store.calls).not.toContain("product")
   })
 
-  it("rejects an unknown variant type and saves a listed type without publishing", async () => {
-    const store = deps()
-    await expect(
-      applyAdminCentralSection(store, "prod_1", { ...info, variant_type: "Smaak" }, "admin")
-    ).rejects.toMatchObject({ field: "variant_type" })
-    expect(store.calls).not.toContain("product")
+  it("saves information without changing variant type or value and without publishing", async () => {
     const ok = deps()
     await applyAdminCentralSection(ok, "prod_1", info, "admin")
     expect(ok.calls).toContain("version:Nieuwe pan")
     expect(ok.calls).not.toContain("publication")
-    expect(ok.calls).toContain("variant")
+    expect(ok.calls).not.toContain("variant")
   })
 
   it("rolls back category links when a later link write fails", async () => {
     const links = [{ id: "pctg_old", category_id: "cat_old" }]
     let creates = 0
     const store = deps({
-      listCategories: async () => [{ id: "cat_parent" }, { id: "cat_child" }],
+      listCategories: async () => [
+        { id: "cat_parent", parent_category_id: null },
+        { id: "cat_child", parent_category_id: "cat_parent" },
+      ],
       listProductCategories: async () => links.map((link) => ({ ...link })),
       deleteProductCategories: async (id) => {
         const index = links.findIndex((link) => link.id === id)

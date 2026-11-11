@@ -14,17 +14,27 @@ import {
   slugifyCategoryName,
   type RequirementTier,
 } from "../../../modules/product-cloud/category-attributes"
+import { presentVariantSize } from "../../../modules/product-cloud/shoe-sizes"
 import {
   applyGpsrComplianceAttributes,
   manufacturerIsOutsideEu,
   type ManufacturerGpsrSource,
 } from "../../../modules/product-cloud/gpsr-manufacturer"
+import {
+  dedupeAttributeSchemaByCode,
+  resolveAttributeValueByCode,
+} from "../../../modules/product-cloud/attribute-schema"
+import { isManagedProductSpecCode } from "../../../modules/product-cloud/product-specifications"
 import { resolveCatalogGtinValue } from "../../../modules/product-cloud/concept-identifier"
 import { resolveEffectiveManufacturerId } from "../../../modules/product-cloud/manufacturer-completeness"
 import { buildDocumentInputs, evidenceKindOf, type EvidenceRow } from "../../../modules/product-cloud/compliance-gates"
 import { buildTranslationDocumentInputs } from "../../../modules/product-cloud/translation/completeness"
 import type VerificationModuleService from "../../../modules/verification/service"
 import { VERIFICATION_MODULE } from "../../../modules/verification"
+import {
+  evaluateOfferSellability,
+  shippingProfileFacts,
+} from "../../../modules/commerce-cloud/offer-sellability"
 import { buildProductCloudPreview } from "./product-preview"
 import { loadMadeInEuropeForProduct } from "./made-in-europe-helpers"
 import type { MedusaContainer } from "@medusajs/framework/types"
@@ -42,6 +52,7 @@ import {
   isProductManagerProposalFields,
   resolveProductManagerRequestKind,
 } from "../../../modules/product-cloud/product-manager-request"
+import { sanitizeAttributeUnit } from "../../../modules/product-cloud/category-attributes"
 import {
   resolveIsVerifiedBrandOwnerForProduct,
   sellerCanDirectEditCatalog,
@@ -49,6 +60,20 @@ import {
 } from "./catalog-edit-guard"
 
 export { resolveProductActions, resolveWorkflowStatus }
+
+function parseOptionValuesJson(
+  raw: string | null | undefined
+): string[] | null {
+  if (!raw || !String(raw).trim()) return null
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed)
+      ? parsed.map((v) => String(v))
+      : null
+  } catch {
+    return null
+  }
+}
 
 type VersionRow = {
   id: string
@@ -145,6 +170,7 @@ type OfferEntity = {
   seller_sku?: string | null
   sales_status?: string | null
   delivery_days_max?: number | null
+  shipping_profile_id?: string | null
   created_at?: Date | string | null
   updated_at?: Date | string | null
 }
@@ -205,6 +231,8 @@ export type SellerOfferSummary = {
   sales_status: "active" | "paused" | null
   delivery_days_max: number | null
   is_sellable: boolean
+  sellability_reasons?: string[]
+  sellability_codes?: string[]
   has_offer: boolean
   promo_price?: number | null
   promo_starts_at?: string | null
@@ -236,6 +264,7 @@ export type SellerProductManagerRow = {
   current_owner_seller_id: string
   title: string | null
   description: string | null
+  category_ids: string[]
   category_names: string[]
   category_assignment_status: "linked" | "category_pending"
   primary_image_url: string | null
@@ -281,6 +310,13 @@ export type OfferLookupMaps = {
   >
   stockByOffer: Map<string, number>
   activityByIdentifier: Map<string, string>
+  profileFactsByOffer: Map<
+    string,
+    {
+      shipping_profile_status: string | null
+      shipping_profile_serves_region: boolean | null
+    }
+  >
 }
 
 export async function loadSellerOfferLookup(
@@ -292,6 +328,7 @@ export async function loadSellerOfferLookup(
     priceByOffer: new Map(),
     stockByOffer: new Map(),
     activityByIdentifier: new Map(),
+    profileFactsByOffer: new Map(),
   }
   if (!commerce) return empty
 
@@ -388,7 +425,45 @@ export async function loadSellerOfferLookup(
     }
   }
 
-  return { byIdentifier, priceByOffer, stockByOffer, activityByIdentifier }
+  const profileFactsByOffer = new Map<
+    string,
+    {
+      shipping_profile_status: string | null
+      shipping_profile_serves_region: boolean | null
+    }
+  >()
+  const profileIds = [
+    ...new Set(
+      offers
+        .map((offer) => offer.shipping_profile_id?.trim() || "")
+        .filter(Boolean)
+    ),
+  ]
+  const profileById = new Map<string, { status?: string | null; country_rates?: unknown } | null>()
+  for (const profileId of profileIds) {
+    try {
+      profileById.set(
+        profileId,
+        await commerce.retrieveSellerShippingProfile(profileId)
+      )
+    } catch {
+      profileById.set(profileId, null)
+    }
+  }
+  for (const offer of offers) {
+    profileFactsByOffer.set(
+      offer.id,
+      shippingProfileFacts({
+        shipping_profile_id: offer.shipping_profile_id,
+        region_code: offer.region_code,
+        profile: offer.shipping_profile_id
+          ? profileById.get(offer.shipping_profile_id) ?? null
+          : null,
+      })
+    )
+  }
+
+  return { byIdentifier, priceByOffer, stockByOffer, activityByIdentifier, profileFactsByOffer }
 }
 
 export async function productIdsForSellerOffers(
@@ -416,7 +491,8 @@ export async function productIdsForSellerOffers(
 
 function summarizeOffer(
   offer: OfferEntity,
-  maps: OfferLookupMaps
+  maps: OfferLookupMaps,
+  publicationStatus: string | null
 ): SellerOfferSummary {
   const priceRow = maps.priceByOffer.get(offer.id)
   const stock = maps.stockByOffer.has(offer.id)
@@ -426,6 +502,20 @@ function summarizeOffer(
     (offer.sales_status as "active" | "paused" | null) ?? "active"
   const base = moneyNumber(priceRow?.base_price)
   const shipping = moneyNumber(priceRow?.shipping_cost)
+  const profile = maps.profileFactsByOffer.get(offer.id)
+  const decision = evaluateOfferSellability({
+    has_offer: true,
+    sales_status,
+    base_price: base,
+    has_inventory: maps.stockByOffer.has(offer.id),
+    quantity_available: stock,
+    delivery_days_max:
+      offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
+    shipping_profile_id: offer.shipping_profile_id ?? null,
+    shipping_profile_status: profile?.shipping_profile_status ?? null,
+    shipping_profile_serves_region: profile?.shipping_profile_serves_region ?? null,
+    publication_status: publicationStatus,
+  })
   return {
     offer_id: offer.id,
     identifier_id: offer.identifier_id,
@@ -437,7 +527,9 @@ function summarizeOffer(
     sales_status,
     delivery_days_max:
       offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
-    is_sellable: sales_status === "active" && (stock ?? 0) > 0,
+    is_sellable: decision.sellable,
+    sellability_reasons: decision.reasons.map((reason) => reason.message),
+    sellability_codes: decision.reasons.map((reason) => reason.code),
     has_offer: true,
     promo_price: moneyNumber(priceRow?.promo_price),
     promo_starts_at: promoInstant(priceRow?.promo_starts_at),
@@ -538,30 +630,33 @@ async function loadOffersForIdentifier(
   commerce: CommerceCloudModuleService | null,
   sellerId: string,
   identifierId: string | null,
-  maps?: OfferLookupMaps | null
+  maps?: OfferLookupMaps | null,
+  publicationStatus: string | null = null
 ): Promise<SellerOfferSummary[]> {
   if (!identifierId) return []
   if (maps) {
     const list = maps.byIdentifier.get(identifierId) || []
-    return list.map((o) => summarizeOffer(o, maps))
+    return list.map((o) => summarizeOffer(o, maps, publicationStatus))
   }
   if (!commerce) return []
   const localMaps = await loadSellerOfferLookup(commerce, sellerId)
   const list = localMaps.byIdentifier.get(identifierId) || []
-  return list.map((o) => summarizeOffer(o, localMaps))
+  return list.map((o) => summarizeOffer(o, localMaps, publicationStatus))
 }
 
 async function loadOfferForIdentifier(
   commerce: CommerceCloudModuleService | null,
   sellerId: string,
   identifierId: string | null,
-  maps?: OfferLookupMaps | null
+  maps?: OfferLookupMaps | null,
+  publicationStatus: string | null = null
 ): Promise<SellerOfferSummary> {
   const all = await loadOffersForIdentifier(
     commerce,
     sellerId,
     identifierId,
-    maps
+    maps,
+    publicationStatus
   )
   if (all.length === 0) return emptyOffer(identifierId)
   const nl = all.find((o) => (o.region_code || "").toUpperCase() === "NL")
@@ -730,8 +825,14 @@ export async function buildSellerProductManagerRow(
       slug?: string | null
       name: string
     }>) {
-      if (cat.slug) {
+      if (!cat.slug) continue
+      try {
         await productCloud.ensureCategoryAttributeCatalog(cat.id, cat.slug)
+      } catch (err) {
+        console.warn(
+          "[product-manager] ensureCategoryAttributeCatalog failed",
+          { categoryId: cat.id, slug: cat.slug, err }
+        )
       }
     }
   }
@@ -754,16 +855,20 @@ export async function buildSellerProductManagerRow(
   const valueByDef = new Map(
     values.map((v) => [v.attribute_definition_id, v.value])
   )
+  const resolvedValues = resolveAttributeValueByCode(defs, valueByDef)
 
   let maps = opts?.offerMaps ?? null
   if (!maps && commerce) {
     maps = await loadSellerOfferLookup(commerce, sellerId)
   }
 
+  const livePublication = versions.some((version) => version.publication_status === "Gepubliceerd")
+    ? "Gepubliceerd"
+    : working?.publication_status ?? null
   const offerSummaries: SellerOfferSummary[] = []
   for (const id of identifierIds.length ? identifierIds : [preview.identifier_id].filter(Boolean) as string[]) {
     offerSummaries.push(
-      await loadOfferForIdentifier(commerce, sellerId, id, maps)
+      await loadOfferForIdentifier(commerce, sellerId, id, maps, livePublication)
     )
   }
   if (offerSummaries.length === 0 && preview.identifier_id) {
@@ -772,7 +877,8 @@ export async function buildSellerProductManagerRow(
         commerce,
         sellerId,
         preview.identifier_id,
-        maps
+        maps,
+        livePublication
       )
     )
   }
@@ -817,13 +923,17 @@ export async function buildSellerProductManagerRow(
   }
 
   const attributes = applyGpsrComplianceAttributes(
-    defs.map((d) => ({
-      code: d.code || d.id,
-      name: d.name,
-      tier: (d.requirement_tier ||
-        (d.is_required ? "category_required" : "optional")) as RequirementTier,
-      value: valueByDef.get(d.id) ?? null,
-    })),
+    dedupeAttributeSchemaByCode(
+      defs.map((d) => ({
+        id: d.id,
+        code: d.code || d.id,
+        name: d.name,
+        sort_order: d.sort_order ?? null,
+        tier: (d.requirement_tier ||
+          (d.is_required ? "category_required" : "optional")) as RequirementTier,
+        value: resolvedValues.get(d.id)?.value ?? null,
+      }))
+    ),
     resolvedManufacturer
   )
   const ceValue =
@@ -959,20 +1069,35 @@ export async function buildSellerProductManagerRow(
     attributes,
     offer: {
       has_offer: offersAgg.offer_count > 0,
-      has_price: offersAgg.price != null && offersAgg.price > 0,
-      has_stock_configured: offersAgg.stock_total != null,
-      has_delivery:
-        Boolean(shippingProfileId) ||
-        offersAgg.delivery_days_max != null ||
-        offer.shipping_cost != null,
-      has_shipping_profile: Boolean(shippingProfileId),
+      has_price: offerSummaries.some(
+        (row) => row.has_offer && !(row.sellability_codes || []).includes("invalid_price")
+      ),
+      has_stock_configured: offerSummaries.some(
+        (row) => row.has_offer && !(row.sellability_codes || []).includes("missing_inventory")
+      ),
+      has_delivery: offerSummaries.some(
+        (row) => row.has_offer && !(row.sellability_codes || []).includes("invalid_delivery")
+      ),
+      has_shipping_profile: offerSummaries.some(
+        (row) =>
+          row.has_offer &&
+          !(row.sellability_codes || []).includes("missing_shipping_profile") &&
+          !(row.sellability_codes || []).includes("invalid_shipping_profile")
+      ),
       sales_status: offersAgg.sales_status,
       is_sellable: offersAgg.is_sellable,
+      sellability_reasons: offersAgg.is_sellable
+        ? []
+        : [
+            ...new Set(
+              offerSummaries.flatMap((row) => row.sellability_reasons || [])
+            ),
+          ],
     },
     rules: {
       ce_required_for_category: ceRequiredForCategory,
       mie_claimed: mieClaimed,
-      publication_status: working?.publication_status ?? null,
+      publication_status: livePublication,
       manufacturer_outside_eu: manufacturerIsOutsideEu(resolvedManufacturer),
     },
     documents: complianceDocuments,
@@ -1021,6 +1146,7 @@ export async function buildSellerProductManagerRow(
     current_owner_seller_id: product.current_owner_seller_id,
     title: working?.title ?? preview.title,
     description: working?.description ?? null,
+    category_ids: preview.category_ids || [],
     category_names: preview.category_names,
     category_assignment_status:
       preview.category_names.length > 0 ? "linked" : "category_pending",
@@ -1170,6 +1296,12 @@ export async function buildSellerProductManagerDetail(
     product_id: productId,
   })
   const categoryIds = links.map((l: { category_id: string }) => l.category_id)
+  const categoryNameRows = categoryIds.length
+    ? ((await productCloud.listCategories({ id: categoryIds })) as Array<{ name?: string }>)
+    : []
+  const categoryNames = categoryNameRows
+    .map((row) => String(row.name || "").trim())
+    .filter(Boolean)
   const defs: AttrDefRow[] = []
   for (const catId of categoryIds) {
     const rows = (await productCloud.listAttributeDefinitions({
@@ -1185,6 +1317,7 @@ export async function buildSellerProductManagerDetail(
   const valueByDef = new Map(
     values.map((v) => [v.attribute_definition_id, v])
   )
+  const resolvedValues = resolveAttributeValueByCode(defs, valueByDef)
 
   const manufacturer = await resolveManufacturerForCompleteness(
     partner ?? null,
@@ -1193,24 +1326,31 @@ export async function buildSellerProductManagerDetail(
     productId
   )
   const schema = applyGpsrComplianceAttributes(
-    defs
-      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-      .map((d) => ({
-        id: d.id,
-        code: d.code,
-        name: d.name,
-        data_type: d.data_type,
-        unit: d.unit,
-        help_text: d.help_text ?? null,
-        is_active: d.is_active !== false,
-        is_required: d.is_required,
-        requirement_tier:
-          d.requirement_tier ||
-          (d.is_required ? "category_required" : "optional"),
-        option_values: d.option_values ? JSON.parse(d.option_values) : null,
-        value: valueByDef.get(d.id)?.value ?? null,
-        attribute_value_id: valueByDef.get(d.id)?.id ?? null,
-      })),
+    dedupeAttributeSchemaByCode(
+      defs
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        .map((d) => {
+          const resolved = resolvedValues.get(d.id)
+          return {
+            id: d.id,
+            code: d.code,
+            name: d.name,
+            data_type: d.data_type,
+            unit: sanitizeAttributeUnit(d.unit),
+            help_text: d.help_text ?? null,
+            is_active: d.is_active !== false,
+            is_required: d.is_required,
+            sort_order: d.sort_order ?? null,
+            requirement_tier:
+              d.requirement_tier ||
+              (d.is_required ? "category_required" : "optional"),
+            option_values: parseOptionValuesJson(d.option_values),
+            value: resolved?.value ?? null,
+            attribute_value_id: resolved?.attribute_value_id ?? null,
+            is_product_specification: isManagedProductSpecCode(d.code),
+          }
+        })
+    ),
     manufacturer
   )
 
@@ -1228,7 +1368,10 @@ export async function buildSellerProductManagerDetail(
         commerce,
         sellerId,
         idRow.id,
-        offerMaps
+        offerMaps,
+        versions.some((version) => version.publication_status === "Gepubliceerd")
+          ? "Gepubliceerd"
+          : working?.publication_status ?? null
       )
       offers.push(...all)
     }
@@ -1236,6 +1379,11 @@ export async function buildSellerProductManagerDetail(
       ...v,
       identifiers: ids,
       offers,
+      size_label: presentVariantSize({
+        variantType: v.variant_type,
+        variantValue: v.variant_value,
+        categoryNames,
+      }),
     })
   }
 

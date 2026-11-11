@@ -14,6 +14,7 @@ import {
   normalizeBrandKey,
   planBrandCommit,
   undoCreatedCategoryIds,
+  adminStoredIdentity,
   previewBrandImport,
   type BrandCategoryChoice,
   type BrandCommitAction,
@@ -22,11 +23,30 @@ import {
   type SavedBrandProfile,
 } from "../../../../modules/product-cloud/brand-import"
 import { ingestRemoteAsset } from "../../../../modules/product-cloud/brand-import-media"
+import { CONCEPT_DRAFT_COUNTRY_SCOPE } from "../../../../modules/product-cloud/concept-identifier"
 import { applyAttributeCodes } from "../../../store/product-cloud/import-helpers"
 import { persistImportProductionOrigin } from "../../../store/product-cloud/production-origin-import"
+import { upsertProductMadeInEurope } from "../../../store/product-cloud/made-in-europe-helpers"
+import {
+  appendOwnershipStatusEvent,
+  findClaimByBrand,
+} from "../../../store/product-cloud/european-ownership-helpers"
+import {
+  parseAssemblyEuBandLabel,
+  parseMaterialsEuLevelLabel,
+  parsePartsEuLevelLabel,
+} from "../../../../modules/verification/made-in-europe"
+import {
+  EUROPEAN_OWNERSHIP_BAND_LABELS,
+  isEuropeanOwnershipBand,
+  statusAfterSellerSubmit,
+  type EuropeanOwnershipBand,
+} from "../../../../modules/verification/european-ownership"
+import { coalesceUspsIntoValues } from "../../../../modules/product-cloud/import-usps"
 import { slugifyCategoryName } from "../../../../modules/product-cloud/category-attributes"
+import { resolveNlFromSellerTemplateLabel } from "../../../../modules/product-cloud/seller-template-en-catalog"
 import { slugifyCatalogEntityName } from "../../../store/catalog/catalog-helpers"
-import { isValidGtin, normalizeGtinDigits } from "../../../../modules/product-cloud/gtin-validation"
+import { isValidGtin } from "../../../../modules/product-cloud/gtin-validation"
 import {
   normalizeLanguageCode,
   targetLanguagesForSource,
@@ -64,6 +84,8 @@ export type BrandImportRequest = {
   mapping_confirmed?: boolean
   brand_choices?: Record<string, { action: "use"; id: string } | { action: "create"; name: string }>
   category_decisions?: BrandCategoryChoice[]
+  /** Per Excel row number → attribute code → value (category kenmerken). */
+  attribute_overrides?: Record<string, Record<string, string>>
   enqueue_translations?: boolean
   save_profile?: boolean
   actor_id: string
@@ -71,20 +93,21 @@ export type BrandImportRequest = {
 
 async function existingHits(
   productCloud: ProductCloudModuleService,
+  headers: string[],
   rows: string[][],
-  eanIndex: number,
-  mpnIndex: number
+  links: Parameters<typeof adminStoredIdentity>[2]
 ): Promise<ExistingProductHit[]> {
   const wantGtin = new Set<string>()
   const wantMpn = new Set<string>()
+  const wantDraft = new Set<string>()
   for (const row of rows) {
-    const ean = eanIndex >= 0 ? normalizeGtinDigits(String(row[eanIndex] || "")) : ""
-    const mpn = mpnIndex >= 0 ? String(row[mpnIndex] || "").trim() : ""
-    if (ean && isValidGtin(ean)) wantGtin.add(ean)
-    if (mpn) wantMpn.add(mpn)
+    const identity = adminStoredIdentity(headers, row, links)
+    if (identity.validEan) wantGtin.add(identity.validEan)
+    if (identity.mpn) wantMpn.add(identity.mpn)
+    if (identity.draftKey) wantDraft.add(identity.draftKey)
   }
   const hits: ExistingProductHit[] = []
-  async function fromIdentifier(value: string, type: "GTIN" | "MPN") {
+  async function fromIdentifier(value: string, type: "GTIN" | "MPN" | "IMPORT_REF") {
     const found = (await productCloud.listIdentifiers({
       identifier_value: value,
       identifier_type: type,
@@ -120,22 +143,15 @@ async function existingHits(
       description: version?.description ?? null,
       gtin: identifiers.find((i) => i.identifier_type === "GTIN")?.identifier_value ?? null,
       mpn: identifiers.find((i) => i.identifier_type === "MPN")?.identifier_value ?? null,
+      import_ref:
+        identifiers.find((i) => i.identifier_type === "IMPORT_REF")?.identifier_value ?? null,
       translations,
     })
   }
   for (const value of wantGtin) await fromIdentifier(value, "GTIN")
   for (const value of wantMpn) await fromIdentifier(value, "MPN")
+  for (const value of wantDraft) await fromIdentifier(value, "IMPORT_REF")
   return hits
-}
-
-function indexOfField(
-  previewLinks: Array<{ field: string | null; source: string; imported: boolean }>,
-  headers: string[],
-  field: string
-): number {
-  const link = previewLinks.find((l) => l.imported && l.field === field)
-  if (!link) return -1
-  return headers.indexOf(link.source)
 }
 
 async function storeAsset(
@@ -166,6 +182,7 @@ export async function inspectBrandImport(
     rows: input.rows,
     existing: context.hits,
     mapping_confirmed: input.mapping_confirmed,
+    attribute_overrides: input.attribute_overrides,
   })
   assertBrandPlanHasNoOffers(plan.actions)
   return { ...context, plan }
@@ -217,12 +234,7 @@ async function loadBrandContext(container: MedusaContainer, input: BrandImportRe
     categories,
     known_brands: known,
   })
-  const hits = await existingHits(
-    productCloud,
-    input.rows,
-    indexOfField(draft.links, input.headers, "ean"),
-    indexOfField(draft.links, input.headers, "mpn")
-  )
+  const hits = await existingHits(productCloud, input.headers, input.rows, draft.links)
   const preview = previewBrandImport({
     headers: input.headers,
     rows: input.rows,
@@ -255,6 +267,7 @@ export async function executeBrandImport(
     rows: input.rows,
     existing: hits,
     mapping_confirmed: input.mapping_confirmed,
+    attribute_overrides: input.attribute_overrides,
   })
   assertBrandPlanHasNoOffers(plan.actions)
 
@@ -371,6 +384,20 @@ export async function executeBrandImport(
         status: "In behandeling",
       })
       proposals.push((proposal as { id: string }).id)
+    } else if (action.type === "fill_attributes") {
+      const versions = (await productCloud.listProductVersions({
+        product_id: action.product_id,
+      })) as Array<{ id: string; publication_status: string }>
+      const version =
+        versions.find((v) => v.publication_status === "Gepubliceerd") || versions[0]
+      if (!version) continue
+      await applyAttributeCodes(
+        productCloud,
+        action.product_id,
+        version.id,
+        action.attributes,
+        { gapFillOnly: true, container }
+      )
     } else if (action.type === "add_translations") {
       const versions = (await productCloud.listProductVersions({
         product_id: action.product_id,
@@ -489,12 +516,20 @@ async function createCentralProduct(
     variant_type: "Uitvoering",
     variant_value: "Standaard",
   })
-  if (action.ean) {
+  if (action.ean && isValidGtin(action.ean)) {
     await productCloud.createIdentifiers({
       product_variant_id: variant.id,
       identifier_type: "GTIN",
       identifier_value: action.ean,
       country_scope: null,
+    })
+  }
+  if (action.import_ref) {
+    await productCloud.createIdentifiers({
+      product_variant_id: variant.id,
+      identifier_type: "IMPORT_REF",
+      identifier_value: action.import_ref,
+      country_scope: CONCEPT_DRAFT_COUNTRY_SCOPE,
     })
   }
   if (action.mpn && action.mpn !== action.ean) {
@@ -511,7 +546,9 @@ async function createCentralProduct(
       category_id: categoryId,
     })
   }
-  await applyAttributeCodes(productCloud, product.id, version.id, action.attributes)
+  await applyAttributeCodes(productCloud, product.id, version.id, action.attributes, {
+    container,
+  })
   if (action.attributes.production_country) {
     await persistImportProductionOrigin({
       scope: container,
@@ -522,6 +559,87 @@ async function createCentralProduct(
       production_country: action.attributes.production_country,
       production_location: action.attributes.production_location || null,
     })
+  }
+  {
+    const attrs = coalesceUspsIntoValues(action.attributes || {})
+    const assembly = parseAssemblyEuBandLabel(attrs.assembly_eu_band)
+    const parts = parsePartsEuLevelLabel(attrs.parts_eu_level)
+    const materials = parseMaterialsEuLevelLabel(attrs.materials_eu_level)
+    if (assembly && parts && materials) {
+      await upsertProductMadeInEurope(container, {
+        product_id: product.id,
+        seller_id: ACTOR,
+        brand_id: brand.id,
+        manufacturer_id: action.manufacturer || brand.id,
+        input: {
+          assembly_eu_band: assembly,
+          parts_eu_level: parts,
+          materials_eu_level: materials,
+          primary_assembly_country:
+            attrs.production_country?.trim()?.toUpperCase() || null,
+        },
+      })
+    }
+    const eoRaw = String(attrs.european_ownership_band || "").trim()
+    let eoBand: EuropeanOwnershipBand | null = null
+    if (eoRaw) {
+      if (isEuropeanOwnershipBand(eoRaw)) eoBand = eoRaw
+      else if (/^(unknown|niet bekend)$/i.test(eoRaw)) eoBand = "unknown"
+      else {
+        const hit = (
+          Object.entries(EUROPEAN_OWNERSHIP_BAND_LABELS) as Array<
+            [EuropeanOwnershipBand, string]
+          >
+        ).find(([, label]) => label.toLowerCase() === eoRaw.toLowerCase())
+        eoBand = hit?.[0] ?? null
+      }
+    }
+    if (eoBand) {
+      const verification = container.resolve(
+        VERIFICATION_MODULE
+      ) as VerificationModuleService
+      const existing = await findClaimByBrand(verification, brand.id)
+      const nextStatus = statusAfterSellerSubmit(false)
+      if (!existing) {
+        const created = (await verification.createEuropeanOwnershipClaims({
+          brand_id: brand.id,
+          manufacturer_id: null,
+          seller_id: ACTOR,
+          company_id: null,
+          ownership_band: eoBand,
+          source: "brand_producer",
+          status: nextStatus,
+        })) as { id: string }
+        await appendOwnershipStatusEvent(verification, {
+          claim_id: created.id,
+          brand_id: brand.id,
+          to_status: nextStatus,
+          note: "Admin brand-import Europees eigendom",
+          actor_id: ACTOR,
+          actor_type: "admin",
+          decision: "brand_import_create",
+        })
+      } else if (
+        !existing.ownership_band ||
+        existing.ownership_band === "unknown"
+      ) {
+        await verification.updateEuropeanOwnershipClaims({
+          id: existing.id,
+          ownership_band: eoBand,
+          status: nextStatus,
+        })
+        await appendOwnershipStatusEvent(verification, {
+          claim_id: existing.id,
+          brand_id: brand.id,
+          from_status: existing.status,
+          to_status: nextStatus,
+          note: "Admin brand-import Europees eigendom (gap-fill)",
+          actor_id: ACTOR,
+          actor_type: "admin",
+          decision: "brand_import_gapfill",
+        })
+      }
+    }
   }
   let order = 0
   for (const slot of action.media) {
@@ -590,7 +708,7 @@ type BrandCategoryRow = {
 async function loadBrandCategories(
   productCloud: ProductCloudModuleService
 ): Promise<BrandCategoryRow[]> {
-  const rows = (await productCloud.listCategories({}, { take: 500, order: { name: "ASC" } })) as Array<{
+  const rows = (await productCloud.listCategories({}, { take: 2000, order: { name: "ASC" } })) as Array<{
     id: string
     name: string
     slug?: string | null
@@ -695,6 +813,13 @@ async function ensureCategory(
   return row.id
 }
 
+function categoryNameKeys(raw: string): Set<string> {
+  const resolved = resolveNlFromSellerTemplateLabel(raw) || raw
+  return new Set(
+    [normalizeBrandKey(raw), normalizeBrandKey(resolved)].filter(Boolean)
+  )
+}
+
 async function categoryForAction(
   productCloud: ProductCloudModuleService,
   action: Extract<BrandCommitAction, { type: "create" }>,
@@ -708,15 +833,26 @@ async function categoryForAction(
   const createdIds: string[] = []
   const createTracked = async (name: string, parentId: string | null) => {
     const before = catalog.length
-    const id = await ensureCategory(productCloud, name, parentId, catalog)
+    const canonical = resolveNlFromSellerTemplateLabel(name) || name
+    const id = await ensureCategory(productCloud, canonical, parentId, catalog)
     if (catalog.length > before) createdIds.push(id)
     return id
+  }
+  const findChild = (parentId: string | null, raw: string) => {
+    const keys = categoryNameKeys(raw)
+    return catalog.find((row) => {
+      if (!keys.has(normalizeBrandKey(row.name))) return false
+      if (parentId == null) return !row.parent_id
+      return row.parent_id === parentId
+    })
   }
   try {
     let parentId: string | null = null
     if (action.category.trim()) {
       const roots = catalog.filter(
-        (row) => !row.parent_id && normalizeBrandKey(row.name) === normalizeBrandKey(action.category)
+        (row) =>
+          !row.parent_id &&
+          categoryNameKeys(action.category).has(normalizeBrandKey(row.name))
       )
       const choice = decision("category", action.category)
       if (choice?.action === "link" && choice.id) parentId = choice.id
@@ -724,20 +860,22 @@ async function categoryForAction(
         parentId = await createTracked(choice.name || action.category, null)
       } else if (choice?.action !== "skip" && roots.length === 1) parentId = roots[0].id
     }
-    if (!action.subcategory.trim()) return parentId
-    const choice = decision("subcategory", action.subcategory)
-    if (choice?.action === "link" && choice.id) return choice.id
-    if (choice?.action === "create") {
-      if (!parentId) return parentId
-      return createTracked(choice.name || action.subcategory, parentId)
+    if (action.subcategory.trim()) {
+      const choice = decision("subcategory", action.subcategory)
+      if (choice?.action === "link" && choice.id) parentId = choice.id
+      else if (choice?.action === "create") {
+        if (!parentId) return parentId
+        parentId = await createTracked(choice.name || action.subcategory, parentId)
+      } else if (parentId && choice?.action !== "skip") {
+        const child = findChild(parentId, action.subcategory)
+        if (child) parentId = child.id
+      }
     }
-    if (!parentId || choice?.action === "skip") return parentId
-    const child = catalog.find(
-      (row) =>
-        row.parent_id === parentId &&
-        normalizeBrandKey(row.name) === normalizeBrandKey(action.subcategory)
-    )
-    return child?.id || parentId
+    const l3 = String(action.subcategory_l3 || "").trim()
+    if (!l3) return parentId
+    if (!parentId) return parentId
+    const leaf = findChild(parentId, l3)
+    return leaf?.id || parentId
   } catch (err) {
     await undoCreatedCategoryIds(createdIds, async (id) => {
       await productCloud.deleteCategories(id)

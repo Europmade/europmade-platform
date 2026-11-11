@@ -6,6 +6,11 @@ import { PRODUCT_CLOUD_MODULE } from "../../../../../modules/product-cloud"
 import type ProductCloudModuleService from "../../../../../modules/product-cloud/service"
 import { PARTNER_MODULE } from "../../../../../modules/partner"
 import type PartnerModuleService from "../../../../../modules/partner/service"
+import { buildEffectivePriceView } from "../../../../../modules/commerce-cloud/offer-pricing"
+import {
+  evaluateOfferSellability,
+  shippingProfileFacts,
+} from "../../../../../modules/commerce-cloud/offer-sellability"
 
 type RouteParams = { id: string }
 
@@ -42,8 +47,9 @@ async function loadOfferView(
   const productId = (variant as { product_id?: string } | null)?.product_id || null
   let title: string | null = null
   let primaryImage: string | null = null
+  let versions: Array<{ id: string; title: string; publication_status: string }> = []
   if (productId) {
-    const versions = (await productCloud.listProductVersions({ product_id: productId })) as Array<{
+    versions = (await productCloud.listProductVersions({ product_id: productId })) as Array<{
       id: string
       title: string
       publication_status: string
@@ -141,6 +147,58 @@ async function loadOfferView(
     quantity_available: stock[0]?.quantity_available ?? null,
     price_id: prices[0]?.id || null,
     inventory_id: stock[0]?.id || null,
+    ...offerSellability(offer, prices[0], stock[0], shipping, versions),
+  }
+}
+
+function offerSellability(
+  offer: {
+    sales_status?: string | null
+    delivery_days_max?: number | null
+    shipping_profile_id?: string | null
+    region_code?: string | null
+  },
+  price: { base_price?: unknown; shipping_cost?: unknown; extra_delivery_cost?: unknown; promo_price?: unknown; promo_starts_at?: unknown; promo_ends_at?: unknown } | undefined,
+  inventory: { quantity_available?: number } | undefined,
+  shipping: { status?: string | null; country_rates?: unknown } | null,
+  versions: Array<{ publication_status: string }>
+) {
+  const view = price
+    ? buildEffectivePriceView({
+        base_price: Number(price.base_price),
+        shipping_cost: Number(price.shipping_cost),
+        extra_delivery_cost:
+          price.extra_delivery_cost != null ? Number(price.extra_delivery_cost) : null,
+        promo_price: price.promo_price != null ? Number(price.promo_price) : null,
+        promo_starts_at: (price.promo_starts_at as string | Date | null) ?? null,
+        promo_ends_at: (price.promo_ends_at as string | Date | null) ?? null,
+      })
+    : null
+  const facts = shippingProfileFacts({
+    shipping_profile_id: offer.shipping_profile_id,
+    region_code: offer.region_code,
+    profile: shipping,
+  })
+  const decision = evaluateOfferSellability({
+    has_offer: true,
+    sales_status: offer.sales_status,
+    base_price: view?.unit_price ?? null,
+    has_inventory: inventory != null,
+    quantity_available: inventory != null ? Number(inventory.quantity_available) : null,
+    delivery_days_max:
+      offer.delivery_days_max != null ? Number(offer.delivery_days_max) : null,
+    shipping_profile_id: offer.shipping_profile_id,
+    shipping_profile_status: facts.shipping_profile_status,
+    shipping_profile_serves_region: facts.shipping_profile_serves_region,
+    publication_status: versions.some((row) => row.publication_status === "Gepubliceerd")
+      ? "Gepubliceerd"
+      : versions[0]?.publication_status ?? null,
+  })
+  return {
+    is_sellable: decision.sellable,
+    sellability_reasons: decision.reasons.map((reason) => reason.message),
+    offer_complete: decision.offer_complete,
+    published: decision.published,
   }
 }
 

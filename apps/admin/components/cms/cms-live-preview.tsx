@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import {
   CMS_PREVIEW_SOURCE,
+  type CategoryPreviewConceptProduct,
   type CmsPreviewDraftMessage,
   type CmsPreviewKind,
   type CmsThemeDocument,
@@ -29,6 +30,7 @@ export function CmsLivePreview({
   paidSlots,
   theme,
   slug,
+  previewProducts,
   onSelect,
   previewScale = "fit",
 }: {
@@ -43,6 +45,7 @@ export function CmsLivePreview({
   paidSlots?: unknown[]
   theme: CmsThemeDocument | null
   slug?: string
+  previewProducts?: CategoryPreviewConceptProduct[]
   onSelect: (id: string) => void
   previewScale?: "fit" | "100"
 }) {
@@ -64,6 +67,7 @@ export function CmsLivePreview({
       banners,
       paidSlots,
       slug,
+      ...(previewProducts ? { previewProducts } : {}),
     }),
     [
       banners,
@@ -71,6 +75,7 @@ export function CmsLivePreview({
       kind,
       locale,
       paidSlots,
+      previewProducts,
       selectedId,
       slug,
       templateDocument,
@@ -129,9 +134,8 @@ export function CmsLivePreview({
         </a>
       </div>
       <p className="mb-2 shrink-0 text-[11px] leading-snug text-wf-500">
-        De preview toont de echte storefront-layout met conceptgegevens. Niet
-        pixel-perfect. Een nieuw venster laadt de preview-route zonder wat je
-        nét getypt hebt maar nog niet is doorgestuurd.
+        De preview toont de echte storefront-layout. Conceptproducten verschijnen
+        alleen in dit venster. Een nieuw venster en de openbare site tonen ze niet.
       </p>
       {/* Fill the editor column exactly once; scroll happens inside the iframe. */}
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-wf-200 bg-wf-200/80 p-2">

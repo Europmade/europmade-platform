@@ -21,3 +21,36 @@
     height: calc((100cqi - 1.5rem) / 3 / 2.4);
   }
 }
+
+.em-usp-marquee-wrap {
+  overflow: hidden;
+}
+
+.em-usp-marquee {
+  display: flex;
+  width: max-content;
+  animation: em-usp-marquee 32s linear infinite;
+}
+
+@keyframes em-usp-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .em-usp-marquee-wrap {
+    overflow-x: auto;
+  }
+
+  .em-usp-marquee {
+    animation: none;
+  }
+
+  .em-usp-marquee > [data-usp-clone] {
+    display: none;
+  }
+}

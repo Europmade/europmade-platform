@@ -58,6 +58,16 @@ describe("european ownership brand-level resolution", () => {
     expect(claim?.id).toBe("euown_legacy")
   })
 
+  it("does not present a missing or rejected claim as verified ownership", () => {
+    expect(toPublicEuropeanOwnership(null)).toBeNull()
+    expect(
+      toPublicEuropeanOwnership({ ...brandClaim, status: "Afgewezen", ownership_band: "eu_100" })
+    ).toBeNull()
+    expect(
+      toPublicEuropeanOwnership({ ...brandClaim, status: "Niet opgegeven", ownership_band: "eu_100" })
+    ).toBeNull()
+  })
+
   it("exposes brand_id on public PDP payload", () => {
     const pub = toPublicEuropeanOwnership(brandClaim)
     expect(pub?.brand_id).toBe("brand_moeve")

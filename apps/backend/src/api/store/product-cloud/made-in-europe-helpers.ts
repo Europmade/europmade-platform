@@ -7,6 +7,7 @@ import type ProductCloudModuleService from "../../../modules/product-cloud/servi
 import { VERIFICATION_MODULE } from "../../../modules/verification"
 import type VerificationModuleService from "../../../modules/verification/service"
 import {
+  completeMadeInEuropeBands,
   computeMadeInEuropeScore,
   isAssemblyEuBand,
   isEuCountryCode,
@@ -131,18 +132,25 @@ export async function syncProductOriginToBrand(
   })
 }
 
-function requireBand<T extends string>(
-  value: string | null | undefined,
+function pickBand<T extends string>(
+  inputValue: string | null | undefined,
+  fallbacks: Array<string | null | undefined>,
   check: (v: string) => v is T,
   label: string
-): T {
-  if (!value || !check(value)) {
-    throw new MedusaError(
-      MedusaError.Types.INVALID_DATA,
-      `Ongeldige ${label}: ${value ?? "(leeg)"}`
-    )
+): T | null {
+  if (inputValue != null && String(inputValue).trim() !== "") {
+    if (!check(inputValue)) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        `Ongeldige ${label}: ${inputValue}`
+      )
+    }
+    return inputValue
   }
-  return value
+  for (const value of fallbacks) {
+    if (value && check(value)) return value
+  }
+  return null
 }
 
 export function resolveEffectiveMadeInEuropeBands(
@@ -155,33 +163,27 @@ export function resolveEffectiveMadeInEuropeBands(
     primary_assembly_country?: string | null
   } | null
 ): {
-  assembly_eu_band: AssemblyEuBand
-  parts_eu_level: PartsEuLevel
-  materials_eu_level: MaterialsEuLevel
+  assembly_eu_band: AssemblyEuBand | null
+  parts_eu_level: PartsEuLevel | null
+  materials_eu_level: MaterialsEuLevel | null
   primary_assembly_country: string | null
   production_facility_id: string | null
 } {
-  const assembly = requireBand(
-    input.assembly_eu_band ??
-      facility?.assembly_eu_band ??
-      existing?.assembly_eu_band ??
-      "eu_100",
+  const assembly = pickBand(
+    input.assembly_eu_band,
+    [facility?.assembly_eu_band, existing?.assembly_eu_band],
     isAssemblyEuBand,
     "assembly_eu_band"
   )
-  const parts = requireBand(
-    input.parts_eu_level ??
-      facility?.parts_eu_level ??
-      existing?.parts_eu_level ??
-      "eu_majority",
+  const parts = pickBand(
+    input.parts_eu_level,
+    [facility?.parts_eu_level, existing?.parts_eu_level],
     isPartsEuLevel,
     "parts_eu_level"
   )
-  const materials = requireBand(
-    input.materials_eu_level ??
-      facility?.materials_eu_level ??
-      existing?.materials_eu_level ??
-      "eu_majority",
+  const materials = pickBand(
+    input.materials_eu_level,
+    [facility?.materials_eu_level, existing?.materials_eu_level],
     isMaterialsEuLevel,
     "materials_eu_level"
   )
@@ -238,7 +240,7 @@ export async function upsertProductMadeInEurope(
   product_id: string
   product_version_id: string
   origin: ProductOriginRow
-  score: MadeInEuropeScore
+  score: MadeInEuropeScore | null
   facility: FacilityRow | null
 }> {
   const productCloud = scope.resolve(
@@ -283,9 +285,13 @@ export async function upsertProductMadeInEurope(
     })
   }
   const bands = resolveEffectiveMadeInEuropeBands(opts.input, facility, current)
-  const score = computeMadeInEuropeScore(bands)
+  const complete = completeMadeInEuropeBands(bands)
+  const score = complete ? computeMadeInEuropeScore(complete) : null
   const production_country =
-    bands.primary_assembly_country ?? facility?.country_code ?? "EU"
+    bands.primary_assembly_country ??
+    facility?.country_code ??
+    current?.production_country ??
+    "EU"
   const production_location = facility?.name ?? production_country
 
   const payload = {
@@ -296,10 +302,11 @@ export async function upsertProductMadeInEurope(
     production_location,
     status: current?.status ?? "Niet aangevraagd",
     production_facility_id: bands.production_facility_id,
-    assembly_eu_band: bands.assembly_eu_band,
-    parts_eu_level: bands.parts_eu_level,
-    materials_eu_level: bands.materials_eu_level,
-    primary_assembly_country: bands.primary_assembly_country,
+    assembly_eu_band: complete?.assembly_eu_band ?? current?.assembly_eu_band ?? null,
+    parts_eu_level: complete?.parts_eu_level ?? current?.parts_eu_level ?? null,
+    materials_eu_level: complete?.materials_eu_level ?? current?.materials_eu_level ?? null,
+    primary_assembly_country:
+      bands.primary_assembly_country ?? current?.primary_assembly_country ?? null,
   }
 
   let origin: ProductOriginRow

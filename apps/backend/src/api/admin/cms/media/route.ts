@@ -10,6 +10,7 @@ import {
   getMediaRequirements,
   normalizeMediaMimeType,
   persistMediaReference,
+  readCmsAssetAltText,
   resolveMediaUrl,
   validateMedia,
 } from "@europmade/utils"
@@ -24,12 +25,43 @@ interface UploadedFile {
   buffer: Buffer
 }
 
+type AssetRow = {
+  id: string
+  placement: string
+  storage_reference: string
+  mime_type: string
+  original_filename?: string | null
+  size_bytes?: number | null
+  width?: number | null
+  height?: number | null
+  alt_text?: unknown
+  created_at?: string | Date | null
+}
+
+export function serializeCmsAsset(row: AssetRow, origin: string) {
+  const text = readCmsAssetAltText(row.alt_text)
+  return {
+    id: row.id,
+    placement: row.placement,
+    url: resolveMediaUrl(row.storage_reference, origin) ?? row.storage_reference,
+    mime_type: row.mime_type,
+    original_filename: row.original_filename ?? null,
+    size_bytes: row.size_bytes ?? 0,
+    width: row.width ?? null,
+    height: row.height ?? null,
+    alt: text.alt,
+    caption: text.caption,
+    created_at: row.created_at ?? null,
+  }
+}
+
 const PLACEMENTS: MediaPlacement[] = [
   "cms_banner",
   "cms_action_banner",
   "cms_site_logo",
   "campaign_logo",
   "homepage_hero",
+  "category_image",
   "brand_logo",
   "seller_logo",
   "seller_storefront_banner",
@@ -45,8 +77,37 @@ function isPlacement(value: string): value is MediaPlacement {
 }
 
 /**
+ * GET /admin/cms/media — admin library over existing cms_asset rows.
+ * Query: q, placement, mime, take.
+ */
+export async function GET(req: AuthenticatedMedusaRequest, res: MedusaResponse) {
+  const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
+  const query = req.query as Record<string, unknown>
+  const q = typeof query.q === "string" ? query.q.trim().toLowerCase() : ""
+  const placement = typeof query.placement === "string" ? query.placement.trim() : ""
+  const mime = typeof query.mime === "string" ? query.mime.trim().toLowerCase() : ""
+  const take = Math.min(200, Math.max(1, Number(query.take) || 60))
+  const filters = placement && isPlacement(placement) ? { placement } : {}
+  const rows = (await cms.listCmsAssets(filters, {
+    take: 200,
+    order: { created_at: "DESC" },
+  })) as AssetRow[]
+  const origin = requestBackendOrigin(req)
+  const assets = rows
+    .filter((row) => {
+      if (q && !(row.original_filename ?? "").toLowerCase().includes(q)) return false
+      if (mime && !(row.mime_type ?? "").toLowerCase().includes(mime)) return false
+      return true
+    })
+    .slice(0, take)
+    .map((row) => serializeCmsAsset(row, origin))
+  res.status(200).json({ assets })
+}
+
+/**
  * POST /admin/cms/media — multipart file + placement.
  * Publieke file-module upload + cms_asset metadata + validateMedia.
+ * asset_id vervangt het bronbestand van een bestaand cms_asset.
  */
 export async function POST(
   req: AuthenticatedMedusaRequest,
@@ -148,26 +209,32 @@ export async function POST(
   const origin = requestBackendOrigin(req)
 
   const cms = req.scope.resolve(CMS_MODULE) as CmsModuleService
-  const asset = await cms.createCmsAssets({
-    placement: placementRaw,
-    storage_reference: stored,
-    mime_type: mimeType,
-    original_filename: file.originalname,
-    size_bytes: file.size,
-    width,
-    height,
-    alt_text: null,
-  })
+  const replaceId = typeof body.asset_id === "string" ? body.asset_id.trim() : ""
+  const asset = replaceId
+    ? await cms.updateCmsAssets({
+        id: replaceId,
+        placement: placementRaw,
+        storage_reference: stored,
+        mime_type: mimeType,
+        original_filename: file.originalname,
+        size_bytes: file.size,
+        width,
+        height,
+      })
+    : await cms.createCmsAssets({
+        placement: placementRaw,
+        storage_reference: stored,
+        mime_type: mimeType,
+        original_filename: file.originalname,
+        size_bytes: file.size,
+        width,
+        height,
+        alt_text: null,
+      })
 
-  res.status(201).json({
+  res.status(replaceId ? 200 : 201).json({
     asset: {
-      id: asset.id,
-      placement: asset.placement,
-      url: resolveMediaUrl(stored, origin) ?? stored,
-      mime_type: asset.mime_type,
-      size_bytes: asset.size_bytes,
-      width: asset.width,
-      height: asset.height,
+      ...serializeCmsAsset(asset as AssetRow, origin),
       requirements: {
         placement: reqs.placement,
         maxBytes: reqs.maxBytes,

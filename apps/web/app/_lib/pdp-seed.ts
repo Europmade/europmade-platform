@@ -34,6 +34,9 @@ export type PdpReview = {
 export type PdpMadeInEurope = {
   is_made_in_europe: boolean
   score: number | null
+  incomplete?: boolean
+  evidence_approved?: boolean
+  production_country_label?: string | null
   assembly_points: number
   parts_points: number
   materials_points: number

@@ -1,4 +1,5 @@
 import {
+  completeMadeInEuropeBands,
   computeMadeInEuropeScore,
   isAssemblyEuBand,
   isEuCountryCode,
@@ -90,6 +91,23 @@ describe("Made in Europe score engine", () => {
     })
     expect(score.score).toBe(61)
     expect(Object.keys(score)).not.toContain("manual_score")
+  })
+
+  it("does not invent eu_100 when bands are missing", () => {
+    expect(completeMadeInEuropeBands({})).toBeNull()
+    expect(
+      completeMadeInEuropeBands({
+        assembly_eu_band: "eu_100",
+        parts_eu_level: "eu_majority",
+      })
+    ).toBeNull()
+    const complete = completeMadeInEuropeBands({
+      assembly_eu_band: "eu_50_74",
+      parts_eu_level: "eu_partial",
+      materials_eu_level: "eu_none",
+    })
+    expect(complete?.assembly_eu_band).toBe("eu_50_74")
+    expect(computeMadeInEuropeScore(complete!).score).toBe(46)
   })
 
   it("validates stable IDs", () => {
