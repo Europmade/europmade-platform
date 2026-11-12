@@ -44,6 +44,7 @@ import {
   selectionFromListingQuery,
   categoryTilePublicPath,
   level1CategoryTileRows,
+  orderSubcategoriesWithAggregateFirst,
   selectCategoryShelf,
   readCategoryAdPositions,
   selectCategoryAdSource,
@@ -516,6 +517,7 @@ function BlockView(props: {
         products={props.products}
         preview={preview}
         profile={props.profile}
+        slug={props.slug}
       />
     )
   }
@@ -635,7 +637,7 @@ function Hero({
   const scene = storedImage ? null : categoryAtmosphere(slug, "hero")
   const bannerSrc = storedImage ? block.image_url || block.mobile_image_url : scene?.src
   const bannerAlt = storedImage ? text(block.image_alt, locale) || title : scene?.alt ?? ""
-  if ((slug === "huishouden" || profile === "level_3") && bannerSrc) {
+  if ((slug === "huishouden" || slug === "was-droog" || profile === "level_3") && bannerSrc) {
     const showArrow = Boolean(primary && solid && !/[→>]/.test(primary))
     return (
       <Section id={block.id} presentation={block.presentation}>
@@ -666,7 +668,7 @@ function Hero({
                 src={bannerSrc}
                 alt={bannerAlt}
                 className={`absolute inset-0 h-full w-full ${slug === "wasdrogers" || slug === "was-droogcombinaties" ? "object-contain" : "object-cover"}`}
-                style={{ objectPosition: storedImage ? "center" : categoryHeroFocus(slug) ?? scene?.position ?? "center" }}
+                style={{ objectPosition: storedImage ? "center" : slug === "was-droog" ? "46% 62%" : categoryHeroFocus(slug) ?? scene?.position ?? "center" }}
               />
               <div aria-hidden className={`pointer-events-none absolute inset-y-0 w-28 from-white to-transparent ${imageRight ? "left-0 bg-gradient-to-r" : "right-0 bg-gradient-to-l"}`} />
             </div>
@@ -758,8 +760,16 @@ const HUISHOUDEN_USP_BAR: readonly EditorialUsp[] = [
   { id: "service", title: "Service & garantie", body: "Van Europese verkopers", icon: "headset" },
 ]
 
+const WAS_DROOG_USP_BAR: readonly EditorialUsp[] = [
+  { id: "los", title: "Los of in één apparaat", body: "Twee apparaten of één combinatie", icon: "pair" },
+  { id: "vul", title: "Vulgewicht", body: "Stem de kilo's op elkaar af", icon: "drum" },
+  { id: "techniek", title: "Warmtepomp of condens", body: "Alleen als het model dat vermeldt", icon: "heat" },
+  { id: "geluid", title: "Geluid in huis", body: "Lager decibelgetal is stiller", icon: "sound" },
+]
+
 function editorialUspBar(slug: string): readonly EditorialUsp[] | null {
   if (slug === "huishouden") return HUISHOUDEN_USP_BAR
+  if (slug === "was-droog") return WAS_DROOG_USP_BAR
   return null
 }
 
@@ -1025,6 +1035,7 @@ function Tiles({
   products,
   preview,
   profile,
+  slug,
 }: {
   block: Extract<CategoryCmsBlock, { type: "subcategory_tiles" | "product_group_tiles" }>
   locale: StorefrontLocale
@@ -1033,13 +1044,15 @@ function Tiles({
   products: ListingProduct[]
   preview: boolean
   profile: CategoryCmsProfile
+  slug: string
 }) {
   const heading = text(block.title, locale) || (block.type === "subcategory_tiles"
     ? `Ontdek onze categorieën binnen ${categoryName}`
     : "Ontdek de productgroepen")
   const level1Grid = profile === "level_1" && block.type === "subcategory_tiles"
-  if (level1Grid) {
-    const ordered = children
+  const lifestyleGroups = slug === "was-droog" && block.type === "product_group_tiles"
+  if (level1Grid || lifestyleGroups) {
+    const ordered = level1Grid ? children : orderSubcategoriesWithAggregateFirst(rankedCategoryChildren(block, children, locale))
     return (
       <Section id={block.id} presentation={block.presentation}>
         <h2 className="text-xl font-bold text-[#16315c]">{heading}</h2>
@@ -1648,18 +1661,19 @@ function Choice({
   const matches = plan.ready ? choiceAssistantMatches(products, answers, choiceMode) : []
   const answered = plan.questions.every((question) => answers[question.code])
   if (!title && !body && !plan.ready && !preview) return null
-  const scene = categoryAtmosphere(slug, "advice")
+  const scene = categoryAtmosphere(slug, "choice") ?? categoryAtmosphere(slug, "advice")
+  const editorialLeadsElsewhere = Boolean(editorialHref && !editorialHref.startsWith("#"))
   return (
     <Section id={block.id} presentation={block.presentation}>
       <div className="grid overflow-hidden rounded-2xl border border-[#d7eadf] bg-[#f4fbf7] md:grid-cols-[1.15fr_0.85fr]">
         <div className="p-5 sm:p-6">
           <h2 className="text-lg font-bold text-[#16315c]">{title || "Keuzehulp"}</h2>
           {body ? <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">{body}</p> : preview ? <Empty preview label="Nog geen keuzehulptekst." /> : null}
-          {plan.message ? <p className="mt-2 text-sm leading-6 text-slate-600">{plan.message}</p> : null}
+          {plan.message && !editorialLeadsElsewhere ? <p className="mt-2 text-sm leading-6 text-slate-600">{plan.message}</p> : null}
           {plan.source === "preview_catalog" ? (
             <p className="mt-2 text-sm text-slate-600">{t("conceptChoiceNotice", locale)}</p>
           ) : null}
-          {cta && editorialHref && !plan.ready ? (
+          {cta && editorialHref && (!plan.ready || editorialLeadsElsewhere) ? (
             <Link href={editorialHref} prefetch={false} className="mt-4 inline-flex shrink-0 justify-center rounded-full bg-[#1f8a4c] px-4 py-2.5 text-sm font-semibold text-white">{cta}</Link>
           ) : null}
         </div>

@@ -15,7 +15,9 @@ Alle gebruikte foto's staan op Pexels en vallen onder de [Pexels License](https:
 | `apps/web/public/category/atmosphere/europe-landscape.jpg` | 417074 | https://www.pexels.com/photo/landscape-photography-of-mountains-417074/ | Waarom EuropMade bij Huishouden. Bergmeer als sfeerbeeld, geen herkomstclaim |
 | `apps/web/public/category/atmosphere/home-living.jpg` | 5157113 | https://www.pexels.com/photo/5157113/ | Reserve voor wooncategorieën |
 | `apps/web/public/category/atmosphere/laundry-fold.jpg` | 7310016 | https://www.pexels.com/photo/7310016/ | Goed om te weten bij wassen en drogen: was vouwen in huis |
-| `apps/web/public/category/atmosphere/laundry-room.jpg` | 7282784 | https://www.pexels.com/photo/7282784/ | Adviesbeeld bij wassen en drogen |
+| `apps/web/public/category/atmosphere/laundry-room.jpg` | 7282784 | https://www.pexels.com/photo/7282784/ | Adviesbeeld bij wasmachines, wasdrogers en vrijstaande apparaten |
+| `apps/web/public/category/atmosphere/laundry-choice.jpg` | eigen sfeerbeeld | — | Keuzehulp van Wassen & drogen. Andere persoon en ruimte dan het adviesbeeld |
+| `apps/web/public/category/atmosphere/laundry-advice.jpg` | eigen sfeerbeeld | — | Advies en vergelijken van Wassen & drogen. Stilleven, geen persoon en geen apparaat |
 | `apps/web/public/category/atmosphere/kitchen-builtin.jpg` | 1080721 | https://www.pexels.com/photo/1080721/ | Hero en Goed om te weten van Inbouwapparatuur en keuken |
 | `apps/web/public/category/atmosphere/kitchen-dishwasher.jpg` | 2724749 | https://www.pexels.com/photo/2724749/ | Hero van vaatwassers en het adviesbeeld van inbouw |
 

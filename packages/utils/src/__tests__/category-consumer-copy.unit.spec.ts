@@ -139,6 +139,34 @@ describe("category consumer copy", () => {
     expect(validateCategoryCmsDocument(restored.document, { slug: "huishouden", expectedProfile: "level_1" })).toEqual([])
   })
 
+  it("replaces the earlier product-led hero intro for washing and drying and keeps a written one", () => {
+    const laundry = createDefaultCategoryCmsDocument("level_2", { slug: "was-droog" })
+    const laundryHero = laundry.blocks.find((block) => block.type === "hero")
+    if (laundryHero?.type === "hero") {
+      laundryHero.intro = {
+        nl: "Een losse wasmachine en droger draaien naast elkaar. Een combinatie wast en droogt na elkaar en vraagt minder vloeroppervlak.",
+        en: "",
+        de: "",
+        fr: "",
+      }
+    }
+    const laundryNext = restoreGenericCategoryCopy(laundry, {
+      slug: "was-droog",
+      name: "Wassen & drogen",
+      parentName: "Huishouden",
+      profile: "level_2",
+      productCount: 16,
+      brands: [],
+      filterNames: [],
+      distinguishedFrom: null,
+      children: [],
+    }).document.blocks.find((block) => block.type === "hero")
+    expect(laundryNext && laundryNext.type === "hero" ? laundryNext.intro.nl : "").toBe(
+      "Een fijne wasruimte brengt rust en gemak in huis. Wassen en drogen worden zo een vanzelfsprekend deel van de dag."
+    )
+    expect(laundryNext && laundryNext.type === "hero" ? laundryNext.primary_cta_label.nl : "").toBe("Ontdek de groepen")
+  })
+
   it("replaces a specification-led level-3 intro and keeps a written one", () => {
     const document = createDefaultCategoryCmsDocument("level_3", { slug: "wasmachines" })
     const hero = document.blocks.find((block) => block.type === "hero")
@@ -188,6 +216,99 @@ describe("category consumer copy", () => {
       children: [],
     }).document.blocks.find((block) => block.type === "hero")
     expect(kept && kept.type === "hero" ? kept.intro.nl : "").toBe("Deze intro blijft staan.")
+  })
+
+  it("replaces an automatic level-2 choice prompt and keeps a written one", () => {
+    const laundry = createDefaultCategoryCmsDocument("level_2", { slug: "was-droog" })
+    const restored = restoreGenericCategoryCopy(laundry, {
+      slug: "was-droog",
+      name: "Wassen & drogen",
+      parentName: "Huishouden",
+      profile: "level_2",
+      productCount: 16,
+      brands: [],
+      filterNames: [],
+      distinguishedFrom: null,
+      children: [{ slug: "wasmachines", name: "Wasmachines" }],
+    })
+    const choice = restored.document.blocks.find((block) => block.type === "choice_assistant_cta")
+    expect(choice && choice.type === "choice_assistant_cta" ? choice.title.nl : "").toBe("Welke wasmachine past bij jou?")
+    expect(choice && choice.type === "choice_assistant_cta" ? choice.body.nl : "").toBe(
+      "De juiste keuze hangt af van de grootte van je huishouden, hoeveel was je draait en de ruimte die je hebt."
+    )
+    expect(choice && choice.type === "choice_assistant_cta" ? choice.cta_label.nl : "").toBe("Bekijk advies & vergelijking")
+    expect(choice && choice.type === "choice_assistant_cta" ? choice.href : "").toBe(
+      "/categorie/wasmachines#blk_wasmachines_level_3_product_comparison"
+    )
+
+    const written = createDefaultCategoryCmsDocument("level_2", { slug: "was-droog" })
+    const writtenChoice = written.blocks.find((block) => block.type === "choice_assistant_cta")
+    if (writtenChoice?.type === "choice_assistant_cta") {
+      writtenChoice.title = { nl: "Welke inbouwapparatuur past bij jouw keuken?", en: "", de: "", fr: "" }
+      writtenChoice.body = { nl: "Deze tekst blijft staan.", en: "", de: "", fr: "" }
+      writtenChoice.cta_label = { nl: "Eigen knop", en: "", de: "", fr: "" }
+      writtenChoice.href = "/categorie/inbouwapparatuur#eigen"
+    }
+    const kept = restoreGenericCategoryCopy(written, {
+      slug: "was-droog",
+      name: "Wassen & drogen",
+      parentName: "Huishouden",
+      profile: "level_2",
+      productCount: 16,
+      brands: [],
+      filterNames: [],
+      distinguishedFrom: null,
+      children: [],
+    }).document.blocks.find((block) => block.type === "choice_assistant_cta")
+    expect(kept && kept.type === "choice_assistant_cta" ? kept.title.nl : "").toBe("Welke inbouwapparatuur past bij jouw keuken?")
+    expect(kept && kept.type === "choice_assistant_cta" ? kept.body.nl : "").toBe("Deze tekst blijft staan.")
+    expect(kept && kept.type === "choice_assistant_cta" ? kept.href : "").toBe("/categorie/inbouwapparatuur#eigen")
+  })
+
+  it("points a stored buying-guide choice link at the comparison and keeps a custom link", () => {
+    const document = createDefaultCategoryCmsDocument("level_2", { slug: "was-droog" })
+    const choice = document.blocks.find((block) => block.type === "choice_assistant_cta")
+    if (choice?.type !== "choice_assistant_cta") throw new Error("choice missing")
+    choice.title = { nl: "Welke wasmachine past bij jou?", en: "", de: "", fr: "" }
+    choice.body = {
+      nl: "De juiste keuze hangt af van de grootte van je huishouden, hoeveel was je draait en de ruimte die je hebt.",
+      en: "",
+      de: "",
+      fr: "",
+    }
+    choice.cta_label = { nl: "Bekijk advies & vergelijking", en: "", de: "", fr: "" }
+    choice.href = "/categorie/wasmachines#blk_wasmachines_level_3_buying_guide"
+    const restored = restoreGenericCategoryCopy(document, {
+      slug: "was-droog",
+      name: "Wassen & drogen",
+      parentName: "Huishouden",
+      profile: "level_2",
+      productCount: 16,
+      brands: [],
+      filterNames: [],
+      distinguishedFrom: null,
+      children: [],
+    })
+    const next = restored.document.blocks.find((block) => block.type === "choice_assistant_cta")
+    expect(next && next.type === "choice_assistant_cta" ? next.href : "").toBe(
+      "/categorie/wasmachines#blk_wasmachines_level_3_product_comparison"
+    )
+
+    choice.href = "/categorie/wasmachines#eigen-vergelijking"
+    const custom = restoreGenericCategoryCopy(document, {
+      slug: "was-droog",
+      name: "Wassen & drogen",
+      parentName: "Huishouden",
+      profile: "level_2",
+      productCount: 16,
+      brands: [],
+      filterNames: [],
+      distinguishedFrom: null,
+      children: [],
+    }).document.blocks.find((block) => block.type === "choice_assistant_cta")
+    expect(custom && custom.type === "choice_assistant_cta" ? custom.href : "").toBe(
+      "/categorie/wasmachines#eigen-vergelijking"
+    )
   })
 
   it("fills laundry FAQs with consumer questions and leaves another category FAQ intact", () => {

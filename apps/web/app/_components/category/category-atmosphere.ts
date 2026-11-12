@@ -4,7 +4,7 @@
  * Text sits on the quiet side of the frame (align), over a navy scrim.
  */
 
-export type CategoryAtmosphereSlot = "hero" | "why" | "know" | "advice"
+export type CategoryAtmosphereSlot = "hero" | "why" | "know" | "advice" | "choice"
 
 export type CategoryAtmosphere = {
   src: string
@@ -17,6 +17,8 @@ const HOME = "/category/atmosphere/home-living.jpg"
 const LAUNDRY_FOLD = "/category/atmosphere/laundry-fold.jpg"
 const LAUNDRY_ROOM = "/category/atmosphere/laundry-room.jpg"
 const LAUNDRY_HERO = "/category/atmosphere/laundry-hero.jpg"
+const LAUNDRY_CHOICE = "/category/atmosphere/laundry-choice.jpg"
+const LAUNDRY_ADVICE = "/category/atmosphere/laundry-advice.jpg"
 const HUISHOUDEN_HERO = "/category/atmosphere/huishouden-hero.png"
 const EUROPE = "/category/atmosphere/europe-landscape.jpg"
 const KITCHEN = "/category/atmosphere/kitchen-builtin.jpg"
@@ -64,6 +66,18 @@ const SCENE: Record<string, CategoryAtmosphere> = {
     position: "center",
     align: "left",
   },
+  [LAUNDRY_CHOICE]: {
+    src: LAUNDRY_CHOICE,
+    alt: "Iemand met een wasmand bij een wasmachine in een compacte bijkeuken",
+    position: "center",
+    align: "left",
+  },
+  [LAUNDRY_ADVICE]: {
+    src: LAUNDRY_ADVICE,
+    alt: "Opgevouwen handdoeken op een houten tafel",
+    position: "center",
+    align: "left",
+  },
   [HUISHOUDEN_HERO]: {
     src: HUISHOUDEN_HERO,
     alt: "Lichte wasruimte met een witte wasmachine, plant en wasmand",
@@ -106,14 +120,19 @@ export function categoryAtmosphere(
 
 function sceneFor(slug: string, slot: CategoryAtmosphereSlot): string | null {
   const key = slug.trim().toLowerCase()
+  if (slot === "choice") return key === "was-droog" ? LAUNDRY_CHOICE : null
   if (key === "huishouden") return slot === "hero" ? HUISHOUDEN_HERO : EUROPE
+  if (key === "was-droog") {
+    if (slot === "hero") return LAUNDRY_HERO
+    if (slot === "advice") return LAUNDRY_ADVICE
+    return LAUNDRY_FOLD
+  }
   if (key === "wasmachines") {
     if (slot === "hero") return HUISHOUDEN_HERO
     if (slot === "advice") return LAUNDRY_ROOM
     return LAUNDRY_FOLD
   }
   if (
-    key === "was-droog" ||
     key === "wasdrogers" ||
     key === "was-droogcombinaties" ||
     key === "wasmachines-en-drogers" ||

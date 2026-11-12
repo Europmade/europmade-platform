@@ -25,6 +25,7 @@ export {
   findCommercialNavGroup,
   isAggregateAllInCategory,
   isCommercialNavKey,
+  orderSubcategoriesWithAggregateFirst,
   pickCommercialNavLabel,
   sortCommercialNavByProductCount,
   visitorRankingReady,

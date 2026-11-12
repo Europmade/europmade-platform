@@ -217,6 +217,23 @@ export function isAggregateAllInCategory(
 }
 
 /**
+ * Shows an `Alles in …` subcategory as the first card.
+ * Every other category keeps its relative order. A list without that name stays as it is.
+ */
+export function orderSubcategoriesWithAggregateFirst<
+  T extends { name?: string | null; slug?: string | null },
+>(rows: readonly T[]): T[] {
+  const aggregate: T[] = []
+  const rest: T[] = []
+  for (const row of rows) {
+    if (isAggregateAllInCategory(row)) aggregate.push(row)
+    else rest.push(row)
+  }
+  if (aggregate.length === 0) return [...rows]
+  return [...aggregate, ...rest]
+}
+
+/**
  * Listingfilter voor een hoofdcategorie bevat ook de slugs van de kinderen.
  * Een product dat alleen aan Heren hangt, blijft daardoor op Kleding zichtbaar.
  *

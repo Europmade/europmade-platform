@@ -27,7 +27,14 @@ type ChoicePrompt = {
  * Other level-2 categories add an entry here. Empty or still-automatic choice
  * blocks pick this up at display time. A written title or body stays as stored.
  */
-const CHOICE_PROMPTS: Record<string, ChoicePrompt> = {}
+const CHOICE_PROMPTS: Record<string, ChoicePrompt> = {
+  "was-droog": {
+    title: "Welke wasmachine past bij jou?",
+    body: "De juiste keuze hangt af van de grootte van je huishouden, hoeveel was je draait en de ruimte die je hebt.",
+    ctaLabel: "Bekijk advies & vergelijking",
+    href: `/categorie/wasmachines#${categoryCmsBlockId("wasmachines", "level_3", "product_comparison")}`,
+  },
+}
 
 function choicePromptFor(slug: string): ChoicePrompt | null {
   return CHOICE_PROMPTS[slug.trim().toLowerCase()] ?? null
@@ -57,14 +64,17 @@ function textNl(value: CategoryCmsLocalized | null | undefined): string {
   return value?.nl?.trim() ?? ""
 }
 
-const PREVIOUS_HERO_INTRO: Record<string, string> = {}
+const PREVIOUS_HERO_INTRO: Record<string, string> = {
+  "was-droog":
+    "Een losse wasmachine en droger draaien naast elkaar. Een combinatie wast en droogt na elkaar en vraagt minder vloeroppervlak.",
+}
 
 function heroIntro(slug: string, name: string, profile: CategoryCmsProfile): string {
   if (slug === "huishouden") {
     return "Kies een apparaat op de taak die het moet doen, de plek in huis en het verbruik. Inbouw en vrijstaand vragen andere maten."
   }
   if (slug === "was-droog") {
-    return "Een losse wasmachine en droger draaien naast elkaar. Een combinatie wast en droogt na elkaar en vraagt minder vloeroppervlak."
+    return "Een fijne wasruimte brengt rust en gemak in huis. Wassen en drogen worden zo een vanzelfsprekend deel van de dag."
   }
   if (slug === "inbouwapparatuur") {
     return "Meet de nis en controleer stroom of gas voordat je een inbouwmodel kiest. Front en ventilatie horen bij dat model."
