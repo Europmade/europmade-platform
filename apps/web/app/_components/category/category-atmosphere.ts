@@ -21,6 +21,23 @@ const HUISHOUDEN_HERO = "/category/atmosphere/huishouden-hero.png"
 const EUROPE = "/category/atmosphere/europe-landscape.jpg"
 const KITCHEN = "/category/atmosphere/kitchen-builtin.jpg"
 const DISHWASHER = "/category/atmosphere/kitchen-dishwasher.jpg"
+const DISHWASHER_DETAIL = "/category/atmosphere/dishwasher-detail.jpg"
+
+/**
+ * Crop for the short, wide Level 3 hero. Level 2 keeps its own position.
+ * A missing scene is left unchanged rather than replaced with a product photo.
+ */
+const HERO_FOCUS: Record<string, string> = {
+  wasmachines: "58% 62%",
+  wasdrogers: "center 46%",
+  "was-droogcombinaties": "center 52%",
+  vaatwassers: "68% 74%",
+  "vrijstaande-vaatwassers": "76% 70%",
+}
+
+export function categoryHeroFocus(slug: string): string | null {
+  return HERO_FOCUS[slug.trim().toLowerCase()] ?? null
+}
 
 const SCENE: Record<string, CategoryAtmosphere> = {
   [HOME]: {
@@ -71,6 +88,12 @@ const SCENE: Record<string, CategoryAtmosphere> = {
     position: "88% center",
     align: "left",
   },
+  [DISHWASHER_DETAIL]: {
+    src: DISHWASHER_DETAIL,
+    alt: "Keuken met een volledige inbouwvaatwasser onder het aanrecht",
+    position: "68% 74%",
+    align: "left",
+  },
 }
 
 export function categoryAtmosphere(
@@ -84,9 +107,13 @@ export function categoryAtmosphere(
 function sceneFor(slug: string, slot: CategoryAtmosphereSlot): string | null {
   const key = slug.trim().toLowerCase()
   if (key === "huishouden") return slot === "hero" ? HUISHOUDEN_HERO : EUROPE
+  if (key === "wasmachines") {
+    if (slot === "hero") return HUISHOUDEN_HERO
+    if (slot === "advice") return LAUNDRY_ROOM
+    return LAUNDRY_FOLD
+  }
   if (
     key === "was-droog" ||
-    key === "wasmachines" ||
     key === "wasdrogers" ||
     key === "was-droogcombinaties" ||
     key === "wasmachines-en-drogers" ||
@@ -96,6 +123,7 @@ function sceneFor(slug: string, slot: CategoryAtmosphereSlot): string | null {
     if (slot === "advice") return LAUNDRY_ROOM
     return LAUNDRY_FOLD
   }
+  if (key === "vaatwassers") return slot === "hero" ? DISHWASHER_DETAIL : DISHWASHER
   if (key.includes("vaatwasser")) return DISHWASHER
   if (
     key === "inbouwapparatuur" ||

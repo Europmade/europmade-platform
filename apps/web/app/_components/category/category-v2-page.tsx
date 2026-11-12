@@ -11,13 +11,17 @@ import type {
   CategoryCmsLocalized,
   CategoryCmsPresentation,
   CategoryCmsProfile,
+  CategoryListingQuery,
   CategoryProductRelation,
   CategoryV2FilterSelection,
   CategoryV2Sort,
 } from "@europmade/utils"
 import {
   adviceItemCta,
+  applyCategoryV2FacetCounts,
   buildCategoryV2Facets,
+  categoryListingQueryIsEmpty,
+  categoryV2FilterAttributes,
   categoryBrandHref,
   categoryCmsLocalizedHasText,
   categoryCmsOptionalLink,
@@ -35,7 +39,9 @@ import {
   visibleFaqItems,
   paginateCategoryV2Products,
   planChoiceAssistant,
+  getCategoryAdvice,
   productMatchesCategoryV2Filters,
+  selectionFromListingQuery,
   categoryTilePublicPath,
   level1CategoryTileRows,
   selectCategoryShelf,
@@ -55,7 +61,7 @@ import type { StoreCmsBanner } from "../../_lib/cms/fetch-store-cms"
 import type { StorefrontAdCreative } from "../../_lib/storefront-ads"
 import { AdSlot } from "../homepage/ad-slot"
 import { PublicStorefrontChrome } from "../marketplace/public-storefront-chrome"
-import { categoryAtmosphere } from "./category-atmosphere"
+import { categoryAtmosphere, categoryHeroFocus } from "./category-atmosphere"
 import { CategoryPlacementBanner } from "./category-placement-banner"
 
 type ListingSelection = {
@@ -100,6 +106,8 @@ type Props = {
   ads?: CategoryV2Ads
   /** Admin preview shows empty editorial slots. Advertenties without a live result stay hidden. */
   preview?: boolean
+  /** `f`, `min` and `max` from the category URL. Applied once, only when the facet exists. */
+  listingQuery?: CategoryListingQuery
 }
 
 function text(value: CategoryCmsLocalized | undefined, locale: StorefrontLocale): string {
@@ -241,7 +249,7 @@ function Section({
     <section
       id={id}
       data-cms-section={id}
-      className={`min-w-0 px-4 py-5 sm:px-6 ${className}`.trim()}
+      className={`scroll-mt-6 min-w-0 px-4 py-5 sm:px-6 ${className}`.trim()}
       style={{ ...styleOf(presentation), ...(backgroundColor ? { backgroundColor } : {}) }}
     >
       {children}
@@ -261,6 +269,7 @@ export function CategoryV2Page({
   filterAttributes,
   ads,
   preview = false,
+  listingQuery,
 }: Props) {
   const slug = categorySlugFromHref(breadcrumbs.at(-1)?.href ?? "")
   const presentation = useMemo(() => {
@@ -301,6 +310,22 @@ export function CategoryV2Page({
     blocks.splice(whyIndex >= 0 ? whyIndex + 1 : blocks.length, 0, faqBlock)
     return { ...restored, blocks }
   }, [breadcrumbs, categoryName, children, document, filterAttributes, products, slug])
+  useEffect(() => {
+    const raw = window.location.hash.replace(/^#/, "")
+    if (!raw) return
+    const id = decodeURIComponent(raw)
+    let cancelled = false
+    const scroll = () => {
+      if (cancelled) return
+      window.document.getElementById(id)?.scrollIntoView({ block: "start" })
+    }
+    scroll()
+    const timers = [250, 800].map((delay) => window.setTimeout(scroll, delay))
+    return () => {
+      cancelled = true
+      timers.forEach((timer) => window.clearTimeout(timer))
+    }
+  }, [slug])
   const profile = presentation.profile
   const blocks = presentation.blocks.filter((block) => block.visible !== false)
   const h1 = text(presentation.seo?.h1, locale) || categoryName
@@ -338,6 +363,7 @@ export function CategoryV2Page({
         pageBlocks: presentation.blocks,
         slug: slug ?? "",
         listingSelection,
+        listingQuery,
         onApplyListing: applyListingSelection,
       })}
     </PublicStorefrontChrome>
@@ -360,6 +386,7 @@ function renderBlocks(input: {
   pageBlocks: CategoryCmsBlock[]
   slug: string
   listingSelection: ListingSelection | null
+  listingQuery?: CategoryListingQuery
   onApplyListing: (selection: Record<string, CategoryV2FilterSelection>) => void
 }) {
   const gridBlock = input.blocks.find((block) => block.type === "product_grid")
@@ -421,6 +448,7 @@ function renderBlocks(input: {
           filterAttributes={input.filterAttributes}
           preview={input.preview}
           listingSelection={input.listingSelection}
+          listingQuery={input.listingQuery}
         />
       )
       nodes.push(...bands("below_product_grid"))
@@ -476,7 +504,7 @@ function BlockView(props: {
   if (block.type === "hero") {
     return <Hero block={block} locale={locale} h1={props.h1} preview={preview} slug={props.slug} profile={props.profile} />
   }
-  if (block.type === "usp_bar") return <Usps block={block} locale={locale} preview={preview} slug={props.slug} />
+  if (block.type === "usp_bar") return <Usps block={block} locale={locale} preview={preview} slug={props.slug} profile={props.profile} />
   if (block.type === "ad_slot") return null
   if (block.type === "subcategory_tiles" || block.type === "product_group_tiles") {
     return (
@@ -558,7 +586,7 @@ function BlockView(props: {
     )
   }
   if (block.type === "buying_guide") {
-    return <Guide block={block} locale={locale} preview={preview} />
+    return <Guide block={block} locale={locale} preview={preview} slug={props.slug} />
   }
   if (block.type === "filters") return <FiltersOnly block={block} locale={locale} preview={preview} />
   if (block.type === "faq") return <Faq block={block} locale={locale} preview={preview} />
@@ -605,8 +633,9 @@ function Hero({
   const solid = block.presentation?.button_style !== "outline"
   const storedImage = Boolean(block.image_url || block.mobile_image_url)
   const scene = storedImage ? null : categoryAtmosphere(slug, "hero")
-  void profile
-  if (slug === "huishouden" && scene) {
+  const bannerSrc = storedImage ? block.image_url || block.mobile_image_url : scene?.src
+  const bannerAlt = storedImage ? text(block.image_alt, locale) || title : scene?.alt ?? ""
+  if ((slug === "huishouden" || profile === "level_3") && bannerSrc) {
     const showArrow = Boolean(primary && solid && !/[→>]/.test(primary))
     return (
       <Section id={block.id} presentation={block.presentation}>
@@ -633,7 +662,12 @@ function Hero({
             </div>
             <div className={`relative min-h-[12rem] min-[834px]:min-h-0 ${imageRight ? "" : "lg:order-1"}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={scene.src} alt={scene.alt} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: scene.position }} />
+              <img
+                src={bannerSrc}
+                alt={bannerAlt}
+                className={`absolute inset-0 h-full w-full ${slug === "wasdrogers" || slug === "was-droogcombinaties" ? "object-contain" : "object-cover"}`}
+                style={{ objectPosition: storedImage ? "center" : categoryHeroFocus(slug) ?? scene?.position ?? "center" }}
+              />
               <div aria-hidden className={`pointer-events-none absolute inset-y-0 w-28 from-white to-transparent ${imageRight ? "left-0 bg-gradient-to-r" : "right-0 bg-gradient-to-l"}`} />
             </div>
           </div>
@@ -708,19 +742,37 @@ function UspIcon({ title }: { title: string }) {
   )
 }
 
-const HUISHOUDEN_USP_BAR = [
+type EditorialUspIcon = "leaf" | "shield" | "truck" | "headset" | "pair" | "drum" | "heat" | "sound"
+
+type EditorialUsp = {
+  id: string
+  title: string
+  body: string
+  icon: EditorialUspIcon
+}
+
+const HUISHOUDEN_USP_BAR: readonly EditorialUsp[] = [
   { id: "productie", title: "Europese productie", body: "Betrouwbaar en innovatief", icon: "leaf" },
   { id: "kwaliteit", title: "Hoge kwaliteit", body: "Lange levensduur", icon: "shield" },
   { id: "levering", title: "Snelle levering", body: "In heel Europa", icon: "truck" },
   { id: "service", title: "Service & garantie", body: "Van Europese verkopers", icon: "headset" },
-] as const
+]
 
-function UspLineIcon({ name }: { name: (typeof HUISHOUDEN_USP_BAR)[number]["icon"] }) {
-  const paths: Record<(typeof HUISHOUDEN_USP_BAR)[number]["icon"], string> = {
+function editorialUspBar(slug: string): readonly EditorialUsp[] | null {
+  if (slug === "huishouden") return HUISHOUDEN_USP_BAR
+  return null
+}
+
+function UspLineIcon({ name }: { name: EditorialUspIcon }) {
+  const paths: Record<EditorialUspIcon, string> = {
     leaf: "M5 19c8 0 14-8 14-14-6 0-14 6-14 14zM9.5 15.5c2.2-2.2 5.2-4 8.5-5",
     shield: "M12 3.5 18.5 6v5.2c0 4.2-2.7 7-6.5 8.8-3.8-1.8-6.5-4.6-6.5-8.8V6zM9 12.2l1.8 1.8 3.7-3.8",
     truck: "M3 7.5h10.5V16H3zM13.5 10.5H18l2.5 2.8V16h-7zM6.5 18.2a1.4 1.4 0 1 0 0.1 0M17.2 18.2a1.4 1.4 0 1 0 0.1 0",
     headset: "M5 13.5a7 7 0 0 1 14 0M5 13.5V17a2 2 0 0 0 2 2h1.2v-5.5H5zM19 13.5V17a2 2 0 0 1-2 2h-1.2v-5.5H19zM12 19.2v1.6",
+    pair: "M4 8h6v10H4zM14 6h6v12h-6z",
+    drum: "M7 8h10v9a5 5 0 0 1-10 0zM7 8a5 2.2 0 0 1 10 0",
+    heat: "M8 5c2 2.4 2 4.2 0 6.6S6 16 8 19M12 5c2 2.4 2 4.2 0 6.6S10 16 12 19M16 5c2 2.4 2 4.2 0 6.6S14 16 16 19",
+    sound: "M5 10v4h3l4 3V7L8 10zM16 9.5a3 3 0 0 1 0 5M18.2 7.5a6 6 0 0 1 0 9",
   }
   return (
     <svg viewBox="0 0 24 24" className="h-7 w-7 shrink-0 text-[#1f8a4c]" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -729,15 +781,55 @@ function UspLineIcon({ name }: { name: (typeof HUISHOUDEN_USP_BAR)[number]["icon
   )
 }
 
-function UspBarItem({ title, body, icon }: { title: string; body: string; icon: (typeof HUISHOUDEN_USP_BAR)[number]["icon"] }) {
+function UspBarItem({ title, body, icon }: { title: string; body: string; icon: EditorialUspIcon }) {
+  const singleLine = body.length <= 42
   return (
     <li className="flex shrink-0 items-center gap-2.5">
       <UspLineIcon name={icon} />
       <span>
         <span className="block whitespace-nowrap text-sm font-semibold leading-4 text-[#16315c]">{title}</span>
-        <span className="block whitespace-nowrap text-xs leading-4 text-slate-500">{body}</span>
+        <span className={`block text-xs leading-4 text-slate-500 ${singleLine ? "whitespace-nowrap" : "max-w-[16rem] whitespace-normal"}`}>{body}</span>
       </span>
     </li>
+  )
+}
+
+function uspIconFor(title: string): EditorialUspIcon {
+  const key = title.toLowerCase()
+  if (key.includes("geluid")) return "sound"
+  if (key.includes("energie") || key.includes("water") || key.includes("label")) return "leaf"
+  if (key.includes("vul") || key.includes("couvert") || key.includes("gewicht") || key.includes("toer")) return "drum"
+  if (key.includes("warm") || key.includes("droog") || key.includes("condens")) return "heat"
+  if (key.includes("nis") || key.includes("breed") || key.includes("deur") || key.includes("apparaat") || key.includes("plaats")) return "pair"
+  return "shield"
+}
+
+function CompactUspBar({
+  id,
+  presentation,
+  items,
+}: {
+  id: string
+  presentation?: CategoryCmsPresentation
+  items: readonly EditorialUsp[]
+}) {
+  const row = (clone: boolean) => (
+    <ul className={`flex shrink-0 items-center gap-8 pr-8 ${clone ? "" : "md:grid md:w-full md:grid-cols-4 md:gap-4 md:pr-0"}`} {...(clone ? { "data-usp-clone": "true", "aria-hidden": true } : {})}>
+      {items.map((item) => (
+        <UspBarItem key={`${item.id}${clone ? "-clone" : ""}`} title={item.title} body={item.body} icon={item.icon} />
+      ))}
+    </ul>
+  )
+  return (
+    <Section id={id} presentation={presentation} className="bg-[#f3f6f4]" backgroundColor="#f3f6f4">
+      <div className="em-usp-marquee-wrap md:hidden">
+        <div className="em-usp-marquee">
+          {row(false)}
+          {row(true)}
+        </div>
+      </div>
+      <div className="hidden md:block">{row(false)}</div>
+    </Section>
   )
 }
 
@@ -746,31 +838,28 @@ function Usps({
   locale,
   preview,
   slug,
+  profile,
 }: {
   block: Extract<CategoryCmsBlock, { type: "usp_bar" }>
   locale: StorefrontLocale
   preview: boolean
   slug: string
+  profile: CategoryCmsProfile
 }) {
-  if (slug === "huishouden") {
-    const row = (clone: boolean) => (
-      <ul className={`flex shrink-0 items-center gap-8 pr-8 ${clone ? "" : "md:grid md:w-full md:grid-cols-4 md:gap-4 md:pr-0"}`} {...(clone ? { "data-usp-clone": "true", "aria-hidden": true } : {})}>
-        {HUISHOUDEN_USP_BAR.map((item) => (
-          <UspBarItem key={`${item.id}${clone ? "-clone" : ""}`} title={item.title} body={item.body} icon={item.icon} />
-        ))}
-      </ul>
-    )
-    return (
-      <Section id={block.id} presentation={block.presentation} className="bg-[#f3f6f4]" backgroundColor="#f3f6f4">
-        <div className="em-usp-marquee-wrap md:hidden">
-          <div className="em-usp-marquee">
-            {row(false)}
-            {row(true)}
-          </div>
-        </div>
-        <div className="hidden md:block">{row(false)}</div>
-      </Section>
-    )
+  const editorialUsps = editorialUspBar(slug)
+  if (editorialUsps) {
+    return <CompactUspBar id={block.id} presentation={block.presentation} items={editorialUsps} />
+  }
+  if (profile === "level_3") {
+    const items = block.slots.flatMap((slot) => {
+      const title = text(slot.title, locale)
+      const body = text(slot.body, locale)
+      if (!title) return []
+      return [{ id: slot.id, title, body, icon: uspIconFor(title) }]
+    }).slice(0, 4)
+    if (items.length > 0) {
+      return <CompactUspBar id={block.id} presentation={block.presentation} items={items} />
+    }
   }
   return (
     <Section id={block.id} presentation={block.presentation}>
@@ -912,6 +1001,22 @@ function CategoryAd({
   )
 }
 
+function rankedCategoryChildren(
+  block: Extract<CategoryCmsBlock, { type: "subcategory_tiles" | "product_group_tiles" }>,
+  children: CategoryV2Child[],
+  locale: StorefrontLocale
+): CategoryV2Child[] {
+  const wanted = new Set(block.include_slugs)
+  const pool = wanted.size ? children.filter((child) => wanted.has(child.slug)) : children
+  const ranked = wanted.size
+    ? pool
+    : [...pool].sort(
+        (left, right) =>
+          right.productCount - left.productCount || left.name.localeCompare(right.name, locale)
+      )
+  return ranked.slice(0, block.max_items || 12)
+}
+
 function Tiles({
   block,
   locale,
@@ -932,25 +1037,19 @@ function Tiles({
   const heading = text(block.title, locale) || (block.type === "subcategory_tiles"
     ? `Ontdek onze categorieën binnen ${categoryName}`
     : "Ontdek de productgroepen")
-  if (profile === "level_1" && block.type === "subcategory_tiles") {
+  const level1Grid = profile === "level_1" && block.type === "subcategory_tiles"
+  if (level1Grid) {
+    const ordered = children
     return (
       <Section id={block.id} presentation={block.presentation}>
         <h2 className="text-xl font-bold text-[#16315c]">{heading}</h2>
-        {children.length === 0 ? <div className="mt-3"><Empty preview={preview} label="Geen onderliggende categorieën in Product Cloud." /></div> : (
-          <Level1TileGrid block={block} children={children} />
+        {ordered.length === 0 ? <div className="mt-3"><Empty preview={preview} label="Geen onderliggende categorieën in Product Cloud." /></div> : (
+          <Level1TileGrid block={block} children={ordered} />
         )}
       </Section>
     )
   }
-  const wanted = new Set(block.include_slugs)
-  const pool = wanted.size ? children.filter((child) => wanted.has(child.slug)) : children
-  const ordered = wanted.size
-    ? pool
-    : [...pool].sort(
-        (left, right) =>
-          right.productCount - left.productCount || left.name.localeCompare(right.name, locale)
-      )
-  const rows = ordered.slice(0, block.max_items || 12)
+  const rows = rankedCategoryChildren(block, children, locale)
   const cols = columnsOf(block.presentation, 4)
   return (
     <Section id={block.id} presentation={block.presentation}>
@@ -2171,18 +2270,22 @@ function Guide({
   block,
   locale,
   preview,
+  slug,
 }: {
   block: Extract<CategoryCmsBlock, { type: "buying_guide" }>
   locale: StorefrontLocale
   preview: boolean
+  slug: string
 }) {
+  const advice = getCategoryAdvice(slug)
+  const replacedHeadings = new Set(advice?.replacesGuideHeadings ?? [])
   const title = text(block.title, locale)
   const intro = text(block.intro, locale)
   const closingHref = categoryCmsOptionalLink(block.closing_cta_label, block.closing_cta_href)
   const closingLabel = closingHref ? text(block.closing_cta_label, locale) : ""
   const faqs = block.faq.filter((item) => text(item.question, locale))
   const filled = block.sections.some((section) => guideSectionHasContent(section, locale))
-  if (!title && !intro && !filled && faqs.length === 0 && !closingLabel && !preview) return null
+  if (!advice && !title && !intro && !filled && faqs.length === 0 && !closingLabel && !preview) return null
   const solid = block.presentation?.button_style !== "outline"
   const buttonClass = solid
     ? "inline-flex rounded-full bg-[#1f8a4c] px-4 py-2 text-sm font-semibold text-white"
@@ -2190,8 +2293,20 @@ function Guide({
   return (
     <Section id={block.id} presentation={block.presentation}>
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
-        {title ? <h2 className="text-xl font-bold text-[#16315c]">{title}</h2> : null}
-        {intro ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{intro}</p> : null}
+        {advice ? (
+          <div>
+            <h2 className="text-xl font-bold text-[#16315c]">{advice.referralTitle}</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{advice.referralIntro}</p>
+            <Link href={advice.path} className={`${buttonClass} mt-4`}>
+              {advice.referralCta}
+            </Link>
+          </div>
+        ) : (
+          <>
+            {title ? <h2 className="text-xl font-bold text-[#16315c]">{title}</h2> : null}
+            {intro ? <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{intro}</p> : null}
+          </>
+        )}
         {!filled && faqs.length === 0 && !intro && !closingLabel ? (
           <div className="mt-3">
             <Empty preview={preview} label="Nog geen koopgids." />
@@ -2203,6 +2318,7 @@ function Guide({
                 return preview ? <Empty key={section.id} preview label="Lege koopgidssectie." /> : null
               }
               const heading = text(section.heading, locale)
+              if (advice && heading && replacedHeadings.has(heading)) return null
               const sectionIntro = text(section.intro, locale)
               const body = text(section.body, locale)
               const tip = text(section.tip, locale)
@@ -2529,6 +2645,7 @@ function ListingRow({
   filterAttributes,
   preview,
   listingSelection,
+  listingQuery,
 }: {
   filters: Extract<CategoryCmsBlock, { type: "filters" }>
   grid: Extract<CategoryCmsBlock, { type: "product_grid" }>
@@ -2537,6 +2654,7 @@ function ListingRow({
   filterAttributes: ProductCloudStoreAttribute[]
   preview: boolean
   listingSelection: ListingSelection | null
+  listingQuery?: CategoryListingQuery
 }) {
   const newestAvailable = products.some((product) => Boolean(product.publishedAt))
   const sortChoices: CategoryV2Sort[] = newestAvailable
@@ -2546,31 +2664,45 @@ function ListingRow({
   const [sort, setSort] = useState<CategoryV2Sort>(initialSort)
   const [page, setPage] = useState(1)
   const [selection, setSelection] = useState<Record<string, CategoryV2FilterSelection>>({})
+  const queryApplied = useRef(false)
   useEffect(() => {
     if (!listingSelection) return
     setSelection(listingSelection.selection)
     setPage(1)
   }, [listingSelection])
-  const facets = useMemo(
-    () =>
-      buildCategoryV2Facets(
+  const facets = useMemo(() => {
+    const built = buildCategoryV2Facets(
+      categoryV2FilterAttributes(
         filterAttributes
-          .filter((attribute) => attribute.is_filterable && attribute.code?.trim())
+          .filter((attribute) => attribute.code?.trim())
           .map((attribute) => ({
             code: attribute.code as string,
             name: attribute.name,
             dataType: attribute.data_type,
+            filterable: attribute.is_filterable,
           })),
-        products,
-        filters.controls.map((control) => ({
-          attributeKey: control.attributeKey,
-          visible: control.visible !== false,
-          label: text(control.label, locale),
-          sortOrder: Number(control.sortOrder) || 0,
-        }))
+        products
       ),
-    [filterAttributes, filters.controls, locale, products]
-  )
+      products,
+      filters.controls.map((control) => ({
+        attributeKey: control.attributeKey,
+        visible: control.visible !== false,
+        label: text(control.label, locale),
+        sortOrder: Number(control.sortOrder) || 0,
+      }))
+    )
+    return applyCategoryV2FacetCounts(built, products, selection)
+  }, [filterAttributes, filters.controls, locale, products, selection])
+  useEffect(() => {
+    if (queryApplied.current || listingSelection) return
+    if (!listingQuery || categoryListingQueryIsEmpty(listingQuery)) return
+    if (facets.length === 0) return
+    queryApplied.current = true
+    const next = selectionFromListingQuery(facets, listingQuery)
+    if (Object.keys(next).length === 0) return
+    setSelection(next)
+    setPage(1)
+  }, [facets, listingQuery, listingSelection])
   const activeSort = sortChoices.includes(sort) ? sort : "relevance"
   const filtered = useMemo(() => {
     const matched = products.filter((product) =>
@@ -2587,6 +2719,43 @@ function ListingRow({
     setSort(next)
     setPage(1)
   }
+
+  function facetIsActive(key: string): boolean {
+    const chosen = selection[key]
+    if (!chosen) return false
+    if ((chosen.values ?? []).some((value) => value.trim())) return true
+    return (chosen.min != null && Number.isFinite(chosen.min)) || (chosen.max != null && Number.isFinite(chosen.max))
+  }
+
+  function clearFacet(key: string) {
+    setSelection((current) => {
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+    setPage(1)
+  }
+
+  function clearAllFilters() {
+    setSelection({})
+    setPage(1)
+  }
+
+  const activeChips = facets.flatMap((facet) => {
+    const chosen = selection[facet.attributeKey]
+    if (!chosen) return []
+    if (facet.type === "checkbox") {
+      return (chosen.values ?? []).map((value) => {
+        const option = facet.options.find((item) => item.value === value)
+        return { key: `${facet.attributeKey}:${value}`, facet: facet.attributeKey, value, label: `${facet.label}: ${option?.label ?? value}` }
+      })
+    }
+    if (!facetIsActive(facet.attributeKey)) return []
+    const min = chosen.min != null ? String(chosen.min) : ""
+    const max = chosen.max != null ? String(chosen.max) : ""
+    return [{ key: facet.attributeKey, facet: facet.attributeKey, value: "", label: `${facet.label}: ${min || "…"}–${max || "…"}` }]
+  })
+  const filtersActive = activeChips.length > 0
 
   const emptyFilters =
     locale === "en"
@@ -2605,19 +2774,43 @@ function ListingRow({
         : locale === "fr"
           ? "Aucun produit avec une offre dans cette catégorie."
           : "Geen producten met een aanbod in deze categorie."
+  const noMatches =
+    locale === "en"
+      ? "No products match these filters."
+      : locale === "de"
+        ? "Keine Produkte für diese Filter."
+        : locale === "fr"
+          ? "Aucun produit pour ces filtres."
+          : "Geen producten met deze filters."
+  const clearAllLabel =
+    locale === "en" ? "Clear all filters" : locale === "de" ? "Alle Filter löschen" : locale === "fr" ? "Effacer les filtres" : "Wis alle filters"
+  const clearOneLabel =
+    locale === "en" ? "Clear" : locale === "de" ? "Löschen" : locale === "fr" ? "Effacer" : "Wis"
   return (
-    <section className="grid gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[16rem_1fr]">
-      <aside data-cms-section={filters.id} className="rounded-xl border border-slate-200 bg-white lg:p-4" style={styleOf(filters.presentation)}>
-        <details className="p-4 lg:contents">
-        <summary className="cursor-pointer text-sm font-bold text-[#16315c] lg:hidden">Filters</summary>
-        <div className="mt-3 space-y-4 lg:mt-0">
-            <h2 className="hidden text-sm font-bold text-[#16315c] lg:block">Filters</h2>
+    <section id={filters.id} className="grid gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[16rem_1fr]">
+      <aside data-cms-section={filters.id} className="rounded-xl border border-slate-200 bg-white p-4" style={styleOf(filters.presentation)}>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-bold text-[#16315c]">Filters</h2>
+              {filtersActive ? (
+                <button type="button" className="text-xs font-semibold text-[#1f8a4c]" onClick={clearAllFilters}>
+                  {clearAllLabel}
+                </button>
+              ) : null}
+            </div>
             {facets.length === 0 ? (
               <p className="text-sm leading-6 text-slate-500">{emptyFilters}</p>
             ) : null}
             {facets.map((facet) => (
               <fieldset key={facet.attributeKey} className="space-y-1">
-                <legend className="text-sm font-semibold text-[#16315c]">{facet.label}</legend>
+                <legend className="flex w-full items-center justify-between gap-2 text-sm font-semibold text-[#16315c]">
+                  <span>{facet.label}</span>
+                  {facetIsActive(facet.attributeKey) ? (
+                    <button type="button" className="text-xs font-semibold text-[#1f8a4c]" onClick={() => clearFacet(facet.attributeKey)}>
+                      {clearOneLabel}
+                    </button>
+                  ) : null}
+                </legend>
                 {facet.type === "range" ? (
                   <div className="flex gap-2">
                     <input
@@ -2689,9 +2882,8 @@ function ListingRow({
               </fieldset>
             ))}
           </div>
-        </details>
       </aside>
-      <div data-cms-section={grid.id} style={styleOf(grid.presentation)}>
+      <div id={grid.id} data-cms-section={grid.id} style={styleOf(grid.presentation)}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           {heading ? <h2 className="text-xl font-bold text-[#16315c]">{heading}</h2> : <span />}
           <label className="text-sm text-slate-600">
@@ -2707,10 +2899,40 @@ function ListingRow({
             </select>
           </label>
         </div>
+        {activeChips.length > 0 ? (
+          <ul className="mt-3 flex flex-wrap gap-2">
+            {activeChips.map((chip) => (
+              <li key={chip.key}>
+                <button
+                  type="button"
+                  className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-[#16315c]"
+                  onClick={() => {
+                    if (!chip.value) {
+                      clearFacet(chip.facet)
+                      return
+                    }
+                    setSelection((current) => {
+                      const values = (current[chip.facet]?.values ?? []).filter((value) => value !== chip.value)
+                      return { ...current, [chip.facet]: { ...current[chip.facet], values } }
+                    })
+                    setPage(1)
+                  }}
+                >
+                  {chip.label} <span aria-hidden>×</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <p className="mt-1 text-xs text-slate-500">{filtered.length}</p>
         {paged.items.length === 0 ? (
           <p className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-500" role="status">
-            {emptyProducts}
+            {filtersActive ? noMatches : emptyProducts}
+            {filtersActive ? (
+              <button type="button" className="mt-2 block text-xs font-semibold text-[#1f8a4c]" onClick={clearAllFilters}>
+                {clearAllLabel}
+              </button>
+            ) : null}
           </p>
         ) : (
           <ul className={`mt-4 grid items-stretch gap-3 ${cols === 2 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"} ${cols === 4 ? "xl:grid-cols-4" : ""}`}>

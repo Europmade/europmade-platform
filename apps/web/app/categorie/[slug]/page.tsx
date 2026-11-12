@@ -3,6 +3,7 @@ import { cache } from "react"
 import { notFound, permanentRedirect } from "next/navigation"
 import {
   COMMERCIAL_NAV_GROUPS,
+  categoryListingQueryFromSearch,
   expandCategorySlugsWithDescendants,
   isCommercialNavKey,
   selectCategoryShelf,
@@ -45,6 +46,7 @@ import {
 
 type CategoryPageProps = {
   params: Promise<{ slug: string }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
 export async function generateStaticParams() {
@@ -167,8 +169,9 @@ export async function generateMetadata({
  * Categoriepagina — pc_category-slug of commerciële Fase-5-groep.
  * Listing filtert op gekoppelde Product Cloud-slugs. Geen seed-producten.
  */
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params
+  const listingQuery = categoryListingQueryFromSearch((await searchParams) ?? {})
   const locale = await getStorefrontLocaleFromCookies()
   if (!isCommercialNavKey(slug)) {
     const to = await fetchCategoryRedirect(slug)
@@ -281,6 +284,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         productRelations={related.relations}
         filterAttributes={productCloud?.attributes ?? []}
         ads={{ campaign: slots[0] ?? null, banners }}
+        listingQuery={listingQuery}
       />
     )
   }

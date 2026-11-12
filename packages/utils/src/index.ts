@@ -255,6 +255,15 @@ export {
 } from "./category-editorial-copy"
 export { consumerFaqItems, restoreGenericCategoryCopy } from "./category-consumer-copy"
 export {
+  getCategoryAdvice,
+  listCategoryAdviceSlugs,
+  resolveAdviceSelections,
+  type AdviceLink,
+  type AdviceSection,
+  type AdviceSelectionCandidate,
+  type CategoryAdvice,
+} from "./category-advice.ts"
+export {
   categorySlugFromHref,
   displayableStorageReference,
   pickDisplayableMediaReference,
@@ -332,11 +341,19 @@ export {
   type CategoryTaxonomyNode,
 } from "./cms-category-document.ts"
 export {
+  applyCategoryV2FacetCounts,
   buildCategoryV2Facets,
+  categoryFacetLabelKey,
+  categoryListingQueryFromSearch,
+  categoryListingQueryIsEmpty,
+  categoryV2FilterAttributes,
+  consumerFilterValueLabel,
+  selectionFromListingQuery,
   paginateCategoryV2Products,
   productMatchesCategoryV2Filters,
   sortCategoryV2Products,
   specNumber,
+  type CategoryListingQuery,
   type CategoryV2AttributeDef,
   type CategoryV2FilterControlInput,
   type CategoryV2FilterFacet,
